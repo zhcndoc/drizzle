@@ -16,9 +16,9 @@ export default defineConfig({
   build: {
     format: "file", // mandatory due to CloudFlare Pages trailing slash problem
   },
-  image: {
-    domains: ["img.youtube.com"],
-  },
+  // image: {
+  //   domains: ["img.youtube.com"],
+  // },
   prefetch: import.meta.env.DEV ? undefined : {
     prefetchAll: true,
     defaultStrategy: "viewport",
