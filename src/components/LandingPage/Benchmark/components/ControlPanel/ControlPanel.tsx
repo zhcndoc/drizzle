@@ -134,7 +134,7 @@ const ControlPanel: FC<Props> = ({ minWidth = 940 }) => {
               className={styles["play-wrap"]}
               onClick={skipToResults}
             >
-              Skip to results
+              跳转到结果
             </button>
           )}
           {!isTimerActive && !isConfigOpen && (
@@ -143,7 +143,7 @@ const ControlPanel: FC<Props> = ({ minWidth = 940 }) => {
               className={styles["play-wrap"]}
               onClick={rerun}
             >
-              Rerun
+              重新运行
             </button>
           )}
         </div>
@@ -152,7 +152,7 @@ const ControlPanel: FC<Props> = ({ minWidth = 940 }) => {
             <div className={styles["config-popup"]}>
               <BenchmarkConifg selectedItems={selectedItems} />
             </div>
-            <div className={styles["config-info"]}>Benchmark Config</div>
+            <div className={styles["config-info"]}>基准配置</div>
           </div>
           <div className={styles["arrow-wrap"]}>
             <ArrowRight />
@@ -172,7 +172,7 @@ const ControlPanel: FC<Props> = ({ minWidth = 940 }) => {
             <div className={styles["blur-content"]}>
               {isShaking && (
                 <div className={styles["only-desktop"]}>
-                  Only available on Desktop 🖥️
+                  仅限在桌面上可用 🖥️
                 </div>
               )}
               <button
@@ -180,7 +180,7 @@ const ControlPanel: FC<Props> = ({ minWidth = 940 }) => {
                 type="button"
                 className={isShaking ? styles["start-shaked"] : styles.start}
               >
-                Launch your DevOps experience 🚀
+                启动你的 DevOps 体验 🚀
               </button>
             </div>
           )}
@@ -203,7 +203,7 @@ const ControlPanel: FC<Props> = ({ minWidth = 940 }) => {
           <div className={styles["sticker-wrap"]}>
             <div className={styles.congrats}>
               <div className={styles["congrats-text"]}>
-                At least you have great Lighthouse score!
+                至少你的 Lighthouse 得分很高！
               </div>
             </div>
             <div className={styles.sticker}>
