@@ -18,20 +18,20 @@ import AnchorCards from '@components/markdown/AnchorCards.astro';
 
 ## Neon
 
-According to their **[official website](https://neon.tech)**, Neon is a fully managed serverless Postgres. 
+根据其 [官方网站](https://neon.tech) 描述，Neon 是一个完全托管的无服务器 Postgres。
 
-Drizzle ORM natively supports both the **[Neon serverless driver](https://github.com/neondatabase/serverless)** 
- with the `drizzle-orm/neon-serverless` package and the **[`postgres`](#postgresjs)** or **[`pg`](#node-postgres)** drivers for accessing a Neon Postgres database.
+Drizzle ORM 原生支持使用 `drizzle-orm/neon-serverless` 软件包的 [Neon 无服务器驱动程序](https://github.com/neondatabase/serverless)
+，以及用于访问 Neon Postgres 数据库的 [`postgres`](#postgresjs) 或 [`pg`](#node-postgres) 驱动程序。
 
 <Npm>
 drizzle-orm @neondatabase/serverless
 -D drizzle-kit
 </Npm>
 
-With the Neon serverless driver [**[github](https://github.com/neondatabase/serverless)**, **[blog post](https://blog.cloudflare.com/neon-postgres-database-from-workers/)**, **[Neon docs](https://neon.tech/docs/serverless/serverless-driver)**],  
-you can access a Neon database from serverless environments — like Cloudflare Workers or Vercel Edge Functions — over HTTP or WebSockets instead of TCP.
+使用 Neon 无服务器驱动程序，请查看 [Github](https://github.com/neondatabase/serverless)、[博客文章](https://blog.cloudflare.com/neon-postgres-database-from-workers/)、[Neon 文档](https://neon.tech/docs/serverless/serverless-driver)
+，您可以通过 HTTP 或 WebSockets 而不是 TCP 从无服务器环境（如 Cloudflare Workers 或 Vercel Edge Functions）访问 Neon 数据库。
 
-Querying over HTTP is faster for single, non-interactive transactions. If you require session or interactive transaction support or a fully-compatible drop-in replacement for the `pg` driver, use WebSockets.
+使用 HTTP 进行查询对于单个非交互式事务来说更快。如果您需要会话或交互式事务支持，或者完全兼容的 `pg` 驱动程序的即插即用替代方案，请使用 WebSockets。
 
 <Tabs items={['HTTP', 'WebSockets']}>
 <Tab>
@@ -58,24 +58,25 @@ const result = await db.select().from(...);
 </Tab>
 </Tabs>
 
-For an example of using Drizzle ORM with the Neon Serverless driver in a Cloudflare Worker, **[see here.](http://driz.link/neon-cf-ex)**
+有关在 Cloudflare Worker 中使用 Neon Serverless 驱动程序的示例，请参阅[此处](http://driz.link/neon-cf-ex)。
 
-To use Neon from a serverfull environment, you can use the PostgresJS driver, as described in Neon's **[official nodejs docs](https://neon.tech/docs/guides/node)** — see **[docs](#postgresjs)**.
+要从服务器端环境使用 Neon，您可以使用 PostgresJS 驱动程序，如 Neon 的 [官方 Nodejs 文档](https://neon.tech/docs/guides/node) 中所述，请参阅 [PostgresJS 文档](#postgresjs)**。
 
 ## Xata
 
-According their **[official website](https://xata.io)**, Xata is a Postgres data platform with a focus on reliability, scalability, and developer experience. The Xata Postgres service is currently in beta, please see the [Xata docs](https://xata.io/docs/postgres) on how to enable it in your account.
+根据其 [官方网站](https://xata.io) 描述，Xata 是一个以可靠性、可扩展性和开发者体验为重点的 Postgres 数据平台。Xata Postgres 服务目前处于测试版，请参阅 [Xata 文档](https://xata.io/docs/postgres) 以了解如何在您的帐户中启用它。
 
-Drizzle ORM natively supports both the `xata` driver with `drizzle-orm/xata` package and the **[`postgres`](#postgresjs)** or **[`pg`](#node-postgres)** drivers for accessing a Xata Postgres database.
+Drizzle ORM 原生支持使用 `drizzle-orm/xata` 包的 `xata` 驱动程序
+，以及 [`postgres`](#postgresjs) 或 [`pg`](#node-postgres) 驱动程序访问 Xata Postgres 数据库。
 
 <Npm>
 drizzle-orm @xata.io/client
 -D drizzle-kit
 </Npm>
 
-You can use Drizzle with Xata with a HTTP client or a TCP client. The HTTP client doesn't create a persistent connection to the Xata server, while the TCP client does and can be used for better performance with a higher number of requests. The HTTP client is usually recommended from serverless environments like Cloudflare Workers or Vercel Edge Functions. The TCP client is typically used from long-running servers like Express.js or Fastify.
+您可以使用 HTTP 客户端或 TCP 客户端与 Xata 一起使用 Drizzle。HTTP 客户端不会创建到 Xata 服务器的持久连接，而 TCP 客户端会，并且可以用于在较高数量的请求下获得更好的性能。HTTP 客户端通常建议在无服务器环境（如 Cloudflare Workers 或 Vercel Edge Functions）中使用。TCP 客户端通常从长时间运行的服务器（如 Express.js 或 Fastify）中使用。
 
-The following example use the Xata generated client, which you obtain by running the [xata init](https://xata.io/docs/getting-started/installation) CLI command.
+以下示例使用 Xata 生成的客户端，您可以通过运行 [`xata init`](https://xata.io/docs/getting-started/installation) CLI 命令来获取它。
 
 <Tabs items={['HTTP', 'TCP', 'TCP (pool)']}>
 <Tab>
@@ -113,7 +114,7 @@ const db = drizzle(pool);
 </Tab>
 </Tabs>
 
-If you prefer to not use the generated Xata client, it is also possible to use Xata with the **[`postgres`](#postgresjs)** or **[`pg`](#node-postgres)** drivers, in this case you can copy the connection string from the Settings page of your Xata database. For example:
+如果您不希望使用生成的 Xata 客户端，则还可以使用 [`postgres`](#postgresjs) 或 [`pg`](#node-postgres) 驱动程序与 Xata 一起使用，在这种情况下，您可以从 Xata 数据库的设置页面复制连接字符串。例如：
 
 ```typescript copy filename="index.ts"
 import { pgTable, serial, text, varchar } from "drizzle-orm/pg-core";
@@ -126,15 +127,15 @@ await client.connect();
 const db = drizzle(client);
 ```
 
-For more details about using Drizzle with Xata, see the official [Xata docs](https://xata.io/docs/integrations/drizzle).
+有关使用 Drizzle 与 Xata 的更多详细信息，请参阅官方 [Xata 文档](https://xata.io/docs/integrations/drizzle)。
 
 ## PGlite
 
-According to the **[official repo](https://github.com/electric-sql/pglite)**, PGlite is a WASM Postgres build packaged into a TypeScript client library that enables you to run Postgres in the browser, Node.js and Bun, with no need to install any other dependencies. It is only 2.6mb gzipped.
+根据其 [官方网站](https://github.com/electric-sql/pglite) 描述，PGlite 是一个打包在 TypeScript 客户端库中的 WASM Postgres 构建包，可以在浏览器、Node.js 和 Bun 中运行 Postgres，无需安装任何其他依赖项。它经过 gzip 压缩之后只有 2.6MB 大小。
 
-It can be used as an ephemeral in-memory database, or with persistence either to the file system (Node/Bun) or indexedDB (Browser).
+它可以用作临时内存数据库，或者可以将数据持久化到文件系统（Node/Bun）或 indexedDB（浏览器）。
 
-Unlike previous "Postgres in the browser" projects, PGlite does not use a Linux virtual machine - it is simply Postgres in WASM.
+与以前的「在浏览器中使用 Postgres」项目不同，PGlite 不使用 Linux 虚拟机 - 它只是 Postgres 在 WASM 中。
 
 <Npm>
 drizzle-orm @electric-sql/pglite
@@ -154,10 +155,9 @@ await db.select().from(users);
 
 ## Postgres.JS
 
-According to the **[official website](https://github.com/porsager/postgres)**, PostgresJS is the fastest fully featured PostgreSQL client for Node.js and Deno.  
+根据其 [官方网站](https://github.com/porsager/postgres) 描述，PostgresJS 是用于在 Node.js 和 Deno 中与 PostgreSQL 数据库进行交互的最快速完整特性的客户端。
 
-Drizzle ORM natively supports `postgresjs` driver with `drizzle-orm/postgres-js` package.
-
+Drizzle ORM 原生支持 `drizzle-orm/postgres-js` 包的 `postgresjs` 驱动程序。
 
 <Npm>
 drizzle-orm postgres
@@ -180,17 +180,16 @@ await db.select().from(...)...
 ```
 
 <Callout type="warning" emoji="⚙️">
-  For the built in `migrate` function with DDL migrations we strongly encourage you to use `max: 1` connection configuration. 
+  对于使用 DDL 迁移的内置 `migrate` 功能，我们强烈建议使用 `max: 1` 连接配置。
 
-  For querying purposes feel free to use pool size of your choice based on your business demands.
+  对于查询目的，请随意使用适合自己业务需求的连接池大小。
 </Callout>
 
 ## node-postgres
 
-According to the **[official website](https://node-postgres.com/)**, node-postgres is a collection 
-of Node.js modules for interfacing with your PostgreSQL database.
+根据其 [官方网站](https://node-postgres.com/) 描述，node-postgres 是与 PostgreSQL 数据库进行交互的一组 Node.js 模块。
 
-Drizzle ORM natively supports `pg` with `drizzle-orm/pg` package.
+Drizzle ORM 原生支持 `drizzle-orm/pg` 包的 `pg` 驱动程序。
 
 <Npm>
 drizzle-orm pg
@@ -198,8 +197,8 @@ drizzle-orm pg
 </Npm>
 
 
-You can connect to a PostgreSQL database either using a single `client` connection or a `pool`.
-<Tabs items={['Client connection', 'Pool connection']}>
+您可以使用单个 `client` 连接或一个 `pool` 连接来连接到 PostgreSQL 数据库。
+<Tabs items={['客户端连接', '池连接']}>
   <Tab>
 ```typescript copy filename="index.ts"
 import { pgTable, serial, text, varchar } from "drizzle-orm/pg-core";
@@ -247,9 +246,9 @@ const db = drizzle(pool);
 </Tab>
 </Tabs>
 
-### Usage with Cloudflare Workers
+### Cloudflare Workers
 
-Now that Cloudflare Workers supports TCP connections, [you can use](https://developers.cloudflare.com/workers/databases/connect-to-postgres/) `node-postgres` to connect to connection poolers, e.g. pgBouncer.
+现在，Cloudflare Workers 支持 TCP 连接，[可以使用](https://developers.cloudflare.com/workers/databases/connect-to-postgres/) `node-postgres` 连接到连接池器，例如 pgBouncer。
 
 ```typescript copy filename="worker.ts"
 import { Client } from "pg";
@@ -274,36 +273,33 @@ export default {
 ```
 
 <Callout type="warning" emoji="⚙️">
-  For the built in `migrate` function with DDL migrations we strongly encourage you to use `max: 1` connection configuration. 
+对于使用 DDL 迁移的内置 `migrate` 功能，我们强烈建议使用 `max: 1` 连接配置。
 
-  For querying purposes feel free to use pool size of your choice based on your business demands.
+对于查询目的，请根据业务需求使用适当的连接池大小。
 </Callout>
 
 ## Vercel Postgres
 
-According to their **[official website](https://vercel.com/docs/storage/vercel-postgres)**,
-Vercel Postgres is a serverless SQL database designed to integrate with Vercel Functions.
+根据其 [官方网站](https://vercel.com/docs/storage/vercel-postgres) 描述，Vercel Postgres 是一个无服务器的 SQL 数据库，特别设计用于与 Vercel Functions 集成。
 
-Drizzle ORM natively supports both **[@vercel/postgres](https://vercel.com/docs/storage/vercel-postgres)** serverless
-driver with `drizzle-orm/vercel-postgres` package and **[`postgres`](#postgresjs)** or **[`pg`](#node-postgres)**
-drivers to access Vercel Postgres through `postgesql://`
+Drizzle ORM 原生支持使用 `drizzle-orm/vercel-postgres` 包的 **[@vercel/postgres](https://vercel.com/docs/storage/vercel-postgres)** 无服务器驱动程序，并支持通过 `postgesql://` 访问 Vercel Postgres 的 **[`postgres`](#postgresjs)** 或 **[`pg`](#node-postgres)** 驱动程序。
 
-Check out the official **[Vercel Postgres + Drizzle](https://vercel.com/docs/storage/vercel-postgres/using-an-orm#drizzle)** docs.
+查看官方 **[Vercel Postgres + Drizzle](https://vercel.com/docs/storage/vercel-postgres/using-an-orm#drizzle)** 文档。
 
 <Steps>
 
-#### Install dependencies
+#### 安装依赖项
 
 <Npm>
 drizzle-orm @vercel/postgres
 -D drizzle-kit
 </Npm>
 
-#### Prepare Vercel Postgres
+#### 准备 Vercel Postgres
 
-Setup a project according to the **[official docs.](https://vercel.com/docs/storage/vercel-postgres/quickstart)** 
+按照 **[官方文档](https://vercel.com/docs/storage/vercel-postgres/quickstart)** 设置项目。
 
-#### Make your first query
+#### 进行第一个查询
 
 ```typescript copy filename="index.ts"
 import { sql } from '@vercel/postgres';
@@ -314,31 +310,29 @@ const result = await db.select().from(...);
 ```
 </Steps>
 
-With **[@vercel/postgres](https://vercel.com/docs/storage/vercel-postgres)** severless package
-you can access Vercel Postgres from either serverful or serverless environments with no TCP available,
-like Cloudflare Workers, through websockets.  
-  
-If you're about to use Vercel Postgres from a _serverfull_ environment, you can do it
-either with `@vercel/postgres` or directly access the DB through `postgesql://` with 
-either **[`postgres`](#postgresjs)** or **[`pg`](#node-postgres)**.
+使用 **[@vercel/postgres](https://vercel.com/docs/storage/vercel-postgres)** 无服务器包
+您可以通过无 TCP 可用的服务器端和无服务器环境，例如 Cloudflare Workers，通过 WebSockets 访问 Vercel Postgres。
+
+如果您打算从服务器端环境使用 Vercel Postgres，则可以使用 `@vercel/postgres` 或直接通过 `postgesql://` 访问该 DB
+，使用 **[`postgres`](#postgresjs)** 或 **[`pg`](#node-postgres)**。
 
 
 ## Supabase
 
-According to the **[official website](https://supabase.com/docs)**, Supabase is an open source Firebase alternative for building secure and performant Postgres backends with minimal configuration.
+根据其 [官方网站](https://supabase.com/docs) 描述，Supabase 是一个开源的 Firebase 替代品，用于构建安全且性能卓越的最小配置 Postgres 后端。
 
-Checkout official **[Supabase + Drizzle](https://supabase.com/docs/guides/database/connecting-to-postgres#connecting-with-drizzle)** docs.
+查看官方 **[Supabase + Drizzle](https://supabase.com/docs/guides/database/connecting-to-postgres#connecting-with-drizzle)** 文档。
 
 <Steps>
 
-#### Install dependencies
+#### 安装依赖项
 
 <Npm>
 drizzle-orm postgres
 -D drizzle-kit
 </Npm>
 
-#### Create your models
+#### 创建模型
 
 ```typescript copy filename="schema.ts"
 import { pgTable, serial, text, varchar } from "drizzle-orm/pg-core";
@@ -350,7 +344,7 @@ export const users = pgTable('users', {
 });
 ```
 
-#### Make your first query
+#### 进行第一个查询
 
 ```typescript copy filename="index.ts"
 import { drizzle } from 'drizzle-orm/postgres-js'
@@ -365,9 +359,9 @@ const db = drizzle(client);
 const allUsers = await db.select().from(users);
 ```
 
-#### Connection pooling (optional)
+#### 连接池（可选）
 
-If you decide to use connection pooling via Supabase (described [here](https://supabase.com/docs/guides/database/connecting-to-postgres#connection-pooler)), and have "Transaction" pool mode enabled, then ensure to turn off prepare, as prepared statements are not supported. 
+如果决定通过 Supabase 使用连接池（在 [此处](https://supabase.com/docs/guides/database/connecting-to-postgres#connection-pooler) 有描述），并启用了 "Transaction" 池模式，则确保关闭 prepare，因为不支持预处理语句。
 
 ```typescript copy filename="index.ts"
 import { drizzle } from 'drizzle-orm/postgres-js'
@@ -385,12 +379,12 @@ const allUsers = await db.select().from(users);
 
 </Steps>
 
-Connect to your database using the Connection Pooler for **serverless environments**, and the Direct Connection for **long-running servers**.
+通过连接池器连接到您的数据库进行 **无服务器环境**，通过直连连接到您的数据库进行 **长时间运行的服务器**。
 
 
 ## AWS Data API
 
-Drizzle ORM natively supports `aws-sdk` driver with `drizzle-orm/aws-data-api` package.
+Drizzle ORM 原生支持使用 `drizzle-orm/aws-data-api` 包的 `aws-sdk` 驱动程序。
 
 <Npm>
 drizzle-orm @aws-sdk/client-rds-data @aws-sdk/credential-providers
@@ -417,9 +411,9 @@ const db = drizzle(rdsClient, {
 await db.select().from(...)...;
 ```
 
-## HTTP proxy
+## HTTP 代理
 
-Example of driver implementation
+驱动程序实现示例
 
 ```typescript copy
 import { drizzle } from 'drizzle-orm/pg-proxy';
@@ -436,7 +430,7 @@ const db = drizzle(async (sql, params, method) => {
 });
 ```
 
-Example of server implementation
+服务器实现示例
 
 ```ts
 import { Client } from 'pg';

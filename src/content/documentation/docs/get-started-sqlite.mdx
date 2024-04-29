@@ -15,12 +15,9 @@ import Steps from '@components/markdown/Steps.astro';
 
 ## Turso
 
-According to the **[official website](https://turso.tech/drizzle)**, 
-Turso is a **[libSQL](https://github.com/libsql/libsql)** powered edge SQLite database as a service.
-  
-Drizzle ORM natively supports libSQL driver, 
-we embrace SQL dialects and dialect specific drivers and syntax and mirror most popular 
-SQLite-like `all`, `get`, `values` and `run` query methods syntax. 
+根据其 [官方网站](https://turso.tech/drizzle) 描述，Turso 是一个以 [libSQL](https://github.com/libsql/libsql) 为驱动的边缘 SQLite 数据库作为服务。
+
+Drizzle ORM 原生支持 libSQL 驱动程序，我们采用 SQL 方言和方言特定的驱动程序和语法，并模拟最流行的类似 SQLite 的 `all`、`get`、`values` 和 `run` 查询方法的语法。
 
 <Npm>
 drizzle-orm @libsql/client
@@ -38,7 +35,7 @@ const db = drizzle(client);
 const result = await db.select().from(users).all()
 ```
 
-Unless you plan on writing every SQL query by hand, a table declaration is helpful:
+除非您打算手动编写每个 SQL 查询，否则表声明非常有用：
 ```typescript copy
 import { sql } from "drizzle-orm";
 import { text, integer, sqliteTable } from "drizzle-orm/sqlite-core";
@@ -49,18 +46,16 @@ const users = sqliteTable('users', {
   intModifiers: integer('int_modifiers', { mode: 'boolean' }).notNull().default(false),
 });
 ```
-For more details about column types, see the **[SQLite column types in Drizzle.](/docs/column-types/sqlite)**
+有关列类型的更多详细信息，请参阅 [Drizzle 中的 SQLite 列类型](/docs/column-types/sqlite)。
 
 ## Cloudflare D1
 
-According to the **[official website](https://developers.cloudflare.com/d1/)**, 
-D1 is Cloudflare's first queryable relational database.  
-  
-Drizzle ORM fully supports the Cloudflare D1 database and Cloudflare Workers environment.
-We embrace SQL dialects and dialect specific drivers and syntax and mirror most popular 
-SQLite-like `all`, `get`, `values` and `run` query methods syntax.
+根据其 [官方网站](https://developers.cloudflare.com/d1/) 描述，D1 是 Cloudflare 的第一个可查询关系数据库。
 
-To setup project for your Cloudflare D1 please refer to **[official docs.](https://developers.cloudflare.com/d1/)**
+Drizzle ORM 完全支持 Cloudflare D1 数据库和 Cloudflare Workers 环境。
+我们采用 SQL 方言和方言特定的驱动程序和语法，并模拟最流行的类似 SQLite 的 `all`、`get`、`values` 和 `run` 查询方法的语法。
+
+要为您的 Cloudflare D1 设置项目，请参阅 [官方文档](https://developers.cloudflare.com/d1/)。
 
 ```toml
 ### your wrangler.toml will look something like this:
@@ -76,20 +71,20 @@ database_name = "YOUR DB NAME"
 database_id = "YOUR DB ID"
 ```
 
-Initialize local database and run server locally:
+初始化本地数据库并在本地运行服务器：
 ```bash
 wrangler d1 execute <DATABASE_NAME> --local --file=./drizzle/0000_short_lockheed.sql
-wrangler dev ## on wrangler versions below 3.0.0, add the --local and --persist flags
+wrangler dev ## 在版本低于 3.0.0 的 wrangler 加上 --local 和 --persist 标志
 ```
 
-Install Drizzle ORM:
+安装 Drizzle ORM：
 
 <Npm>
 drizzle-orm
 -D drizzle-kit
 </Npm>
 
-Make your first D1 query:
+进行第一个 D1 查询：
 ```typescript copy
 import { drizzle } from 'drizzle-orm/d1';
 
@@ -106,7 +101,7 @@ export default {
 };
 ```
 
-Unless you plan on writing every SQL query by hand, a table declaration is helpful:
+除非您打算手动编写每个 SQL 查询，否则表声明非常有用：
 ```typescript copy
 import { sql } from "drizzle-orm";
 import { text, integer, sqliteTable } from "drizzle-orm/sqlite-core";
@@ -117,17 +112,16 @@ const users = sqliteTable('users', {
   intModifiers: integer('int_modifiers', { mode: 'boolean' }).notNull().default(false),
 });
 ```
-For more details about column types, see the **[SQLite column types in Drizzle.](/docs/column-types/sqlite)**
+有关列类型的更多详细信息，请参阅 [Drizzle 中的 SQLite 列类型](/docs/column-types/sqlite)。
 
 ## Bun SQLite
 
-According to the **[official website](https://bun.sh/)**, Bun is a fast all-in-one JavaScript runtime. 
+根据其 [官方网站](https://bun.sh/) 描述，Bun 是一个快速的全能的 JavaScript 运行时。
 
-Drizzle ORM natively supports **[`bun:sqlite`](https://bun.sh/docs/api/sqlite)** module and it's crazy fast 🚀  
+Drizzle ORM 原生支持 [`bun:sqlite`](https://bun.sh/docs/api/sqlite) 模块，而且速度非常快 🚀
 
-We embraces SQL dialects and dialect specific drivers and syntax and unlike any other ORM, 
-for synchronous drivers like `bun:sqlite` we have both **async** and **sync** APIs and we mirror most popular 
-SQLite-like `all`, `get`, `values` and `run` query methods syntax.
+我们采用 SQL 方言和方言特定的驱动程序和语法，并与其他任何 ORM 不同，
+对于像是 `bun:sqlite` 这样的同步驱动程序，我们同时具有 **async** 和 **sync** API，并且我们模拟了最流行的类似 SQLite 的 `all`、`get`、`values` 和 `run` 查询方法的语法。
 
 <Npm>
 drizzle-orm
@@ -144,7 +138,7 @@ const db = drizzle(sqlite);
 const result = await db.select().from(users);
 ```
 
-Unless you plan on writing every SQL query by hand, a table declaration is helpful:
+除非您打算手动编写每个 SQL 查询，否则表声明非常有用：
 ```typescript copy
 import { sql } from "drizzle-orm";
 import { text, integer, sqliteTable } from "drizzle-orm/sqlite-core";
@@ -155,9 +149,9 @@ const users = sqliteTable('users', {
   intModifiers: integer('int_modifiers', { mode: 'boolean' }).notNull().default(false),
 });
 ```
-For more details about column types, see the **[SQLite column types in Drizzle.](/docs/column-types/sqlite)**
+有关列类型的更多详细信息，请参阅 [Drizzle 中的 SQLite 列类型](/docs/column-types/sqlite)。
 
-If you want to use **sync** APIs:
+如果要使用 **sync** API：
 ```typescript copy
 import { drizzle } from 'drizzle-orm/bun-sqlite';
 import { Database } from 'bun:sqlite';
@@ -170,12 +164,12 @@ const result = db.select().from(users).get();
 const result = db.select().from(users).values();
 const result = db.select().from(users).run();
 ```
-More on **sync** and **async** APIs for sqlite - read here.
+有关 sqlite 的 **sync** 和 **async** API 的更多信息 - 请阅读此处。
 
 ## Expo SQLite
-According to the **[official website](https://expo.dev/)**, Expo is an ecosystem of tools to develop, build and ship applications on React Native. 
-It's powered by Hermes JavaScript runtime and Metro bundler, Drizzle Expo driver is built to natively support both.  
-  
+根据其 [官方网站](https://expo.dev/) 描述，Expo 是基于 React Native 开发、构建和发布应用程序的工具生态系统。
+它由 Hermes JavaScript 运行时和 Metro bundler 提供动力，Drizzle Expo 驱动程序旨在原生支持这两者。
+
 <Npm>
 drizzle-orm expo-sqlite@next
 -D drizzle-kit 
@@ -191,20 +185,19 @@ const db = drizzle(expo);
 await db.select().from(users);
 ```
 
-You can use Drizzle Kit for SQL migration generation.  
-Please make sure to check how [Drizzle Kit migrations](/kit-docs/overview) work before proceeding.  
-Expo / React Native requires you to have SQL migrations bundled into the app and we've got you covered.  
+您可以使用 Drizzle Kit 生成 SQL 迁移。在进行下一步之前，请确保查看 [Drizzle Kit 迁移](/kit-docs/overview) 的工作原理。
+Expo / React Native 要求您将 SQL 迁移捆绑到应用程序中，我们已为您提供覆盖。
 
 <Steps>
 
-#### Install babel plugin
-It's necessary to bundle SQL migration files as string directly to your bundle.
+#### 安装 babel 插件
+必须直接将 SQL 迁移文件作为字符串捆绑到您的包中。
 ```shell
 npm install babel-plugin-inline-import
 ```
 
-#### Update config files.
-You will need to update `babel.config.js`, `metro.config.js` and `drizzle.config.ts` files
+#### 更新配置文件
+您需要更新 `babel.config.js`，`metro.config.js` 和 `drizzle.config.ts` 文件
 ```js filename='babel.config.js'
 module.exports = function(api) {
   api.cache(true);
@@ -227,7 +220,7 @@ config.resolver.sourceExts.push('sql'); // <--- add this
 module.exports = config;
 ```
 
-Make sure to have `driver: 'expo'` in Drizzle Kit config
+确保在 Drizzle Kit 配置中拥有 `driver: 'expo'`
 ```ts filename="drizzle.config.ts"
 import type { Config } from 'drizzle-kit';
 
@@ -238,15 +231,15 @@ export default {
 } satisfies Config;
 ```
 
-#### Generate migrations
-After creating SQL schema file and drizzle.config.ts file, you can generate migrations
+#### 生成迁移
+在创建 SQL 模式文件和 drizzle.config.ts 文件之后，您可以生成迁移
 ```bash
 npx drizzle-kit generate:sqlite
 ```
 
-#### Add migrations to your app
-Now you need to import `migrations.js` file into your Expo/React Native app from `./drizzle` folder. 
-You can run migrations on application startup using our custom `useMigrations` migrations hook on in `useEffect` hook manually as you want.
+#### 添加迁移到您的应用程序
+现在需要从 `./drizzle` 文件夹导入 `migrations.js` 文件到 Expo/React Native 应用程序中。
+您可以在应用程序启动时使用我们的自定义 `useMigrations` 迁移钩子运行迁移，也可以在 `useEffect` 钩子中手动运行。
 
 ```ts filename="App.tsx"
 import { drizzle } from "drizzle-orm/expo-sqlite";
@@ -284,8 +277,7 @@ export default function App() {
 </Steps>
 
 ## OP SQLite
-According to the **[official github page](https://github.com/OP-Engineering/op-sqlite)**, 
-OP-SQLite embeds the latest version of SQLite and provides a low-level API to execute SQL queries.
+根据其 [官方网站](https://github.com/OP-Engineering/op-sqlite) 描述，OP-SQLite 嵌入了最新版本的 SQLite，并提供了一个执行 SQL 查询的低级 API。
 
 <Npm>
 drizzle-orm @op-engineering/op-sqlite
@@ -304,20 +296,19 @@ const db = drizzle(opsqlite);
 await db.select().from(users);
 ```
 
-You can use Drizzle Kit for SQL migration generation.  
-Please make sure to check how [Drizzle Kit migrations](/kit-docs/overview) work before proceeding.  
-OP SQLite requires you to have SQL migrations bundled into the app and we've got you covered.  
+您可以使用 Drizzle Kit 生成 SQL 迁移。在进行下一步之前，请确保查看 [Drizzle Kit 迁移](/kit-docs/overview) 的工作原理。
+OP SQLite 要求您将 SQL 迁移捆绑到应用程序中，我们已为您提供覆盖。
 
 <Steps>
 
-#### Install babel plugin
-It's necessary to bundle SQL migration files as string directly to your bundle.
+#### 安装 babel 插件
+必须直接将 SQL 迁移文件作为字符串捆绑到您的包中。
 ```shell
 npm install babel-plugin-inline-import
 ```
 
-#### Update config files.
-You will need to update `babel.config.js`, `metro.config.js` and `drizzle.config.ts` files
+#### 更新配置文件
+您需要更新 `babel.config.js`，`metro.config.js` 和 `drizzle.config.ts` 文件
 ```js filename='babel.config.js'
 module.exports = {
   presets: ['module:@react-native/babel-preset'],
@@ -342,7 +333,7 @@ config.resolver.sourceExts.push('sql');
 module.exports = config;
 ```
 
-Make sure to have `driver: 'expo'` in Drizzle Kit config
+确保在 Drizzle Kit 配置中拥有 `driver: 'expo'`
 ```ts filename="drizzle.config.ts"
 import type { Config } from 'drizzle-kit';
 
@@ -353,15 +344,15 @@ export default {
 } satisfies Config;
 ```
 
-#### Generate migrations
-After creating SQL schema file and drizzle.config.ts file, you can generate migrations
+#### 生成迁移
+在创建 SQL 模式文件和 drizzle.config.ts 文件之后，您可以生成迁移
 ```bash
 npx drizzle-kit generate:sqlite
 ```
 
-#### Add migrations to your app
-Now you need to import `migrations.js` file into your Expo/React Native app from `./drizzle` folder. 
-You can run migrations on application startup using our custom `useMigrations` migrations hook on in `useEffect` hook manually as you want.
+#### 添加迁移到您的应用程序
+现在需要从 `./drizzle` 文件夹导入 `migrations.js` 文件到 Expo/React Native 应用程序中。
+您可以在应用程序启动时使用我们的自定义 `useMigrations` 迁移钩子运行迁移，也可以在 `useEffect` 钩子中手动运行。
 
 ```ts filename="App.tsx"
 import { drizzle } from "drizzle-orm/op-sqlite";
@@ -402,19 +393,16 @@ export default function App() {
 
 
 ## React Native SQLite
-Please use [`Expo SQLite`](#expo-sqlite) to run Drizzle ORM with React Native apps.  
-The only [popular library](https://github.com/andpor/react-native-sqlite-storage) we've found does not support new Hermes JavaScript runtime, 
-which is a standard out of the box runtime for React Native and Expo now.
-
+请使用 [`Expo SQLite`](#expo-sqlite) 在 React Native 应用程序中运行 Drizzle ORM。
+我们发现唯一的 [流行库](https://github.com/andpor/react-native-sqlite-storage) 不支持新的 Hermes JavaScript 运行时，
+而新的 Hermes JavaScript 运行时现在是 React Native 和 Expo 的开箱即用标准运行时。
 
 ## better-sqlite3
 
-According to the **[official docs](https://github.com/WiseLibs/better-sqlite3)**, 
-BetterSqlite3 is the fastest and simplest library for SQLite3 in Node.js.
+根据其 [官方网站](https://github.com/WiseLibs/better-sqlite3) 描述，BetterSqlite3 是 Node.js 中最快、最简单的 SQLite3 库。
 
-Drizzle ORM embraces SQL dialects and dialect specific drivers and syntax and unlike any other ORM, 
-for synchronous drivers like `better-sqlite3` both **async** and **sync** APIs and we mirror most popular 
-SQLite-like `all`, `get`, `values` and `run` query methods syntax.  
+Drizzle ORM 采用 SQL 方言和方言特定的驱动程序和语法，并且与任何其他 ORM 不同，
+对于像是 `better-sqlite3` 这样的同步驱动程序，我们同时具有 **async** 和 **sync** API，并且我们模拟了最流行的类似 SQLite 的 `all`、`get`、`values` 和 `run` 查询方法的语法。
 
 <Npm>
 drizzle-orm better-sqlite3
@@ -432,7 +420,7 @@ const db = drizzle(sqlite);
 const result = await db.select().from(users);
 ```
 
-Unless you plan on writing every SQL query by hand, a table declaration is helpful:
+除非您打算手动编写每个 SQL 查询，否则表声明非常有用：
 ```typescript copy
 import { sql } from "drizzle-orm";
 import { text, integer, sqliteTable } from "drizzle-orm/sqlite-core";
@@ -443,13 +431,13 @@ const users = sqliteTable('users', {
   intModifiers: integer('int_modifiers', { mode: 'boolean' }).notNull().default(false),
 });
 ```
-For more details about column types, see the **[SQLite column types in Drizzle.](/docs/column-types/sqlite)**
+有关列类型的更多详细信息，请参阅 [Drizzle 中的 SQLite 列类型](/docs/column-types/sqlite)。
 
 <Callout type="info" emoji="ℹ️">
-  If your `db.insert()` returns data, append `all()` to your query, otherwise append `run()`
+  如果您的 `db.insert()` 返回数据，请在查询中添加 `all()`，否则添加 `run()`
 </Callout>
 
-If you want to use **sync** APIs:
+如果要使用 **sync** API：
 ```typescript copy
 import { drizzle, BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import Database from 'better-sqlite3';
@@ -462,21 +450,19 @@ const result = db.select().from(users).get();
 const result = db.select().from(users).values();
 const result = db.select().from(users).run();
 ```
-More on **sync** and **async** APIs for sqlite - read here.
+有关 sqlite 的 **sync** 和 **async** API 的更多信息 - 请阅读此处。
 
-## HTTP proxy
+## HTTP 代理
 
+Drizzle ORM 还支持使用异步回调函数进行执行 SQL。
 
-Drizzle ORM also supports simply using asynchronous callback function for executing SQL.
+- `sql` 是带有占位符的查询字符串。
+- `params` 是参数的数组。
+- 根据 SQL 语句，`method` 的值将设为 `run`、`all`、`values` 或 `get`。
+Drizzle 始终等待返回值为 `{rows: string[][]}` 或 `{rows: string[]}`。
 
-- `sql` is a query string with placeholders.
-- `params` is an array of parameters.
-- One of the following values will set for `method` depending on the SQL statement - `run`, `all`, `values` or `get`.
-
-Drizzle always waits for `{rows: string[][]}` or `{rows: string[]}` for the return value.
-
-- When the `method` is `get`, you should return a value as `{rows: string[]}`.
-- Otherwise, you should return `{rows: string[][]}`.
+- 当 `method` 为 `get` 时，您应该返回一个值为 `{rows: string[]}` 的对象。
+- 否则，您应返回 `{rows: string[][]}` 的对象。
 
 ```typescript copy
 import { drizzle } from 'drizzle-orm/sqlite-proxy';
@@ -493,11 +479,11 @@ const db = drizzle(async (sql, params, method) => {
 });
 ```
 
-**Batch support**
+**批量支持**
 
-Sqlite Proxy supports batch requests, the same as it's done for all other drivers. Check full [docs](/docs/batch-api)
+Sqlite 代理支持批量请求，与所有其他驱动程序一样。查看完整的 [文档](/docs/batch-api)。
 
-You will need to specify a specific callback for batch queries and handle requests to proxy server:
+您需要为批量查询指定一个特定的回调函数，并处理对代理服务器的请求：
 
 ```ts
 import { drizzle } from 'drizzle-orm/sqlite-proxy';
@@ -518,15 +504,15 @@ const db = drizzle(async (sql, params, method) => {
 	});
 ```
 
-And then you can use `db.batch([])` method, that will proxy all queries
+然后，您可以使用 `db.batch([])` 方法，该方法将代理所有查询。
 
 <Callout>
-  Response from the batch should be an array of raw values (an array within an array), in the same order as they were sent to the proxy server
+  批处理的响应应为原始值数组（数组内的数组），顺序与发送到代理服务器的顺序相同。
 </Callout>
 
 ---
 
-Unless you plan on writing every SQL query by hand, a table declaration is helpful:
+除非您打算手动编写每个 SQL 查询，否则表声明非常有用：
 ```typescript copy
 import { sql } from "drizzle-orm";
 import { text, integer, sqliteTable } from "drizzle-orm/sqlite-core";
@@ -537,4 +523,4 @@ const users = sqliteTable('users', {
   intModifiers: integer('int_modifiers', { mode: 'boolean' }).notNull().default(false),
 });
 ```
-For more details about column types, see the **[SQLite column types in Drizzle.](/docs/column-types/sqlite)**
+有关列类型的更多详细信息，请参阅 [Drizzle 中的 SQLite 列类型](/docs/column-types/sqlite)。
