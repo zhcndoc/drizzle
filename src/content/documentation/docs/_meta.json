@@ -1,7 +1,7 @@
 {
   "---":{
     "type":"separator",
-    "title": "Get started"
+    "title": "开始使用"
   },
   "overview": "概述",
   "get-started-postgresql": "PostgreSQL",
@@ -9,14 +9,14 @@
   "get-started-sqlite": "SQLite",
   "----":{
     "type":"separator",
-    "title": "Manage schema"
+    "title": "模式管理"
   },
-  "sql-schema-declaration": "Overview",
-  "column-types": "Column types",
-  "indexes-constraints": "Indexes & Constraints",
-  "migrations": "Migrations",
-  "views": "Views",
-  "schemas": "Schemas",
+  "sql-schema-declaration": "概述",
+  "column-types": "列类型",
+  "indexes-constraints": "索引和约束",
+  "migrations": "迁移",
+  "views": "视图",
+  "schemas": "模式",
   "-----":{
     "type":"separator",
     "title": "Access your data"

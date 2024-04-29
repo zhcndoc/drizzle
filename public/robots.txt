@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://orm.drizzle.team/sitemap-index.xml
+Sitemap: https://drizzle.zhcndoc.com/sitemap-index.xml
