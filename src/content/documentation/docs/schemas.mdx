@@ -4,17 +4,17 @@ import IsSupportedChipGroup from '@components/markdown/IsSupportedChipGroup.astr
 import Section from '@components/markdown/Section.astro';
 import Callout from '@components/markdown/Callout.astro';
 
-# Table schemas
+# 表模式
 
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': true, 'SQLite': false }} />
 
-Drizzle ORM provides you an API for declaring SQL schemas for PostgreSQL and MySQL dialects.
+Drizzle ORM 为 PostgreSQL 和 MySQL 方言提供了声明 SQL 模式的 API。
 
-If you declare an entity within a schema, query builder will prepend schema names in queries:<br/>
+如果在 schema 中声明了一个实体，查询生成器将在查询中添加 schema 名称：<br/>
 `select * from "schema"."users"`
 
 <Callout type='warning' emoji='⚠️'>
-  Support for enums in custom schemas in Postgres is currently only available in `drizzle-orm`, support for `drizzle-kit` is coming soon.
+  在 Postgres 中自定义 schema 中支持枚举目前仅在 `drizzle-orm` 中可用，对于 `drizzle-kit` 的支持即将推出。
 </Callout>
 
 <Tabs items={['PostgreSQL', 'MySQL', "SQLite"]}>
@@ -71,7 +71,7 @@ If you declare an entity within a schema, query builder will prepend schema name
     </Section>
   </Tab>
   <Tab>
-  SQLite does not have support for schemas 😕
+  SQLite 不支持模式 😕
   </Tab>
 </Tabs>
 
