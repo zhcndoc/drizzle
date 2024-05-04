@@ -1,17 +1,16 @@
 import Callout from '@components/markdown/Callout.astro';
 import Steps from '@components/markdown/Steps.astro';
 
-# Migrations
-The most important thing about Drizzle is that you can use its schema as a source of truth for everything else.<br />
-[drizzle-kit](/kit-docs/overview) is a CLI companion for Drizzle ORM which you can use to generate SQL migrations automatically based on your schema changes
-or apply those changes directly to the database.
+# 迁移
+关于 Drizzle 最重要的一点是你可以将它的模式作为其他一切的真实来源。<br />
+[drizzle-kit](/kit-docs/overview) 是 Drizzle ORM 的 CLI 助手，你可以使用它根据模式更改自动生成 SQL 迁移，或直接将这些更改应用到数据库中。
 
-See [detailed docs](/kit-docs/overview) for extended examples and walk-throughs.
+详细文档见 [此处](/kit-docs/overview)，包含更多扩展示例和步骤解析。
 
-## Quick start
+## 快速开始
 
 <Steps>
-#### Declare your schema
+#### 声明你的模式
 
 ```typescript copy filename="src/schema.ts"
 import { index, int, mysqlTable, bigint, varchar } from 'drizzle-orm/mysql-core';
@@ -31,16 +30,16 @@ export const authOtps = mysqlTable('auth_otp', {
 ```
 
 <Callout type="warning">
-The schema files **SHOULD NOT** contain any runtime logic besides defining your DB schema.
-In particular, your DB connection should be defined separately.
-Otherwise, that logic will be executed whenever you run any drizzle-kit commands.
+模式文件**不应该**包含除定义数据库模式之外的任何运行时逻辑。
+特别注意，数据库连接应该单独定义。
+否则，每次运行 drizzle-kit 命令时都会执行该逻辑。
 
-Schema-related type definitions, on the other hand, are allowed and even encouraged, as they are not executed at runtime.
+另一方面，与此相关的类型定义是允许的，甚至是鼓励的，因为它们不会在运行时执行。
 </Callout>
 
-#### Create the config
+#### 创建配置
 
-Create a `drizzle.config.ts` file in your project root:
+在项目根目录中创建一个 `drizzle.config.ts` 文件：
 
 ```typescript copy filename="drizzle.config.ts"
 import { defineConfig } from 'drizzle-kit';
@@ -58,12 +57,12 @@ export default defineConfig({
 });
 ```
 
-#### Generate the migration
+#### 生成迁移
 
 ```bash
 pnpm drizzle-kit generate
 ```
-This will generate a migration SQL file:
+这将生成一个迁移 SQL 文件：
 ```sql copy filename="drizzle/migrations/0000_migration.sql"
 CREATE TABLE `users` (
  `id` bigint primary key auto_increment,
@@ -82,12 +81,12 @@ ALTER TABLE auth_otp ADD CONSTRAINT auth_otp_user_id_users_id_fk FOREIGN KEY (`u
 CREATE INDEX name_idx ON users (`full_name`);
 ```
 
-#### Run the migrations
+#### 执行迁移
 
-Drizzle ORM is designed to be an opt-in solution at any point of your development flow.
-You can either run the generated migrations via Drizzle, or treat them as generic SQL migrations and run them with any other tool.
+Drizzle ORM 被设计为在开发流程的任何时间点使用的选择性解决方案。
+你可以通过 Drizzle 运行生成的迁移，也可以将它们视为通用的 SQL 迁移，并使用其他工具运行它们。
 
-To run the migrations with Drizzle, you can use the `migrate()` helper, available for every supported driver:
+要使用 Drizzle 运行迁移，你可以使用每个受支持驱动程序（driver）都可用的 `migrate()` 辅助函数：
 ```typescript copy filename="src/db.ts"
 import { drizzle } from 'drizzle-orm/mysql2';
 import mysql from 'mysql2/promise';
@@ -109,10 +108,10 @@ import 'dotenv/config';
 import { migrate } from 'drizzle-orm/mysql2/migrator';
 import { db, connection } from './db';
 
-// This will run migrations on the database, skipping the ones already applied
+// 这将在数据库上运行迁移，跳过已应用的迁移
 await migrate(db, { migrationsFolder: './drizzle' });
 
-// Don't forget to close the connection, otherwise the script will hang
+// 不要忘记关闭连接，否则脚本将挂起
 await connection.end();
 ```
 
@@ -121,29 +120,29 @@ pnpm tsx src/migrate.ts
 ```
 </Steps>
 
-### Configurations
+### 配置项
 
-- **Custom table for migrations**
+- **自定义迁移表格**
 
-By default, all information about executed migrations will be stored in the database inside the `__drizzle_migrations` table, 
-and for PostgreSQL, inside the `drizzle` schema. However, you can configure where to store those records.
+默认情况下，有关已执行迁移的所有信息都将存储在数据库内的 `__drizzle_migrations` 表中，
+对于 PostgreSQL，也会存储在`drizzle`模式中。但是，你可以配置记录的存储位置。
 
-To add a custom table name for migrations stored inside your database, you should use the `migrationsTable` option
+要在数据库内添加一个自定义表格名用于存储迁移，请使用 `migrationsTable` 选项。
 
-Usage example
+使用示例
 ```ts
 await migrate(db, { migrationsFolder: './drizzle', migrationsTable: 'my_migrations' });
 ```
 
-- **Custom schema for migrations**
+- **自定义迁移模式**
 
 <Callout>
-  Works only with PostgreSQL databases
+  仅适用于 PostgreSQL 数据库
 </Callout>
 
-To add a custom schema name for migrations stored inside your database, you should use the `migrationsSchema` option
+要在数据库内添加一个自定义模式名用于存储迁移，请使用 `migrationsSchema` 选项。
 
-Usage example
+使用示例
 ```ts
 await migrate(db, { migrationsFolder: './drizzle', migrationsSchema: 'custom' });
 ```
