@@ -1,14 +1,14 @@
 ---
-title: MySQL column types
+title: MySQL 列类型
 ---
 import Section from '@components/markdown/Section.astro';
 import Callout from '@components/markdown/Callout.astro';
 
-We have native support for all of them, yet if that's not enough for you, feel free to create **[custom types](/docs/custom-types)**.
+我们对所有列类型都有原生支持，如果这还不够，请随意创建 **[自定义类型](/docs/custom-types)**。
 
-### Integer
+### 整数类型
 
-A signed integer, stored in `0`, `1`, `2`, `3`, `4`, `6`, or `8` bytes depending on the magnitude of the value.
+有符号整数，根据值的大小存储在 `0`、`1`、`2`、`3`、`4`、`6` 或 `8` 字节中。
 
 <Section>
 ```typescript
@@ -26,7 +26,7 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### tinyint
+### tinyint 类型
 
 <Section>
 ```typescript
@@ -44,7 +44,7 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### smallint
+### smallint 类型
 
 <Section>
 ```typescript
@@ -62,7 +62,7 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### mediumint
+### mediumint 类型
 
 <Section>
 ```typescript
@@ -80,7 +80,7 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### bigint
+### bigint 类型
 
 <Section>
 ```typescript
@@ -93,7 +93,7 @@ const table = mysqlTable('table', {
 
 bigint('...', { mode: 'number' | 'bigint' });
 
-// You can also specify unsigned option for bigint
+// 也可以为 bigint 指定 unsigned 选项
 bigint('...', { mode: 'number' | 'bigint', unsigned: true })
 ```
 
@@ -105,7 +105,7 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### real
+### real 类型
 
 <Section>
 ```typescript
@@ -141,7 +141,7 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### decimal
+### decimal 类型
 
 <Section>
 ```typescript
@@ -177,7 +177,7 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### double
+### double 类型
 
 <Section>
 ```typescript
@@ -213,7 +213,7 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### float
+### float 类型
 
 <Section>
 ```typescript
@@ -231,11 +231,11 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### serial
+### serial 类型
 
 <Section>
 
-`SERIAL` is an alias for `BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE`.
+`SERIAL` 是 `BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE` 的别名。
 
 ```typescript
 import { serial, mysqlTable } from "drizzle-orm/mysql-core";
@@ -252,7 +252,7 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### binary
+### binary 类型
 
 <Section>
 ```typescript
@@ -270,7 +270,7 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### varbinary
+### varbinary 类型
 
 <Section>
 ```typescript
@@ -288,7 +288,7 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### char
+### char 类型
 
 <Section>
 ```typescript
@@ -306,8 +306,8 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### varchar
-You can define `{ enum: ["value1", "value2"] }` config to infer `insert` and `select` types, it **won't** check runtime values.
+### varchar 类型
+你可以使用 `{ enum: ["value1", "value2"] }` 配置来推断 `insert` 和 `select` 类型，它**不会**检查运行时的值。
 <Section>
 ```typescript
 import { varchar, mysqlTable } from "drizzle-orm/mysql-core";
@@ -316,7 +316,7 @@ const table = mysqlTable('table', {
 	varchar: varchar('varchar', { length: 2 }),
 });
 
-// will be inferred as text: "value1" | "value2" | null
+// 会被推断为 text: "value1" | "value2" | null
 varchar: varchar('varchar', { length: 6, enum: ["value1", "value2"] })
 ```
 
@@ -327,9 +327,9 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### text
+### text 类型
 
-You can define `{ enum: ["value1", "value2"] }` config to infer `insert` and `select` types, it **won't** check runtime values.
+你可以使用 `{ enum: ["value1", "value2"] }` 配置来推断 `insert` 和 `select` 类型，它**不会**检查运行时的值。
 
 <Section>
 ```typescript
@@ -339,7 +339,7 @@ const table = mysqlTable('table', {
 	text: text('text'),
 });
 
-// will be inferred as text: "value1" | "value2" | null
+// 会被推断为 text: "value1" | "value2" | null
 text: text('text', { enum: ["value1", "value2"] });
 ```
 
@@ -350,7 +350,7 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### boolean
+### boolean 类型
 
 <Section>
 ```typescript
@@ -368,7 +368,7 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### date
+### date 类型
 
 <Section>
 ```typescript
@@ -386,7 +386,7 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### datetime
+### datetime 类型
 
 <Section>
 ```typescript
@@ -423,7 +423,7 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### time 
+### time 类型
 
 <Section>
 ```typescript
@@ -445,7 +445,7 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### year
+### year 类型
 
 <Section>
 ```typescript
@@ -463,7 +463,7 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### timestamp
+### timestamp 类型
 
 <Section>
 ```typescript
@@ -516,7 +516,7 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### json
+### json 类型
 
 <Section>
 ```typescript
@@ -535,20 +535,20 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-You can specify `.$type<..>()` for json object inference, it **won't** check runtime values. 
-It provides compile time protection for default values, insert and select schemas.
+您可以为 json 对象推断指定 `.$type<..>()`，它**不会**检查运行时的值。
+它为默认值、插入和选择模式提供了编译时保护。
 ```typescript
-// will be infered as { foo: string }
+// 会被推断为 { foo: string }
 json: json('json').$type<{ foo: string }>();
 
-// will be infered as string[]
+// 会被推断为 string[]
 json: json('json').$type<string[]>();
 
-// won't compile
+// 不会被编译
 json: json('json').$type<string[]>().default({});
 ```
 
-## enumColumn
+## 枚举列
 
 <Section>
 ```typescript
@@ -567,9 +567,9 @@ CREATE TABLE `table` (
 </Section>
 
 
-## Customizing column data type
+## 自定义列数据类型
 
-Every column builder has a `.$type()` method, which allows you to customize the data type of the column. This is useful, for example, with unknown or branded types.
+每个列构建器都有一个 `.$type()` 方法，允许您自定义列的数据类型。这在处理未知或品牌类型时非常有用。
 
 ```ts
 type UserId = number & { __brand: 'user_id' };
@@ -584,9 +584,9 @@ const users = mysqlTable('users', {
 });
 ```
 
-## Columns constraints
-### Not null
-`NOT NULL` constraint dictates that the associated column may not contain a `NULL` value.
+## 列约束
+### Not null 约束
+`NOT NULL` 约束指定关联列不允许包含 `NULL` 值。
 
 <Section>
 ```typescript
@@ -604,15 +604,12 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### Default value
+### 默认值
 
-The `DEFAULT` clause specifies a default value to use for the column if no value
-is explicitly provided by the user when doing an `INSERT`.
-If there is no explicit `DEFAULT` clause attached to a column definition,
-then the default value of the column is `NULL`.
+`DEFAULT` 子句指定在执行 `INSERT` 时，如果用户没有显式提供值，则使用的列的默认值。
+如果列定义没有明确的 `DEFAULT` 子句，那么列的默认值是 `NULL`。
 
-An explicit `DEFAULT` clause may specify that the default value is `NULL`,
-a string constant, a blob constant, a signed-number, or any constant expression enclosed in parentheses.
+显式的 `DEFAULT` 子句可以指定默认值是 `NULL`、字符串常量、blob 常量、有符号数字或括在括号中的任何常量表达式。
 
 <Section>
 ```typescript
@@ -630,12 +627,12 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-When using `$default()` or `$defaultFn()`, which are simply different aliases for the same function, 
-you can generate defaults at runtime and use these values in all insert queries. 
-These functions can assist you in utilizing various implementations such as `uuid`, `cuid`, `cuid2`, and many more.
+当使用 `$default()` 或 `$defaultFn()` 时，它们只是相同函数的不同别名，
+您可以在运行时生成默认值并在所有插入查询中使用这些值。
+这些函数可以帮助您利用各种实现，如 `uuid`、`cuid`、`cuid2` 等等。
 
 <Callout type="info" emoji="ℹ️">
-	Note: This value does not affect the `drizzle-kit` behavior, it is only used at runtime in `drizzle-orm`
+	注意：此值不会影响 `drizzle-kit` 的行为，它仅在 `drizzle-orm` 中运行时使用
 </Callout>
 
 ```ts
@@ -647,16 +644,14 @@ const table = mysqlTable('table', {
 });
 ```
 
-When using `$onUpdate()` or `$onUpdateFn()`, which are simply different aliases for the same function, 
-you can generate defaults at runtime and use these values in all update queries. 
+当使用 `$onUpdate()` 或 `$onUpdateFn()` 时，它们只是相同函数的不同别名，
+您可以在运行时生成默认值并在所有更新查询中使用这些值。
 
-Adds a dynamic update value to the column. The function will be called when the row is updated, 
-and the returned value will be used as the column value if none is provided.
-If no default (or $defaultFn) value is provided, the function will be called
-when the row is inserted as well, and the returned value will be used as the column value.
+为列添加一个动态的更新值。当行更新时，将调用该函数，并且如果没有提供列值，则使用返回的值作为列值。
+如果未提供默认值（或 `$defaultFn`）值，则在插入行时也将调用该函数，并将返回的值用作列值。
 
 <Callout type="info" emoji="ℹ️">
-	Note: This value does not affect the `drizzle-kit` behavior, it is only used at runtime in `drizzle-orm`
+	注意：此值不会影响 `drizzle-kit` 的行为，它仅在 `drizzle-orm` 中运行时使用
 </Callout>
 
 ```ts
@@ -667,7 +662,7 @@ const table = mysqlTable('table', {
 });
 ```
 
-### Primary key 
+### 主键约束
 
 <Section>
 ```typescript
@@ -685,7 +680,7 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### Auto increment
+### 自增约束
 
 <Section>
 ```typescript

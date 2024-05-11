@@ -1,17 +1,17 @@
 ---
-title: PostgreSQL column types
+title: PostgreSQL 列类型
 ---
 
 import Section from '@components/markdown/Section.astro';
 import Callout from '@components/markdown/Callout.astro';
 
-We have native support for all of them, yet if that's not enough for you, feel free to create **[custom types](/docs/custom-types)**.
+我们原生支持所有这些类型，但如果这还不够，你可以随意创建 **[自定义类型](/docs/custom-types)**。
 
 ### integer
 `integer` `int` `int4`  
-Signed 4-byte integer     
+有符号的 4 字节整数     
 
-If you need `integer autoincrement` please refer to **[serial.](#serial)**
+如果你需要 `integer autoincrement` 请参考 **[serial](#serial)**。
 
 <Section>
 ```typescript
@@ -52,9 +52,9 @@ CREATE TABLE IF NOT EXISTS "table" (
 
 ### smallint
 `smallint` `int2`  
-Small-range signed 2-byte integer   
+小范围有符号的 2 字节整数   
 
-If you need `smallint autoincrement` please refer to **[smallserial.](#smallserial)**
+如果你需要 `smallint autoincrement` 请参考 **[smallserial](#smallserial)**。
 <Section>
 ```typescript
 import { smallint, pgTable } from "drizzle-orm/pg-core";
@@ -92,11 +92,11 @@ CREATE TABLE IF NOT EXISTS "table" (
 
 ### bigint
 `bigint` `int8`  
-Signed 8-byte integer  
+有符号的 8 字节整数  
 
-If you need `bigint autoincrement` please refer to **[bigserial.](#bigserial)**
+如果你需要 `bigint autoincrement` 请参考 **[bigserial](#bigserial)**。
 
-If you're expecting values above 2^31 but below 2^53, you can utilise `mode: 'number'` and deal with javascript number as opposed to bigint.
+如果你预期的值在 2^31 以上但低于 2^53，你可以使用 `mode: 'number'` 并处理 javascript 数字而不是 bigint。
 <Section>
 ```typescript
 import { bigint, pgTable } from "drizzle-orm/pg-core";
@@ -105,10 +105,10 @@ export const table = pgTable('table', {
 	bigint: bigint('bigint', { mode: 'number' })
 });
 
-// will be inferred as `number`
+// 将被推断为 `number`
 bigint: bigint('bigint', { mode: 'number' })
 
-// will be inferred as `bigint`
+// 将被推断为 `bigint`
 bigint: bigint('bigint', { mode: 'bigint' })
 ```
 
@@ -140,9 +140,9 @@ CREATE TABLE IF NOT EXISTS "table" (
 
 ### serial
 `serial` `serial4`  
-Auto incrementing 4-bytes integer, notational convenience for creating unique identifier columns (similar to the `AUTO_INCREMENT` property supported by some other databases). 
+自动递增的 4 字节整数，创建唯一标识列的简便表示（类似于其他一些数据库支持的 `AUTO_INCREMENT` 属性）。 
 
-For more info please refer to the official PostgreSQL **[docs.](https://www.postgresql.org/docs/current/datatype-numeric.html#DATATYPE-SERIAL)**
+有关更多信息，请参考官方 PostgreSQL **[文档.](https://www.postgresql.org/docs/current/datatype-numeric.html#DATATYPE-SERIAL)** 
 <Section>
 ```typescript
 import { serial, pgTable } from "drizzle-orm/pg-core";
@@ -161,9 +161,9 @@ CREATE TABLE IF NOT EXISTS "table" (
 
 ### smallserial
 `smallserial` `serial2`  
-Auto incrementing 2-bytes integer, notational convenience for creating unique identifier columns (similar to the `AUTO_INCREMENT` property supported by some other databases). 
+自动递增的 2 字节整数，创建唯一标识列的简便表示（类似于其他一些数据库支持的 `AUTO_INCREMENT` 属性）。 
 
-For more info please refer to the official PostgreSQL **[docs.](https://www.postgresql.org/docs/current/datatype-numeric.html#DATATYPE-SERIAL)**
+有关更多信息，请参考官方 PostgreSQL **[文档.](https://www.postgresql.org/docs/current/datatype-numeric.html#DATATYPE-SERIAL)** 
 <Section>
 ```typescript
 import { smallserial, pgTable } from "drizzle-orm/pg-core";
@@ -182,11 +182,11 @@ CREATE TABLE IF NOT EXISTS "table" (
 
 ### bigserial
 `bigserial` `serial8`  
-Auto incrementing 8-bytes integer, notational convenience for creating unique identifier columns (similar to the `AUTO_INCREMENT` property supported by some other databases).
+自动递增的 8 字节整数，创建唯一标识列的简便表示（类似于其他一些数据库支持的 `AUTO_INCREMENT` 属性）。
 
-For more info please refer to the official PostgreSQL **[docs.](https://www.postgresql.org/docs/current/datatype-numeric.html#DATATYPE-SERIAL)**
+有关更多信息，请参考官方 PostgreSQL **[文档.](https://www.postgresql.org/docs/current/datatype-numeric.html#DATATYPE-SERIAL)** 
 
-If you're expecting values above 2^31 but below 2^53, you can utilise `mode: 'number'` and deal with javascript number as opposed to bigint.
+如果你预期的值在 2^31 以上但低于 2^53，你可以使用 `mode: 'number'` 并处理 javascript 数字而不是 bigint。
 <Section>
 ```typescript
 import { bigserial, pgTable } from "drizzle-orm/pg-core";
@@ -205,9 +205,9 @@ CREATE TABLE IF NOT EXISTS "table" (
 
 
 ### boolean
-PostgreSQL provides the standard SQL type boolean.
+PostgreSQL 提供了标准的 SQL 类型 boolean。
 
-For more info please refer to the official PostgreSQL **[docs.](https://www.postgresql.org/docs/current/datatype-boolean.html)**
+有关更多信息，请参考官方 PostgreSQL **[文档.](https://www.postgresql.org/docs/current/datatype-boolean.html)** 
 
 <Section>
 ```typescript
@@ -228,11 +228,11 @@ CREATE TABLE IF NOT EXISTS "table" (
 
 ### text
 `text`  
-Variable-length(unlimited) character string.
+可变长度（无限制）的字符字符串。
 
-For more info please refer to the official PostgreSQL **[docs.](https://www.postgresql.org/docs/current/datatype-character.html)**
+有关更多信息，请参考官方 PostgreSQL **[文档.](https://www.postgresql.org/docs/current/datatype-character.html)** 
   
-You can define `{ enum: ["value1", "value2"] }` config to infer `insert` and `select` types, it **won't** check runtime values.
+你可以定义 `{ enum: ["value1", "value2"] }` 配置来推断 `insert` 和 `select` 类型，它 **不会** 检查运行时值。
 <Section>
 ```typescript
 import { text, pgTable } from "drizzle-orm/pg-core";
@@ -241,7 +241,7 @@ export const table = pgTable('table', {
   text: text('text')
 });
 
-// will be inferred as text: "value1" | "value2" | null
+// 将被推断为 text: "value1" | "value2" | null
 text: text('text', { enum: ["value1", "value2"] })
 ```
 
@@ -254,13 +254,13 @@ CREATE TABLE IF NOT EXISTS "table" (
 
 ### varchar
 `character varying(n)` `varchar(n)`  
-Variable-length character string, can store strings up to **`n`** characters (not bytes). 
+可变长度的字符字符串，可以存储最多 **`n`** 个字符（不是字节）。 
 
-For more info please refer to the official PostgreSQL **[docs.](https://www.postgresql.org/docs/current/datatype-character.html)**
+有关更多信息，请参考官方 PostgreSQL **[文档.](https://www.postgresql.org/docs/current/datatype-character.html)** 
 
-You can define `{ enum: ["value1", "value2"] }` config to infer `insert` and `select` types, it **won't** check runtime values.
+你可以定义 `{ enum: ["value1", "value2"] }` 配置来推断 `insert` 和 `select` 类型，它 **不会** 检查运行时值。
 
-The `length` parameter is optional according to PostgreSQL docs.
+`length` 参数根据 PostgreSQL 文档是可选的。
 <Section>
 ```typescript
 import { varchar, pgTable } from "drizzle-orm/pg-core";
@@ -270,7 +270,7 @@ export const table = pgTable('table', {
   varchar1: varchar('varchar2', { length: 256 }),
 });
 
-// will be inferred as text: "value1" | "value2" | null
+// 将被推断为 text: "value1" | "value2" | null
 varchar: varchar('varchar', { enum: ["value1", "value2"] }),
 ```
 
@@ -284,13 +284,13 @@ CREATE TABLE IF NOT EXISTS "table" (
 
 ### char
 `character(n)` `char(n)`  
-Fixed-length, blank padded character string, can store strings up to **`n`** characters(not bytes).
+固定长度，空白填充的字符字符串，可以存储多达 **`n`** 个字符（不是字节）。
 
-For more info please refer to the official PostgreSQL **[docs.](https://www.postgresql.org/docs/current/datatype-character.html)**
+有关更多信息，请参考官方 PostgreSQL **[文档。](https://www.postgresql.org/docs/current/datatype-character.html)** 
 
-You can define `{ enum: ["value1", "value2"] }` config to infer `insert` and `select` types, it **won't** check runtime values.
+您可以定义 `{ enum: ["value1", "value2"] }` 配置来推断 `insert` 和 `select` 类型，它 **不会** 检查运行时值。
 
-The `length` parameter is optional according to PostgreSQL docs.
+根据 PostgreSQL 文档，`length` 参数是可选的。
 <Section>
 ```typescript
 import { char, pgTable } from "drizzle-orm/pg-core";
@@ -300,7 +300,7 @@ export const table = pgTable('table', {
   char2: char('char2', { length: 256 }),
 });
 
-// will be inferred as text: "value1" | "value2" | null
+// 将被推断为 text: "value1" | "value2" | null
 char: char('char', { enum: ["value1", "value2"] }),
 ```
 
@@ -314,9 +314,9 @@ CREATE TABLE IF NOT EXISTS "table" (
 
 ### numeric
 `numeric` `decimal`  
-Exact numeric of selectable precision. Can store numbers with a very large number of digits, up to 131072 digits before the decimal point and up to 16383 digits after the decimal point.
+可选定精度的精确数值。可以存储多达 131072 个数字的数字，小数点前多达 131072 个数字，小数点后多达 16383 个数字。
 
-For more info please refer to the official PostgreSQL **[docs.](https://www.postgresql.org/docs/current/datatype-numeric.html#DATATYPE-NUMERIC-DECIMAL)**
+有关更多信息，请参考官方 PostgreSQL **[文档。](https://www.postgresql.org/docs/current/datatype-numeric.html#DATATYPE-NUMERIC-DECIMAL)** 
 
 <Section>
 ```typescript
@@ -339,13 +339,13 @@ CREATE TABLE IF NOT EXISTS "table" (
 </Section>
 
 ### decimal
-An alias of **[numeric.](#numeric)**
+**[numeric.](#numeric)** 的别名
 
 ### real
 `real` `float4`  
-Single precision floating-point number (4 bytes)
+单精度浮点数（4 字节）
 
-For more info please refer to the official PostgreSQL **[docs.](https://www.postgresql.org/docs/current/datatype-numeric.html)**  
+有关更多信息，请参考官方 PostgreSQL **[文档。](https://www.postgresql.org/docs/current/datatype-numeric.html)**   
 
 <Section>
 ```typescript
@@ -370,9 +370,9 @@ CREATE TABLE IF NOT EXISTS "table" (
 
 ### double precision
 `double precision` `float8`  
-Double precision floating-point number (8 bytes)
+双精度浮点数（8 字节）
 
-For more info please refer to the official PostgreSQL **[docs.](https://www.postgresql.org/docs/current/datatype-numeric.html)**  
+有关更多信息，请参考官方 PostgreSQL **[文档。](https://www.postgresql.org/docs/current/datatype-numeric.html)**   
 
 <Section>
 ```typescript
@@ -397,9 +397,9 @@ CREATE TABLE IF NOT EXISTS "table" (
 
 ### json
 `json`  
-Textual JSON data, as specified in **[RFC 7159.](https://tools.ietf.org/html/rfc7159)**
+文本 JSON 数据，如 **[RFC 7159.](https://tools.ietf.org/html/rfc7159)** 所指定的。
 
-For more info please refer to the official PostgreSQL **[docs.](https://www.postgresql.org/docs/current/datatype-json.html)**
+有关更多信息，请参考官方 PostgreSQL **[文档。](https://www.postgresql.org/docs/current/datatype-json.html)** 
 <Section>
 ```typescript
 import { sql } from "drizzle-orm";
@@ -421,24 +421,25 @@ CREATE TABLE IF NOT EXISTS "table" (
 ```
 </Section>
   
-You can specify `.$type<..>()` for json object inference, it **won't** check runtime values. 
-It provides compile time protection for default values, insert and select schemas.
+您可以指定 `.$type<..>()` 用于 json 对象推断，它 **不会** 检查运行时值。 
+它为默认值、插入和选择模式提供编译时保护。
+
 ```typescript
-// will be infered as { foo: string }
+// 将被推断为 { foo: string }
 json: json('json').$type<{ foo: string }>();
 
-// will be infered as string[]
+// 将被推断为 string[]
 json: json('json').$type<string[]>();
 
-// won't compile
+// 不会编译
 json: json('json').$type<string[]>().default({});
 ```
 
 ### jsonb
 `jsonb`  
-Binary JSON data, decomposed.
+二进制 JSON 数据，已分解。
 
-For more info please refer to the official PostgreSQL **[docs.](https://www.postgresql.org/docs/current/datatype-json.html)**
+有关更多信息，请参考官方 PostgreSQL **[文档。](https://www.postgresql.org/docs/current/datatype-json.html)** 
 <Section>
 ```typescript
 import { jsonb, pgTable } from "drizzle-orm/pg-core";
@@ -458,25 +459,25 @@ CREATE TABLE IF NOT EXISTS "table" (
 ```
 </Section>
 
-You can specify `.$type<..>()` for json object inference, it **won't** check runtime values. 
-It provides compile time protection for default values, insert and select schemas.
+您可以指定 `.$type<..>()` 用于 json 对象推断，它 **不会** 检查运行时值。 
+它为默认值、插入和选择模式提供编译时保护。
 
 ```typescript
-// will be infered as { foo: string }
+// 将被推断为 { foo: string }
 jsonb: jsonb('jsonb').$type<{ foo: string }>();
 
-// will be infered as string[]
+// 将被推断为 string[]
 jsonb: jsonb('jsonb').$type<string[]>();
 
-// won't compile
+// 不会编译
 jsonb: jsonb('jsonb').$type<string[]>().default({});
 ```
 
 ### time
 `time` `timetz` `time with timezone` `time without timezone`  
-Time of day with or without time zone.
+带或不带时区的时间。
 
-For more info please refer to the official PostgreSQL **[docs.](https://www.postgresql.org/docs/current/datatype-datetime.html)**
+有关更多信息，请参考官方 PostgreSQL **[文档。](https://www.postgresql.org/docs/current/datatype-datetime.html)** 
 
 <Section>
 ```typescript
@@ -502,9 +503,9 @@ CREATE TABLE IF NOT EXISTS "table" (
 
 ### timestamp
 `timestamp` `timestamptz` `timestamp with time zone` `timestamp without time zone`  
-Date and time with or without time zone.
+日期和时间，带或不带时区。
 
-For more info please refer to the official PostgreSQL **[docs.](https://www.postgresql.org/docs/current/datatype-datetime.html)**
+有关更多信息，请参考官方 PostgreSQL **[文档。](https://www.postgresql.org/docs/current/datatype-datetime.html)** 
 <Section>
 ```typescript
 import { sql } from "drizzle-orm";
@@ -512,121 +513,116 @@ import { timestamp, pgTable } from "drizzle-orm/pg-core";
 
 const table = pgTable('table', {
   timestamp1: timestamp('timestamp1'),
-	timestamp2: timestamp('timestamp2', { precision: 6, withTimezone: true }),
-	timestamp3: timestamp('timestamp3').defaultNow(),
-	timestamp4: timestamp('timestamp4').default(sql`now()`),
+  timestamp2: timestamp('timestamp2', { precision: 6, withTimezone: true }),
+  timestamp3: timestamp('timestamp3').defaultNow(),
+  timestamp4: timestamp('timestamp4').default(sql`now()`),
 });
 ```
 ```sql
 CREATE TABLE IF NOT EXISTS "table" (
-	"timestamp1" timestamp,
-	"timestamp2" timestamp (6) with time zone,
-	"timestamp3" timestamp default now(),
-	"timestamp4" timestamp default now(),
+  "timestamp1" timestamp,
+  "timestamp2" timestamp (6) with time zone,
+  "timestamp3" timestamp default now(),
+  "timestamp4" timestamp default now(),
 );
 ```
 </Section>
 
-You can specify either `date` or `string` infer modes:
+您可以指定 `date` 或 `string` 推断模式：
 ```typescript
-// will infer as date
+// 将推断为 date
 timestamp: timestamp('timestamp', { mode: "date" }),
 
-// will infer as string
+// 将推断为 string
 timestamp: timestamp('timestamp', { mode: "string" }),
 ```
 
-> The `string` mode does not perform any mappings for you. This mode was added to Drizzle ORM to provide developers
-with the possibility to handle dates and date mappings themselves, depending on their needs.
-Drizzle will pass raw dates as strings `to` and `from` the database, so the behavior should be as predictable as possible 
-and aligned 100% with the database behavior
+> `string` 模式不会为您执行任何映射。这种模式被添加到 Drizzle ORM 中是为了提供给开发者根据他们的需求自己处理日期和日期映射的可能性。
+Drizzle 将原始日期作为字符串 `to` 和 `from` 数据库传递，因此行为应该尽可能可预测，并且与数据库行为 100% 对齐
 
-> The `date` mode is the regular way to work with dates. Drizzle will take care of all mappings between the database and the JS Date object
+> `date` 模式是处理日期的常规方式。Drizzle 将负责数据库和 JS Date 对象之间的所有映射
 
 <Callout type='info' emoji='ℹ️'>
- How mapping works for `timestamp` and `timestamp with timezone`:
+  `timestamp` 和 `timestamp with timezone` 的映射工作原理：
 
- As PostgreSQL docs stated:
- > In a literal that has been determined to be timestamp without time zone, PostgreSQL will silently ignore any time zone indication. 
- > That is, the resulting value is derived from the date/time fields in the input value, and is not adjusted for time zone.
- >
- > For timestamp with time zone, the internally stored value is always in UTC (Universal Coordinated Time, traditionally known as Greenwich Mean Time, GMT). 
- An input value that has an explicit time zone specified is converted to UTC using the appropriate offset for that time zone. 
- If no time zone is stated in the input string, then it is assumed to be in the time zone indicated by the system's TimeZone parameter, 
- and is converted to UTC using the offset for the timezone zone.
+  正如 PostgreSQL 文档所述：
+  > 在已确定为不带时区的时间戳的字面量中，PostgreSQL 将静默忽略任何时区指示。
+  > 也就是说，结果值来源于输入值中的日期/时间字段，并不会根据时区进行调整。
+  >
+  > 对于带有时区的时间戳，内部存储的值总是在 UTC（协调世界时，传统上称为格林威治标准时间，GMT）中。
+  输入值如果指定了明确的时区，则会使用该时区的适当偏移量转换为 UTC。
+  如果输入字符串中没有声明时区，则假定其处于系统 TimeZone 参数指示的时区，并使用该时区区域的偏移量转换为 UTC。
 
- So for `timestamp with timezone` you will get back string converted to a timezone set in you Postgres instance. 
- You can check timezone using this sql query: 
- 
- ```sql 
- show timezone;
- ```
-
-
+  因此，对于 `timestamp with timezone` 您将得到转换为您的 Postgres 实例中设置的时区的字符串。
+  您可以使用此 SQL 查询检查时区：
+  
+  ```sql 
+  show timezone;
+  ```
 </Callout>
 
 ### date
 `date`  
-Calendar date (year, month, day)
+日历日期（年，月，日）
 
-For more info please refer to the official PostgreSQL **[docs.](https://www.postgresql.org/docs/current/datatype-datetime.html)**
+有关更多信息，请参考官方 PostgreSQL **[文档。](https://www.postgresql.org/docs/current/datatype-datetime.html)** 
 <Section>
 ```typescript
 import { date, pgTable } from "drizzle-orm/pg-core";
 
 const table = pgTable('table', {
-	date: date('date'),
+  date: date('date'),
 });
 ```
 
 ```sql
 CREATE TABLE IF NOT EXISTS "table" (
-	"date" date,
+  "date" date,
 );
 ```
 </Section>
-You can specify either `date` or `string` infer modes:
+您可以指定 `date` 或 `string` 推断模式：
 ```typescript
-// will infer as date
+// 将推断为 date
 date: date('date', { mode: "date" }),
 
-// will infer as string
+// 将推断为 string
 date: date('date', { mode: "string" }),
 ```
+
 ### interval
 `interval`  
-Time span
+时间跨度
 
-For more info please refer to the official PostgreSQL **[docs.](https://www.postgresql.org/docs/current/datatype-datetime.html)** 
+有关更多信息，请参考官方 PostgreSQL **[文档。](https://www.postgresql.org/docs/current/datatype-datetime.html)**  
 
 <Section>
 ```typescript
 import { interval, pgTable } from "drizzle-orm/pg-core";
 
 const table = pgTable('table', {
-	interval1: interval('interval1'),
+  interval1: interval('interval1'),
   interval2: interval('interval2', { fields: 'day' }),
   interval3: interval('interval3', { fields: 'month' , precision: 6 }),
 });
-
 ```
 
 ```sql
 CREATE TABLE IF NOT EXISTS "table" (
-	"interval1" interval,
-	"interval2" interval day,
-	"interval3" interval(6) month,
+  "interval1" interval,
+  "interval2" interval day,
+  "interval3" interval(6) month,
 );
 ```
 </Section>
 
 ### enum 
 `enum` `enumerated types`  
-Enumerated (enum) types are data types that comprise a static, ordered set of values. 
-They are equivalent to the enum types supported in a number of programming languages. 
-An example of an enum type might be the days of the week, or a set of status values for a piece of data.
+枚举（enum）类型是由一组静态有序值组成的数据类型。
+它们等同于许多编程语言中支持的枚举类型。
+枚举类型的例子可能是一周的天数，或者是数据状态值的一组。
 
-For more info please refer to the official PostgreSQL **[docs.](https://www.postgresql.org/docs/current/datatype-enum.html)**
+有关更多信息，请参考官方 PostgreSQL **[文档。](https://www.postgresql.org/docs/current/datatype-enum.html)** 
 <Section>
 ```typescript
 import { pgEnum, pgTable } from "drizzle-orm/pg-core";
@@ -642,20 +638,20 @@ export const table = pgTable('table', {
 CREATE TYPE mood AS ENUM ('sad', 'ok', 'happy');
 
 CREATE TABLE IF NOT EXISTS "table" (
-	"mood" mood,
+  "mood" mood,
 );
 ```
 </Section>
 
-## Customizing column data type
-Every column builder has a `.$type()` method, which allows you to customize the data type of the column. 
+## 自定义列数据类型
+每个列构建器都有一个 `.$type()` 方法，它允许您自定义列的数据类型。
 
-This is useful, for example, with unknown or branded types:
+这在处理未知或品牌类型时非常有用：
 ```ts
 type UserId = number & { __brand: 'user_id' };
 type Data = {
-	foo: string;
-	bar: number;
+  foo: string;
+  bar: number;
 };
 
 const users = pgTable('users', {
@@ -664,16 +660,15 @@ const users = pgTable('users', {
 });
 ```
 
-## Constraints & defaults
+## 约束和默认值
 
-### Default value
-The `DEFAULT` clause specifies a default value to use for the column if no value
-is explicitly provided by the user when doing an `INSERT`.
-If there is no explicit `DEFAULT` clause attached to a column definition,
-then the default value of the column is `NULL`.
+### 默认值
+`DEFAULT` 子句指定了如果在执行 `INSERT` 时用户没有显式提供值，则用于列的默认值。
+如果没有附加到列定义的显式 `DEFAULT` 子句，
+那么列的默认值就是 `NULL`。
 
-An explicit `DEFAULT` clause may specify that the default value is `NULL`,
-a string constant, a blob constant, a signed-number, or any constant expression enclosed in parentheses.
+显式的 `DEFAULT` 子句可以指定默认值为 `NULL`，
+一个字符串常量，一个 blob 常量，一个带符号的数字，或任何用括号括起来的常量表达式。
 
 <Section>
 ```typescript
@@ -681,30 +676,30 @@ import { sql } from "drizzle-orm";
 import { integer, pgTable, uuid } from "drizzle-orm/pg-core";
 
 const table = pgTable('table', {
-	integer1: integer('integer1').default(42),
-	integer2: integer('integer2').default(sql`'42'::integer`),
-	uuid1: uuid('uuid1').defaultRandom(),
-	uuid2: uuid('uuid2').default(sql`gen_random_uuid()`),
+  integer1: integer('integer1').default(42),
+  integer2: integer('integer2').default(sql`'42'::integer`),
+  uuid1: uuid('uuid1').defaultRandom(),
+  uuid2: uuid('uuid2').default(sql`gen_random_uuid()`),
 });
 ```
 
 ```sql
 CREATE TABLE IF NOT EXISTS "table" (
-	"integer1" integer DEFAULT 42,
-	"integer2" integer DEFAULT '42'::integer,
-	"uuid1" uuid DEFAULT gen_random_uuid(),
-	"uuid2" uuid DEFAULT gen_random_uuid()
+  "integer1" integer DEFAULT 42,
+  "integer2" integer DEFAULT '42'::integer,
+  "uuid1" uuid DEFAULT gen_random_uuid(),
+  "uuid2" uuid DEFAULT gen_random_uuid()
 );
 ```
 </Section>
 
-When using `$default()` or `$defaultFn()`, which are simply different aliases for the same function, 
-you can generate defaults at runtime and use these values in all insert queries. 
+当使用 `$default()` 或 `$defaultFn()`，这只是相同功能的两个不同别名时，
+您可以在运行时生成默认值，并在所有插入查询中使用这些值。
 
-These functions can assist you in utilizing various implementations such as `uuid`, `cuid`, `cuid2`, and many more.
+这些函数可以帮助您使用各种实现，如 `uuid`、`cuid`、`cuid2` 等。
 
 <Callout type="info" emoji="ℹ️">
-	Note: This value does not affect the `drizzle-kit` behavior, it is only used at runtime in `drizzle-orm`
+  注意：这个值不会影响 `drizzle-kit` 的行为，它只在 `drizzle-orm` 中的运行时使用
 </Callout>
 
 ```ts
@@ -712,20 +707,20 @@ import { text, pgTable } from "drizzle-orm/pg-core";
 import { createId } from '@paralleldrive/cuid2';
 
 const table = pgTable('table', {
-	id: text('id').$defaultFn(() => createId()),
+  id: text('id').$defaultFn(() => createId()),
 });
 ```
 
-When using `$onUpdate()` or `$onUpdateFn()`, which are simply different aliases for the same function, 
-you can generate defaults at runtime and use these values in all update queries. 
+当使用 `$onUpdate()` 或 `$onUpdateFn()`，这只是相同功能的两个不同别名时，
+您可以在运行时生成默认值，并在所有更新查询中使用这些值。
 
-Adds a dynamic update value to the column. The function will be called when the row is updated, 
-and the returned value will be used as the column value if none is provided.
-If no default (or $defaultFn) value is provided, the function will be called
-when the row is inserted as well, and the returned value will be used as the column value.
+为列添加一个动态更新值。当行被更新时，将调用该函数，
+如果没有提供任何值，则返回的值将用作列值。
+如果没有提供默认值（或 $defaultFn）值，函数也将在行被插入时被调用，
+并且返回的值将用作列值。
 
 <Callout type="info" emoji="ℹ️">
-	Note: This value does not affect the `drizzle-kit` behavior, it is only used at runtime in `drizzle-orm`
+  注意：这个值不会影响 `drizzle-kit` 的行为，它只在 `drizzle-orm` 中的运行时使用
 </Callout>
 
 ```ts
@@ -738,9 +733,8 @@ const table = pgTable('table', {
 });
 ```
 
-
-### Not null
-`NOT NULL` constraint dictates that the associated column may not contain a `NULL` value.
+### 不为 null
+`NOT NULL` 约束规定关联的列不得包含一个 `NULL` 值。
 
 <Section>
 ```typescript
@@ -759,9 +753,9 @@ CREATE TABLE IF NOT EXISTS "table" (
 </Section>
 
 
-### Primary key
-A primary key constraint indicates that a column, or group of columns, can be used as a unique identifier for rows in the table. 
-This requires that the values be both unique and not null.
+### 主键
+主键约束表示一个列，或列的组，可以用作表中行的唯一标识符。 
+这要求值既唯一又不为 null。
 <Section>
 ```typescript
 import { integer, pgTable } from "drizzle-orm/pg-core";
