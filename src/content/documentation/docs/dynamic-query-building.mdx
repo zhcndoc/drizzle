@@ -1,26 +1,26 @@
 import Callout from '@components/markdown/Callout.astro';
 
-# Dynamic query building
+# 动态查询构建
 
-By default, as all the query builders in Drizzle try to conform to SQL as much as possible, you can only invoke most of the methods once.
-For example, in a `SELECT` statement there might only be one `WHERE` clause, so you can only invoke `.where()` once:
+默认情况下，由于 Drizzle 中的所有查询构建器都尽可能遵循 SQL 规范，因此大多数方法只能调用一次。
+例如，在 `SELECT` 语句中可能只有一个 `WHERE` 子句，因此只能调用一次 `.where()`：
 
 ```ts
 const query = db
 	.select()
 	.from(users)
 	.where(eq(users.id, 1))
-	.where(eq(users.name, 'John')); // ❌ Type error - where() can only be invoked once
+	.where(eq(users.name, 'John')); // ❌ 类型错误 - where() 只能调用一次
 ```
 
-In the previous ORM versions, when such restrictions weren't implemented, this example in particular was a source of confusion for many users, as they expected the query builder to "merge" multiple `.where()` calls into a single condition.
+在以前的 ORM 版本中，当没有实施此类限制时，特别是对于该示例来说，对于许多用户来说，这是一个令人困惑的地方，因为他们期望查询构建器能够将多个 `.where()` 调用合并为一个条件。
 
-This behavior is useful for conventional query building, i.e. when you create the whole query at once.
-However, it becomes a problem when you want to build a query dynamically, i.e. if you have a shared function that takes a query builder and enhances it.
-To solve this problem, Drizzle provides a special 'dynamic' mode for query builders, which removes the restriction of invoking methods only once.
-To enable it, you need to call `.$dynamic()` on a query builder.
+这种行为对于传统的查询构建很有用，即一次创建整个查询。
+然而，当你想要动态构建查询时，它会成为一个问题，即如果你有一个共享的函数，它需要一个查询构建器并对其进行增强。
+为了解决这个问题，Drizzle 提供了一种特殊的动态模式用于查询构建器，它取消了只能调用方法一次的限制。
+要启用它，你需要在查询构建器上调用 `.$dynamic()`。
 
-Let's see how it works by implementing a simple `withPagination` function that adds `LIMIT` and `OFFSET` clauses to a query based on the provided page number and an optional page size:
+让我们通过实现一个简单的 `withPagination` 函数来看看它是如何工作的，该函数根据提供的页码和可选的每页大小将 `LIMIT` 和 `OFFSET` 子句添加到查询中：
 
 ```ts
 function withPagination<T extends PgSelect>(
@@ -32,13 +32,13 @@ function withPagination<T extends PgSelect>(
 }
 
 const query = db.select().from(users).where(eq(users.id, 1));
-withPagination(query, 1); // ❌ Type error - the query builder is not in dynamic mode
+withPagination(query, 1); // ❌ 类型错误 - 查询构建器未处于动态模式
 
 const dynamicQuery = query.$dynamic();
 withPagination(dynamicQuery, 1); // ✅ OK
 ```
 
-Note that the `withPagination` function is generic, which allows you to modify the result type of the query builder inside it, for example by adding a join:
+注意，`withPagination` 函数是泛型的，这允许你在其中修改查询构建器的结果类型，例如通过添加一个连接：
 
 ```ts
 function withFriends<T extends PgSelect>(qb: T) {
@@ -49,9 +49,9 @@ let query = db.select().from(users).where(eq(users.id, 1)).$dynamic();
 query = withFriends(query);
 ```
 
-This is possible, because `PgSelect` and other similar types are specifically designed to be used in dynamic query building. They can only be used in dynamic mode.
+这是可能的，因为 `PgSelect` 和其他类似类型专门设计用于动态查询构建。它们只能在动态模式下使用。
 
-Here is the list of all types that can be used as generic parameters in dynamic query building:
+下面是可以在动态查询构建中用作泛型参数的所有类型列表：
 
 {
 
@@ -150,9 +150,7 @@ Here is the list of all types that can be used as generic parameters in dynamic 
 }
 
 <Callout type='info'>
-	The `...QueryBuilder` types are for usage with [standalone query builder
-	instances](/docs/goodies#standalone-query-builder). DB query builders are
-	subclasses of them, so you can use them as well.
+	`...QueryBuilder` 类型是与 [独立查询构建器实例](/docs/goodies#standalone-query-builder) 一起使用的。数据库查询构建器是它们的子类，因此你也可以使用它们。
 
     ```ts
     	import { QueryBuilder } from 'drizzle-orm/pg-core';

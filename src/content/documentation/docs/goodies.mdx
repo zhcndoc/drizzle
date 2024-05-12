@@ -4,9 +4,9 @@ import Tabs from '@components/markdown/Tabs.astro';
 import Callout from '@components/markdown/Callout.astro';
 import CodeTabs from '@components/markdown/CodeTabs.astro';
 
-## Type API
+## 类型 API
 
-To retrieve a type from your table schema for `select` and `insert` queries, you can make use of our type helpers.
+要从表模式中检索 `select` 和 `insert` 查询的类型，您可以使用我们的类型助手。
 
 <Tabs items={["PostgreSQL","MySQL","SQLite"]}>
 <Tab>
@@ -72,15 +72,15 @@ type InsertUser = InferInsertModel<typeof users>;
 </Tabs>
 
 
-## Logging
-To enable default query logging, just pass `{ logger: true }` to the `drizzle` initialization function:
+## 查询日志记录
+要启用默认的查询日志记录，请将 `{ logger: true }` 作为参数传递给 `drizzle` 初始化函数:
 ```typescript copy
 import { drizzle } from 'drizzle-orm/...'; // driver specific
 
 const db = drizzle(pool, { logger: true });
 ```
 
-You can change the logs destination by creating a `DefaultLogger` instance and providing a custom `writer` to it:
+您可以创建一个 `DefaultLogger` 实例并为其提供自定义的 `writer`，以更改日志输出位置:
 ```typescript copy
 import { DefaultLogger, LogWriter } from 'drizzle-orm/logger';
 import { drizzle } from 'drizzle-orm/...'; // driver specific
@@ -95,7 +95,7 @@ const logger = new DefaultLogger({ writer: new MyLogWriter() });
 const db = drizzle(pool, { logger });
 ```
 
-You can also create a custom logger:
+您还可以创建一个自定义的日志记录器:
 ```typescript copy
 import { Logger } from 'drizzle-orm/logger';
 import { drizzle } from 'drizzle-orm/...'; // driver specific
@@ -110,11 +110,11 @@ const db = drizzle(pool, { logger: new MyLogger() });
 ```
 
 
-## Multi-project schema
-`table creator` operator lets you define customise table names.  
-It's very useful when you need to keep schemas of different projects in one database.
+## 多项目架构
+`table creator` 运算符允许您定义自定义表名。  
+当您需要将不同项目的模式保存在一个数据库中时，它非常有用。
 
-For db push docs — **[see here.](/kit-docs/conf#multi-project-schema)**
+有关 db push 文档，请参阅 [这里](/kit-docs/conf#multi-project-schema)。
 <Tabs items={["PostgreSQL","MySQL","SQLite"]}>
 <Tab>
 ```ts {3}
@@ -156,8 +156,8 @@ const users = sqliteTable('users', {
 
 
 
-## Printing SQL query
-You can print SQL queries with `db` instance or by using **[`standalone query builder`](#standalone-query-builder)**.
+## 打印 SQL 查询
+您可以使用 `db` 实例打印 SQL 查询，或者使用 **[`standalone query builder`](#standalone-query-builder)**。
 ```typescript copy
 const query = db
   .select({ id: users.id, name: users.name })
@@ -166,14 +166,14 @@ const query = db
   .toSQL();
 // query:
 {
-  sql: 'select 'id', 'name' from 'users' group by 'users'.'id'',
+  sql: 'select `id`, `name` from `users` group by `users`.`id`',
   params: [],
 }
 ```
 
-## Raw SQL queries execution
-If you have some complex queries to execute and `drizzle-orm` can't handle them yet,
-you can use the `db.execute` method to execute raw `parametrized` queries.
+## 原始 SQL 查询执行
+如果您有一些复杂的查询要执行，并且 `drizzle-orm` 目前无法处理它们，
+您可以使用 `db.execute` 方法来执行原始的 `parametrized` 查询。
 
 <Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
     <Tab>
@@ -203,9 +203,9 @@ you can use the `db.execute` method to execute raw `parametrized` queries.
 </Tabs>
 
 
-## Standalone query builder
-Drizzle ORM provides a standalone query builder that allows you to build queries
-without creating a database instance and get generated SQL.
+## 独立查询构建器
+Drizzle ORM 提供了一个独立的查询构建器，可以让您构建查询，
+而无需创建数据库实例并获取生成的 SQL。
 <Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
     <Tab>
         ```typescript copy
@@ -239,9 +239,9 @@ without creating a database instance and get generated SQL.
     </Tab>
 </Tabs>
 
-## Get typed table columns
-You can get a typed table columns map,
-very useful when you need to omit certain columns upon selection.
+## 获取键入的表格列
+您可以获得一个类型化的表列映射，
+当您需要在选择时省略特定列时非常有用。
 
 <Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
   <Tab>
@@ -315,7 +315,7 @@ very useful when you need to omit certain columns upon selection.
   </Tab>
 </Tabs>
 
-## Get table information
+## 获取表信息
 <Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
   <Tab>
     ```ts copy
@@ -370,16 +370,15 @@ very useful when you need to omit certain columns upon selection.
   </Tab>
 </Tabs>
 
-## Compare objects types (instanceof alternative)
+## 比较对象类型
 
-You can check if an object is of a specific Drizzle type using the `is()` function. 
-You can use it with any available type in Drizzle.
+您可以使用 `is()` 函数检查对象是否为特定的 Drizzle 类型。您可以将其与 Drizzle 中的任何可用类型一起使用。
 
 <Callout type="warning" emoji="⭐️">
-  You should always use `is()` instead of `instanceof`
+  您应该始终使用 `is()`，而不是 `instanceof`
 </Callout>
 
-**Few examples**
+**几个例子**
 ```ts
 import { Column, is } from 'drizzle-orm';
 

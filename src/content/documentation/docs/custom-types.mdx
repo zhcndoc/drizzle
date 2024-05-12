@@ -1,14 +1,13 @@
 import Tab from '@components/markdown/Tab.astro';
 import Tabs from '@components/markdown/Tabs.astro';
 
-# Common way of defining custom types
+# 定义自定义类型的常见方式
 
-## Examples
+## 示例
 
-The best way to see how `customType` definition is working is to check how existing data types in postgres and mysql could be defined using `customType` function from Drizzle ORM.
+了解 `customType` 函数如何使用的最佳方式，是查看如何使用 Drizzle ORM 的 `customType` 函数定义现有的 PostgreSQL 和 MySQL 数据类型。
 
-
-<Tabs items={['Postgres Data Types', 'MySql Data Types']}>
+<Tabs items={['PostgreSQL 数据类型', 'MySQL 数据类型']}>
   <Tab>
 
 **Serial**
@@ -91,7 +90,7 @@ const customTimestamp = customType<
 });
 ```
 
-Usage for all types will be same as defined functions in Drizzle ORM. For example:
+所有类型的使用方法与 Drizzle ORM 中定义的函数相同。例如:
 
 ```typescript copy
 const usersTable = pgTable('users', {
@@ -186,7 +185,7 @@ const customTimestamp = customType<
 });
 ```
 
-Usage for all types will be same as defined functions in Drizzle ORM. For example:
+所有类型的使用方法与 Drizzle ORM 中定义的函数相同。例如:
 
 ```typescript copy
 const usersTable = mysqlTable('userstest', {
@@ -203,9 +202,9 @@ const usersTable = mysqlTable('userstest', {
   </Tab>
 </Tabs>
 
-## TS-doc for type definitions 
+## 类型定义的 TS 文档
 
-You can check ts-doc for `types` and `param` definition.
+可以查看 `types` 和 `param` 定义的 TS 文档。
 
 ```typescript
 export type CustomTypeValues = {
