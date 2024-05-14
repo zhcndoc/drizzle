@@ -5,10 +5,10 @@ import Tab from '@components/markdown/Tab.astro';
 import Tabs from '@components/markdown/Tabs.astro';
 
 # SQL Insert
-Drizzle ORM provides you the most SQL-like way to insert rows into the database tables.
+Drizzle ORM 提供了最接近 SQL 风格的将行插入数据库表的方式。
 
-## Insert one row
-Inserting data with Drizzle is extremely straightfoward and sql-like. See for yourself:
+## 插入一行
+使用 Drizzle 插入数据非常直接且类似 SQL。请看以下示例：
 
 <Section>
 ```typescript copy 
@@ -19,7 +19,7 @@ insert into "users" ("name") values ("Andrew");
 ```
 </Section>
 
-If you need insert type for a particular table you can use `typeof usersTable.$inferInsert` syntax. 
+如果您需要为特定表指定插入类型，可以使用 `typeof usersTable.$inferInsert` 语法。
 ```typescript copy 
 type NewUser = typeof users.$inferInsert;
 
@@ -31,55 +31,55 @@ const newUser: NewUser = { name: "Alef" };
 await insertUser(newUser);
 ```
 
-## Insert returning
+## 插入返回
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'SQLite': true, 'MySQL': false }} />
-You can insert a row and get it back in PostgreSQL and SQLite like such:
+您可以在 PostgreSQL 和 SQLite 中像这样插入一行并获取它：
 ```typescript copy
 await db.insert(users).values({ name: "Dan" }).returning();
 
-// partial return
+// 部分返回
 await db.insert(users).values({ name: "Partial Dan" }).returning({ insertedId: users.id });
 ```
 
-## Insert multiple rows
+## 插入多行
 ```typescript copy
 await db.insert(users).values([{ name: 'Andrew' }, { name: 'Dan' }]);
 ```
 
-## Upserts and conflicts
-Drizzle ORM provides simple interfaces for handling upserts and conflicts.
+## Upserts 和冲突
+Drizzle ORM 提供了处理 Upserts 和冲突的简单接口。
 
-### On conflict do nothing
+### 冲突时不做任何操作
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'SQLite': true, 'MySQL': false }} />
 
-`onConflictDoNothing` will cancel the insert if there's a conflict:
+`onConflictDoNothing` 如果存在冲突将取消插入：
 
 ```typescript copy
 await db.insert(users)
   .values({ id: 1, name: 'John' })
   .onConflictDoNothing();
 
-// explicitly specify conflict target
+// 明确指定冲突目标
 await db.insert(users)
   .values({ id: 1, name: 'John' })
   .onConflictDoNothing({ target: users.id });
 ```
 
-### On conflict do update
+### 冲突时更新
 
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'SQLite': true, 'MySQL': false }} />
 
-`onConflictDoUpdate` will update the row if there's a conflict:
+`onConflictDoUpdate` 如果存在冲突将更新行：
 ```typescript
 await db.insert(users)
   .values({ id: 1, name: 'Dan' })
   .onConflictDoUpdate({ target: users.id, set: { name: 'John' } });
 ```
 
-#### `where` clauses
+#### `where` 子句
 
-`on conflict do update` can have a `where` clause in two different places -
-as part of the conflict target (i.e. for partial indexes) or as part of the `update` clause:
+`on conflict do update` 可以有两个不同的位置使用 `where` 子句 -
+作为冲突目标的一部分（即部分索引）或作为 `update` 子句的一部分：
 
 ```sql
 insert into employees (employee_id, name)
@@ -93,7 +93,7 @@ on conflict (employee_id) do update set name = excluded.name
 where name <> 'John Doe';
 ```
 
-To specify these conditions in Drizzle, you can use `setWhere` and `targetWhere` clauses:
+在 Drizzle 中指定这些条件，可以使用 `setWhere` 和 `targetWhere` 子句：
 
 ```typescript
 await db.insert(employees)
@@ -115,7 +115,7 @@ await db.insert(employees)
 
 <hr />
 
-Upsert with composite indexes, or composite primary keys for `onConflictDoUpdate`:
+使用复合索引的 Upsert，或者 `onConflictDoUpdate` 的复合主键：
 
 ```typescript
 await db.insert(users)
@@ -126,21 +126,21 @@ await db.insert(users)
   });
 ```
 
-### On duplicate key update
+### 重复键更新
 <IsSupportedChipGroup chips={{ 'PostgreSQL': false, 'SQLite': false, 'MySQL': true }} />
 
-MySQL supports [`ON DUPLICATE KEY UPDATE`](https://dev.mysql.com/doc/refman/8.0/en/insert-on-duplicate.html) instead of `ON CONFLICT` clauses. MySQL will automatically determine the conflict target based on the primary key and unique indexes, and will update the row if *any* unique index conflicts.
+MySQL 支持 [`ON DUPLICATE KEY UPDATE`](https://dev.mysql.com/doc/refman/8.0/en/insert-on-duplicate.html) 而不是 `ON CONFLICT` 子句。MySQL 将自动根据主键和唯一索引确定冲突目标，如果存在任何唯一索引冲突，将更新行。
 
-Drizzle supports this through the `onDuplicateKeyUpdate` method:
+Drizzle 通过 `onDuplicateKeyUpdate` 方法支持此功能：
 
 ```typescript
-// Note that MySQL automatically determines targets based on the primary key and unique indexes
+// 注意 MySQL 会根据主键和唯一索引自动确定目标
 await db.insert(users)
   .values({ id: 1, name: 'John' })
   .onDuplicateKeyUpdate({ set: { name: 'John' } });
 ```
 
-While MySQL does not directly support doing nothing on conflict, you can perform a no-op by setting any column's value to itself and achieve the same effect:
+虽然 MySQL 不直接支持在冲突时不做任何操作，但可以通过将任何列的值设置为自己来实现相同的效果：
 
 ```typescript
 import { sql } from 'drizzle-orm';
@@ -150,13 +150,13 @@ await db.insert(users)
   .onDuplicateKeyUpdate({ set: { id: sql`id` } });
 ```
 
-## WITH INSERT clause
+## WITH INSERT 子句
 
 <Callout>
-  Check how to use WITH statement with [select](/docs/select#with-clause), [update](/docs/update#with-update-clause), [delete](/docs/delete#with-delete-clause)
+  查看如何使用 WITH 语句与 [select](/docs/select#with-clause)、[update](/docs/update#with-update-clause)、[delete](/docs/delete#with-delete-clause)
 </Callout>
 
-Using the `with` clause can help you simplify complex queries by splitting them into smaller subqueries called common table expressions (CTEs):
+使用 `with` 子句可以帮助您通过将复杂查询拆分为称为公共表表达式（CTEs）的较小子查询来简化复杂查询：
 <Section>
 ```typescript copy
 const userCount = db.$with('user_count').as(

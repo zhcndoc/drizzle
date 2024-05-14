@@ -2,13 +2,13 @@ import CodeTabs from '@components/markdown/CodeTabs.astro';
 import CodeTab from '@components/markdown/CodeTab.astro';
 import Section from '@components/markdown/Section.astro';
 
-# Joins [SQL]
-Join clause in SQL is used to combine 2 or more tables, based on related columns between them.
-Drizzle ORM joins syntax is a balance between the SQL-likeness and type safety.
+# 连接 [SQL]
+SQL 中的连接子句用于基于它们之间的相关列将 2 个或更多表组合在一起。
+Drizzle ORM 连接语法是 SQL 相似性和类型安全性的平衡。
 
-## Join types
-Drizzle ORM has APIs for `INNER JOIN`, `FULL JOIN`, `LEFT JOIN` and `RIGHT JOIN`.
-Lets have a quick look at examples based on below table schemas:
+## 连接类型
+Drizzle ORM 提供了 `INNER JOIN`、`FULL JOIN`、`LEFT JOIN` 和 `RIGHT JOIN` 的 API。
+让我们快速看一下基于以下表模式示例：
 ```typescript copy
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
@@ -22,7 +22,7 @@ export const pets = pgTable('pets', {
 })
 ```
 
-### Left Join
+### 左连接
 <Section>
 ```typescript copy
 const result = await db.select().from(users).leftJoin(pets, eq(users.id, pets.ownerId))
@@ -46,7 +46,7 @@ const result: {
 ```
 </Section>
 
-### Right Join
+### 右连接
 <Section>
 ```typescript copy
 const result = await db.select().from(users).rightJoin(pets, eq(users.id, pets.ownerId))
@@ -69,7 +69,7 @@ const result: {
 }[];
 ```
 </Section>
-### Inner Join
+### 内连接
 <Section>
 ```typescript copy
 const result = await db.select().from(users).innerJoin(pets, eq(users.id, pets.ownerId))
@@ -92,7 +92,7 @@ const result: {
 }[];
 ```
 </Section>
-### Full Join
+### 全连接
 <Section>
 ```typescript copy
 const result = await db.select().from(users).fullJoin(pets, eq(users.id, pets.ownerId))
@@ -116,9 +116,8 @@ const result: {
 ```
 </Section>
 
-## Partial select
-If you need to select a particular subset of fields or to have a flat response type, Drizzle ORM
-supports joins with partial select and will automatically infer return type based on `.select({ ... })` structure.
+## 部分选择
+如果您需要选择特定字段子集或需要平铺响应类型，Drizzle ORM 支持带部分选择的连接，并将自动推断返回类型基于 `.select({ ... })` 结构。
 <Section>
 ```typescript copy
 await db.select({
@@ -137,10 +136,9 @@ const result: {
 }[];
 ```
 </Section>
-You might've noticed that `petId` can be null now, it's because we're left joining and there can be users without a pet.
+您可能已经注意到 `petId` 现在可以是 null，这是因为我们进行了左连接，可能存在没有宠物的用户。
 
-It's very important to keep in mind when using `sql` operator for partial selection fields and aggregations when needed,
-you should to use `sql<type | null>` for proper result type inference, that one is on you!
+在使用 `sql` 运算符进行部分选择字段和聚合时，当需要时，您应该使用 `sql<type | null>` 以正确推断结果类型，这是您的责任！
 <Section>
 ```typescript copy
 const result = await db.select({
@@ -164,8 +162,7 @@ const result: {
 }[];
 ```
 </Section>
-To avoid plethora of nullable fields when joining tables with lots of columns we can utilise our **nested select object syntax**,
-our smart type inference will make whole object nullable instead of making all table fields nullable!
+为了在连接具有大量列的表时避免出现大量可空字段，我们可以使用我们的**嵌套选择对象语法**，我们的智能类型推断将使整个对象变为可空，而不是使所有表字段都变为可空！
 <Section>
 ```typescript copy
 await db.select({
@@ -195,10 +192,10 @@ const result: {
 ```
 </Section>
 
-## Aliases & Selfjoins
-Drizzle ORM supports table aliases which comes really handy when you need to do selfjoins.
+## 别名和自连接
+Drizzle ORM 支持表别名，这在您需要进行自连接时非常有用。
 
-Lets say you need to fetch users with their parents:
+假设您需要获取带有其父级用户的用户信息：
 <CodeTabs items={["index.ts", "schema.ts"]}>
 <CodeTab>
 ```typescript copy
@@ -240,10 +237,10 @@ export const user = pgTable("user", {
 
 </CodeTabs>
 
-## Aggregating results
-Drizzle ORM delivers name-mapped results from the driver without changing the structure.
+## 聚合结果
+Drizzle ORM 从驱动程序中提供名称映射的结果，而不改变结构。
 
-You're free to operate with results the way you want, here's an example of mapping many-one relational data:
+您可以自由地以您想要的方式操作结果，这里是一个映射一对多关系数据的示例：
 ```typescript
 type User = typeof usersTable.$inferSelect;
 type Pet = typeof usersTable.$inferSelect;
@@ -278,7 +275,7 @@ const result: Record<number, {
 }>;
 ```
 
-## Many-to-one example
+## 一对多示例
 ```typescript
 import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
@@ -296,9 +293,9 @@ const users = sqliteTable('users', {
 
 const db = drizzle(sqlite);
 
-const result = db.select().from(cities).leftJoin(users, eq(cities2.id, users2.cityId)).all();
+const result = db.select().from(cities).leftJoin(users, eq(cities.id, users.cityId)).all();
 ```
-## Many-to-many example
+## 多对多示例
 ```typescript
 const users = sqliteTable('users', {
   id: integer('id').primaryKey(),

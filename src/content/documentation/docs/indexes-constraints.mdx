@@ -3,22 +3,19 @@ import Tabs from '@components/markdown/Tabs.astro';
 import Callout from '@components/markdown/Callout.astro';
 import Section from '@components/markdown/Section.astro';
 
-# Indexes & Constraints
+# 索引和约束
 
-## Constraints
+## 约束
 
-SQL constraints are the rules enforced on table columns. They are used to prevent invalid data from being entered into the database.
+SQL 约束是对表列施加的规则。它们用于防止无效数据进入数据库。
 
-This ensures the accuracy and reliability of your data in the database.
+这可以确保数据库中的数据的准确性和可靠性。
 
-### Default
+### 默认值
 
-The `DEFAULT` clause specifies a default value to use for the column if no value provided by the user when doing an `INSERT`.
-If there is no explicit `DEFAULT` clause attached to a column definition,
-then the default value of the column is `NULL`.
+`DEFAULT` 子句指定如果用户在进行 `INSERT` 操作时未提供值，则在列上使用的默认值。如果列定义不附加显式的 `DEFAULT` 子句，则列的默认值为 `NULL`。
 
-An explicit `DEFAULT` clause may specify that the default value is `NULL`,
-a string constant, a blob constant, a signed-number, or any constant expression enclosed in parentheses.
+显式的 `DEFAULT` 子句可以指定默认值为 `NULL`，字符串常量，Blob 常量，有符号数或用括号括起来的任何常量表达式。
 
 <Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
   <Tab>
@@ -88,12 +85,11 @@ a string constant, a blob constant, a signed-number, or any constant expression 
   </Tab>
 </Tabs>
 
-### Not null
+### 非空
 
-By default, a column can hold **NULL** values. The `NOT NULL` constraint enforces a column to **NOT** accept **NULL** values.  
+默认情况下，列可以存储 **NULL** 值。`NOT NULL` 约束强制列 **不** 接受 **NULL** 值。
 
-This enforces a field to always contain a value, which means that you cannot insert a new record,
-or update a record without adding a value to this field.
+这将确保字段始终包含一个值，这意味着您无法插入新记录或更新记录而不给此字段添加值。
 
 <Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
   <Tab>
@@ -139,7 +135,7 @@ or update a record without adding a value to this field.
         numInt: integer('numInt').notNull() 
       });
       ```
-
+ 
       ```sql
       CREATE TABLE table (
         `numInt` integer NOT NULL
@@ -150,16 +146,16 @@ or update a record without adding a value to this field.
   </Tab>
 </Tabs>
 
-### Unique
+### 唯一性
 
-The `UNIQUE` constraint ensures that all values in a column are different.  
+`UNIQUE` 约束确保列中的所有值都是不同的。
 
-Both the `UNIQUE` and `PRIMARY KEY` constraints provide a guarantee for uniqueness for a column or set of columns.
+`UNIQUE` 约束和 `PRIMARY KEY` 约束都为列或一组列提供了唯一性保证。
 
-A `PRIMARY KEY` constraint automatically has a `UNIQUE` constraint.  
+`PRIMARY KEY` 约束自动具有 `UNIQUE` 约束。
 
 <Callout type="info" emoji="ℹ️">
-  You can have many `UNIQUE` constraints per table, but only one `PRIMARY KEY` constraint per table.
+  每个表可以有多个 `UNIQUE` 约束，但每个表只能有一个 `PRIMARY KEY` 约束。
 </Callout>
 
 <Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
@@ -309,24 +305,24 @@ A `PRIMARY KEY` constraint automatically has a `UNIQUE` constraint.
   </Tab>
 </Tabs>
 
-### Check
+### 检查条件
 
-The `CHECK` constraint is used to limit the value range that can be placed in a column.
+`CHECK` 约束用于限制可放置在列中的值范围。
 
-If you define a `CHECK` constraint on a column it will allow only certain values for this column.  
+如果在列上定义了 `CHECK` 约束，它将仅允许为此列指定的某些值。
 
-If you define a `CHECK` constraint on a table it can limit the values in certain columns based on values in other columns in the row.
+如果在表上定义了 `CHECK` 约束，它可以根据行中其他列的值来限制特定列中的值。
 
 <Callout type="error" emoji="🛑">
-  NOT YET IMPLEMENTED IN DRIZZLE ORM
+  DRIZZLE ORM 尚未实现此功能
 </Callout>
 
-### Primary Key
+### 主键
 
-The `PRIMARY KEY` constraint uniquely identifies each record in a table.  
-Primary keys must contain `UNIQUE` values, and cannot contain `NULL` values.  
+`PRIMARY KEY` 约束唯一标识表中的每条记录。
+主键必须包含 `UNIQUE` 值，并且不能包含 `NULL` 值。
 
-A table can have only **ONE** primary key; and in the table, this primary key can consist of single or multiple columns (fields).
+一个表只能有 **一个** 主键；并且在该表中，此主键可以由单个字段或多个字段组成。
 
 <Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
   <Tab>
@@ -409,11 +405,11 @@ A table can have only **ONE** primary key; and in the table, this primary key ca
   </Tab>
 </Tabs>
 
-### Composite Primary Key
+### 复合主键
 
-Just like `PRIMARY KEY`, composite primary key uniquely identifies each record in a table using multiple fields.
+与 `PRIMARY KEY` 类似，复合主键使用多个字段在表中唯一标识每条记录。
 
-Drizzle ORM provides a standalone `primaryKey` operator for that:
+Drizzle ORM 提供了一个独立的 `primaryKey` 运算符来实现这一点：
 <Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
   <Tab>
     <Section>
@@ -532,14 +528,14 @@ Drizzle ORM provides a standalone `primaryKey` operator for that:
   </Tab>
 </Tabs>
 
-### Foreign key
+### 外键
 
-The `FOREIGN KEY` constraint is used to prevent actions that would destroy links between tables.
-A `FOREIGN KEY` is a field (or collection of fields) in one table, that refers to the `PRIMARY KEY` in another table.
-The table with the foreign key is called the child table, and the table with the primary key is called the referenced or parent table.
+`FOREIGN KEY` 约束用于防止破坏表之间链接的操作。
+`FOREIGN KEY` 是一个字段（或一组字段），它引用另一个表中的 `PRIMARY KEY`。
+具有外键的表称为子表，具有主键的表称为引用表或父表。
 
-Drizzle ORM provides several ways to declare foreign keys.
-You can declare them in a column declaration statement:
+Drizzle ORM 提供了几种声明外键的方法。
+您可以在列声明语句中声明它们：
 
 <Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
   <Tab>
@@ -595,8 +591,7 @@ You can declare them in a column declaration statement:
   </Tab>
 </Tabs>
 
-If you want to do a self reference, due to a TypeScript limitations you will have to either explicitly
-set return type for reference callback or user a standalone `foreignKey` operator.
+如果您想进行自引用，由于 TypeScript 的限制，您必须显式设置引用回调的返回类型或使用一个独立的 `foreignKey` 运算符。
 
 <Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
   <Tab>
@@ -624,7 +619,7 @@ set return type for reference callback or user a standalone `foreignKey` operato
       };
     });
     ```
-
+   
   </Tab>
   <Tab>
     ```typescript {6,16-19}
@@ -651,7 +646,7 @@ set return type for reference callback or user a standalone `foreignKey` operato
       };
     });
     ```
-
+    
   </Tab>
   <Tab>
     ```typescript {6,16-19}
@@ -681,7 +676,7 @@ set return type for reference callback or user a standalone `foreignKey` operato
 
   </Tab>
 </Tabs>
-To declare multicolumn foreign keys you can use a dedicated `foreignKey` operator:
+要声明多列外键，可以使用专用的 `foreignKey` 运算符：
 <Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
   <Tab>
     ```typescript copy {4-5,14-15,18-21}
@@ -772,9 +767,9 @@ To declare multicolumn foreign keys you can use a dedicated `foreignKey` operato
   </Tab>
 </Tabs>
 
-## Indexes
+## 索引
 
-Drizzle ORM provides API for both `index` and `unique index` declaration:
+Drizzle ORM 提供了对索引和唯一索引的 API 声明：
 
 <Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
   <Tab>
@@ -803,10 +798,10 @@ Drizzle ORM provides API for both `index` and `unique index` declaration:
     ```
     </Section>
     <Callout type="warning" emoji="⚠️">
-      As of now `drizzle-kit` only supports index `name` and `on()` param.
+      目前的 `drizzle-kit` 只支持索引的 `name` 和 `on()` 参数。
     </Callout>
 
-    Drizzle ORM provides set of all params for index creation:
+    Drizzle ORM 提供了用于索引创建的所有参数：
 
     ```typescript
     // Index declaration reference
@@ -846,10 +841,10 @@ Drizzle ORM provides API for both `index` and `unique index` declaration:
     ```
     </Section>
     <Callout type="warning" emoji="⚠️">
-      As of now `drizzle-kit` only supports index `name` and `on()` param.
+      目前的 `drizzle-kit` 只支持索引的 `name` 和 `on()` 参数。
     </Callout>
 
-     Drizzle ORM provides set of all params for index creation:
+     Drizzle ORM 提供了用于索引创建的所有参数：
 
     ```typescript
     // Index declaration reference
@@ -886,13 +881,13 @@ Drizzle ORM provides API for both `index` and `unique index` declaration:
     ```
     </Section>
     <Callout type="warning" emoji="⚠️">
-      As of now `drizzle-kit` only supports index `name` and `on()` param.
+      目前的 `drizzle-kit` 只支持索引的 `name` 和 `on()` 参数。
     </Callout>
 
-     Drizzle ORM provides set of all params for index creation:
+     Drizzle ORM 提供了用于索引创建的所有参数：
      
     ```typescript
-    // Index declaration reference
+    // 索引声明参考
     index("name")
       .on(table.name)
       .where(sql`...`)
