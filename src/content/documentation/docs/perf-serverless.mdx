@@ -1,11 +1,10 @@
-# Drizzle Serverless performance
+# Drizzle 服务器无服务性能
 
-You can get immense benefits with `serverless functions` like AWS Lamba or Vercel Server Functions (they're AWS Lamba based), 
-since they can live up to 15mins and reuse both database connections and prepared statements.
+在 `无服务函数`（如 AWS Lamba 或 Vercel 服务器函数，它们基于 AWS Lamba）上您可以获得巨大的好处，因为它们可以长达 15 分钟，并且可以重复使用数据库连接和预编译语句。
 
-On the other, hand `edge functions` tend to clean up straight after they're invoked which leads to little to no performance benefits.
-  
-To reuse your database connection and prepared statements you just have to declare them outside of handler scope:
+另一方面，`边缘函数` tend 倾向于在被调用后立即清理，这导致几乎没有性能收益。
+
+要重用您的数据库连接和预编译语句，您只需在处理程序范围之外声明它们：
 ```ts
 const databaseConnection = ...;
 const db = drizzle(databaseConnection);

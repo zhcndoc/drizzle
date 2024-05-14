@@ -10,9 +10,9 @@ await db.update(users)
   .where(eq(users.name, 'Dan'));
 ```
 
-### Update with returning
+### 带返回值的更新
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'SQLite': true, 'MySQL': false }} />
-You can update a row and get it back in PostgreSQL and SQLite:
+您可以在 PostgreSQL 和 SQLite 中更新一行并获取它回来：
 ```typescript copy
 const updatedUserId: { updatedId: number }[] = await db.update(users)
   .set({ name: 'Mr. Dan' })
@@ -20,13 +20,13 @@ const updatedUserId: { updatedId: number }[] = await db.update(users)
   .returning({ updatedId: users.id });
 ```
 
-## WITH UPDATE clause
+## WITH 更新子句
 
 <Callout>
-  Check how to use WITH statement with [select](/docs/select#with-clause), [insert](/docs/insert#with-insert-clause), [delete](/docs/delete#with-delete-clause)
+  查看如何使用 WITH 语句与 [select](/docs/select#with-clause)、[insert](/docs/insert#with-insert-clause)、[delete](/docs/delete#with-delete-clause)
 </Callout>
 
-Using the `with` clause can help you simplify complex queries by splitting them into smaller subqueries called common table expressions (CTEs):
+使用 `with` 子句可以帮助您通过将复杂的查询拆分为称为公用表表达式（CTEs）的较小子查询来简化复杂查询：
 <Section>
 ```typescript copy
 const averagePrice = db.$with('average_price').as(

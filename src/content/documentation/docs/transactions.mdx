@@ -1,13 +1,12 @@
 import Tab from '@components/markdown/Tab.astro';
 import Tabs from '@components/markdown/Tabs.astro';
 
-# Transactions
+# 事务
 
-SQL transaction is a grouping of one or more SQL statements that interact with a database.
-A transaction in its entirety can commit to a database as a single logical unit
-or rollback (become undone) as a single logical unit.
+SQL 事务是一组或多个 SQL 语句的集合，这些语句与数据库交互。
+整个事务可以作为一个单一的逻辑单元提交给数据库，或者作为一个单一的逻辑单元回滚（撤销）。
 
-Drizzle ORM provides APIs to run SQL statements in transactions:
+Drizzle ORM 提供了运行 SQL 语句的事务 API：
 
 ```ts copy
 const db = drizzle(...)
@@ -18,7 +17,7 @@ await db.transaction(async (tx) => {
 });
 ```
 
-Drizzle ORM supports `savepoints` with nested transactions API:
+Drizzle ORM 支持带有嵌套事务 API 的 `savepoints`：
 
 ```ts copy {7-9}
 const db = drizzle(...)
@@ -33,7 +32,7 @@ await db.transaction(async (tx) => {
 });
 ```
 
-You can embed business logic to the transaction and rollback whenever needed:
+您可以将业务逻辑嵌入事务中，并在需要时回滚：
 
 ```ts copy {6}
 const db = drizzle(...)
@@ -50,7 +49,7 @@ await db.transaction(async (tx) => {
 });
 ```
 
-You can return values from the transaction:
+您可以从事务中返回值：
 
 ```ts copy {8}
 const db = drizzle(...)
@@ -64,7 +63,7 @@ const newBalance: number = await db.transaction(async (tx) => {
 });
 ```
 
-You can use transactions with **[relational queries](/docs/rqb)**:
+您可以使用事务与 **[关系查询](/docs/rqb)** 一起使用：
 
 ```ts
 const db = drizzle(..., { schema })
@@ -82,7 +81,7 @@ await db.transaction(async (tx) => {
 
 
 
-We provide dialect-specific transaction configuration APIs:
+我们提供了特定于方言的事务配置 API：
 
 <Tabs items={["PostgreSQL", "MySQL", "SQLite"]}>
 <Tab>

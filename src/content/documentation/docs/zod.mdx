@@ -2,15 +2,15 @@ import Npm from '@components/markdown/Npm.astro';
 
 # drizzle-zod
 
-`drizzle-zod` is a plugin for **[Drizzle ORM](https://github.com/drizzle-team/drizzle-orm)** that allows you to generate **[Zod](https://github.com/colinhacks/zod)** schemas from Drizzle ORM schemas.
+`drizzle-zod` 是为 **[Drizzle ORM](https://github.com/drizzle-team/drizzle-orm)** 开发的插件，它允许您从 Drizzle ORM 模式中生成 **[Zod](https://github.com/colinhacks/zod)** 模式。
 
-### Install the dependencies
+### 安装依赖
 
 <Npm>
 drizzle-zod
 </Npm>
 
-# Usage
+# 使用
 
 ```ts copy
 import { pgEnum, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
@@ -25,25 +25,25 @@ const users = pgTable('users', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
 });
 
-// Schema for inserting a user - can be used to validate API requests
+// 插入用户的模式 - 可用于验证 API 请求
 const insertUserSchema = createInsertSchema(users);
 
-// Schema for selecting a user - can be used to validate API responses
+// 选择用户的模式 - 可用于验证 API 响应
 const selectUserSchema = createSelectSchema(users);
 
-// Overriding the fields
+// 覆盖字段
 const insertUserSchema = createInsertSchema(users, {
   role: z.string(),
 });
 
-// Refining the fields - useful if you want to change the fields before they become nullable/optional in the final schema
+// 精炼字段 - 如果在最终模式中您想改变字段（使其变为可选或可为空）则很有用
 const insertUserSchema = createInsertSchema(users, {
   id: (schema) => schema.id.positive(),
   email: (schema) => schema.email.email(),
   role: z.string(),
 });
 
-// Usage
+// 使用
 
 const user = insertUserSchema.parse({
   name: 'John Doe',
@@ -51,6 +51,6 @@ const user = insertUserSchema.parse({
   role: 'admin',
 });
 
-// Zod schema type is also inferred from the table schema, so you have full type safety
+// Zod 模式类型也从表模式中推断出来，因此您拥有完整的类型安全性
 const requestSchema = insertUserSchema.pick({ name: true, email: true });
 ```

@@ -1,10 +1,10 @@
 import IsSupportedChipGroup from '@components/markdown/IsSupportedChipGroup.astro';
 import Section from '@components/markdown/Section.astro';
 
-# Filter and conditional operators
-We natively support all dialect specific filter and conditional operators.
+# 过滤器和条件运算符
+我们原生支持所有特定方言的过滤器和条件运算符。
 
-You can import all filter & conditional from `drizzle-orm`:
+你可以从 `drizzle-orm` 导入所有过滤器和条件运算符：
 ```typescript copy
 import { eq, ne, gt, gte, ... } from "drizzle-orm";
 ```
@@ -12,7 +12,7 @@ import { eq, ne, gt, gte, ... } from "drizzle-orm";
 ### eq
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': true, 'SQLite': true }} />
   
-Value equal to `n`
+值等于 `n`
 <Section>
 ```typescript copy
 import { eq } from "drizzle-orm";
@@ -43,7 +43,7 @@ SELECT * FROM table WHERE table.column1 = table.column2
 ### ne
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': true, 'SQLite': true }} />
   
-Value is not equal to `n`  
+值不等于 `n`  
 <Section>
 ```typescript
 import { ne } from "drizzle-orm";
@@ -73,7 +73,7 @@ SELECT * FROM table WHERE table.column1 <> table.column2
 ### gt
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': true, 'SQLite': true }} /> 
   
-Value is greater than `n`
+值大于 `n`
 <Section>
 ```typescript
 import { gt } from "drizzle-orm";
@@ -102,7 +102,7 @@ SELECT * FROM table WHERE table.column1 > table.column2
 ### gte
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': true, 'SQLite': true }} />
   
-Value is greater than or equal to `n`
+值大于或等于 `n`
 <Section>
 ```typescript
 import { gte } from "drizzle-orm";
@@ -131,7 +131,7 @@ SELECT * FROM table WHERE table.column1 >= table.column2
 ### lt
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': true, 'SQLite': true }} />
   
-Value is less than `n`
+值小于 `n`
 <Section>
 ```typescript
 import { lt } from "drizzle-orm";
@@ -160,7 +160,7 @@ SELECT * FROM table WHERE table.column1 < table.column2
 ### lte
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': true, 'SQLite': true }} />
   
-Value is less than or equal to `n`.
+值小于或等于 `n`.
 
 <Section>
 ```typescript
@@ -190,7 +190,7 @@ SELECT * FROM table WHERE table.column1 <= table.column2
 ### isNull
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': true, 'SQLite': true }} />
   
-Value is `null`
+值为 `null`
 <Section>
 ```typescript
 import { isNull } from "drizzle-orm";
@@ -207,7 +207,7 @@ SELECT * FROM table WHERE table.column IS NULL
 ### isNotNull
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': true, 'SQLite': true }} />
   
-Value is not `null`
+值不为 `null`
 <Section>
 ```typescript
 import { isNotNull } from "drizzle-orm";
@@ -223,7 +223,7 @@ SELECT * FROM table WHERE table.column IS NOT NULL
 ### inArray
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': true, 'SQLite': true }} />
   
-Value is in array of values
+值在值数组中
 <Section>
 ```typescript
 import { inArray } from "drizzle-orm";
@@ -252,7 +252,7 @@ SELECT * FROM table WHERE table.column IN (SELECT table2.column FROM table2)
 ### notInArray
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': true, 'SQLite': true }} />
   
-Value is not in array of values
+值不在值数组中
 <Section>
 ```typescript
 import { notInArray } from "drizzle-orm";
@@ -281,7 +281,7 @@ SELECT * FROM table WHERE table.column NOT IN (SELECT table2.column FROM table2)
 ### exists
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': true, 'SQLite': true }} />
   
-Value exists
+值存在
 <Section>
 ```typescript
 import { exists } from "drizzle-orm";
@@ -313,7 +313,7 @@ SELECT * FROM table WHERE NOT EXISTS (SELECT * from table2)
 ### between
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': true, 'SQLite': true }} />
   
-Value is between two values
+值在两个值之间
 <Section>
 ```typescript
 import { between } from "drizzle-orm";
@@ -329,7 +329,7 @@ SELECT * FROM table WHERE table.column BETWEEN 2 AND 7
 ### notBetween
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': true, 'SQLite': true }} />
   
-Value is not between two value
+值不在两个值之间
 <Section>
 ```typescript
 import { notBetween } from "drizzle-orm";
@@ -345,7 +345,7 @@ SELECT * FROM table WHERE table.column NOT BETWEEN 2 AND 7
 ### like
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': true, 'SQLite': true }} />
   
-Value is like other value, case sensitive
+值类似于其他值，区分大小写
 <Section>
 ```typescript
 import { like } from "drizzle-orm";
@@ -361,7 +361,7 @@ SELECT * FROM table  WHERE table.column LIKE '%llo wor%'
 ### ilike
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': false, 'SQLite': false }} />
   
-Value is like some other value, case insensitive
+值类似于其他值，不区分大小写
 <Section>
 ```typescript
 import { ilike } from "drizzle-orm";
@@ -377,7 +377,7 @@ SELECT * FROM table WHERE table.column ILIKE '%llo wor%'
 ### notIlike
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': true, 'SQLite': true }} />
   
-Value is not like some other value, case insensitive
+值不类似于其他值，不区分大小写
 <Section>
 ```typescript
 import { notIlike } from "drizzle-orm";
@@ -393,7 +393,7 @@ SELECT * FROM table WHERE table.column NOT ILIKE '%llo wor%'
 ### not
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': true, 'SQLite': true }} />
   
-All conditions must return `false`.
+所有条件必须返回 `false`。
 
 <Section>
 ```typescript
@@ -410,7 +410,7 @@ SELECT * FROM table WHERE NOT (table.column = 5)
 ### and
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': true, 'SQLite': true }} />
   
-All conditions must return `true`.
+所有条件必须返回 `true`。
 
 <Section>
 ```typescript
@@ -427,7 +427,7 @@ SELECT * FROM table WHERE (table.column > 5 AND table.column < 7)
 ### or
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': true, 'SQLite': true }} />
   
-One or more conditions must return `true`.
+一个或多个条件必须返回 `true`。
 
 <Section>
 ```typescript
@@ -444,7 +444,7 @@ SELECT * FROM table WHERE (table.column > 5 OR table.column < 7)
 ### arrayContains
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': false, 'SQLite': false }} />
   
-Test that a column or expression contains all elements of the list passed as the second argument
+测试列或表达式是否包含作为第二个参数传递的列表的所有元素
 
 <Section>
 ```typescript
@@ -469,7 +469,7 @@ select "id" from "posts" where "posts"."tags" @> (select "tags" from "posts" whe
 ### arrayContained
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': false, 'SQLite': false }} />
   
-Test that the list passed as the second argument contains all elements of a column or expression
+测试作为第二个参数传递的列表是否包含列或表达式的所有元素
 
 <Section>
 ```typescript
@@ -487,7 +487,7 @@ select "id" from "posts" where "posts"."tags" <@ {Typescript,ORM};
 ### arrayOverlaps
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': false, 'SQLite': false }} />
   
-Test that a column or expression contains any elements of the list passed as the second argument.
+测试列或表达式是否包含作为第二个参数传递的列表的任何元素。
 
 <Section>
 ```typescript
