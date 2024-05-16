@@ -5,10 +5,10 @@ import Tab from "@/components/markdown/Tab.astro";
 import Tabs from "@/components/markdown/Tabs.astro";
 import Callout from "@/components/markdown/Callout.astro";
 
-# Configuration files
-Drizzle Kit lets you declare configurations in `TypeScript`, `JavaScript` or `JSON` configuration files.  
+# 配置文件
+Drizzle Kit 允许您在 `TypeScript`、`JavaScript` 或 `JSON` 配置文件中声明配置。 
 
-You can have autocomplete experience and a very convenient environment variables flow!  
+您可以拥有自动补全体验和非常方便的环境变量流程！ 
 
 ```plaintext {5}
 📦 <project root>
@@ -54,14 +54,12 @@ export default {
 </CodeTab>
 </CodeTabs>
 
-## Schema files paths
-`schema` param lets you define where your schema file/files live.  
+## 架构文件路径
+`schema` 参数允许您定义架构文件的位置。 
 
-You can have as many separate schema files as you want and define paths to them using 
-**[`glob`](https://www.digitalocean.com/community/tools/glob?comments=true&glob=/**/*.js&matches=false&tests=//%20This%20will%20match%20as%20it%20ends%20with%20'.js'&tests=/hello/world.js&tests=//%20This%20won't%20match!&tests=/test/some/globs)**
- or array of globs syntax.
+您可以拥有任意数量的独立的架构文件，并使用**[`glob`](https://www.digitalocean.com/community/tools/glob?comments=true&glob=/**/*.js&matches=false&tests=//%20This%20will%20match%20as%20it%20ends%20with%20'.js'&tests=/hello/world.js&tests=//%20This%20won't%20match!&tests=/test/some/globs)**语法或 glob 数组语法定义路径。
 
-<Tabs items={["Example 1", "Example 2", "Example 3"]}>
+<Tabs items={["示例 1", "示例 2", "示例 3"]}>
 <Tab>
 <Section>
 ```plaintext {7}
@@ -139,14 +137,14 @@ export default defineConfig({
 </Tabs>
 
 
-## Migrations folder
-`out` param lets you define folder for your migrations, it's optional and `drizzle` by default.  
-It's very useful since you can have many separate schemas for different databases in the same project 
-and have different migration folders for them.  
-  
-Migration folder contains `.sql` migration files and `_meta` folder which is used by `drizzle-kit`
+## 迁移文件夹
+`out` 参数允许您定义迁移的文件夹，默认为 `drizzle`。 
+
+非常有用，因为您可以在同一个项目中为不同的数据库拥有多个独立的架构，并为它们定义不同的迁移文件夹。
+
+迁移文件夹包含 `.sql` 迁移文件和 `_meta` 文件夹，由 `drizzle-kit` 使用。
 <Callout type="warning" emoji="⚠️">
-	Don't delete any files manually, please refer to [`drizzle-kit drop`](/kit-docs/commands#drop-migration) command
+请勿手动删除任何文件，请参考 [`drizzle-kit drop`](/kit-docs/commands#drop-migration) 命令
 </Callout>
 
 <Section>
@@ -173,12 +171,12 @@ export default defineConfig({
 ```
 </Section>
 
-## SQL breakpoints
-`breakpoints` param lets you enable/disable SQL statement breakpoints in generated migrations.
+## SQL 断点
+`breakpoints` 参数允许您在生成的迁移中启用/禁用 SQL 语句断点。
 
-It's optional and `true` by default, 
-it's necessary to properly apply migrations on databases, that do not support multiple DDL alternation statements in one transaction (MySQL, SQLite) 
-and Drizzle ORM has to apply them sequentially one by one.
+它是可选的，默认为 `true`， 
+它对于在不支持一次事务中的多个 DDL 变更语句的数据库（如 MySQL，SQLite）上正确应用迁移是必要的，
+Drizzle ORM 必须按顺序逐个应用它们。
 ```sql {5}
 CREATE TABLE `book` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -191,12 +189,12 @@ CREATE TABLE `book_to_author` (
 	PRIMARY KEY(`book_id`, `author_id`)
 );
 ```
-## Push and Pull
-Drizzle Kit provides you **[introspect](/kit-docs/commands#introspect--pull)** and **[push](/kit-docs/commands#prototype--push)** APIs.  
+## 推送和拉取
+Drizzle Kit 提供了 **[introspect](/kit-docs/commands#introspect--pull)** 和 **[push](/kit-docs/commands#prototype--push)** API。
 
-We mirror connection params of database drivers.
+我们镜像了数据库驱动程序的连接参数。
 
-<Tabs items={["Connection URI", "Connection params"]}>
+<Tabs items={["连接 URI", "连接参数"]}>
 <Tab>
 ```ts {8}
 import { defineConfig } from "drizzle-kit";
@@ -211,7 +209,7 @@ export default defineConfig({
 });
 ```
 <Callout type="info" emoji="ℹ️">
-When using the PlanetScale driver, your connection string must end with `?ssl={"rejectUnauthorized":true}` instead of `?sslaccept=strict`.
+使用 PlanetScale 驱动程序时，您的连接字符串必须以 `?ssl={"rejectUnauthorized":true}` 结尾，而不是 `?sslaccept=strict`。
 </Callout>
 
 </Tab>
@@ -235,11 +233,10 @@ export default defineConfig({
 </Tab>
 </Tabs>
 
-## Multi-project schema
-`tablesFilter` param lets you filter tables with **[`glob`](https://www.digitalocean.com/community/tools/glob?comments=true&glob=/**/*.js&matches=false&tests=//%20This%20will%20match%20as%20it%20ends%20with%20'.js'&tests=/hello/world.js&tests=//%20This%20won't%20match!&tests=/test/some/globs)** 
-syntax for db **[`push`](/kit-docs/commands#prototype--push)** command. It's useful when you have only one database available for several separate projects with separate sql schemas.  
+## 多项目架构
+`tablesFilter` 参数对于 db **[`push`](/kit-docs/commands#prototype--push)** 命令，可以使用 **[`glob`](https://www.digitalocean.com/community/tools/glob?comments=true&glob=/**/*.js&matches=false&tests=//%20This%20will%20match%20as%20it%20ends%20with%20'.js'&tests=/hello/world.js&tests=//%20This%20won't%20match!&tests=/test/some/globs)** 语法来过滤表。当您只有一个数据库可用于多个具有独立 SQL 架构的分离项目时，这非常有用。 
 
-How to define multi-project tables with Drizzle ORM — **[see here.](/docs/goodies#multi-project-schema)**
+如何使用 Drizzle ORM 定义多项目表 — 请参阅 **[这里。](/docs/goodies#multi-project-schema)**
 
 <Section>
 ```ts {3}
@@ -267,7 +264,7 @@ export default defineConfig({
 ```
 </Section>
 
-You can apply multiple `or` filters:
+您可以应用多个 `or` 过滤器：
 ```ts
 tablesFilter: ["project1_*", "project2_*"]
 ```

@@ -8,28 +8,25 @@ import Button from '@components/markdown/Button.astro';
 import Npm from '@components/markdown/Npm.astro';
 
 # Drizzle Kit
-Our most fundamental design principles of Drizzle ORM is to always stay explicit, 
-provide opt-in solutions and never interfere. Our migrations toolkit is not an exception.
+我们 Drizzle ORM 最基本的设计原则是始终明确、提供选择性解决方案并且不进行干预。我们的迁移工具包也不例外。
 
 <Npm>
 -D drizzle-kit
 </Npm>
 
-## Overview
-**Drizzle Kit** — is a CLI companion for automatic SQL migrations generation and rapid prototyping.
-  
-Conceptually it's very simple, you just declare a Drizzle ORM TypeScript schema and generate an SQL migration from it. 
+## 概览
+**Drizzle Kit**是用于生成自动 SQL 迁移和快速原型开发的 CLI 工具。
 
-You can then change the original schema and Drizzle Kit will generate new migrations, that way you can 
-have DDL source of truth in one type-safe place and under version control. 
-  
-Drizzle Kit lets you split your schema in different files and even have multiple schemas for different databases in one project.
-You can rapidly prototype database schema and push it directly to the database.
+从概念上讲，它非常简单，你只需要声明一个 Drizzle ORM 的 TypeScript schema，然后从中生成一个 SQL 迁移。
 
-Last but not least — you can pull the schema from an existing database in a matter of seconds ⚡️
+然后你可以更改原始的 schema，Drizzle Kit 将生成新的迁移，这样你就可以在一个类型安全的地方拥有 DDL 的真实源，并进行版本控制。
 
-## Migration files
-Migrations history is stored in `.sql` files in the migrations folder
+Drizzle Kit 允许你将 schema 拆分到不同的文件中，甚至在一个项目中为不同的数据库有多个 schemas。你可以快速原型数据库 schema 并直接推送到数据库。
+
+值得一提的是，你可以在几秒钟内从现有的数据库中拉取 schema ⚡️
+
+## 迁移文件
+迁移历史存储在 migrations 文件夹中的 `.sql` 文件中
 ```plaintext {3,5-8}
 📦 <project root>
  ├ ...
@@ -45,8 +42,9 @@ Migrations history is stored in `.sql` files in the migrations folder
  └ ...
 ```
 
-Each SQL migration file contains statements which you apply to the database through.
-Drizzle ORM migration package or any other way suitable for your business case or personal preference.
+每个 SQL 迁移文件包含你在数据库中应用的语句。
+你可以使用 Drizzle ORM 迁移包或适合你的业务案例或个人偏好的任何其他方式。
+
 <CodeTabs items={["0000_premium_mister_fear.sql", "schema.ts"]}>
   ```sql
   CREATE TABLE IF NOT EXISTS "user" (
@@ -72,9 +70,9 @@ Drizzle ORM migration package or any other way suitable for your business case o
   ```
 </CodeTabs>
 
-## Schema updates
-Whenever you apply changes to the schema you just rerun `$ drizzle-kit generate` and 
-it will generate SQL migration for you completely automatically in most of the cases.
+## Schema 更新
+每当你对 schema 进行更改时，只需要重新运行 `$ drizzle-kit generate`，
+它将根据大多数情况自动为你生成 SQL 迁移。
 <CodeTabs items={["0001_absurd_toad.sql", "schema.ts"]}>
   ```sql
   ALTER TABLE "user" ADD COLUMN "is_verified" boolean;
@@ -93,27 +91,29 @@ it will generate SQL migration for you completely automatically in most of the c
   ```
 </CodeTabs>
 
-## Running migrations
-We're unopinionated on how you should run your migrations, you can run them manually using SQL generated files, using external tools, etc. or use **Drizzle Kit** or **Drizzle ORM**.
+## 运行迁移
+我们在如何运行迁移方面没有固定意见，你可以使用生成的 SQL 文件手动运行迁移，使用外部工具运行迁移等等，
+或者使用 **Drizzle Kit** 或 **Drizzle ORM**。
 
-**Using Drizzle Kit**
+**使用 Drizzle Kit**
 
-You can use the native migrate CLI command `drizzle-kit migrate`. It will gather all the needed information from the `drizzle.config.ts` file to run migrations.
+你可以使用本地迁移 CLI 命令 `drizzle-kit migrate`。它将从 `drizzle.config.ts` 文件中收集所有所需的信息来运行迁移。
 
-You can specify custom schema and migration table names in `drizzle.config.ts` . For more information, please check the migrate [documentation](/kit-docs/commands#apply-migrations).
+你可以在 `drizzle.config.ts` 中指定自定义的 schema 和 migration 表名。
+更多信息，请查看迁移[文档](/kit-docs/commands#apply-migrations)。
 
 ```bash
 drizzle-kit migrate
 ```
 
-**Using Drizzle ORM**
+**使用 Drizzle ORM**
 
-We also provide you a useful way to run generated migrations with `migrate` function which we implement for each driver and dialect specifically.  
+我们还为你提供了一种有用的方式来运行生成的迁移，即使用特殊地为每个驱动程序和方言实现的 `migrate` 函数。
 
-Drizzle will automatically keep track of applied migrations in your database.
+Drizzle 将自动跟踪应用于你的数据库的迁移。
 
 <Callout type="info" emoji="ℹ️">
-`drizzle` and `migrate` imports depend on the [database driver](/docs/installation-and-db-connection) you're using.
+`drizzle` 和 `migrate` 的导入取决于你正在使用的[数据库驱动](/docs/installation-and-db-connection)。
 </Callout>
 
 <Tabs items={["PostgreSQL", "MySQL", "SQLite"]}>
@@ -161,10 +161,10 @@ betterSqlite.close()
 </Tab>
 </Tabs>
 
-## Configuration
-Drizzle Kit lets you declare configurations in `TypeScript`, `JavaScript` or `JSON` configuration files.  
+## 配置
+Drizzle Kit 允许你在 `TypeScript`、`JavaScript` 或 `JSON` 配置文件中声明配置。
 
-You can have autocomplete experience and a very convenient environment variables flow!
+你可以享受自动补全的体验和非常便利的环境变量流程！
 
 <CodeTabs items={["drizzle.config.ts", "drizzle.config.js", "drizzle.config.json"]}>
 <CodeTab>
@@ -206,41 +206,39 @@ export default {
 </CodeTab>
 </CodeTabs>
 
-For list of all configuration params — **[see here.](/kit-docs/conf)**
+有关所有配置参数的列表，请参阅**[这里](/kit-docs/conf)**。
 
-## Prototyping with db push
-Drizzle Kit lets you alter you database schema and rapidly move forward with a db **[`push` command](/kit-docs/commands#prototype--push)**.  
+## 使用 db push 进行原型开发
+Drizzle Kit 允许你更改数据库 schema 并使用 db **[`push` command](/kit-docs/commands#prototype--push)** 迅速向前推进。
 
-That's very handy when you have remote databases like **[Neon](/docs/get-started-postgresql#neon)**, **[Planetscale](/docs/get-started-mysql#planetscale)** or **[Turso](/docs/get-started-sqlite#turso)**.  
+当你拥有像 **[Neon](/docs/get-started-postgresql#neon)**、**[Planetscale](/docs/get-started-mysql#planetscale)** 或 **[Turso](/docs/get-started-sqlite#turso)** 等远程数据库时，这非常方便。
 
-### Overview
+### 概览
 
-If you want to iterate quickly during local development or if your project doesn't require
-migration files, Drizzle offers a useful command called `drizzle-kit push`.
+如果你想在本地开发中快速迭代或者项目不需要迁移文件，Drizzle 提供了一个好用的命令 `drizzle-kit push`。
 
-When do you need to use the 'push' command?
+什么时候需要使用 'push' 命令？
 
-1. During the prototyping and experimentation phase of your schema on a local environment.
-2. When you are utilizing an external provider that manages migrations and schema changes for you (e.g., PlanetScale).
-3. If you are comfortable modifying the database schema before your code changes can be deployed.
+1. 在本地环境中 schema 的原型和实验阶段。
+2. 当你使用管理迁移和 schema 变更的外部提供商时（例如 PlanetScale）。
+3. 在你的代码更改可以部署之前，你可以修改数据库 schema。
 
-### How it works?
+### 工作原理
 
-When you run the command `drizzle-kit push` drizzle executes the following steps:
+当你运行 `drizzle-kit push` 命令时，Drizzle 执行以下步骤：
 
-1. It retrieves your schema from the database and converts it to the "drizzle-schema" format.
-2. The command reads all your schema files containing drizzle tables and converts them to 
-the "drizzle-schema" format as well.
-3. Drizzle then compares the two schemas and generates a set of statements that need to be executed against your database. 
-These statements ensure that the database is synchronized with the schemas defined in your code.
+1. 它从数据库中检索你的 schema，并将其转换为 "drizzle-schema" 格式。
+2. 该命令还会读取包含 drizzle 表的所有 schema 文件，并将其转换为 "drizzle-schema" 格式。
+3. 接下来，Drizzle 将比较这两个 schemas，并生成一组需要在你的数据库上执行的语句。
+这些语句确保数据库与你代码中定义的 schema 同步。
 
 ```bash
 $ drizzle-kit push
 ```
-For extended `push` examples **[see here.](/kit-docs/commands#prototype--push)**
+有关扩展的 `push` 示例，**[请参阅这里](/kit-docs/commands#prototype--push)**。
 
-## Introspecting with db pull
-Drizzle Kit lets you pull DDL from existing database and prints a TypeScript schema file completely automatically.
+## 使用 db pull 进行自省
+Drizzle Kit 允许你从现有数据库中拉取 DDL，并完全自动打印一个 TypeScript schema 文件。
 
 <Section>
 ```bash
@@ -270,24 +268,22 @@ $ drizzle-kit introspect
   });
 ```
 </Section>
-For extended `introspect` examples — **[see here.](/kit-docs/commands/#introspect--pull)**
+有关扩展的 `introspect` 示例，请**[参阅此处](/kit-docs/commands/#introspect--pull)**。
 
 ## Drizzle Studio
-Drizzle Kit comes with bundled **[Drizzle Studio](/drizzle-studio/overview)**
-database browser and lets you launch it locally with one command.  
+Drizzle Kit 带有捆绑的**[Drizzle Studio](/drizzle-studio/overview)**数据库浏览器，并让你只需一个命令就可以在本地启动。
 
 ![Drizzle Studio](@/assets/images/drizzle-studio-light.webp)
 
-Studio requires drizzle config file with `schema` and `dbCredentials` provided.
+Studio 需要提供具有 `schema` 和 `dbCredentials` 的 drizzle 配置文件。
 ```bash
 drizzle-kit studio
 
-drizzle-kit studio --port 3000 ## custom port
-drizzle-kit studio --host 0.0.0.0 ## custom host for studio server
-drizzle-kit studio --verbose   ## log all sql statements
+drizzle-kit studio --port 3000 ## 自定义端口
+drizzle-kit studio --host 0.0.0.0 ## 自定义 Studio 服务器的主机
+drizzle-kit studio --verbose   ## 记录所有的 SQL 语句
 ```
 
-<Button href="https://demo.drizzle.studio" value="🖥 Drizzle Studio Demo"/>
+<Button href="https://demo.drizzle.studio" value="🖥 Drizzle Studio 演示"/>
 
-<Button href="https://local.drizzle.studio" value="🖥 Open Drizzle Studio"/>
-
+<Button href="https://local.drizzle.studio" value="🖥 打开 Drizzle Studio"/>

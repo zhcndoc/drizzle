@@ -223,11 +223,7 @@ select "id", "name", "age" from "users" where not ("id" = 42);
 </Section>
 
 <Callout type="info">
-通过指定 `sql<string>`，您告诉 Drizzle 字段的 **预期** 类型是 `string`。<br />
-如果您错误地指定了类型（例如，为将返回为字符串的字段使用 `sql<number>`），运行时值将不匹配预期的类型。
-Drizzle 无法根据提供的类型泛型执行任何类型转换，因为这些信息在运行时不可用。
-
-如果需要对返回的值应用运行时转换，可以使用 [`.mapWith()`](/docs/sql#sqlmapwith) 方法。
+您可以安全地更改模式、重命名表和列，由于模板插值的作用，这将自动反映在你的查询中，而不是在编写原始 SQL 时硬编码列或表的名称。
 </Callout>
 
 ### 组合过滤器

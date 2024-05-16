@@ -2,20 +2,19 @@ import Tab from "@/components/markdown/Tab.astro";
 import Tabs from "@/components/markdown/Tabs.astro";
 import Callout from "@/components/markdown/Callout.astro";
 
-# Configuring Drizzle kit
+# 配置 Drizzle kit
 
-## Configuration
+## 配置
 
-By default, Drizzle reads the `drizzle.config.ts` file located in the project's root folder. 
-If you need to specify a different configuration file, you can utilize the `--config=<path>`
-command-line option after any drizzle-kit command.
+默认情况下，Drizzle 会读取位于项目根目录的 `drizzle.config.ts` 文件。 
+如果您需要指定不同的配置文件，可以在任何 drizzle-kit 命令后面使用 `--config=<path>` 命令行选项。
 
-Drizzle Kit supports multiple formats for the configuration file, including `.ts`, `.js`.
-This flexibility allows you to choose the format that best suits your needs and preferences.
+Drizzle Kit 支持多种配置文件格式，包括 `.ts`、`.js`。
+这种灵活性允许您选择最适合您需求和偏好的格式。
 
-Here are some examples of each file format usage:
+以下是每种文件格式用法的例子：
 
-**Typescript example**
+**Typescript 示例**
 ```ts
 import { defineConfig } from 'drizzle-kit'
 
@@ -26,7 +25,7 @@ export default defineConfig({
 })
 ```
 
-**JavaScript example**
+**JavaScript 示例**
 ```js
 /** @type { import("drizzle-kit").Config } */
 export default {
@@ -36,21 +35,21 @@ export default {
 };
 ```
 
-## Options
+## 选项
 
 ### dialect
 
-- **Type**: `'postgresql' | 'mysql' | 'sqlite'`
-- **Commands**: all commands
+- **类型**: `'postgresql' | 'mysql' | 'sqlite'`
+- **命令**: 所有命令
 
 <Callout type="warning" emoji="⚠️">
-	Current param is available in `drizzle-kit@0.21.0` and higher. In previous versions you should not use this param
+	当前参数适用于 `drizzle-kit@0.21.0` 及更高版本。在之前的版本中，不应使用此参数。
 </Callout>
 
-The `dialect` parameter is responsible for explicitly providing a databse dialect you are using
-for all the commands
+`dialect` 参数负责明确指定您正在使用的数据库方言
+对于所有命令
 
-**Usage**
+**用法**
 ```ts
 import { defineConfig } from 'drizzle-kit'
 
@@ -61,17 +60,17 @@ export default defineConfig({
 
 ### schema
 
-- **Type**: `string | string[]`
-- **Commands**: `generate`, `check`, `up`, `push`, `drop`
+- **类型**: `string | string[]`
+- **命令**: `generate`, `check`, `up`, `push`, `drop`
 
-`schema` param lets you define where your schema file/files live.  
+`schema` 参数允许您定义模式文件的位置。
 
-You can have as many separate schema files as you want and define paths to them using 
+您可以拥有任意数量的单独模式文件，并使用
 **[`glob`](https://www.digitalocean.com/community/tools/glob?comments=true&glob=/**/*.js&matches=false&tests=//%20This%20will%20match%20as%20it%20ends%20with%20'.js'&tests=/hello/world.js&tests=//%20This%20won't%20match!&tests=/test/some/globs)**
-or array of globs syntax.
+或者 globs 语法的数组来定义它们的路径。
 
-**Usage**
-<Tabs items={["Single file", "Multiple files", "Glob pattern"]}>
+**用法**
+<Tabs items={["单个文件", "多个文件", "Glob 模式"]}>
 <Tab>
 ```ts
 import { defineConfig } from 'drizzle-kit'
@@ -103,18 +102,18 @@ export default defineConfig({
 
 ### out
 
-- **Type**: `string | string[]`
-- **Default**: `drizzle`
-- **Commands**: `generate`, `check`, `up`, `drop`, `introspect`, `migrate`
+- **类型**: `string | string[]`
+- **缺省值**: `drizzle`
+- **命令**: `generate`, `check`, `up`, `drop`, `introspect`, `migrate`
 
-The `out` parameter allows you to define the folder for your migrations.
+`out` 参数允许您定义迁移文件的文件夹。
 
-In this folder, drizzle-kit will:
+在此文件夹中，drizzle-kit 将：
 
-1. Store migration files, `meta`, and `journal`
-2. Output the `schema.ts` file when running `drizzle-kit introspect`
+1. 存储迁移文件、`meta` 和 `journal`
+2. 在运行 `drizzle-kit introspect` 时输出 `schema.ts` 文件
 
-**Usage**
+**用法**
 ```ts
 import { defineConfig } from 'drizzle-kit'
 
@@ -125,14 +124,13 @@ export default defineConfig({
 
 ### driver
 
-- **Type**: `'aws-data-api' | 'd1-http' | 'expo' | 'turso'`
-- **Commands**: `push`, `introspect`, `migrate`
+- **类型**: `'aws-data-api' | 'd1-http' | 'expo' | 'turso'`
+- **命令**: `push`, `introspect`, `migrate`
 
-The `driver` parameter is responsible for explicitly providing a driver to use when accessing a database 
-for the introspect and push commands. It is also useful for HTTP-based databases where connecting using 
-a database connection url is not possible. For example, **[Turso](https://turso.tech/drizzle)** and **[Cloudflare D1](https://developers.cloudflare.com/d1/)**!
+`driver` 参数负责明确提供要在访问数据库时使用的驱动程序，
+用于录像和推送命令。这对于使用基于 HTTP 的数据库并且使用数据库连接 URL 连接不可行的情况非常有用。例如，**[Turso](https://turso.tech/drizzle)** 和 **[Cloudflare D1](https://developers.cloudflare.com/d1/)**！
 
-**Usage**
+**用法**
 ```ts
 import { defineConfig } from 'drizzle-kit'
 
@@ -143,15 +141,15 @@ export default defineConfig({
 
 ### dbCredentials
 
-- **Type**: `PostgresCredentials, MySQLCredentials, SQLiteCredentials, TursoCredentials`
-- **Commands**: `push`, `introspect`
+- **类型**: `PostgresCredentials, MySQLCredentials, SQLiteCredentials, TursoCredentials`
+- **命令**: `push`, `introspect`
 
 <Callout>
-	Each `dialect` should have `dbCredentials` field to provide a means of connecting to the database.
+	每个 `dialect` 都应该有 `dbCredentials` 字段，以提供与数据库连接的手段。
 </Callout>
 
 **PostgresCredentials** (`postgresql`)
-<Tabs items={["Option 1", "Option 2"]}>
+<Tabs items={["选项 1", "选项 2"]}>
 <Tab>
 ```ts
 import { defineConfig } from 'drizzle-kit'
@@ -182,7 +180,7 @@ export default defineConfig({
 </Tabs>
 
 **MySQLCredentials** (`mysql`)
-<Tabs items={["Option 1", "Option 2"]}>
+<Tabs items={["选项 1", "选项 2"]}>
 <Tab>
 ```ts
 import { defineConfig } from 'drizzle-kit'
@@ -252,15 +250,15 @@ export default defineConfig({
 
 ### migrations
 
-- **Type**: `object`
-- **Commands**: `migrate`
+- **类型**: `object`
+- **命令**: `migrate`
 
-`migrations` param let's use specify custom table and schema(PostgreSQL only) for migrations. 
-By default, all information about executed migrations will be stored in the database inside the
-`__drizzle_migrations` table, and for PostgreSQL, inside the drizzle schema. 
-However, you can configure where to store those records.
+`migrations` 参数允许您指定自定义迁移的表和模式（仅适用于 PostgreSQL）。 
+默认情况下，关于已执行迁移的所有信息都将存储在数据库中的
+`__drizzle_migrations` 表中，并且对于 PostgreSQL，还将存储在 drizzle 模式中。 
+但是，您可以配置记录存储在何处。
 
-**Usage**
+**用法**
 ```ts
 import { defineConfig } from 'drizzle-kit'
 
@@ -274,13 +272,13 @@ export default defineConfig({
 
 ### breakpoints
 
-- **Type**: `boolean`
-- **Default**: `true`
-- **Commands**: `generate`, `introspect`
+- **类型**: `boolean`
+- **缺省值**: `true`
+- **命令**: `generate`, `introspect`
 
-`breakpoints` param lets you enable/disable SQL statement breakpoints in generated migrations. It's optional and `true` by default, 
-it's necessary to properly apply migrations on databases, that do not support multiple DDL alternation statements in one transaction(MySQL, SQLite) 
-and Drizzle ORM has to apply them sequentially one by one.
+`breakpoints` 参数允许您在生成的迁移中启用/禁用 SQL 语句断点。它是可选的，默认为 `true`，
+它对于在不支持一个事务中的多个 DDL 交替语句（MySQL、SQLite）的数据库上正确应用迁移是必要的，
+因此 Drizzle ORM 必须逐个顺序应用它们。
 ```sql {5}
 CREATE TABLE `book` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -294,7 +292,7 @@ CREATE TABLE `book_to_author` (
 );
 ```
 
-**Usage**
+**用法**
 ```ts
 import { defineConfig } from 'drizzle-kit'
 
@@ -305,16 +303,16 @@ export default defineConfig({
 
 ### tablesFilters
 
-- **Type**: `string | string[]`
-- **Commands**: `push`
+- **类型**: `string | string[]`
+- **命令**: `push`
 
 
-`tablesFilter` param lets you filter tables with glob(opens in a new tab) syntax for db push command.
-It's useful when you have only one database avaialable for several separate projects with separate sql schemas.
+`tablesFilter` 参数允许您使用用于 db push 命令的 glob(opens in a new tab) 语法过滤表。
+当您只有一个数据库可用于多个独立的具有单独的 SQL 模式的项目时，这非常有用。
 
-How to define multi-project tables with Drizzle ORM — **[see here.](/docs/goodies#multi-project-schema)**
+如何定义使用 Drizzle ORM 的多项目表 — **[在此查看。](/docs/goodies#multi-project-schema)**
 
-**Usage**
+**用法**
 ```ts
 import { defineConfig } from 'drizzle-kit'
 
@@ -323,25 +321,25 @@ export default defineConfig({
 });
 ```
 
-In this case, only tables that start with `project1_` will be synced with the database
+在这种情况下，仅以 `project1_` 开头的表将与数据库同步
 
 ### schemaFilter
 
-- **Type**: `string | string[]`
-- **Default**: `["public"]`
-- **Commands**: `push`, `introspect`
-- **Available databases**: `PostgreSQL`
+- **类型**: `string | string[]`
+- **缺省值**: `["public"]`
+- **命令**: `push`, `introspect`
+- **可用数据库**: `PostgreSQL`
 
 
-The `schemaFilter` parameter allows you to define which schema in PostgreSQL should be used for either `introspect` 
-or `push` commands.
-This parameter accepts a single schema as a string or an array of schemas as strings. No glob pattern is supported here. 
-By default, drizzle will use the `public` schema for both commands, but you can add any schema you need.
+`schemaFilter` 参数允许您定义在 `introspect` 
+或 `push` 命令中应使用的 PostgreSQL 架构。
+此参数接受单个模式作为字符串或作为字符串数组。此处不支持 glob 模式。
+默认情况下，drizzle 将在这两个命令中使用 `public` 架构，但您可以添加任何需要的模式。
 
-For example, having `schemaFilter: ["my_schema"]` will only look for tables in both the database and 
-drizzle schema that are a part of the `my_schema` schema.
+例如，设置 `schemaFilter: ["my_schema"]` 将只查找数据库和 
+drizzle 模式中属于 `my_schema` 模式的表。
 
-**Usage**
+**用法**
 ```ts
 import { defineConfig } from 'drizzle-kit'
 
@@ -351,18 +349,18 @@ export default defineConfig({
 ```
 ### verbose
 
-- **Type**: `boolean`
-- **Default**: false
-- **Commands**: `push`
+- **类型**: `boolean`
+- **缺省值**: false
+- **命令**: `push`
 
-This command is used for `drizzle-kit push` commands and prints all statements that will be executed.
+此命令用于 `drizzle-kit push` 命令，打印将要执行的所有语句。
 
 <Callout>
-    Note: This command will only print the statements that should be executed.
-    To approve them before applying, please refer to the `strict` command.
+    注意：此命令只会打印应该执行的语句。
+    要在应用之前批准它们，请参考 `strict` 命令。
 </Callout>
 
-**Usage**
+**用法**
 ```ts
 import { defineConfig } from 'drizzle-kit'
 
@@ -373,14 +371,14 @@ export default defineConfig({
 
 ### strict
 
-- **Type**: `boolean`
-- **Default**: false
-- **Commands**: `push`
+- **类型**: `boolean`
+- **缺省值**: false
+- **命令**: `push`
 
-This command is used for `drizzle-kit push` commands and will always ask for your confirmation, either 
-to execute all statements needed to sync your schema with the database or not.
+此命令用于 `drizzle-kit push` 命令，将始终要求您确认是否
+要执行同步架构与数据库所需的所有语句。
 
-**Usage**
+**用法**
 ```ts
 import { defineConfig } from 'drizzle-kit'
 
@@ -391,19 +389,19 @@ export default defineConfig({
 
 ### introspect
 
-- **Type**: `object`
+- **类型**: `object`
 
-This section is a reference to `introspect` object inside `drizzle.config.*` file.
+此部分是 `drizzle.config.*` 文件中 `introspect` 对象的参考。
 
 #### casing
 
-- **Type**: `'preserve' | 'camel'`
-- **Default**: `camel`
-- **Commands**: 
+- **类型**: `'preserve' | 'camel'`
+- **缺省值**: `camel`
+- **命令**: 
 
-This command is responsible for a strategy for choosing column, table, constraint JS key names while introspecting your databse.
+此命令负责选择 introspect 数据库时的列、表、约束 JS 键名称的策略。
 
-**Usage**
+**用法**
 ```ts
 import { defineConfig } from 'drizzle-kit'
 
@@ -414,7 +412,7 @@ export default defineConfig({
 });
 ```
 
-**Example**
+**示例**
 <Tabs items={["preserve", "camel"]}>
 <Tab>
 ```ts
