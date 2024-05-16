@@ -5,11 +5,11 @@ import Section from '@components/markdown/Section.astro';
 import IsSupportedChipGroup from '@mdx/IsSupportedChipGroup.astro';
 
 # SQL Select
-Drizzle provides you the most SQL-like way to fetch data from your database, while remaining type-safe and composable.
-It natively supports mostly every query feature and capability of every dialect,
-and whatever it doesn't support yet, can be added by the user with the powerful [`sql`](/docs/sql) operator.
+Drizzle 在保持类型安全和可组合性的同时，为您提供了最接近 SQL 的方式从数据库中获取数据。
+它本机支持几乎每个方言的查询功能和能力，
+而它尚不支持的任何功能，都可以由用户通过强大的 [`sql`](/docs/sql) 操作符添加。
 
-For the following examples, let's assume you have a `users` table defined like this:
+对于以下示例，请假设您有一个像这样定义的 `users` 表：
 <Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
 <Tab>
 ```typescript
@@ -46,10 +46,10 @@ export const users = sqliteTable('users', {
 </Tab>
 </Tabs>
 
-## Basic and partial select
+## 基本和部分选择
 
-### Select with all columns
-Select all rows from a table including all columns:
+### 选择所有列
+选择包括所有列的表中的所有行：
 
 <Section>
 ```typescript
@@ -67,16 +67,16 @@ select "id", "name", "age" from "users";
 ```
 </Section>
 
-Notice that the result type is inferred automatically based on the table definition, including columns nullability.
+请注意，结果类型是根据表定义自动推断的，包括列的可空性。
 
 <Callout type="info">
-Drizzle always explicitly lists columns in the `select` clause instead of using `select *`.<br />
-This is required internally to guarantee the fields order in the query result, and is also generally considered a good practice.
+Drizzle 总是在 `select` 子句中显式列出列，而不是使用 `select *`。<br />
+内部必须这样做，以确保查询结果中字段的顺序，这也通常被认为是一种良好的实践。
 </Callout>
 
-### Partial select
-In some cases, you might want to select only a subset of columns from a table.
-You can do that by providing a selection object to the `.select()` method:
+### 部分选择
+在某些情况下，您可能只想从表中选择部分列。
+您可以通过向 `.select()` 方法提供一个选择对象来实现此目的：
 <Section>
 ```typescript copy
 const result = await db.select({
@@ -91,7 +91,7 @@ select "id", "name" from "users";
 ```
 </Section>
 
-Like in SQL, you can use arbitrary expressions as selection fields, not just table columns:
+与 SQL 一样，您可以使用任意表达式作为选择字段，而不仅仅是表列：
 
 <Section>
 ```typescript
@@ -106,14 +106,14 @@ select "id", lower("name") from "users";
 </Section>
 
 <Callout type="warning">
-By specifying `sql<string>`, you are telling Drizzle that the **expected** type of the field is `string`.<br />
-If you specify it incorrectly (e.g. use `sql<number>` for a field that will be returned as a string), the runtime value won't match the expected type.
-Drizzle cannot perform any type casts based on the provided type generic, because that information is not available at runtime.
+通过指定 `sql<string>`，你告诉 Drizzle 字段的**期望**类型是 `string`。<br />
+如果你指定了错误的类型（例如，为将返回为字符串的字段使用 `sql<number>`），运行时值将不匹配期望的类型。
+Drizzle 无法根据提供的类型泛型执行任何类型转换，因为这些信息在运行时不可用。
 
-If you need to apply runtime transformations to the returned value, you can use the [`.mapWith()`](/docs/sql#sqlmapwith) method.
+如果需要对返回的值进行运行时转换，可以使用 [`.mapWith()`](/docs/sql#sqlmapwith) 方法。
 </Callout>
 
-If you have an expression you use frequently, you can extract it into a function:
+如果您经常使用表达式，可以将其提取到一个函数中：
 
 ```typescript
 import type { Column } from 'drizzle-orm';
@@ -129,9 +129,9 @@ const result = await db.select({
 }).from(users);
 ```
 
-### Conditional select
+### 条件选择
 
-You can have a dynamic selection object based on some condition:
+您可以根据某些条件拥有动态选择对象：
 
 ```typescript
 async function selectUsers(withName: boolean) {
@@ -146,9 +146,9 @@ async function selectUsers(withName: boolean) {
 const users = await selectUsers(true);
 ```
 
-## Filtering
+## 过滤
 
-You can filter the query results using the [filter operators](/docs/operators) in the `.where()` method:
+您可以使用 `.where()` 方法中的[过滤操作器](/docs/operators)来过滤查询结果：
 
 <Section>
 ```typescript copy
@@ -168,9 +168,9 @@ select "id", "name", "age" from "users" where "id" <> 42;
 ```
 </Section>
 
-All filter operators are implemented using the [`sql`](/docs/sql) function.
-You can use it yourself to write arbitrary SQL filters, or build your own operators.
-For inspiration, you can check how the operators provided by Drizzle are [implemented](https://github.com/drizzle-team/drizzle-orm/blob/main/drizzle-orm/src/sql/expressions/conditions.ts).
+所有过滤操作符均使用 [`sql`](/docs/sql) 函数实现。
+您可以自己使用它来编写任意 SQL 过滤器或构建自己的操作符。
+您可以参考 Drizzle 提供的操作符是如何[实现](https://github.com/drizzle-team/drizzle-orm/blob/main/drizzle-orm/src/sql/expressions/conditions.ts)的。
 <Section>
 ```typescript copy
 import { sql } from 'drizzle-orm';
@@ -197,18 +197,18 @@ select "id", "name", "age" from "users" where lower("name") = 'aaron';
 </Section>
 
 <Callout type='info'>
-All the values provided to filter operators and to the `sql` function are parameterized automatically.
-For example, this query:
+提供给过滤操作符和 `sql` 函数的所有值都会自动参数化。
+例如，这个查询：
 ```ts
 await db.select().from(users).where(eq(users.id, 42));
 ```
-will be translated to:
+将被转换为：
 ```sql
 select "id", "name", "age" from "users" where "id" = $1; -- params: [42]
 ```
 </Callout>
 
-Inverting condition with a `not` operator:
+使用 `not` 操作符反转条件：
 <Section>
 ```typescript copy
 import { eq, not, sql } from 'drizzle-orm';
@@ -223,13 +223,15 @@ select "id", "name", "age" from "users" where not ("id" = 42);
 </Section>
 
 <Callout type="info">
-You can safely alter schema, rename tables and columns
-and it will be automatically reflected in your queries because of template interpolation,
-as opposed to hardcoding column or table names when writing raw SQL.
+通过指定 `sql<string>`，您告诉 Drizzle 字段的 **预期** 类型是 `string`。<br />
+如果您错误地指定了类型（例如，为将返回为字符串的字段使用 `sql<number>`），运行时值将不匹配预期的类型。
+Drizzle 无法根据提供的类型泛型执行任何类型转换，因为这些信息在运行时不可用。
+
+如果需要对返回的值应用运行时转换，可以使用 [`.mapWith()`](/docs/sql#sqlmapwith) 方法。
 </Callout>
 
-## Combining filters
-You can logically combine filter operators with `and()` and `or()` operators:
+### 组合过滤器
+您可以使用 `and()` 和 `or()` 操作符逻辑地组合过滤操作符：
 <Section>
 ```typescript copy
 import { eq, and, sql } from 'drizzle-orm';
@@ -268,7 +270,7 @@ select "id", "name", "age" from "users" where "id" = 42 or "name" = 'Dan';
 
 ## Distinct
 
-You can use `.selectDistinct()` instead of `.select()` to retrieve only unique rows from a dataset:
+您可以使用 `.selectDistinct()` 来代替 `.select()`，从数据集中仅检索唯一的行：
 <Section>
 ```ts
 await db.selectDistinct().from(users).orderBy(usersTable.id, usersTable.name);
@@ -282,7 +284,7 @@ select distinct "id" from "users" order by "id";
 ```
 </Section>
 
-In PostgreSQL, you can also use the `distinct on` clause to specify how the unique rows are determined:
+在 PostgreSQL 中，您还可以使用 `distinct on` 子句指定如何确定唯一行：
 
 <Section>
 ```ts
@@ -296,12 +298,12 @@ select distinct on ("name") "name" from "users" order by "name";
 </Section>
 
 <Callout>
-`distinct on` clause is only supported in PostgreSQL.
+`distinct on` 子句仅在 PostgreSQL 中受支持。
 </Callout>
 
 
 ## Limit & offset
-Use `.limit()` and `.offset()` to add `limit` and `offset` clauses to the query - for example, to implement pagination:
+使用 `.limit()` 和 `.offset()` 将 `limit` 和 `offset` 子句添加到查询中，例如用于实现分页：
 <Section>
 ```typescript
 await db.select().from(users).limit(10);
@@ -314,7 +316,7 @@ select "id", "name", "age" from "users" limit 10 offset 10;
 </Section>
 
 ## Order By
-Use `.orderBy()` to add `order by` clause to the query, sorting the results by the specified fields:
+使用 `.orderBy()` 将 `order by` 子句添加到查询中，按指定的字段对结果进行排序：
 <Section>
 ```typescript
 import { asc, desc } from 'drizzle-orm';
@@ -335,13 +337,13 @@ select "id", "name", "age" from "users" order by "name" asc, "name2" desc;
 ```
 </Section>
 
-## WITH clause
+## WITH 子句
 
 <Callout>
-  Check how to use WITH statement with [insert](/docs/insert#with-insert-clause), [update](/docs/update#with-update-clause), [delete](/docs/delete#with-delete-clause)
+请查看如何在 INSERT 语句中使用 WITH 语句 [insert](/docs/insert#with-insert-clause)、[update](/docs/update#with-update-clause)、[delete](/docs/delete#with-delete-clause)
 </Callout>
 
-Using the `with` clause can help you simplify complex queries by splitting them into smaller subqueries called common table expressions (CTEs):
+使用 `with` 子句可以通过将复杂的查询拆分为更小的子查询（称为公共表达式）来简化查询：
 <Section>
 ```typescript copy
 const sq = db.$with('sq').as(db.select().from(users).where(eq(users.id, 42)));
@@ -354,8 +356,8 @@ select "id", "name", "age" from sq;
 ```
 </Section>
 
-To select arbitrary SQL values as fields in a CTE and reference them in other CTEs or in the main query,
-you need to add aliases to them:
+要选择一个 CTE 中的任意 SQL 值作为字段，并在其他 CTE 或主查询中引用它们，
+您需要为它们添加别名：
 ```typescript copy
 
 const sq = db.$with('sq').as(db.select({ 
@@ -365,12 +367,11 @@ const sq = db.$with('sq').as(db.select({
 
 const result = await db.with(sq).select({ name: sq.name }).from(sq);
 ```
-If you don't provide an alias, the field type will become `DrizzleTypeError` and you won't be able to reference it in other queries.
-If you ignore the type error and still try to use the field,
-you will get a runtime error, since there's no way to reference that field without an alias.
+如果不提供别名，字段类型将变为 `DrizzleTypeError`，您将无法在其他查询中引用它。
+如果忽略类型错误并尝试仍然使用该字段，您将获得一个运行时错误，因为没有办法在没有别名的情况下引用该字段。
 
-## Select from subquery
-Just like in SQL, you can embed queries into other queries by using the subquery API:
+## 从子查询中选择
+就像在 SQL 中一样，您可以使用子查询 API 将查询嵌入到其他查询中：
 <Section>
 ```typescript copy
 const sq = db.select().from(users).where(eq(users.id, 42)).as('sq');
@@ -381,7 +382,7 @@ select "id", "name", "age" from (select "id", "name", "age" from "users" where "
 ```
 </Section>
 
-Subqueries can be used in any place where a table can be used, for example in joins:
+子查询可以在任何可以使用表的地方使用，例如在连接中：
 <Section>
 ```typescript copy
 const sq = db.select().from(users).where(eq(users.id, 42)).as('sq');
@@ -394,11 +395,11 @@ select "users"."id", "users"."name", "users"."age", "sq"."id", "sq"."name", "sq"
 ```
 </Section>
 
-## Iterator
+## 迭代器
 
 <IsSupportedChipGroup chips={{ 'MySQL': true, 'PostgreSQL[WIP]': false, 'SQLite[WIP]': false,  }} />
 
-If you need to return a very large amount of rows from a query and you don't want to load them all into memory, you can use `.iterator()` to convert the query into an async iterator:
+如果您需要从查询中返回非常大量的行，并且不希望将它们全部加载到内存中，可以使用 `.iterator()` 将查询转换为异步迭代器：
 
 ```ts copy
 const iterator = await db.select().from(users).iterator();
@@ -408,7 +409,7 @@ for await (const row of iterator) {
 }
 ```
 
-It also works with prepared statements:
+它也可以与 prepared statements 一起使用：
 
 ```ts copy
 const query = await db.select().from(users).prepare();
@@ -419,9 +420,8 @@ for await (const row of iterator) {
 }
 ```
 
-## Aggregations
-With Drizzle, you can do aggregations using functions like `sum`, `count`, `avg`, etc. by
-grouping and filtering with `.groupBy()` and `.having()` respectfully, same as you would do in raw SQL:
+## 聚合
+使用 Drizzle，您可以通过使用 `sum`、`count`、`avg` 等函数进行聚合，并通过 `.groupBy()` 和 `.having()` 进行分组和筛选，就像在原始 SQL 中一样：
 
 <Section>
 ```typescript
@@ -454,26 +454,26 @@ select "age", cast(count("id") as int)
 ```
 </Section>
 
+
 <Callout type="info">
-`cast(... as int)` is necessary because `count()` returns `bigint` in PostgreSQL and `decimal` in MySQL, which are treated as string values instead of numbers.
-Alternatively, you can use [`.mapWith(Number)`](/docs/sql#sqlmapwith) to cast the value to a number at runtime.
+`cast(... as int)` 是必需的，因为 PostgreSQL 中 `count()` 返回 `bigint`，MySQL 中返回 `decimal`，它们被视为字符串值而不是数字。
+或者，您可以使用 [`.mapWith(Number)`](/docs/sql#sqlmapwith) 在运行时将值转换为数字。
 </Callout>
 
-## Aggregations helpers
+## 聚合助手函数
 
-Drizzle has a set of wrapped `sql` functions, so you don't need to write
-`sql` templates for common cases in your app
+Drizzle 提供了一组封装的 `sql` 函数，这样您就不需要为应用程序中的常见情况编写 `sql` 模板
 
 <Callout type="info">
- Remember, aggregation functions are often used with the GROUP BY clause of the SELECT statement. 
- So if you are selecting using aggregating functions and other columns in one query, 
- be sure to use the `.groupBy` clause
+请记住，聚合函数通常与 SELECT 语句的 GROUP BY 子句一起使用。
+因此，如果您正在使用聚合函数和其他列在一个查询中选择，
+请务必使用 `.groupBy` 子句
 </Callout>
 
 
 **count**
 
-Returns the number of values in `expression`.
+返回 `expression` 中的值的数量。
 <Section>
 ```ts
 import { count } from 'drizzle-orm'
@@ -499,7 +499,7 @@ await db.select({
 
 **countDistinct**
 
-Returns the number of non-duplicate values in `expression`.
+返回 `expression` 中的非重复值的数量。
 <Section>
 ```ts
 import { countDistinct } from 'drizzle-orm'
@@ -519,7 +519,7 @@ await db.select({
 
 **avg**
 
-Returns the average (arithmetic mean) of all non-null values in `expression`.
+返回 `expression` 中所有非空值的平均值（算术平均值）。
 <Section>
 ```ts
 import { avg } from 'drizzle-orm'
@@ -539,7 +539,7 @@ await db.select({
 
 **avgDistinct**
 
-Returns the average (arithmetic mean) of all non-null values in `expression`.
+返回 `expression` 中所有非空值的平均值（算术平均值）。
 <Section>
 ```ts
 import { avgDistinct } from 'drizzle-orm'
@@ -559,7 +559,7 @@ await db.select({
 
 **sum**
 
-Returns the sum of all non-null values in `expression`.
+返回 `expression` 中所有非空值的总和。
 <Section>
 ```ts
 import { sum } from 'drizzle-orm'
@@ -579,7 +579,7 @@ await db.select({
 
 **sumDistinct**
 
-Returns the sum of all non-null and non-duplicate values in `expression`.
+返回 `expression` 中所有非空且不重复的值的总和。
 <Section>
 ```ts
 import { sumDistinct } from 'drizzle-orm'
@@ -599,7 +599,7 @@ await db.select({
 
 **max**
 
-Returns the maximum value in `expression`.
+返回 `expression` 中的最大值。
 <Section>
 ```ts
 import { max } from 'drizzle-orm'
@@ -619,7 +619,7 @@ await db.select({
 
 **min**
 
-Returns the minimum value in `expression`.
+返回 `expression` 中的最小值。
 <Section>
 ```ts
 import { min } from 'drizzle-orm'
@@ -637,7 +637,7 @@ await db.select({
 ```
 </Section>
 
-A more advanced example:
+更高级的示例：
 
 ```typescript copy
 const orders = sqliteTable('order', {

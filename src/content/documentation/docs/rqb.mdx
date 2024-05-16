@@ -5,17 +5,13 @@ import CodeTabs from '@components/markdown/CodeTabs.astro';
 import CodeTab from '@components/markdown/CodeTab.astro';
 import Section from '@components/markdown/Section.astro';
 
-# Drizzle Queries
+# Drizzle 查询
 
-Drizzle ORM is designed to be a thin typed layer on top of SQL. 
-We truly believe we've designed the best way to operate an SQL database from TypeScript and it's time to make it better.  
-  
-Relational queries are meant to provide you with a great developer experience for querying 
-nested relational data from an SQL database, avoiding multiple joins and complex data mappings.  
+Drizzle ORM 旨在在 SQL 之上提供一个薄型的类型化层。我们真诚地相信我们设计了一种在 TypeScript 中操作 SQL 数据库的最佳方式，现在是时候让它变得更好了。
 
-It is an extension to the existing schema definition and query builder. 
-You can opt-in to use it based on your needs. 
-We've made sure you have both the best-in-class developer experience and performance.  
+关系查询旨在为您提供优秀的开发人员体验，用于从 SQL 数据库中查询嵌套关系数据，避免多个连接和复杂的数据映射。
+
+它是现有模式定义和查询构建器的扩展。您可以根据自己的需求选择使用它。我们确保您既有一流的开发人员体验又有高性能。
 
 <CodeTabs items={["index.ts", "schema.ts"]}>
 	<CodeTab>
@@ -102,14 +98,14 @@ We've made sure you have both the best-in-class developer experience and perform
 </CodeTabs>
 
 
-## Modes
-Drizzle relational queries always generate exactly one SQL statement to run on the database and it has certain caveats. 
-To have best in class support for every database out there we've introduced **`modes`**.  
+## 模式
+Drizzle 关系查询始终生成一个要在数据库上运行的 SQL 语句，并且有一定的注意事项。
+为了对每个数据库提供最佳支持，我们引入了 `modes`。
 
-Drizzle relational queries use lateral joins of subqueries under the hood and for now PlanetScale does not support them.
+Drizzle 关系查询在内部使用子查询的侧向连接，但目前 PlanetScale 不支持它们。
 
-When using **mysql2** driver with regular **MySQL** database — you should specify `mode: "default"`
-When using **mysql2** driver with **PlanetScale** — you need to specify `mode: "planetscale"`
+当使用 mysql2 驱动程序和常规 MySQL 数据库时，应该指定 `mode: "default"`
+当使用 mysql2 驱动程序和 PlanetScale 时，需要指定 `mode: "planetscale"`
 
 ```ts copy
 import * as schema from './schema';
@@ -123,12 +119,12 @@ const connection = await mysql.createConnection({
 const db = drizzle(connection, { schema, mode: 'planetscale' });
 ```
 
-## Declaring relations
+## 声明关系
 
-### One-to-one
-Drizzle ORM provides you an API to define `one-to-one` relations between tables with the `relations` operator.
+### 一对一
+Drizzle ORM 提供了一种 API 来定义表之间的 `一对一` 关系，使用 `relations` 运算符。
 
-An example of a `one-to-one` relation between users and users, where a user can invite another (this example uses a self reference):
+下面是 users 和 users 之间的 `一对一` 关系的示例，其中一个用户可以邀请另一个用户（此示例使用了自我引用）：
 
 ```typescript copy {10-15}
 import { pgTable, serial, text, integer, boolean } from 'drizzle-orm/pg-core';
@@ -148,7 +144,7 @@ export const usersRelations = relations(users, ({ one }) => ({
 }));
 ```
 
-Another example would be a user having a profile information stored in separate table. In this case, because the foreign key is stored in the "profile_info" table, the user relation have neither fields or references. This tells Typescript that `user.profileInfo` is nullable:
+另一个示例是用户在单独的表中存储个人资料信息。在这种情况下，由于外键存储在 "profile_info" 表中，用户关系既没有字段也没有引用。它告诉 Typescript `user.profileInfo` 是可空的：
 
 ```typescript copy {9-17}
 import { pgTable, serial, text, integer, jsonb } from 'drizzle-orm/pg-core';
@@ -173,10 +169,10 @@ const user = await queryUserWithProfileInfo();
 //____^? type { id: number, profileInfo: { ... } | null  }
 ```
 
-### One-to-many
-Drizzle ORM provides you an API to define `one-to-many` relations between tables with `relations` operator. 
+### 一对多
+Drizzle ORM 提供了一种 API 来定义表之间的 `一对多` 关系，使用 `relations` 运算符。
 
-Example of `one-to-many` relation between users and posts they've written:
+users 和他们编写的 posts 之间的 `一对多` 关系示例：
 
 ```typescript copy {9-11, 19-24}
 import { pgTable, serial, text, integer } from 'drizzle-orm/pg-core';
@@ -205,7 +201,7 @@ export const postsRelations = relations(posts, ({ one }) => ({
 }));
 ```
 
-Now lets add comments to the posts:
+现在让我们给帖子添加评论：
 ```typescript copy {14,17-22,24-29}
 ...
 
@@ -239,11 +235,10 @@ export const commentsRelations = relations(comments, ({ one }) => ({
 ```
 
 
-### Many-to-many
-Drizzle ORM provides you an API to define `many-to-many` relations between tables through so called `junction` or `join` tables,
-they have to be explicitly defined and store associations between related tables.  
-  
-Example of `many-to-many` relation between users and groups:
+### 多对多
+Drizzle ORM 提供了一种 API 来定义表之间的 `多对多` 关系，通过所谓的 `junction` 或 `join` 表进行关联，它们必须明确定义并存储相关表之间的关联。
+
+users 和 groups 之间的 `多对多` 关系示例：
 ```typescript copy {9-11, 18-20, 37-46}
 import { relations } from 'drizzle-orm';
 import { integer, pgTable, primaryKey, serial, text } from 'drizzle-orm/pg-core';
@@ -293,20 +288,20 @@ export const usersToGroupsRelations = relations(usersToGroups, ({ one }) => ({
 }));
 ```
 
-### Foreign keys
+### 外键
 
-You might've noticed that `relations` look similar to foreign keys — they even have a `references` property. So what's the difference?
+您可能已经注意到 `relations` 看起来类似于外键 —— 甚至具有 `references` 属性。那么它们的区别是什么？
 
-While foreign keys serve a similar purpose, defining relations between tables, they work on a different level compared to `relations`.
+虽然外键是用于在表之间定义关系的相似目的，但它们与 `relations` 在不同的层面上工作。
 
-Foreign keys are a database level constraint, they are checked on every `insert`/`update`/`delete` operation and throw an error if a constraint is violated.
-On the other hand, `relations` are a higher level abstraction, they are used to define relations between tables on the application level only.
-They do not affect the database schema in any way and do not create foreign keys implicitly.
+外键是数据库级别的约束，它们在每次 `插入`/`更新`/`删除` 操作时进行检查，并在违反约束时抛出错误。
+另一方面，`relations` 是一个更高级别的抽象，它们仅用于在应用程序级别定义表之间的关系。
+它们不会以任何方式影响数据库架构，也不会隐式地创建外键。
 
-What this means is `relations` and foreign keys can be used together, but they are not dependent on each other.
-You can define `relations` without using foreign keys (and vice versa), which allows them to be used with databases that do not support foreign keys.
+这意味着 `relations` 和外键可以一起使用，但它们彼此之间不依赖。
+您可以定义 `relations` 而不使用外键（反之亦然），这使它们能够与不支持外键的数据库一起使用。
 
-The following two examples will work exactly the same in terms of querying the data using Drizzle relational queries.
+以下两个示例在使用 Drizzle 关系查询查询数据方面的效果完全相同。
 <CodeTabs items={["schema1.ts", "schema2.ts"]}>
 <CodeTab>
 ```ts {15}
@@ -352,28 +347,28 @@ export const profileInfo = pgTable('profile_info', {
 </CodeTab>
 </CodeTabs>
 
-### Foreign key actions
+### 外键操作
 
-for more information check [posrgres foreign keys docs](https://www.postgresql.org/docs/current/ddl-constraints.html#DDL-CONSTRAINTS-FK)
+有关更多信息，请参阅 [posrgres 外键文档](https://www.postgresql.org/docs/current/ddl-constraints.html#DDL-CONSTRAINTS-FK)
 
-You can specify actions that should occur when the referenced data in the parent table is modified. These actions are known as "foreign key actions." PostgreSQL provides several options for these actions.
+您可以指定在修改父表中的引用数据时应执行的操作。这些操作称为 "外键操作"。PostgreSQL 提供了几个选项用于这些操作。
 
-On Delete/ Update Actions
+删除/更新操作
 
-- `CASCADE`: When a row in the parent table is deleted, all corresponding rows in the child table will also be deleted. This ensures that no orphaned rows exist in the child table.
+- `CASCADE`：当删除父表中的行时，子表中的所有相关行也将被删除。这样可以确保子表中不存在孤立的行。
 
-- `NO ACTION`: This is the default action. It prevents the deletion of a row in the parent table if there are related rows in the child table. The DELETE operation in the parent table will fail.
+- `NO ACTION`：这是默认操作。如果子表中存在相关行，则会阻止删除父表中的行。父表中的 DELETE 操作将失败。
 
-- `RESTRICT`: Similar to NO ACTION, it prevents the deletion of a parent row if there are dependent rows in the child table. It is essentially the same as NO ACTION and included for compatibility reasons.
+- `RESTRICT`：与 NO ACTION 类似，它防止删除父行，如果子表中有依赖行的话。本质上它与 NO ACTION 相同，并包含兼容性的原因。
 
-- `SET DEFAULT`: If a row in the parent table is deleted, the foreign key column in the child table will be set to its default value if it has one. If it doesn't have a default value, the DELETE operation will fail.
+- `SET DEFAULT`：如果删除父表中的行，则如果它有默认值，则子表中的外键列将设置为其默认值。如果它没有默认值，则删除操作将失败。
 
-- `SET NULL`: When a row in the parent table is deleted, the foreign key column in the child table will be set to NULL. This action assumes that the foreign key column in the child table allows NULL values.
+- `SET NULL`：当删除父表中的行时，子表中的外键列将设置为空。此操作假设子表中的外键列允许空值。
 
-> Analogous to ON DELETE there is also ON UPDATE which is invoked when a referenced column is changed (updated). The possible actions are the same, except that column lists cannot be specified for SET NULL and SET DEFAULT. In this case, CASCADE means that the updated values of the referenced column(s) should be copied into the referencing row(s).
-in drizzle you can add foreign key action using `references()` second argument.
+> 类似于 ON DELETE，还有 ON UPDATE，它在引用列更改（更新）时调用。可能的操作和 ON DELETE 相同，只是不能为 SET NULL 和 SET DEFAULT 指定列列表。在这种情况下，CASCADE 表示应将更新后的引用列的值复制到引用行中。
+在 Drizzle 中，您可以使用 `references()` 的第二个参数添加外键操作。
 
-type of the actions
+操作的类型
 
 ```typescript
 export type UpdateDeleteAction = 'cascade' | 'restrict' | 'no action' | 'set null' | 'set default';
@@ -403,12 +398,10 @@ export const posts = pgTable('posts', {
 });
 ```
 
-### Disambiguating relations
+### 消除模糊关系
 
-Drizzle also provides the `relationName` option as a way to disambiguate
-relations when you define multiple of them between the same two tables. For
-example, if you define a `posts` table that has the `author` and `reviewer`
-relations.
+Drizzle 还提供了 `relationName` 选项来消除在相同的两个表之间定义多个关系时的模糊关系。
+例如，如果定义了具有 `author` 和 `reviewer` 关系的 `posts` 表。
 
 ```ts {9-12, 21-32}
 import { pgTable, serial, text, integer } from 'drizzle-orm/pg-core';
@@ -445,12 +438,11 @@ export const postsRelations = relations(posts, ({ one }) => ({
 }));
 ```
 
-## Querying
-Relational queries are an extension to Drizzle's original **[query builder](/docs/crud)**.
-You need to provide all `tables` and `relations` from your schema file/files upon `drizzle()` 
-initialization and then just use the `db.query` API.
+## 查询
+关系查询是 Drizzle 原始 **[查询构建器](/docs/crud)** 的扩展。
+在 `drizzle()` 初始化时，您需要提供来自模式文件/文件的所有 `tables` 和 `relations`，然后只需使用 `db.query` API。
 <Callout type="info" emoji="ℹ️">
-	`drizzle` import path depends on the **[database driver](/docs/installation-and-db-connection)** you're using.
+	`drizzle` 的导入路径取决于您使用的 **[数据库驱动程序](/docs/installation-and-db-connection)**。
 </Callout>
 <CodeTabs items={["index.ts", "schema.ts"]}>
 <CodeTab>
@@ -553,8 +545,8 @@ await db.query.users.findMany(...);
 ```
 </CodeTabs>
 
-Drizzle provides `.findMany()` and `.findFirst()` APIs.
-### Find many
+Drizzle 提供了 `.findMany()` 和 `.findFirst()` API。
+### 查询多个
 <Section>
 ```typescript copy
 const users = await db.query.users.findMany();
@@ -589,11 +581,14 @@ const result: {
 ```
 </Section>
 
-### Include relations
+### 查询第一个
 
-`With` operator lets you combine data from multiple related tables and properly aggregate results.
 
-**Getting all posts with comments:**
+### 包含关系
+
+`With` 运算符允许您将多个相关表的数据组合在一起，并正确聚合结果。
+
+**获取所有带有评论的帖子：**
 ```typescript copy
 const posts = await db.query.posts.findMany({
 	with: {
@@ -602,7 +597,7 @@ const posts = await db.query.posts.findMany({
 });
 ```
 
-**Getting first post with comments:**
+**获取带有评论的第一篇帖子：**
 ```typescript copy
 const post = await db.query.posts.findFirst({
 	with: {
@@ -611,10 +606,9 @@ const post = await db.query.posts.findFirst({
 });
 ```
 
-You can chain nested with statements as much as necessary.  
-For any nested `with` queries Drizzle will infer types using [Core Type API](/docs/goodies#type-api).
+您可以将嵌套的 `with` 语句链接起来，需要多少链接就可以。对于任何嵌套的 `with` 查询，Drizzle 将使用 [核心类型 API](/docs/goodies#type-api) 推断类型。
   
-**Get all users with posts. Each post should contain a list of comments:**
+**获取所有用户和他们的帖子。每个帖子都应包含一条评论列表：**
 ```typescript copy
 const users = await db.query.users.findMany({
 	with: {
@@ -627,16 +621,16 @@ const users = await db.query.users.findMany({
 });
 ```
 
-### Partial fields select
-`columns` parameter lets you include or omit columns you want to get from the database.
+### 部分字段选择
+`columns` 参数允许您包含或省略要从数据库获取的列。
 
 <Callout type="info" emoji="ℹ️">
-  Drizzle performs partial selects on the query level, no additional data is transferred from the database.
+  Drizzle 在查询级别执行部分选择，不会从数据库传输额外的数据。
 
-  Keep in mind that **a single SQL statement is outputted by Drizzle.**
+  请注意，**Drizzle 只输出一个 SQL 语句。**
 </Callout>
 
-**Get all posts with just `id`, `content` and include `comments`:**
+**仅获取带有 `id`、`content` 的所有帖子，并包含 `comments`：**
 ```typescript copy
 const posts = await db.query.posts.findMany({
 	columns: {
@@ -659,13 +653,12 @@ const posts = await db.query.posts.findMany({
 ```
 
 <Callout type="info" emoji="ℹ️">
-When both `true` and `false` select options are present, all `false` options are ignored.
+当同时存在 `true` 和 `false` 选择选项时，所有 `false` 选项将被忽略。
 </Callout>
 
-If you include the `name` field and exclude the `id` field, `id` exclusion will be redundant, 
-all fields apart from `name` would be excluded anyways.  
-  
-**Exclude and Include fields in the same query:**
+如果将 `name` 字段包含进来并排除 `id` 字段，`id` 的排除将是多余的，因为除了 `name` 之外的所有字段都将被排除。
+
+**在同一个查询中排除和包含字段：**
 <Section>
 ```typescript copy
 const users = await db.query.users.findMany({
@@ -683,7 +676,7 @@ const users: {
 ```
 </Section>
 
-**Only include columns from nested relations:**
+**仅包括嵌套关联的列：**
 <Section>
 ```typescript copy
 const res = await db.query.users.findMany({
@@ -704,8 +697,8 @@ const res: {
 ```
 </Section>
 
-### Nested partial fields select
-Just like with **[`partial select`](#partial-select)**, you can include or exclude columns of nested relations:
+### 嵌套部分字段选择
+与**[`部分选择`](#部分选择)**一样，您可以包含或排除嵌套关系的列：
 ```typescript copy
 const posts = await db.query.posts.findMany({
 	columns: {
@@ -722,11 +715,11 @@ const posts = await db.query.posts.findMany({
 });
 ```
 
-### Select filters
-Just like in our SQL-like query builder, 
-relational queries API lets you define filters and conditions with the list of our **[`operators`](/docs/operators)**.  
+### 选择过滤器
+就像在我们的 SQL-类似的查询构建器中一样，
+关系查询 API 允许您使用我们的**[`operators`](/docs/operators)**列表定义过滤器和条件。
 
-You can either import them from `drizzle-orm` or use from the callback syntax:
+您可以从 `drizzle-orm` 中导入它们，也可以使用回调语法中的操作符：
 <Section>
 ```typescript copy
 import { eq } from 'drizzle-orm';
@@ -742,7 +735,7 @@ const users = await db.query.users.findMany({
 ```
 </Section>
 
-Find post with `id=1` and comments that were created before particular date:
+查找帖子 `id=1` 和早于特定日期创建的评论：
 ```typescript copy
 await db.query.posts.findMany({
 	where: (posts, { eq }) => (eq(posts.id, 1)),
@@ -754,17 +747,17 @@ await db.query.posts.findMany({
 });
 ```
 
-### Limit & Offset
-Drizzle ORM provides `limit` & `offset` API for queries and for the nested entities.
+### 限制和偏移量
+Drizzle ORM 为查询和嵌套实体提供了 `limit` 和 `offset` API。
   
-**Find 5 posts:**
+**查找 5 条帖子：**
 ```typescript copy
 await db.query.posts.findMany({
 	limit: 5,
 });
 ```
 
-**Find posts and get 3 comments at most:**
+**查找帖子并在最多的 3 条评论：**
 ```typescript copy
 await db.query.posts.findMany({
 	with: {
@@ -776,7 +769,7 @@ await db.query.posts.findMany({
 ```
 
 <Callout type="warning" emoji="⚠️">
-  `offset` is only available for top level query.
+  `offset` 只适用于顶级查询。
 </Callout>
 ```typescript 
 await db.query.posts.findMany({
@@ -791,7 +784,7 @@ await db.query.posts.findMany({
 });
 ```
 
-Find posts with comments from the 5th to the 10th post:
+查找带有评论的帖子，并从第 5 条到第 10 条帖子：
 ```typescript copy
 await db.query.posts.findMany({
 	limit: 5,
@@ -802,11 +795,10 @@ await db.query.posts.findMany({
 });
 ```
 
-### Order By
-Drizzle provides API for ordering in the relational query builder.  
+### 排序
+Drizzle 在关系查询构建器中提供排序的 API。
 
-You can use same ordering **[core API](/docs/crud#order-by)** or use
-`order by` operator from the callback with no imports.  
+您可以使用相同的排序 **[核心 API](/docs/crud#order-by)** 或使用回调中的 `order by` 运算符，无需导入。
 
 <Section>
 ```typescript copy
@@ -823,7 +815,7 @@ await db.query.posts.findMany({
 ```
 </Section>
 
-**Order by `asc` + `desc`:**
+**按 `asc` + `desc` 排序：**
 ```typescript copy
 await db.query.posts.findMany({
 	orderBy: (posts, { asc }) => [asc(posts.id)],
@@ -835,11 +827,10 @@ await db.query.posts.findMany({
 });
 ```
 
-### Include custom fields
-Relational query API lets you add custom additional fields. 
-It's useful when you need to retrieve data and apply additional functions to it.
+### 包含自定义字段
+关系查询 API 允许您添加自定义的附加字段。在需要检索数据并对其应用其他函数时非常有用。
 <Callout type="warning" emoji="⚠️">
-	As of now aggregations are not supported in `extras`, please use **[`core queries`](/docs/crud)** for that.
+	目前不支持在 `extras` 中进行聚合，请使用 **[`核心查询`](/docs/crud)**。
 </Callout>
 
 <Section>
@@ -861,14 +852,13 @@ await db.query.users.findMany({
 ```
 </Section>
 
-`lowerName` as a key will be included to all fields in returned object.
+以 `lowerName` 为键将包含在返回对象的所有字段中。
 
 <Callout type="warning" emoji="⚠️">
-  You have to explicitly specify `.as("<name_for_column>")`
+  您必须明确指定 `.as("<name_for_column>")`
 </Callout>
 
-To retrieve all users with groups, but with the fullName field included (which is a concatenation of firstName and lastName), 
-you can use the following query with the Drizzle relational query builder.
+要检索包含组的所有用户，但包含全名字段（它是 firstName 和 lastName 的串联），您可以使用以下查询中的 Drizzle 关系查询构建器。
 
 <Section>
 ```typescript copy
@@ -906,7 +896,7 @@ const res: {
 </Section>
 
 
-To retrieve all posts with comments and add an additional field to calculate the size of the post content and the size of each comment content:
+要检索所有帖子及其评论，并添加一个额外的字段来计算帖子内容的大小和每个评论内容的大小：
 <Section>
 ```typescript copy
 const res = await db.query.posts.findMany({
@@ -942,13 +932,12 @@ const res: {
 ```
 </Section>
 
-### Prepared statements
-Prepared statements are designed to massively improve query performance — [see here.](/docs/performance)
+### 准备语句
+准备语句旨在大大提高查询性能 —— [请看这里。](/docs/performance)
 
-In this section, you can learn how to define placeholders and execute prepared statements 
-using the Drizzle relational query builder.
+在本节中，您可以了解如何定义占位符并使用 Drizzle 关系查询构建器执行准备语句。
 
-##### **Placeholder in `where`**
+##### **`where` 中的占位符**
 <Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
 <Tab>
 <Section>
@@ -1001,7 +990,7 @@ const usersWithPosts = await prepared.execute({ id: 1 });
 </Tabs>
 
 
-##### **Placeholder in `limit`**
+##### **`limit` 中的占位符**
 <Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
 <Tab>
 <Section>
@@ -1051,7 +1040,7 @@ const usersWithPosts = await prepared.execute({ limit: 1 });
 </Tabs>
 
 
-##### **Placeholder in `offset`**
+##### **`offset` 中的占位符**
 <Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
 <Tab>
 <Section>
@@ -1097,7 +1086,7 @@ const usersWithPosts = await prepared.execute({ offset: 1 });
 </Tab>
 </Tabs>
 
-##### **Multiple placeholders**
+##### **多个占位符**
 <Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
 <Tab>
 <Section>
