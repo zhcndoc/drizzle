@@ -220,13 +220,14 @@ config.resolver.sourceExts.push('sql'); // <--- add this
 module.exports = config;
 ```
 
-确保在 Drizzle Kit 配置中拥有 `driver: 'expo'`
+确保在 Drizzle Kit 配置中拥有 `dialect: 'sqlite'` 和 `driver: 'expo'`
 ```ts filename="drizzle.config.ts"
 import type { Config } from 'drizzle-kit';
 
 export default {
 	schema: './db/schema.ts',
 	out: './drizzle',
+  dialect: 'sqlite',
 	driver: 'expo', // <--- very important
 } satisfies Config;
 ```
@@ -234,7 +235,7 @@ export default {
 #### 生成迁移
 在创建 SQL 模式文件和 drizzle.config.ts 文件之后，您可以生成迁移
 ```bash
-npx drizzle-kit generate:sqlite
+npx drizzle-kit generate
 ```
 
 #### 添加迁移到您的应用程序
@@ -333,13 +334,14 @@ config.resolver.sourceExts.push('sql');
 module.exports = config;
 ```
 
-确保在 Drizzle Kit 配置中拥有 `driver: 'expo'`
+确保在 Drizzle Kit 配置中拥有 `dialect: 'sqlite'` 和 `driver: 'expo'`
 ```ts filename="drizzle.config.ts"
 import type { Config } from 'drizzle-kit';
 
 export default {
 	schema: './db/schema.ts',
 	out: './drizzle',
+  dialect: 'sqlite',
 	driver: 'expo', // <--- very important
 } satisfies Config;
 ```
@@ -347,7 +349,7 @@ export default {
 #### 生成迁移
 在创建 SQL 模式文件和 drizzle.config.ts 文件之后，您可以生成迁移
 ```bash
-npx drizzle-kit generate:sqlite
+npx drizzle-kit generate
 ```
 
 #### 添加迁移到您的应用程序
