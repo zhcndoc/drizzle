@@ -798,21 +798,28 @@ Drizzle ORM 提供了对索引和唯一索引的 API 声明：
     ```
     </Section>
     <Callout type="warning" emoji="⚠️">
-      目前的 `drizzle-kit` 只支持索引的 `name` 和 `on()` 参数。
+      对于 `drizzle-kit@0.22.0` 和 `drizzle-orm@0.31.0` `drizzle-kit` 之前的版本仅支持索引 `name` 和 `on()` 参数。
+
+      在 `drizzle-kit@0.22.0` 和 `drizzle-orm@0.31.0` 版本之后，drizzle-kit 中支持所有字段！
     </Callout>
 
-    Drizzle ORM 提供了用于索引创建的所有参数：
 
-    ```typescript
-    // Index declaration reference
-    index('name')
-      .on(table.column1, table.column2, ...) or .onOnly(table.column1, table.column2, ...)
-      .concurrently()
-      .using(sql``) // sql expression
-      .asc() or .desc()
-      .nullsFirst() or .nullsLast()
-      .where(sql``) // sql expression
-    ```
+    从 0.31.0 开始，Drizzle ORM 的新索引 API 提供了用于创建索引的所有参数集：
+
+```ts
+// First example, with `.on()`
+index('name')
+  .on(table.column1.asc(), table.column2.nullsFirst(), ...) or .onOnly(table.column1.desc().nullsLast(), table.column2, ...)
+  .concurrently()
+  .where(sql``)
+  .with({ fillfactor: '70' })
+
+// Second Example, with `.using()`
+index('name')
+  .using('btree', table.column1.asc(), sql`lower(${table.column2})`, table.column1.op('text_ops'))
+  .where(sql``) // sql expression
+  .with({ fillfactor: '70' })
+```
 
   </Tab>
   <Tab>
@@ -880,9 +887,6 @@ Drizzle ORM 提供了对索引和唯一索引的 API 声明：
     CREATE UNIQUE INDEX `email_idx` ON `user` (`email`);
     ```
     </Section>
-    <Callout type="warning" emoji="⚠️">
-      目前的 `drizzle-kit` 只支持索引的 `name` 和 `on()` 参数。
-    </Callout>
 
      Drizzle ORM 提供了用于索引创建的所有参数：
      

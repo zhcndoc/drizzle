@@ -172,7 +172,7 @@ export default defineConfig({
     user: "",
     password: "",
     database: "",
-    ssl: true,
+    ssl: true, // can be boolean | "require" | "allow" | "prefer" | "verify-full" | options from node:tls
   }
 })
 ```
@@ -203,6 +203,7 @@ export default defineConfig({
     user: "",
     password: "",
     database: "",
+    ssl: "" // can be: string | SslOptions (ssl options from mysql2 package)
   }
 })
 ```
@@ -341,6 +342,33 @@ export default defineConfig({
 ```
 
 在这种情况下，仅以 `project1_` 开头的表将与数据库同步
+
+### extensionsFilters
+
+- **Type**: `string[]`
+- **Commands**: `push`, `introspect`
+
+<Callout>
+Available from `drizzle-kit@0.22.0`
+</Callout>
+
+The PostGIS extension creates a few internal tables in the `public` schema. This means that if you have a database with the PostGIS extension and use `push` or `introspect`, all those tables will be included in `diff` operations. In this case, you would need to specify `tablesFilter`, find all tables created by the extension, and list them in this parameter.
+
+We have addressed this issue so that you won't need to take all these steps. Simply specify `extensionsFilters` with the name of the extension used, and Drizzle will skip all the necessary tables.
+
+Currently, we only support the `postgis` option, but we plan to add more extensions if they create tables in the `public` schema.
+
+The `postgis` option will skip the `geography_columns`, `geometry_columns`, and `spatial_ref_sys` tables
+
+**Usage**
+```ts
+import { defineConfig } from 'drizzle-kit'
+
+export default defaultConfig({
+  dialect: "postgresql",
+  extensionsFilters: ["postgis"],
+})
+```
 
 ### schemaFilter
 

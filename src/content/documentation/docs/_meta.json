@@ -17,6 +17,7 @@
   "migrations": "迁移",
   "views": "视图",
   "schemas": "模式",
+  "extensions": "扩展",
   "-----":{
     "type":"separator",
     "title": "访问您的数据"

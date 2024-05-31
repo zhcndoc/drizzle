@@ -113,6 +113,7 @@ $ drizzle-kit migrate --config=custom.config.ts
 | `config`                                      | 否       | 配置文件路径，默认=`drizzle.config.ts`                           |
 | `introspect-casing`                           | 否       | JS 键在列、表等中的创建策略 (`preserve`、`camel`) 	                    |
 | **[`schemaFilter`](/kit-docs/config-reference#schemaFilter)**                              | 否       | 架构名称筛选器。默认: `["public"]`                   |
+| **[`extensionsFilters`](/kit-docs/config-reference#extensionsfilters)** | 否       | 数据库扩展内部数据库过滤器                                                   |
 
 
 <Section>
@@ -192,6 +193,7 @@ $ drizzle-kit introspect --out=migrations/ --host=0.0.0.0 --port=5432 --user=pos
 | driver                                   | 否       | 用于查询的驱动程序（`aws-data-api`、`d1-http`、`turso`、`expo`）     |
 | **[`tablesFilter`](/kit-docs/conf#multi-project-schema)** | 否       | 表名筛选器                                                    |
 | **[`schemaFilter`](/kit-docs/config-reference#schemafilter)**                                | 否       | 架构名称筛选器。默认: `["public"]`                   |
+| **[`extensionsFilters`](/kit-docs/config-reference#extensionsfilters)** | 否       | 数据库扩展内部数据库过滤器                                                 |
 | `url`                               | 否       | 数据库连接字符串                                                |
 | `user`                                         | 否       | 数据库用户                                                    |
 | `password`                                     | 否       | 数据库密码                                                    |
