@@ -12,6 +12,9 @@ import sitemap from "@astrojs/sitemap";
 
 // https://astro.build/config
 export default defineConfig({
+  devToolbar: {
+    enabled: false
+  },
   site: "https://drizzle.zhcndoc.com",
   build: {
     format: "file", // mandatory due to CloudFlare Pages trailing slash problem
