@@ -1,74 +1,74 @@
 ---
-title: DrizzleORM v0.27.2 release
+title: DrizzleORM v0.27.2 发布
 pubDate: 2023-07-12
-description: Added support for unique constraints in PostgreSQL, MySQL, SQLite.
+description: 在 PostgreSQL、MySQL、SQLite 中添加对唯一约束的支持。
 ---
 
-## 🎉 Added support for `UNIQUE` constraints in PostgreSQL, MySQL, SQLite
+## 🎉 在 PostgreSQL、MySQL、SQLite 中添加对 `UNIQUE` 约束的支持
 
-For PostgreSQL, unique constraints can be defined at the column level for single-column constraints, and in the third parameter for multi-column constraints. In both cases, it will be possible to define a custom name for the constraint. Additionally, PostgreSQL will receive the `NULLS NOT DISTINCT` option to restrict having more than one NULL value in a table. [Reference](https://www.postgresql.org/docs/current/ddl-constraints.html#DDL-CONSTRAINTS-UNIQUE-CONSTRAINTS)
+对于 PostgreSQL，唯一约束可以在单列约束的列级别定义，也可以在多列约束的第三个参数中定义。在两种情况下，都可以为约束定义一个自定义名称。此外，PostgreSQL 将接收 `NULLS NOT DISTINCT` 选项，以限制表中超过一个 NULL 值。[参考链接](https://www.postgresql.org/docs/current/ddl-constraints.html#DDL-CONSTRAINTS-UNIQUE-CONSTRAINTS)
 
-Examples that just shows a different `unique` usage. Please don't search a real usage for those tables
+以下示例仅演示不同的 `unique` 用法。请不要搜索这些表的真实用途。
 
 ```ts copy
-// single column
+// 单列
 const table = pgTable('table', {
-  id: serial('id').primaryKey(),
-  name: text('name').notNull().unique(),
-  state: char('state', { length: 2 }).unique('custom'),
-  field: char('field', { length: 2 }).unique('custom_field', { nulls: 'not distinct' }),
+  id: serial('id').主键(),
+  name: text('name').不能为空().唯一(),
+  state: char('state', { length: 2 }).唯一('custom'),
+  field: char('field', { length: 2 }).唯一('custom_field', { nulls: 'not distinct' }),
 });
-// multiple columns
+// 多列
 const table = pgTable('table', {
-  id: serial('id').primaryKey(),
-  name: text('name').notNull(),
+  id: serial('id').主键(),
+  name: text('name').不能为空(),
   state: char('state', { length: 2 }),
 }, (t) => ({
-  first: unique('custom_name').on(t.name, t.state).nullsNotDistinct(),
-  second: unique('custom_name1').on(t.name, t.state),
+  first: 唯一('custom_name').在(t.name, t.state).不同的空值(),
+  second: 唯一('custom_name1').在(t.name, t.state),
 }));
 ```
 
-For MySQL, everything will be the same except for the `NULLS NOT DISTINCT` option. It appears that MySQL does not support it
+对于 MySQL，除了 `NULLS NOT DISTINCT` 选项之外，其他都相同。似乎 MySQL 不支持此选项。
 
-Examples that just shows a different `unique` usage. Please don't search a real usage for those tables
+以下示例仅演示不同的 `unique` 用法。请不要搜索这些表的真实用途。
 
 ```ts copy
-// single column
+// 单列
 const table = mysqlTable('table', {
-    id: serial('id').primaryKey(),
-    name: text('name').notNull().unique(),
-    state: text('state').unique('custom'),
-    field: text('field').unique('custom_field'),
+    id: serial('id').主键(),
+    name: text('name').不能为空().唯一(),
+    state: text('state').唯一('custom'),
+    field: text('field').唯一('custom_field'),
 });
-// multiple columns
+// 多列
 const table = mysqlTable('cities1', {
-    id: serial('id').primaryKey(),
-    name: text('name').notNull(),
+    id: serial('id').主键(),
+    name: text('name').不能为空(),
     state: text('state'),
 }, (t) => ({
-    first: unique().on(t.name, t.state),
-    second: unique('custom_name1').on(t.name, t.state),
+    first: 唯一().在(t.name, t.state),
+    second: 唯一('custom_name1').在(t.name, t.state),
 }));
 ```
 
-In SQLite unique constraints are the same as unique indexes. As long as you can specify a name for the unique index in SQLite - we will treat all unique constraints as unique indexes in internal implementation
+在 SQLite 中，唯一约束与唯一索引相同。只要您可以为唯一索引指定一个名称，在内部实现中，我们将把所有唯一约束视为唯一索引。
 
 ```ts copy
-// single column
+// 单列
 const table = sqliteTable('table', {
-    id: int('id').primaryKey(),
-    name: text('name').notNull().unique(),
-    state: text('state').unique('custom'),
-    field: text('field').unique(),
+    id: int('id').主键(),
+    name: text('name').不能为空().唯一(),
+    state: text('state').唯一('custom'),
+    field: text('field').唯一(),
 });
-// multiple columns
+// 多列
 const table = sqliteTable('table', {
-    id: int('id').primaryKey(),
-    name: text('name').notNull(),
+    id: int('id').主键(),
+    name: text('name').不能为空(),
     state: text('state'),
 }, (t) => ({
-    first: unique().on(t.name, t.state),
-    second: unique('custom').on(t.name, t.state),
+    first: 唯一().在(t.name, t.state),
+    second: 唯一('custom').在(t.name, t.state),
 }));
 ```

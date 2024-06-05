@@ -1,50 +1,50 @@
 ---
-title: DrizzleORM v0.30.0 release
+title: DrizzleORM v0.30.0发布
 pubDate: 2024-03-07
-description: Modified the 'postgres.js' driver instance to always return strings for dates, and then Drizzle will provide you with either strings of mapped dates, depending on the selected 'mode'. Fixed many bugs related to timestamps and dates. 
+description: 修改了 'postgres.js' 驱动实例，始终返回日期字符串，然后 Drizzle 将根据选择的 'mode' 为您提供映射后的日期字符串。修复了与时间戳和日期相关的许多错误。
 ---
 
-## Breaking Changes
+## 破坏性变更
 
-The Postgres timestamp mapping has been changed to align all drivers with the same behavior.
+Postgres 的时间戳映射已更改，以使所有驱动程序行为一致。
 
-❗ We've modified the `postgres.js` driver instance to always return strings for dates, and then Drizzle will provide you with either strings of mapped dates, depending on the selected `mode`. The only issue you may encounter is that once you provide the `postgres.js`` driver instance inside Drizzle, the behavior of this object will change for dates, which will always be strings.
+❗ 我们修改了 `postgres.js` 驱动实例，始终返回日期字符串，然后 Drizzle 将根据选择的 `mode` 为您提供映射后的日期字符串。唯一可能遇到的问题是，一旦在 Drizzle 中提供了 `postgres.js` 驱动实例，此对象的日期行为将始终为字符串。
 
-We've made this change as a minor release, just as a warning, that:
+我们将此更改作为一个次要版本发布，只是作为警告，即：
 
-- If you were using timestamps and were waiting for a specific response, the behavior will now be changed.
-  When mapping to the driver, we will always use `.toISOString` for both timestamps with timezone and without timezone.
+- 如果您正在使用时间戳并等待特定响应，则行为将发生更改。
+  在映射到驱动程序时，无论是带时区还是不带时区的时间戳，我们都将始终使用 `.toISOString`。
 
-- If you were using the `postgres.js` driver outside of Drizzle, all `postgres.js` clients passed to Drizzle will have mutated behavior for dates. All dates will be strings in the response.
+- 如果您在 Drizzle 之外使用 `postgres.js`驱动程序，所有传递给 Drizzle 的 `postgres.js` 客户端的日期行为都将发生变化。响应中的所有日期都将是字符串。
 
-Parsers that were changed for `postgres.js`.
+`postgres.js` 的更改解析器。
 
 ```ts
 const transparentParser = (val: any) => val;
 
-// Override postgres.js default date parsers: https://github.com/porsager/postgres/discussions/761
+// 覆盖 postgres.js 默认的日期解析器: https://github.com/porsager/postgres/discussions/761
 for (const type of ['1184', '1082', '1083', '1114']) {
 	client.options.parsers[type as any] = transparentParser;
 	client.options.serializers[type as any] = transparentParser;
 }
 ```
 
-Ideally, as is the case with almost all other drivers, we should have the possibility to mutate mappings on a per-query basis, which means that the driver client won't be mutated. We will be reaching out to the creator of the `postgres.js` library to inquire about the possibility of specifying per-query mapping interceptors and making this flow even better for all users.
+理想情况下，与几乎所有其他驱动程序一样，我们应该有可能根据每个查询更改映射，这意味着驱动程序客户端不会被更改。我们将与 `postgres.js` 库的创建者联系，询问是否有可能指定每个查询的映射拦截器，并让这个流程对所有用户都更好。
 
-If we've overlooked this capability and it is already available with `postgres.js``, please ping us in our Discord!
+如果我们忽略了这个能力，并且在 `postgres.js` 中已经可用，请在我们的 Discord 上联系我们！
 
-A few more references for timestamps without and with timezones can be found in our [docs](http://orm.drizzle.team/docs/column-types/pg#timestamp)
+有关无时区和有时区的时间戳的更多参考，请参阅我们的[文档](http://orm.drizzle.team/docs/column-types/pg#timestamp)
 
-Check docs for getting started with `postgres.js` driver and Drizzle [here](https://orm.drizzle.team/docs/get-started-postgresql#postgresjs)
+查看使用 `postgres.js` 驱动程序和 Drizzle 的入门文档[这里](https://orm.drizzle.team/docs/get-started-postgresql#postgresjs)
 
-## Fixes
+## 修复
 
-- timestamp with mode string is returned as Date object instead of string - ([#806](https://github.com/drizzle-team/drizzle-orm/issues/806))
-- Dates are always dates ([#971](https://github.com/drizzle-team/drizzle-orm/issues/971))
-- Inconsistencies when working with timestamps and corresponding datetime objects in javascript. ([#1176](https://github.com/drizzle-team/drizzle-orm/issues/1176))
-- timestamp columns showing string type, however actually returning a Date object. ([#1185](https://github.com/drizzle-team/drizzle-orm/issues/1185))
-- Wrong data type for postgres date colum ([#1407](https://github.com/drizzle-team/drizzle-orm/issues/1407))
-- invalid timestamp conversion when using PostgreSQL with TimeZone set to UTC ([#1587](https://github.com/drizzle-team/drizzle-orm/issues/1587))
-- Postgres insert into timestamp with time zone removes milliseconds ([#1061](https://github.com/drizzle-team/drizzle-orm/issues/1061))
-- update timestamp field (using AWS Data API) ([#1164](https://github.com/drizzle-team/drizzle-orm/issues/1164))
-- Invalid date from relational queries ([#895](https://github.com/drizzle-team/drizzle-orm/issues/895))
+- 以字符串模式返回的时间戳返回为 Date 对象而不是字符串 - ([#806](https://github.com/drizzle-team/drizzle-orm/issues/806))
+- 日期始终为日期 ([#971](https://github.com/drizzle-team/drizzle-orm/issues/971))
+- 在处理时间戳和对应的 JavaScript 日期对象时存在不一致性。 ([#1176](https://github.com/drizzle-team/drizzle-orm/issues/1176))
+- 显示为字符串类型的时间戳列，实际上返回的是 Date 对象。 ([#1185](https://github.com/drizzle-team/drizzle-orm/issues/1185))
+- Postgres 日期列的数据类型错误 ([#1407](https://github.com/drizzle-team/drizzle-orm/issues/1407))
+- 使用设置为 UTC 的 PostgreSQL 时的无效时间戳转换 ([#1587](https://github.com/drizzle-team/drizzle-orm/issues/1587))
+- 插入到带时区的时间戳会删除毫秒数 ([#1061](https://github.com/drizzle-team/drizzle-orm/issues/1061))
+- 更新时间戳字段（使用 AWS Data API） ([#1164](https://github.com/drizzle-team/drizzle-orm/issues/1164))
+- 关系查询的无效日期 ([#895](https://github.com/drizzle-team/drizzle-orm/issues/895))

@@ -1,20 +1,20 @@
 ---
-title: DrizzleORM v0.30.4 release
+title: DrizzleORM v0.30.4 发布
 pubDate: 2024-03-19 12:00:00
-description: Added support for Xata driver. 
+description: 增加对 Xata 驱动程序的支持。
 ---
 
 import Npm from "@components/markdown/Npm.astro";
 
-## New Features
+## 新功能
 
-### 🎉 xata-http driver support
+### 🎉 支持 xata-http 驱动程序
 
-According their **[official website](https://xata.io)**, Xata is a Postgres data platform with a focus on reliability, scalability, and developer experience. The Xata Postgres service is currently in beta, please see the [Xata docs](https://xata.io/docs/postgres) on how to enable it in your account.
+根据官方网站[（https://xata.io）](https://xata.io)，Xata 是一个以可靠性、可伸缩性和开发者体验为重点的 Postgres 数据平台。Xata Postgres 服务目前处于 beta 版阶段，请参阅[Xata 文档](https://xata.io/docs/postgres)了解如何在您的账户中启用它。
 
-Drizzle ORM natively supports both the `xata` driver with `drizzle-orm/xata` package and the **`postgres`** or **`pg`** drivers for accessing a Xata Postgres database.
+Drizzle ORM 原生支持使用 `drizzle-orm/xata` 包的 `xata` 驱动程序以及用于访问 Xata Postgres 数据库的 **`postgres`** 或 **`pg`** 驱动程序。
 
-The following example use the Xata generated client, which you obtain by running the [xata init](https://xata.io/docs/getting-started/installation) CLI command.
+以下示例使用由运行[xata init](https://xata.io/docs/getting-started/installation) CLI 命令生成的 Xata 生成的客户端。
 
 <Npm>
 drizzle-orm @xata.io/client
@@ -23,7 +23,7 @@ drizzle-orm @xata.io/client
 
 ```ts
 import { drizzle } from 'drizzle-orm/xata-http';
-import { getXataClient } from './xata'; // Generated client
+import { getXataClient } from './xata'; // 生成的客户端
 
 const xata = getXataClient();
 const db = drizzle(xata);
@@ -31,6 +31,6 @@ const db = drizzle(xata);
 const result = await db.select().from(...);
 ```
 
-You can also connect to Xata using `pg` or `postgres.js` drivers
+您也可以使用 `pg` 或 `postgres.js` 驱动程序连接到 Xata
 
-To get started with Xata and Drizzle follow the [documentation](/docs/get-started-postgresql#xata).
+要开始使用 Xata 和 Drizzle，请参阅[文档](/docs/get-started-postgresql#xata)。

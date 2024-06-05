@@ -1,23 +1,23 @@
 ---
 pubDate: 2022-07-20
-title: DrizzleORM v0.11.0 release
-description: DrizzleORM - is an open source TypeScript ORM, supports PostgreSQL and about to have MySQL and SQLite support in couple of weeks. We've decided it's time to share it with public.
+title: DrizzleORM v0.11.0 发布
+description: DrizzleORM - 是一个开源的 TypeScript ORM，支持 PostgreSQL，并计划在几周内提供 MySQL 和 SQLite 的支持。我们决定是时候与公众分享了。
 ---
 import Section from "@mdx/Section.astro";
 
-DrizzleORM - is an open source TypeScript ORM, supports PostgreSQL and about to have MySQL and SQLite support in couple of weeks. We've decided it's time to share it with public.
+DrizzleORM - 是一个开源的 TypeScript ORM，支持 PostgreSQL，并计划在几周内提供 MySQL 和 SQLite 的支持。我们决定是时候与公众分享了。
 
-With drizzle you have a fully typed SQL schema in-code which benefits you in multiple different major ways, which I'll cover later
+通过 drizzle，您可以在代码中拥有完全类型化的 SQL 模式，这将以多种不同的主要方式使您受益。稍后我将详细介绍。
 
 ```ts
-// declaring enum in database
+// 在数据库中声明枚举
 export const popularityEnum = createEnum({ alias: 'popularity', values: ['unknown', 'known', 'popular'] });
 
 export class CountriesTable extends PgTable<CountriesTable> {
   id = this.serial("id").primaryKey();
   name = this.varchar("name", { size: 256 })
 
-  // declaring index
+  // 声明索引
   nameIndex = this.uniqueIndex(this.name)
 
   public tableName(): string {
@@ -30,7 +30,7 @@ export class CitiesTable extends PgTable<CitiesTable> {
   name = this.varchar("name", { size: 256 })
   countryId = this.int("country_id").foreignKey(CountriesTable, (country) => country.id)
 
-  // declaring enum column in table
+  // 在表中声明枚举列
   popularity = this.type(popularityEnum, "popularity")
 
   public tableName(): string {
@@ -39,7 +39,7 @@ export class CitiesTable extends PgTable<CitiesTable> {
 }
 ```
 
-This is quick start example of how you connect to the database and make your first query with typed result
+这是一个快速入门示例，介绍了如何连接到数据库并进行第一次查询并获得类型化的结果。
 
 ```ts
 import { drizzle, PgTable } from 'drizzle-orm'
@@ -61,14 +61,14 @@ const usersTable = new UsersTable(db);
 const users: User[] = await usersTable.select().execute();
 ```
 
-This is how you use `WHERE` statement with filters, run partial select queries, use `limit/offset` and `orderBy`
+以下是如何使用 `WHERE` 条件语句和过滤器，在查询中使用部分选择，使用 `limit/offset` 和 `orderBy`
 
 ```ts
 await table.select().where(
   eq(table.id, 42)
 ).execute();
 
-// you can combine filters with eq(...) or or(...)
+// 您可以使用 eq(...) 或 or(...) 将过滤器组合起来
 await table.select().where(
   and([eq(table.id, 42), eq(table.name, "Dan")])
 ).execute();
@@ -77,7 +77,7 @@ await table.select().where(
   or([eq(table.id, 42), eq(table.id, 1)])
 ).execute();
 
-// partial select
+// 部分选择
 const result = await table.select({
      mapped1: table.id,
      mapped2: table.name,
@@ -90,7 +90,7 @@ await table.select().orderBy((table) => table.name, Order.ASC)
 await table.select().orderBy((table) => table.name, Order.DESC)
 ```
 
-This is how you run `inserts`, `updates` and `deletes`
+以下是如何运行 `插入`、`更新` 和 `删除` 操作
 
 ```ts
 const result = await usersTable.insert({
@@ -116,7 +116,7 @@ await usersTable.delete()
   .execute();
 ```
 
-One of the most powerful features we have in our ORM are fully typed joins, compiler won't let you make a mistake
+我们 ORM 中最强大的功能之一是完全类型化的连接操作，编译器将不会让您犯任何错误。
 
 ```ts
 const usersTable = new UsersTable(db);
@@ -130,7 +130,7 @@ const result = await citiesTable.select()
 const citiesWithUsers: { city: City, user: User }[] = result.map((city, user) => ({ city, user }));
 ```
 
-Here's a `many to many` relationship example
+下面是 `多对多` 关系的示例
 
 ```ts
 export class UsersTable extends PgTable<UsersTable> {
@@ -152,7 +152,7 @@ const usersTable = new UsersTable(db);
 const chatGroupsTable = new ChatGroupsTable(db);
 const manyToManyTable = new ManyToManyTable(db);
 
-// querying user group with id 1 and all the participants(users)
+// 查询 ID 为 1 的用户组以及所有参与者（用户）
 const usersWithUserGroups = await manyToManyTable.select()
   .leftJoin(usersTable, (manyToMany, users) => eq(manyToManyTable.userId, users.id))
   .leftJoin(chatGroupsTable, (manyToMany, _users, chatGroups) => eq(manyToManyTable.groupId, chatGroups.id))
@@ -160,9 +160,9 @@ const usersWithUserGroups = await manyToManyTable.select()
   .execute();
 ```
 
-Last but not least are migrations. We've implemented a CLI tool for automatic migrations generation, which does handle renames and deletes by prompting you to resolve.
+最后，我们来谈谈迁移。我们为自动生成迁移的 CLI 工具进行了实现，该工具可以处理重命名和删除操作，并提示您进行解决。
 
-For a typescript schema below
+对于下方的 TypeScript 模式
 
 <Section>
 ```ts
@@ -191,7 +191,7 @@ export class AuthOtpTable extends PgTable<AuthOtpTable> {
 ```
 
 ```sql
--- SQL migration
+-- SQL 迁移
 CREATE TABLE IF NOT EXISTS auth_otp (
     "id" SERIAL PRIMARY KEY,
     "phone" character varying(256),

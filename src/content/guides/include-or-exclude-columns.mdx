@@ -1,5 +1,5 @@
 ---
-title: Include or Exclude Columns in Query
+title: 在查询中包含或排除某些列
 slug: include-or-exclude-columns
 ---
 
@@ -12,15 +12,17 @@ import CodeTab from '@components/markdown/CodeTab.astro';
 <IsSupportedChipGroup chips={{PostgreSQL: true, MySQL: true, SQLite: true}}/>
 
 <Prerequisites>
-- Get started with [PostgreSQL](/docs/get-started-postgresql), [MySQL](/docs/get-started-mysql) and [SQLite](/docs/get-started-sqlite)
-- [Select statement](/docs/select)
-- [Get typed table columns](/docs/goodies#get-typed-table-columns)
-- [Joins](/docs/joins)
-- [Relational queries](/docs/rqb)
-- [Partial select with relational queries](/docs/rqb#partial-fields-select)
+- 从[这里](/docs/get-started-postgresql)开始使用 PostgreSQL
+- 从[这里](/docs/get-started-mysql)开始使用 MySQL
+- 从[这里](/docs/get-started-sqlite)开始使用 SQLite
+- [选择语句](/docs/select)
+- [获取类型定义的表列](/docs/goodies#get-typed-table-columns)
+- [连接](/docs/joins)
+- [关系查询](/docs/rqb)
+- [关系查询的部分选择](/docs/rqb#partial-fields-select)
 </Prerequisites>
 
-Drizzle has flexible API for including or excluding columns in queries. To include all columns you can use `.select()` method like this:
+Drizzle 提供了灵活的 API 来在查询中包含或排除某些列。要包含所有列，可以使用 `.select()` 方法，示例如下：
 
 <CodeTabs items={["index.ts", "schema.ts"]}>
 	<CodeTab>
@@ -33,7 +35,7 @@ Drizzle has flexible API for including or excluding columns in queries. To inclu
     ```
 
     ```ts
-    // result type
+    // 结果类型
     type Result = {
       id: number;
       title: string;
@@ -55,7 +57,7 @@ Drizzle has flexible API for including or excluding columns in queries. To inclu
 	```
 </CodeTabs>
 
-To include specific columns you can use `.select()` method like this:
+要包含特定的列，可以使用 `.select()` 方法，示例如下：
 
 <Section>
   ```ts copy {1}
@@ -63,14 +65,14 @@ To include specific columns you can use `.select()` method like this:
   ```
 
   ```ts
-  // result type
+  // 结果类型
   type Result = {
     title: string;
   }[];
   ```
 </Section>
 
-To include all columns with extra columns you can use `getTableColumns()` utility function like this:
+要包含所有列和额外的列，可以使用 `getTableColumns()` 函数，示例如下：
 
 <Section>
   ```ts copy {5,6}
@@ -85,7 +87,7 @@ To include all columns with extra columns you can use `getTableColumns()` utilit
   ```
 
   ```ts
-  // result type
+  // 结果类型
   type Result = {
     id: number;
     title: string;
@@ -96,19 +98,19 @@ To include all columns with extra columns you can use `getTableColumns()` utilit
   ```
 </Section>
 
-To exclude columns you can use `getTableColumns()` utility function like this:
+要排除某些列，可以使用 `getTableColumns()` 函数，示例如下：
 
 <Section>
   ```ts copy {3,5}
   import { getTableColumns } from 'drizzle-orm';
 
-  const { content, ...rest } = getTableColumns(posts); // exclude "content" column
+  const { content, ...rest } = getTableColumns(posts); // 排除 "content" 列
 
-  await db.select({ ...rest }).from(posts); // select all other columns
+  await db.select({ ...rest }).from(posts); // 选择其它所有列
   ```
 
   ```ts
-  // result type
+  // 结果类型
   type Result = {
     id: number;
     title: string;
@@ -117,7 +119,7 @@ To exclude columns you can use `getTableColumns()` utility function like this:
   ```
 </Section>
 
-This is how you can include or exclude columns with joins:
+以下是如何在关系查询中包含或排除列：
 
 <CodeTabs items={["index.ts", "schema.ts"]}>
   <CodeTab>
@@ -125,14 +127,14 @@ This is how you can include or exclude columns with joins:
     import { eq, getTableColumns } from 'drizzle-orm';
     import { comments, posts, users } from './db/schema';
 
-    // exclude "userId" and "postId" columns from "comments"
+    // 从 "comments" 中排除 "userId" 列和 "postId" 列
     const { userId, postId, ...rest } = getTableColumns(comments);
 
     await db
       .select({
-        postId: posts.id, // include "id" column from "posts"
-        comment: { ...rest }, // include all other columns
-        user: users, // equivalent to getTableColumns(users)
+        postId: posts.id, // 从 "posts" 中包含 "id" 列
+        comment: { ...rest }, // 包含其它所有列
+        user: users, // 等同于 getTableColumns(users)
       })
       .from(posts)
       .leftJoin(comments, eq(posts.id, comments.postId))
@@ -140,7 +142,7 @@ This is how you can include or exclude columns with joins:
     ```
 
     ```ts
-    // result type
+    // 结果类型
     type Result = {
       postId: number;
       comment: {
@@ -184,7 +186,7 @@ This is how you can include or exclude columns with joins:
   ```
 </CodeTabs>
 
-Drizzle has useful relational queries API, that lets you easily include or exclude columns in queries. This is how you can include all columns:
+Drizzle 提供了有用的关系查询 API，可以轻松地在查询中包含或排除列。以下是如何包含所有列：
 
 <CodeTabs items={["index.ts", "schema.ts"]}>
   <CodeTab>
@@ -197,7 +199,7 @@ Drizzle has useful relational queries API, that lets you easily include or exclu
     ```
 
     ```ts
-    // result type
+    // 结果类型
     type Result = {
       id: number;
       title: string;
@@ -219,7 +221,7 @@ Drizzle has useful relational queries API, that lets you easily include or exclu
 	```
 </CodeTabs>
 
-This is how you can include specific columns using relational queries:
+以下是如何使用关系查询来包含特定的列：
 
 <Section>
   ```ts copy {2,3,4}
@@ -231,14 +233,14 @@ This is how you can include specific columns using relational queries:
   ```
 
   ```ts
-  // result type
+  // 结果类型
   type Result = {
     title: string;
   }[]
   ```
 </Section>
 
-This is how you can include all columns with extra columns using relational queries:
+以下是如何使用关系查询来包含所有列和额外的列：
 
 <Section>
   ```ts copy {4,5,6}
@@ -252,7 +254,7 @@ This is how you can include all columns with extra columns using relational quer
   ```
 
   ```ts
-  // result type
+  // 结果类型
   type Result = {
     id: number;
     title: string;
@@ -263,7 +265,7 @@ This is how you can include all columns with extra columns using relational quer
   ```
 </Section>
 
-This is how you can exclude columns using relational queries:
+以下是如何使用关系查询来排除列：
 
 <Section>
   ```ts copy {2,3,4}
@@ -275,7 +277,7 @@ This is how you can exclude columns using relational queries:
   ```
 
   ```ts
-  // result type
+  // 结果类型
   type Result = {
     id: number;
     title: string;
@@ -284,7 +286,7 @@ This is how you can exclude columns using relational queries:
   ```
 </Section>
 
-This is how you can include or exclude columns with relations using relational queries:
+以下是如何在关系查询中包含或排除列和关系：
 
 <CodeTabs items={["index.ts", "schema.ts"]}>
   <CodeTab>
@@ -295,22 +297,22 @@ This is how you can include or exclude columns with relations using relational q
 
   await db.query.posts.findMany({
     columns: {
-      id: true, // include "id" column
+      id: true, // 包含 "id" 列
     },
     with: {
       comments: {
         columns: {
-          userId: false, // exclude "userId" column
-          postId: false, // exclude "postId" column
+          userId: false, // 排除 "userId" 列
+          postId: false, // 排除 "postId" 列
         },
       },
-      user: true, // include all columns from "users" table
+      user: true, // 包含 "users" 表的所有列
     },
   });
   ```
 
   ```ts
-  // result type
+  // 结果类型
   type Result = {
     id: number;
     user: {
@@ -370,7 +372,7 @@ This is how you can include or exclude columns with relations using relational q
   ```
 </CodeTabs>
 
-This is how you can create custom solution for conditional select:
+以下是如何创建有条件的选择的自定义解决方案：
 
 <CodeTabs items={["index.ts", "schema.ts"]}>
   <CodeTab>
@@ -391,7 +393,7 @@ This is how you can create custom solution for conditional select:
     ```
 
     ```ts
-    // result type
+    // 结果类型
     type Result = {
       id: number;
       title?: string | undefined;

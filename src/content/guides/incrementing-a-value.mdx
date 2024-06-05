@@ -1,5 +1,5 @@
 ---
-title: SQL Increment value
+title: SQL 增加值
 slug: incrementing-a-value
 ---
 import Section from "@mdx/Section.astro";
@@ -9,12 +9,12 @@ import Prerequisites from "@mdx/Prerequisites.astro";
 <IsSupportedChipGroup chips={{PostgreSQL: true, MySQL: true, SQLite: true}}/>
 
 <Prerequisites>
-- Get started with [PostgreSQL](/docs/get-started-postgresql), [MySQL](/docs/get-started-mysql) and [SQLite](/docs/get-started-sqlite)
-- [Update statement](/docs/update)
-- [Filters](/docs/operators) and [sql operator](/docs/sql)
+- 开始使用 [PostgreSQL](/docs/get-started-postgresql)，[MySQL](/docs/get-started-mysql) 和 [SQLite](/docs/get-started-sqlite)
+- [Update 语句](/docs/update)
+- [过滤器](/docs/operators) 和 [sql 运算符](/docs/sql)
 </Prerequisites>
 
-To increment a column value you can use `update().set()` method like below:
+要增加某一列的值，可以使用以下形式的 `update().set()` 方法：
 
 <Section>
 ```ts copy {8}
@@ -35,7 +35,7 @@ update "table" set "counter" = "counter" + 1 where "id" = 1;
 ```
 </Section>
 
-Drizzle has simple and flexible API, which lets you easily create custom solutions. This is how you do custom increment function:
+Drizzle 提供了简单灵活的 API，使您能够轻松创建自定义解决方案。以下是如何创建自定义增加函数：
 
 ```ts copy {4,10,11}
 import { AnyColumn } from 'drizzle-orm';
