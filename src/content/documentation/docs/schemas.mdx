@@ -13,10 +13,6 @@ Drizzle ORM 为 PostgreSQL 和 MySQL 方言提供了声明 SQL 模式的 API。
 如果在 schema 中声明了一个实体，查询生成器将在查询中添加 schema 名称：<br/>
 `select * from "schema"."users"`
 
-<Callout type='warning' emoji='⚠️'>
-  在 Postgres 中自定义 schema 中支持枚举目前仅在 `drizzle-orm` 中可用，对于 `drizzle-kit` 的支持即将推出。
-</Callout>
-
 <Tabs items={['PostgreSQL', 'MySQL', "SQLite"]}>
   <Tab>
     <Section>

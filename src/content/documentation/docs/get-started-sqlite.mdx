@@ -169,6 +169,12 @@ const result = db.select().from(users).run();
 ## Expo SQLite
 根据其 [官方网站](https://expo.dev/) 描述，Expo 是基于 React Native 开发、构建和发布应用程序的工具生态系统。
 它由 Hermes JavaScript 运行时和 Metro bundler 提供动力，Drizzle Expo 驱动程序旨在原生支持这两者。
+  
+Drizzle ORM 在 Expo SQLite 中拥有最佳的工具包：
+- Expo SQLite 的原生 ORM 驱动程序 ✅
+- [Drizzle Kit](/kit-docs/overview) 支持应用程序中的迁移生成和捆绑 ✅
+- [Drizzle Studio](https://github.com/drizzle-team/drizzle-studio-expo) 开发工具插件，用于浏览设备数据库 ✅
+- 实时查询 ✅
 
 <Npm>
 drizzle-orm expo-sqlite@next
@@ -184,7 +190,27 @@ const db = drizzle(expo);
 
 await db.select().from(users);
 ```
+#### 实时查询
+使用 `useLiveQuery` 钩子，您可以使任何 Drizzle 查询具有响应性：
+```ts
+import { useLiveQuery, drizzle } from 'drizzle-orm/expo-sqlite';
+import { openDatabaseSync } from 'expo-sqlite/next';
+import { Text } from 'react-native';
+import * as schema from './schema';
 
+const expo = openDatabaseSync('db.db');
+const db = drizzle(expo);
+
+const App = () => {
+  // 数据更改时会自动重新渲染
+  const { data } = useLiveQuery(db.select().from(schema.users));
+  return <Text>{JSON.stringify(data)}</Text>;
+};
+
+export default App;
+```
+
+#### 使用 Drizzle Kit 进行 Expo SQLite 迁移
 您可以使用 Drizzle Kit 生成 SQL 迁移。在进行下一步之前，请确保查看 [Drizzle Kit 迁移](/kit-docs/overview) 的工作原理。
 Expo / React Native 要求您将 SQL 迁移捆绑到应用程序中，我们已为您提供覆盖。
 
@@ -274,7 +300,6 @@ export default function App() {
   return ...your application component;
 }
 ```
-
 </Steps>
 
 ## OP SQLite
