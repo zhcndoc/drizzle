@@ -1,5 +1,5 @@
 ---
-title: "Drizzle with Turso"
+title: "使用 Turso 与 Drizzle 连接"
 date: "2024-02-17"
 svgs: ['<svg width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="9.63139" height="40.8516" rx="4.8157" transform="matrix(0.873028 0.48767 -0.497212 0.867629 43.4805 67.3037)" fill="currentColor"></rect><rect width="9.63139" height="40.8516" rx="4.8157" transform="matrix(0.873028 0.48767 -0.497212 0.867629 76.9395 46.5342)" fill="currentColor"></rect><rect width="9.63139" height="40.8516" rx="4.8157" transform="matrix(0.873028 0.48767 -0.497212 0.867629 128.424 46.5352)" fill="currentColor"></rect><rect width="9.63139" height="40.8516" rx="4.8157" transform="matrix(0.873028 0.48767 -0.497212 0.867629 94.957 67.3037)" fill="currentColor"></rect></svg>', '<svg width="241" height="240" viewBox="0 0 241 240" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M220.035 83.61C215.365 55.67 190.875 35 190.875 35V65.78L176.335 69.53L167.225 58.56L162.415 68.02C152.495 65.32 138.835 63.58 120.045 63.58C101.255 63.58 87.5949 65.33 77.6749 68.02L72.8649 58.56L63.7549 69.53L49.2149 65.78V35C49.2149 35 24.7249 55.67 20.0549 83.61L52.1949 94.73C53.2449 114.16 61.9849 166.61 64.4849 171.37C67.1449 176.44 81.2649 190.93 92.3149 196.5C92.3149 196.5 96.3149 192.27 98.7549 188.54C101.855 192.19 117.865 204.99 120.055 204.99C122.245 204.99 138.255 192.2 141.355 188.54C143.795 192.27 147.795 196.5 147.795 196.5C158.845 190.93 172.965 176.44 175.625 171.37C178.125 166.61 186.865 114.16 187.915 94.73L220.055 83.61H220.035ZM173.845 128.35L152.095 130.29L154.005 156.96C154.005 156.96 140.775 167.91 120.045 167.91C99.3149 167.91 86.0849 156.96 86.0849 156.96L87.9949 130.29L66.2449 128.35L62.5249 98.31L98.5749 110.79L95.7749 148.18C102.475 149.88 109.525 151.57 120.055 151.57C130.585 151.57 137.625 149.88 144.325 148.18L141.525 110.79L177.575 98.31L173.855 128.35H173.845Z" fill="currentColor"/></svg>']
 ---
@@ -10,76 +10,76 @@ import Steps from '@mdx/Steps.astro';
 import Section from "@mdx/Section.astro";
 import Callout from '@mdx/Callout.astro';
 
-This tutorial demonstrates how to use Drizzle ORM with [Turso](https://docs.turso.tech/introduction).
+本教程演示了如何使用 [Turso](https://docs.turso.tech/introduction) 与 Drizzle ORM。
 
 <Prerequisites>
-- You should have installed Drizzle ORM and [Drizzle kit](https://orm.drizzle.team/kit-docs/overview). You can do this by running the following command:
+- 您应该已经安装了 Drizzle ORM 和 [Drizzle kit](https://orm.drizzle.team/kit-docs/overview)。您可以通过运行以下命令来安装：
 <Npm>
 drizzle-orm
 -D drizzle-kit
 </Npm>
-- You should have installed `dotenv` package for managing environment variables. Read more about this package [here](https://www.npmjs.com/package/dotenv).
-- You should have installed Turso CLI. Check [documentation](https://docs.turso.tech/cli/introduction) for more information.
-- You should have installed `@libsql/client` package. Read more about this package [here](https://www.npmjs.com/package/@libsql/client).
+- 您应该已经安装了 `dotenv` 包以管理环境变量。您可以在[这里](https://www.npmjs.com/package/dotenv)了解更多关于此包的信息。
+- 您应该已经安装了 Turso CLI。请查阅[文档](https://docs.turso.tech/cli/introduction)以了解更多信息。
+- 您应该已经安装了 `@libsql/client` 包。请在[这里](https://www.npmjs.com/package/@libsql/client)了解更多关于此包的信息。
 </Prerequisites>
 
-[Turso](https://docs.turso.tech/concepts) is a SQLite-compatible database built on [libSQL](https://docs.turso.tech/libsql), the Open Contribution fork of SQLite. It enables scaling to hundreds of thousands of databases per organization and supports replication to any location, including your own servers, for microsecond-latency access. You can read more about Turso’s concepts [here](https://docs.turso.tech/concepts).
+[Turso](https://docs.turso.tech/concepts) 是一个兼容 SQLite 的数据库，构建在 [libSQL](https://docs.turso.tech/libsql) 上，libSQL 是 SQLite 的开放提交分支。它支持每个组织的数十万个数据库的扩展，并支持复制到任何位置，包括您自己的服务器，以实现微秒级访问延迟。您可以在[这里](https://docs.turso.tech/concepts)了解更多有关 Turso 概念的信息。
 
-Drizzle ORM natively supports libSQL driver, we embrace SQL dialects and dialect specific drivers and syntax and mirror most popular SQLite-like `all`, `get`, `values` and `run` query methods syntax.
+Drizzle ORM 本地支持 libSQL 驱动程序，我们支持 SQL 方言和特定于方言的驱动程序和语法，并且镜像了最流行的 SQLite-like 的 `all`、`get`、`values` 和 `run` 查询方法的语法。
 
-Check [official documentation](https://docs.turso.tech/quickstart) to setup Turso database.
+请参阅[官方文档](https://docs.turso.tech/quickstart)以设置 Turso 数据库。
 
-## Setup Turso and Drizzle ORM
+## 设置 Turso 和 Drizzle ORM
 
 <Steps>
-#### Signup or login to Turso
+#### 注册或登录 Turso
 
-Signup:
+注册:
 
 ```bash copy
 turso auth signup
 ```
 
-Login:
+登录:
 
 ```bash copy
 turso auth login
 ```
 
-#### Create new database
+#### 创建新数据库
 
-Create new database by running the `turso db create <DATABASE_NAME>` command:
+通过运行 `turso db create <DATABASE_NAME>` 命令创建一个新数据库:
 
 ```bash copy
 turso db create drizzle-turso-db
 ```
 
-To see information about the database, run the following command:
+要查看有关数据库的信息，请运行以下命令:
 
 ```bash copy
 turso db show drizzle-turso-db
 ```
 
-#### Create an authentication token
+#### 创建身份验证令牌
 
-To create an authentication token for your database, run the following command:
+要为您的数据库创建身份验证令牌，请运行以下命令:
 
 ```bash copy
 turso db tokens create drizzle-turso-db
 ```
 
-Learn more about this command and its options in the [documentation](https://docs.turso.tech/cli/db/tokens/create).
+在[文档](https://docs.turso.tech/cli/db/tokens/create)中了解有关此命令及其选项的更多信息。
 
-#### Update environment variables
+#### 更新环境变量
 
-Update your `.env` file with connection url and authentication token.
+使用数据库连接 URL 和身份验证令牌更新您的 `.env` 文件。
 
 ```
 TURSO_CONNECTION_URL=
 TURSO_AUTH_TOKEN=
 ```
 
-#### Connect Drizzle ORM to your database
+#### 连接 Drizzle ORM 到您的数据库
 
 ```typescript copy filename="src/db/db.ts"
 import 'dotenv/config';
@@ -94,7 +94,7 @@ const client = createClient({
 export const db = drizzle(client);
 ```
 
-#### Create tables
+#### 创建表
 
 ```typescript copy filename="src/db/schema.ts"
 import { sql } from 'drizzle-orm';
@@ -127,11 +127,11 @@ export type InsertPost = typeof postsTable.$inferInsert;
 export type SelectPost = typeof postsTable.$inferSelect;
 ```
 
-#### Setup Drizzle config file
+#### 设置 Drizzle 配置文件
 
-**Drizzle config** - a configuration file that is used by [Drizzle Kit](https://orm.drizzle.team/kit-docs/overview) and contains all the information about your database connection, migration folder and schema files.
+**Drizzle 配置** - 此配置文件用于 [Drizzle Kit](https://orm.drizzle.team/kit-docs/overview)，其中包含有关您的数据库连接、迁移文件夹和模式文件的所有信息。
 
-Create a `drizzle.config.ts` file in the root of your project and add the following content:
+在项目根目录中创建一个 `drizzle.config.ts` 文件，并添加以下内容:
 
 ```typescript copy filename="drizzle.config.ts"
 import 'dotenv/config';
@@ -149,19 +149,19 @@ export default defineConfig({
 });
 ```
 
-#### Applying changes to the database
+#### 将更改应用到数据库
 
-You can generate migrations using `drizzle-kit generate` command and then run them using the `drizzle-kit migrate` command.
+您可以使用 `drizzle-kit generate` 命令生成迁移，然后使用 `drizzle-kit migrate` 命令运行它们。
 
-Generate migrations:
+生成迁移:
 
 ```bash
 npx drizzle-kit generate
 ```
 
-These migrations are stored in the `migrations`  directory, as specified in your `drizzle.config.ts`. This directory will contain the SQL files necessary to update your database schema and a `meta` folder for storing snapshots of the schema at different migration stages.
+这些迁移保存在 `migrations` 目录中，如您在 `drizzle.config.ts` 中指定的那样。此目录将包含更新数据库模式所需的 SQL 文件以及用于在不同迁移阶段存储模式快照的 `meta` 文件夹。
 
-Example of a generated migration:
+生成的迁移示例:
 
 ```sql
 CREATE TABLE `posts` (
@@ -184,20 +184,20 @@ CREATE TABLE `users` (
 CREATE UNIQUE INDEX `users_email_unique` ON `users` (`email`);
 ```
 
-Run migrations:
+运行迁移:
 
 ```bash
 npx drizzle-kit migrate
 ```
 
-Learn more about [migration process](https://orm.drizzle.team/docs/migrations). Alternatively, you can push changes directly to the database using [push command](/kit-docs/overview#prototyping-with-db-push).
+了解更多关于[迁移过程](https://orm.drizzle.team/docs/migrations)的信息。或者，您可以使用 [push 命令](/kit-docs/overview#prototyping-with-db-push)直接将更改推送到数据库。
 
-<Callout type="warning">Push command is good for situations where you need to quickly test new schema designs or changes in a local development environment, allowing for fast iterations without the overhead of managing migration files.</Callout>
+<Callout type="warning">推送命令适用于需要在本地开发环境中快速测试新的模式设计或更改的情况，它允许快速迭代而无需管理迁移文件的开销。</Callout>
 </Steps>
 
-### Basic file structure
+### 基本文件结构
 
-This is the basic file structure of the project. In the `src/db` directory, we have database-related files including connection in `db.ts` and schema definitions in `schema.ts`.
+这是项目的基本文件结构。在 `src/db` 目录中，我们有与数据库相关的文件，包括 `db.ts` 中的连接和 `schema.ts` 中的模式定义。
 
 ```plaintext
 📦 <project root>
@@ -216,13 +216,13 @@ This is the basic file structure of the project. In the `src/db` directory, we h
  └ 📜 tsconfig.json
 ```
 
-## Query examples
+## 查询示例
 
-For instance, we create `src/db/queries.ts` file with the following queries.
+例如，我们创建了一个名为 `src/db/queries.ts` 的文件，其中包含以下查询。
 
-#### Insert data
+#### 插入数据
 
-Read more about insert query in the [documentation](/docs/insert).
+在[文档](/docs/insert)中阅读有关插入查询的更多信息。
 
 ```typescript copy filename="src/db/queries.ts" {4}
 import { db } from './db';
@@ -233,9 +233,9 @@ export async function createUser(data: InsertUser) {
 }
 ```
 
-#### Select data
+#### 查询数据
 
-Read more about select query in the [documentation](/docs/select).
+在[文档](/docs/select)中阅读有关选择查询的更多信息。
 
 ```typescript copy filename="src/db/queries.ts" {5, 16, 41}
 import { asc, count, eq, getTableColumns, gt, sql } from 'drizzle-orm';
@@ -300,11 +300,11 @@ export async function getPostsForLast24Hours(
 }
 ```
 
-Alternatively, you can use [relational query syntax](/docs/rqb).
+或者，您可以使用 [关系查询语法](/docs/rqb)。
 
-#### Update data
+#### 更新数据
 
-Read more about update query in the [documentation](/docs/update).
+在[文档](/docs/update)中阅读有关更新查询的更多信息。
 
 ```typescript copy filename="src/db/queries.ts" {3}
 // imports
@@ -314,9 +314,9 @@ export async function updatePost(id: SelectPost['id'], data: Partial<Omit<Select
 }
 ```
 
-#### Delete data
+#### 删除数据
 
-Read more about delete query in the [documentation](/docs/delete).
+在[文档](/docs/delete)中阅读有关删除查询的更多信息。
 
 ```typescript copy filename="src/db/queries.ts" {3}
 // imports

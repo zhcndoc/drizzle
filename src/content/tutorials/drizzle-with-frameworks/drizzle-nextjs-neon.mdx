@@ -1,5 +1,5 @@
 ---
-title: "Todo App with Neon Postgres"
+title: "使用 Neon Postgres 构建 Todo 应用"
 date: "2024-01-17"
 svgs: ['<svg width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="9.63139" height="40.8516" rx="4.8157" transform="matrix(0.873028 0.48767 -0.497212 0.867629 43.4805 67.3037)" fill="currentColor"></rect><rect width="9.63139" height="40.8516" rx="4.8157" transform="matrix(0.873028 0.48767 -0.497212 0.867629 76.9395 46.5342)" fill="currentColor"></rect><rect width="9.63139" height="40.8516" rx="4.8157" transform="matrix(0.873028 0.48767 -0.497212 0.867629 128.424 46.5352)" fill="currentColor"></rect><rect width="9.63139" height="40.8516" rx="4.8157" transform="matrix(0.873028 0.48767 -0.497212 0.867629 94.957 67.3037)" fill="currentColor"></rect></svg>', '<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg"><g clip-path="url(#clip0_84_2)"><path d="M128 256C198.692 256 256 198.692 256 128C256 57.3075 198.692 0 128 0C57.3075 0 0 57.3075 0 128C0 198.692 57.3075 256 128 256Z" fill="black"/><path d="M212.63 224.03L98.34 76.8H76.8V179.16H94.03V98.68L199.11 234.45C203.85 231.27 208.37 227.79 212.63 224.03Z" fill="url(#paint0_linear_84_2)"/><path d="M180.63 76.8H163.56V179.2H180.63V76.8Z" fill="url(#paint1_linear_84_2)"/></g><defs><linearGradient id="paint0_linear_84_2" x1="132.707" y1="181.561" x2="178.076" y2="237.79" gradientUnits="userSpaceOnUse"><stop stop-color="white"/><stop offset="1" stop-color="white" stop-opacity="0"/></linearGradient><linearGradient id="paint1_linear_84_2" x1="172.083" y1="76.7712" x2="171.776" y2="151.973" gradientUnits="userSpaceOnUse"><stop stop-color="white"/><stop offset="1" stop-color="white" stop-opacity="0"/></linearGradient><clipPath id="clip0_84_2"><rect width="256" height="256" fill="white"/></clipPath></defs></svg>', '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M2 6.27586C2 4.46665 3.54385 3 5.44828 3H18.5517C20.4562 3 22 4.46665 22 6.27586V16.8631C22 18.7349 19.5068 19.5471 18.2976 18.0694L14.5173 13.4496V19.0517C14.5173 20.68 13.1278 22 11.4138 22H5.44828C3.54385 22 2 20.5333 2 18.7241V6.27586ZM5.44828 5.62069C5.06739 5.62069 4.75863 5.91402 4.75863 6.27586V18.7241C4.75863 19.086 5.06739 19.3793 5.44828 19.3793H11.5172C11.7077 19.3793 11.7586 19.2327 11.7586 19.0517V11.5393C11.7586 9.66758 14.2518 8.8552 15.461 10.333L19.2414 14.9528V6.27586C19.2414 5.91402 19.2774 5.62069 18.8966 5.62069H5.44828Z" fill="currentColor"/></svg>']
 ---
@@ -10,21 +10,21 @@ import Section from "@mdx/Section.astro";
 import Tabs from "@mdx/Tabs.astro";
 import Tab from "@mdx/Tab.astro";
 
-This tutorial demonstrates how to build `Todo app` using **Drizzle ORM** with **Neon database** and **Next.js**.
+本教程演示如何使用 **Drizzle ORM**、**Neon 数据库**和 **Next.js** 构建 `Todo 应用`。
 
-## Backend
+## 后端
 <Steps>
-#### Install Drizzle Kit and Drizzle ORM
-The first step is to install **Drizzle Kit** and **Drizzle ORM** in your project.
+#### 安装 Drizzle Kit 和 Drizzle ORM
+第一步是在项目中安装 **Drizzle Kit** 和 **Drizzle ORM**。
 
 ```bash
 npm i drizzle-orm @neondatabase/serverless
 npm i -D drizzle-kit
 ```
 
-Here, we're installing the necessary packages: **`drizzle-orm`** for database interactions and **`@neondatabase/serverless`** for working with the Neon database. The **`drizzle-kit`** package is used as a dev-dependency for handling configuration and migrations.
+在这里，我们安装了必要的包：用于数据库交互的 **`drizzle-orm`**，以及与 Neon 数据库配合使用的 **`@neondatabase/serverless`**。**`drizzle-kit`** 包用作开发依赖项，用于处理配置和迁移。
 
-#### Connect Drizzle ORM to the Neon database
+#### 将 Drizzle ORM 连接到 Neon 数据库
 
 ```tsx copy filename="db/drizzle.ts"
 import { neon } from '@neondatabase/serverless';
@@ -37,12 +37,12 @@ const db = drizzle(sql);
 export default db;
 ```
 
-In this snippet, we import functionality from **`@neondatabase/serverless`** and **`drizzle-orm`**, establish a connection to the Neon database, and initialize Drizzle.
+在此代码片段中，我们从 **`@neondatabase/serverless`** 和 **`drizzle-orm`** 导入功能，与 Neon 数据库建立连接，并初始化 Drizzle。
 
-#### Setup Drizzle config file
+#### 配置 Drizzle 文件
 
 
-**Then, set up** the Drizzle configuration. **Drizzle config** is a configuration file used by **Drizzle Kit**. It contains all the information about your database connection, migration folder, and schema files.
+**然后，配置** Drizzle 配置文件。**Drizzle 配置** 是 **Drizzle Kit** 使用的配置文件。它包含有关数据库连接、迁移文件夹和模式文件的所有信息。
 
 ```tsx copy filename="drizzle.config.ts"
 import "dotenv/config";
@@ -58,9 +58,9 @@ export default defineConfig({
 });
 ```
 
-This configuration file specifies the database schema location, path for generating migrations, and database connection through the connection string.
+此配置文件指定数据库模式位置、生成迁移文件的路径以及通过连接字符串进行的数据库连接。
 
-#### Declare todos schema
+#### 声明 todos 模式
 
 ```tsx copy filename="db/schema.ts"
 import { integer, text, boolean, pgTable } from "drizzle-orm/pg-core";
@@ -72,33 +72,33 @@ export const todo = pgTable("todo", {
 });
 ```
 
-Here we define the **`todo`** table with fields **`id`**, **`text`**, and **`done`**, using data types from Drizzle ORM.
+在这里，我们使用 Drizzle ORM 的数据类型定义了 **`todo`** 表，其中包含 **`id`**、**`text`** 和 **`done`** 字段。
 
-Push your schema changes directly to the database without generating any migrations files using `drizzle-kit push` command:
+使用 `drizzle-kit push` 命令直接将模式更改推送到数据库，而不生成任何迁移文件：
 
 ```bash
 npx drizzle-kit push
 ```
 
-**Now, we're ready to write queries** using Drizzle ORM.
+**现在，我们准备好**使用 Drizzle ORM 编写查询了。
 </Steps>
 
 
-### Functions
+### 函数
 
-1. **`Add todo`:**
-    The `addTodo` function inserts a new record into the `todo` table.
-2. **`Get todos`:**
-    Here, we fetch all todos, sorted by their identifier.
-3. **`Edit todo`:**
-    The `editTodo` function updates the text of a todo by its identifier.
-4. **`Toggle todo`:**
-    This method toggles the status of a todo to its opposite state.
-5. **`Delete todo`:**
-    The `deleteTodo` function removes a todo by its identifier.
+1. **`添加 todo`：**
+    `addTodo` 函数向 `todo` 表中插入一条新记录。
+2. **`获取 todos`：**
+    这里，我们获取所有按标识符排序的 todos。
+3. **`编辑 todo`：**
+    `editTodo` 函数根据其标识符更新 todo 的文本。
+4. **`切换 todo`：**
+    此方法切换 todo 的状态到相反的状态。
+5. **`删除 todo`：**
+    `deleteTodo` 函数根据其标识符删除 todo。
 
 
-<Tabs items={['Add todo', 'Get todos', 'Edit todo', 'Toggle todo', 'Delete todo']}>
+<Tabs items={['添加 todo', '获取 todos', '编辑 todo', '切换 todo', '删除 todo']}>
   <Tab>
     <Section>
     ```tsx copy filename="actions/todoActions.ts"
@@ -183,17 +183,17 @@ npx drizzle-kit push
 
 
 
-## Frontend
+## 前端
 <Steps>
-#### Initiate Next.js app with Tailwind CSS
-Initiate a new Next.js application with Tailwind CSS support using the **`npx create-next-app@latest`** command. Name your project when prompted, navigate to the project directory, and start the development server with **`npm run dev`**. Your Next.js app is now set up for customization and styling with Tailwind CSS.
+#### 使用 Tailwind CSS 初始化 Next.js 应用
+使用 **`npx create-next-app@latest`** 命令初始化一个新的 Next.js 应用，并支持 Tailwind CSS。在提示时命名项目，转到项目目录，并使用 **`npm run dev`** 启动开发服务器。现在，你可以通过 Tailwind CSS 进行自定义和样式设定。
 
 ```bash
 npx create-next-app@latest
 ```
-#### Define a TypeScript type
+#### 定义 TypeScript 类型
 
-Define a TypeScript type for a todo item with three properties: **`id`** of type **`number`**, **`text`** of type **`string`**, and **`done`** of type **`boolean`**. This type, named **`todoType`**, represents the structure of a typical todo item within your application.
+为 todo 项定义一个 TypeScript 类型，包括三个属性：类型为 **`number`** 的 **`id`**、类型为 **`string`** 的 **`text`** 和类型为 **`boolean`** 的 **`done`**。名为 **`todoType`** 的此类型表示应用程序中典型 todo 项的结构。
 
 ```ts
 export type todoType = {
@@ -203,7 +203,7 @@ export type todoType = {
 };
 ```
 
-#### Create a home page for a to-do application
+#### 创建 to-do 应用的主页
 
 ```tsx
 import {getData} from "@/actions/todoActions";
@@ -215,13 +215,12 @@ export default async function Home() {
   return <Todos todos={data} />;
 }
 ```
-1. **`Todos.tsx`:**
-    Create Todos components that represents the main interface of a Todo app. It manages the state of todo items, provides functions for creating, editing, toggling, and deleting todos, and renders the individual todo items using the `Todo` component.
-2. **`Todo.tsx`:**
-    Create a `Todo` component that represents a single todo item. It includes features for displaying and editing the todo text, marking it as done with a checkbox, and providing actions for editing, saving, canceling, and deleting the todo.
-3. **`AddTodo`:**
-    The `AddTodo` component provides a simple form for adding new todo items to the Todo app. It includes an input field for entering the todo text and a button for triggering the addition of the new todo.
-
+1. **`Todos.tsx`：**
+    创建表示 Todo 应用的主要界面的 Todos 组件。它管理 todo 项的状态，提供创建、编辑、切换和删除 todos 的函数，并使用 Todo 组件渲染单个 todo 项。
+2. **`Todo.tsx`：**
+    创建代表单个 todo 项的 Todo 组件。它包括显示和编辑 todo 文本、通过复选框标记为已完成以及提供编辑、保存、取消和删除 todo 的操作。
+3. **`AddTodo`：**
+    AddTodo 组件提供一个简单的表单，用于向 Todo 应用中添加新的 todo 项。它包括一个输入字段用于输入 todo 文本，以及一个按钮用于触发添加新 todo。
 
 <CodeTabs items={["Todos.tsx", "Todo.tsx", "AddTodo.tsx"]}>
 	<CodeTab>
@@ -238,17 +237,17 @@ interface Props {
 }
 
 const Todos: FC<Props> = ({ todos }) => {
-  // State to manage the list of todo items
+  // 用于管理 todo 项列表的状态
   const [todoItems, setTodoItems] = useState<todoType[]>(todos);
 
-  // Function to create a new todo item
+  // 创建新的 todo 项的函数
   const createTodo = (text: string) => {
     const id = (todoItems.at(-1)?.id || 0) + 1;
     addTodo(id, text);
     setTodoItems((prev) => [...prev, { id: id, text, done: false }]);
   };
 
-  // Function to change the text of a todo item
+  // 修改 todo 项的文本的函数
   const changeTodoText = (id: number, text: string) => {
     setTodoItems((prev) =>
       prev.map((todo) => (todo.id === id ? { ...todo, text } : todo))
@@ -256,7 +255,7 @@ const Todos: FC<Props> = ({ todos }) => {
     editTodo(id, text);
   };
 
-  // Function to toggle the "done" status of a todo item
+  // 切换 todo 项的完成状态的函数
   const toggleIsTodoDone = (id: number) => {
     setTodoItems((prev) =>
       prev.map((todo) => (todo.id === id ? { ...todo, done: !todo.done } : todo))
@@ -264,18 +263,18 @@ const Todos: FC<Props> = ({ todos }) => {
     toggleTodo(id);
   };
 
-  // Function to delete a todo item
+  // 删除 todo 项的函数
   const deleteTodoItem = (id: number) => {
     setTodoItems((prev) => prev.filter((todo) => todo.id !== id));
     deleteTodo(id);
   };
 
-  // Rendering the Todo List component
+  // 渲染 Todo 列表组件
   return (
     <main className="flex mx-auto max-w-xl w-full min-h-screen flex-col items-center p-16">
       <div className="text-5xl font-medium">To-do app</div>
       <div className="w-full flex flex-col mt-8 gap-2">
-        {/* Mapping through todoItems and rendering Todo component for each */}
+        {/* 遍历 todoItems 并为每个渲染 Todo 组件 */}
         {todoItems.map((todo) => (
           <Todo
             key={todo.id}
@@ -286,7 +285,7 @@ const Todos: FC<Props> = ({ todos }) => {
           />
         ))}
       </div>
-      {/* Adding Todo component for creating new todos */}
+      {/* 添加 AddTodo 组件以创建新的 todos */}
       <AddTodo createTodo={createTodo} />
     </main>
   );
@@ -315,61 +314,61 @@ const Todo: FC<Props> = ({
   toggleIsTodoDone,
   deleteTodoItem,
 }) => {
-  // State for handling editing mode
+  // 用于处理编辑模式的状态
   const [editing, setEditing] = useState(false);
 
-  // State for handling text input
+  // 用于处理文本输入的状态
   const [text, setText] = useState(todo.text);
 
-  // State for handling "done" status
+  // 用于处理 "done" 状态的状态
   const [isDone, setIsDone] = useState(todo.done);
 
-  // Event handler for text input change
+  // 处理文本输入更改的事件处理程序
   const handleTextChange = (e: ChangeEvent<HTMLInputElement>) => {
     setText(e.target.value);
   };
 
-  // Event handler for toggling "done" status
+  // 处理切换 "done" 状态的事件处理程序
   const handleIsDone = async () => {
     toggleIsTodoDone(todo.id, !isDone);
     setIsDone((prev) => !prev);
   };
 
-  // Event handler for initiating the edit mode
+  // 处理启动编辑模式的事件处理程序
   const handleEdit = () => {
     setEditing(true);
   };
 
-  // Event handler for saving the edited text
+  // 处理保存编辑文本的事件处理程序
   const handleSave = async () => {
     changeTodoText(todo.id, text);
     setEditing(false);
   };
 
-  // Event handler for canceling the edit mode
+  // 处理取消编辑模式的事件处理程序
   const handleCancel = () => {
     setEditing(false);
     setText(todo.text);
   };
 
-  // Event handler for deleting a todo item
+  // 处理删除 todo 项的事件处理程序
   const handleDelete = () => {
-    if (confirm("Are you sure you want to delete this todo?")) {
+    if (confirm("确定要删除此 todo 吗？")) {
       deleteTodoItem(todo.id);
     }
   };
 
-  // Rendering the Todo component
+  // 渲染 Todo 组件
   return (
     <div className="flex items-center gap-2 p-4 border-gray-200 border-solid border rounded-lg">
-      {/* Checkbox for marking the todo as done */}
+      {/* 复选框，标记为已完成的 todo */}
       <input
         type="checkbox"
         className="text-blue-200 rounded-sm h-4 w-4"
         checked={isDone}
         onChange={handleIsDone}
       />
-      {/* Input field for todo text */}
+      {/* 用于 todo 文本的输入字段 */}
       <input
         type="text"
         value={text}
@@ -379,21 +378,21 @@ const Todo: FC<Props> = ({
           todo.done ? "line-through" : ""
         } outline-none read-only:border-transparent focus:border border-gray-200 rounded px-2 py-1 w-full`}
       />
-      {/* Action buttons for editing, saving, canceling, and deleting */}
+      {/* 用于编辑、保存、取消和删除的操作按钮 */}
       <div className="flex gap-1 ml-auto">
         {editing ? (
           <button
             onClick={handleSave}
             className="bg-green-600 text-green-50 rounded px-2 w-14 py-1"
           >
-            Save
+            保存
           </button>
         ) : (
           <button
             onClick={handleEdit}
             className="bg-blue-400 text-blue-50 rounded w-14 px-2 py-1"
           >
-            Edit
+            编辑
           </button>
         )}
         {editing ? (
@@ -401,14 +400,14 @@ const Todo: FC<Props> = ({
             onClick={handleCancel}
             className="bg-red-400 w-16 text-red-50 rounded px-2 py-1"
           >
-            Close
+            关闭
           </button>
         ) : (
           <button
             onClick={handleDelete}
             className="bg-red-400 w-16 text-red-50 rounded px-2 py-1"
           >
-            Delete
+            删除
           </button>
         )}
       </div>
@@ -418,6 +417,7 @@ const Todo: FC<Props> = ({
 
 export default Todo;
 ```
+
 ```tsx collapsable copy
 "use client";
 import { ChangeEvent, FC, useState } from "react";
@@ -427,36 +427,36 @@ interface Props {
 }
 
 const AddTodo: FC<Props> = ({ createTodo }) => {
-  // State for handling input value
+  // 用于处理输入值的状态
   const [input, setInput] = useState("");
 
-  // Event handler for input change
+  // 输入更改的事件处理程序
   const handleInput = (e: ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value);
   };
 
-  // Event handler for adding a new todo
+  // 添加新的 todo 的事件处理程序
   const handleAdd = async () => {
     createTodo(input);
     setInput("");
   };
 
-  // Rendering the AddTodo component
+  // 渲染 AddTodo 组件
   return (
     <div className="w-full flex gap-1 mt-2">
-      {/* Input field for entering new todo text */}
+      {/* 用于输入新的 todo 文本的输入字段 */}
       <input
         type="text"
         className="w-full px-2 py-1 border border-gray-200 rounded outline-none"
         onChange={handleInput}
         value={input}
       />
-      {/* Button for adding a new todo */}
+      {/* 用于添加新的 todo 的按钮 */}
       <button
         className="flex items-center justify-center bg-green-600 text-green-50 rounded px-2 h-9 w-14 py-1"
         onClick={handleAdd}
       >
-        Add
+        添加
       </button>
     </div>
   );
@@ -467,23 +467,23 @@ export default AddTodo;
 </CodeTabs>
 
 
-#### Establish server-side functions
-In this step, we establish server-side functions in the **`todoActions`** file to handle crucial operations on todo items:
+#### 建立服务器端函数
+在此步骤中，我们在 **`todoActions`** 文件中建立服务器端函数，以处理 todo 项的重要操作：
 
-1. **`getData`:**
-    - Fetches all existing todo items from the database.
-2. **`addTodo`:**
-    - Adds a new todo item to the database with the provided text.
-    - Initiates revalidation of the home page using **`revalidatePath("/")`**.
-3. **`deleteTodo`:**
-    - Removes a todo item from the database based on its unique ID.
-    - Triggers a revalidation of the home page.
-4. **`toggleTodo`:**
-    - Toggles the completion status of a todo item, updating the database accordingly.
-    - Revalidates the home page after the operation.
-5. **`editTodo`:**
-    - Modifies the text of a todo item identified by its ID in the database.
-    - Initiates a revalidation of the home page.
+1. **`getData`：**
+    - 从数据库获取所有现有的 todo 项。
+2. **`addTodo`：**
+    - 根据提供的文本向数据库添加一个新的 todo 项。
+    - 使用 **`revalidatePath("/")`** 启动主页的重新验证。
+3. **`deleteTodo`：**
+    - 根据其唯一 ID 从数据库中删除一个 todo 项。
+    - 触发主页的重新验证。
+4. **`toggleTodo`：**
+    - 切换 todo 项的完成状态，并相应地更新数据库。
+    - 完成操作后重新验证主页。
+5. **`editTodo`：**
+    - 根据其 ID 修改数据库中的 todo 项的文本。
+    - 启动主页的重新验证。
 
 
 ```tsx collapsable copy
@@ -537,15 +537,14 @@ export const editTodo = async (id: number, text: string) => {
 </Steps>
 
 
-## Project file structure
-This guide uses the following file structure:
+## 项目文件结构
+本指南使用以下文件结构：
 
-
-<Tabs items={['Frontend', 'Backend', 'FullStack']}>
+<Tabs items={['前端', '后端', '全栈']}>
   <Tab>
     <Section>
 ```text
-📦 <project root>
+📦 <项目根目录>
  ├ 📂 actions
  │  └ 📜 todoActions.ts
  ├ 📂 app
@@ -569,7 +568,7 @@ This guide uses the following file structure:
   <Tab>
     <Section>
 ```text
-📦 <project root>
+📦 <项目根目录>
  ├ 📂 drizzle
  │  ├ 📂 meta
  │  │  ├ 📜 _journal.json  
@@ -588,8 +587,8 @@ This guide uses the following file structure:
   </Tab>
     <Tab>
     <Section>
-```text /schema/3
-📦 <+project root>
+```text
+📦 <项目根目录>
  ├ 📂 actions
  │  └ 📜 todoActions.ts
  ├ 📂 drizzle

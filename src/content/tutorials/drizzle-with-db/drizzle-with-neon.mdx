@@ -1,5 +1,5 @@
 ---
-title: "Drizzle with Neon Postgres"
+title: "在 Neon Postgres 使用 Drizzle ORM"
 date: "2024-05-10"
 svgs: ['<svg width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="9.63139" height="40.8516" rx="4.8157" transform="matrix(0.873028 0.48767 -0.497212 0.867629 43.4805 67.3037)" fill="currentColor"></rect><rect width="9.63139" height="40.8516" rx="4.8157" transform="matrix(0.873028 0.48767 -0.497212 0.867629 76.9395 46.5342)" fill="currentColor"></rect><rect width="9.63139" height="40.8516" rx="4.8157" transform="matrix(0.873028 0.48767 -0.497212 0.867629 128.424 46.5352)" fill="currentColor"></rect><rect width="9.63139" height="40.8516" rx="4.8157" transform="matrix(0.873028 0.48767 -0.497212 0.867629 94.957 67.3037)" fill="currentColor"></rect></svg>',<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M4 6.75867C4 6.02702 4.29064 5.32535 4.80799 4.80799C5.32535 4.29064 6.02702 4 6.75867 4H17.2413C17.973 4 18.6747 4.29064 19.192 4.80799C19.7094 5.32535 20 6.02702 20 6.75867V15.6742C20 17.2502 18.0053 17.9342 17.0382 16.6902L14.0138 12.7996V17.5173C14.0138 18.1758 13.7522 18.8073 13.2866 19.2728C12.821 19.7384 12.1896 20 11.5311 20H6.75867C6.02702 20 5.32535 19.7094 4.80799 19.192C4.29064 18.6747 4 17.973 4 17.2413V6.75867ZM6.75867 6.20711C6.45378 6.20711 6.20711 6.45378 6.20711 6.75822V17.2413C6.20711 17.5462 6.45378 17.7933 6.75822 17.7933H11.6138C11.7662 17.7933 11.8067 17.6698 11.8067 17.5173V11.1911C11.8067 9.61467 13.8013 8.93067 14.7689 10.1751L17.7933 14.0653V6.75867C17.7933 6.45378 17.8218 6.20711 17.5173 6.20711H6.75867Z" /></svg>]
 ---
@@ -10,52 +10,52 @@ import Steps from "@mdx/Steps.astro";
 import Section from "@mdx/Section.astro";
 import Callout from "@mdx/Callout.astro";
 
-This tutorial demonstrates how to use Drizzle ORM with [Neon Postgres](https://neon.tech/) database. If you do not have an existing Neon account, sign up [here](https://neon.tech). 
+本教程演示了如何使用 Drizzle ORM 与 [Neon Postgres](https://neon.tech/) 数据库。如果您还没有现有的 Neon 账户，请在[这里](https://neon.tech)注册。
 
 <Prerequisites>  
-  - You should have installed Drizzle ORM and [Drizzle kit](https://orm.drizzle.team/kit-docs/overview). You can do this by running the following command:
+  - 您应该已经安装了 Drizzle ORM 和 [Drizzle kit](https://orm.drizzle.team/kit-docs/overview)。您可以通过运行以下命令来安装它们：
   <Npm>
     drizzle-orm 
     -D drizzle-kit
   </Npm>
 
-  - You should also install the [Neon serverless driver](https://neon.tech/docs/serverless/serverless-driver). 
+  - 您还应该安装 [Neon serverless driver](https://neon.tech/docs/serverless/serverless-driver)。
   <Npm>
     @neondatabase/serverless
   </Npm>
   
-  - You should have installed the `dotenv` package for managing environment variables. 
+  - 您应该已经安装了 `dotenv` 包来管理环境变量。
   <Npm>
     dotenv
   </Npm>  
 </Prerequisites>
 
-## Setup Neon and Drizzle ORM
+## 设置 Neon 和 Drizzle ORM
 
 <Steps>
-#### Create a new Neon project
+#### 创建一个新的 Neon 项目
 
-Log in to the [Neon Console](https://console.neon.tech/app/projects) and navigate to the Projects section. Select a project or click the `New Project` button to create a new one. 
+登录到 [Neon 控制台](https://console.neon.tech/app/projects)，导航到项目部分。选择一个项目或点击 “New Project” 按钮来创建一个新的项目。
 
-Your Neon projects come with a ready-to-use Postgres database named `neondb`. We'll use it in this tutorial.
+您的 Neon 项目有一个名为 `neondb` 的预配置 Postgres 数据库。我们将在本教程中使用它。
 
-#### Retrieve your Neon database connection string
+#### 获取 Neon 数据库连接字符串
 
-Navigate to the **Connection Details** section in the project console to find your database connection string. It should look similar to this:
+在项目控制台的 **Connection Details** 部分查找您的数据库连接字符串。它应该类似于：
 
 ```bash
 postgres://username:password@ep-cool-darkness-123456.us-east-2.aws.neon.tech/neondb
 ```
 
-Add the `DATABASE_URL` environment variable to your `.env` file, which you'll use to connect to the Neon database.
+将 `DATABASE_URL` 环境变量添加到您的 `.env` 文件中，用来连接到 Neon 数据库。 
 
 ```bash
 DATABASE_URL=NEON_DATABASE_CONNECTION_STRING
 ```
 
-#### Connect Drizzle ORM to your database 
+#### 连接 Drizzle ORM 到你的数据库
 
-Create a `db.ts` file and set up your database configuration:
+创建一个 `db.ts` 文件并设置数据库配置：
 
 ```typescript copy filename="src/db.ts"
 import { drizzle } from "drizzle-orm/neon-http";
@@ -68,9 +68,9 @@ const sql = neon(process.env.DATABASE_URL!);
 export const db = drizzle(sql);
 ```
 
-#### Create tables
+#### 创建表格
 
-Create a `schema.ts` file and declare your tables:
+创建一个 `schema.ts` 文件并声明你的表格：
 
 ```typescript copy filename="src/schema.ts"
 import { integer, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
@@ -102,11 +102,11 @@ export type InsertPost = typeof postsTable.$inferInsert;
 export type SelectPost = typeof postsTable.$inferSelect;
 ```
 
-#### Setup Drizzle config file
+#### 设置 Drizzle 配置文件
 
-**Drizzle config** - a configuration file that is used by [Drizzle Kit](https://orm.drizzle.team/kit-docs/overview) and contains all the information about your database connection, migration folder and schema files.
+**Drizzle 配置文件**是由 [Drizzle Kit](https://orm.drizzle.team/kit-docs/overview) 使用的配置文件，包含有关数据库连接、迁移文件夹和模式文件的所有信息。
 
-Create a `drizzle.config.ts` file in the root of your project and add the following content:
+在项目根目录下创建一个 `drizzle.config.ts` 文件并添加以下内容：
 
 ```typescript copy filename="drizzle.config.ts"
 import "dotenv/config";
@@ -122,17 +122,17 @@ export default defineConfig({
 });
 ```
 
-#### Generate migrations
+#### 生成迁移文件
 
-We'll use the drizzle-kit CLI tool. Run the following command in your terminal. 
+我们将使用 drizzle-kit 命令行工具。在终端中运行以下命令。
 
 ```bash
 npx drizzle-kit generate
 ```
 
-These migrations are stored in the `migrations` directory, as specified in the config. This directory will contain the SQL files necessary to update your database schema and a `meta` folder for storing snapshots of the schema at different migration stages. 
+这些迁移文件存储在 `migrations` 目录中，如配置中指定的那样。该目录将包含更新数据库模式所需的 SQL 文件，以及一个 `meta` 文件夹，用于存储不同迁移阶段的模式快照。
 
-For example, the migration generated above will create the following SQL:
+例如，生成的迁移将创建以下 SQL：
 
 ```sql
 CREATE TABLE IF NOT EXISTS "posts_table" (
@@ -159,27 +159,27 @@ EXCEPTION
 END $$;
 ```
 
-#### Applying changes to the database
+#### 将更改应用到数据库
 
-To execute the migration scripts, run the following command. 
+要执行迁移脚本，请运行以下命令。
 
 ```bash
 npx drizzle-kit migrate
 ```
 
-Learn more about the [migration process](https://orm.drizzle.team/docs/migrations). Alternatively, you can push changes directly to the database using [push command](/kit-docs/overview#prototyping-with-db-push).
+详细了解 [迁移过程](https://orm.drizzle.team/docs/migrations)。或者，您可以使用 [push 命令](/kit-docs/overview#prototyping-with-db-push) 将更改直接推送到数据库。
 
-<Callout type="warning">Push command is good for situations where you need to quickly test new schema designs or changes in a local development environment, allowing for fast iterations without the overhead of managing migration files.</Callout>
+<Callout type="warning">push 命令适用于需要在本地开发环境中快速测试新的模式设计或更改的情况，可以实现快速迭代，而无需管理迁移文件的开销。</Callout>
 
 </Steps>
 
 
-### Basic file structure
+### 基本文件结构
 
-This is the basic file structure of the project. In the `src/db` directory, we have database-related files including connection in `db.ts`, schema definitions in `schema.ts`, and a migration script in `migrate.ts` file which is responsible for applying migrations that stored in the `migrations` directory.
+这是项目的基本文件结构。在 `src/db` 目录中，我们有与数据库相关的文件，包括连接在 `db.ts` 中，模式定义在 `schema.ts` 中，以及存储在 `migrations` 目录中的迁移脚本。
 
 ```plaintext
-📦 <project root>
+📦 <项目根目录>
  ├ 📂 src
  │  ├ 📜 db.ts
  │  └ 📜 schema.ts
@@ -195,13 +195,13 @@ This is the basic file structure of the project. In the `src/db` directory, we h
  └ 📜 tsconfig.json
 ```
 
-## Query examples
+## 查询示例
 
-We create a file `src/queries.ts` with some sample queries as below.
+我们创建一个名为 `src/queries.ts` 的文件，其中包含一些示例查询代码。
 
-#### Insert data
+#### 插入数据
 
-Read more about insert query in the [documentation](/docs/insert).
+有关插入查询的更多信息，请参阅[文档](/docs/insert)。
 
 ```typescript copy filename="src/queries.ts" {4}
 import { db } from './db';
@@ -212,9 +212,9 @@ export async function createUser(data: InsertUser) {
 }
 ```
 
-#### Select data
+#### 查询数据
 
-Read more about select query in the [documentation](/docs/select).
+有关查询查询的更多信息，请参阅[文档](/docs/select)。
 
 ```typescript copy filename="src/queries.ts" {5, 16, 41}
 import { asc, between, count, eq, getTableColumns, sql } from 'drizzle-orm';
@@ -279,11 +279,11 @@ export async function getPostsForLast24Hours(
 }
 ```
 
-Alternatively, you can use [relational query syntax](/docs/rqb).
+或者，您可以使用[关系查询语法](/docs/rqb)。
 
-#### Update data
+#### 更新数据
 
-Read more about update query in the [documentation](/docs/update).
+有关更新查询的更多信息，请参阅[文档](/docs/update)。
 
 ```typescript copy filename="src/queries.ts" {3}
 // imports
@@ -293,9 +293,9 @@ export async function updatePost(id: SelectPost['id'], data: Partial<Omit<Select
 }
 ```
 
-#### Delete data
+#### 删除数据
 
-Read more about delete query in the [documentation](/docs/delete).
+有关删除查询的更多信息，请参阅[文档](/docs/delete)。
 
 ```typescript copy filename="src/queries.ts" {3}
 // imports

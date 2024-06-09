@@ -1,5 +1,5 @@
 ---
-title: "Drizzle with Supabase Database"
+title: "使用 Supabase 数据库与 Drizzle 连接"
 date: "2024-05-07"
 svgs: ['<svg width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="9.63139" height="40.8516" rx="4.8157" transform="matrix(0.873028 0.48767 -0.497212 0.867629 43.4805 67.3037)" fill="currentColor"></rect><rect width="9.63139" height="40.8516" rx="4.8157" transform="matrix(0.873028 0.48767 -0.497212 0.867629 76.9395 46.5342)" fill="currentColor"></rect><rect width="9.63139" height="40.8516" rx="4.8157" transform="matrix(0.873028 0.48767 -0.497212 0.867629 128.424 46.5352)" fill="currentColor"></rect><rect width="9.63139" height="40.8516" rx="4.8157" transform="matrix(0.873028 0.48767 -0.497212 0.867629 94.957 67.3037)" fill="currentColor"></rect></svg>', <svg width="24" height="25" viewBox="0 0 24 25" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M13.3501 21.1611C12.9303 21.6898 12.079 21.4002 12.0689 20.7251L11.921 10.8511H18.5603C19.7628 10.8511 20.4335 12.24 19.6857 13.1818L13.3501 21.1611Z" /><path d="M10.6499 5.27307C11.0697 4.7443 11.921 5.03403 11.9311 5.70913L11.996 15.5831H5.43981C4.23723 15.5831 3.56652 14.1942 4.31432 13.2524L10.6499 5.27307Z"/></svg>]
 ---
@@ -10,42 +10,42 @@ import Steps from '@mdx/Steps.astro';
 import Section from "@mdx/Section.astro";
 import Callout from '@mdx/Callout.astro';
 
-This tutorial demonstrates how to use Drizzle ORM with [Supabase Database](https://supabase.com/docs/guides/database/overview). Every Supabase project comes with a full [Postgres](https://www.postgresql.org/) database.
+本教程演示了如何使用 Drizzle ORM 与 [Supabase 数据库](https://supabase.com/docs/guides/database/overview)。每个 Supabase 项目都附带一个完整的 [Postgres](https://www.postgresql.org/) 数据库。
 
 <Prerequisites>
-- You should have installed Drizzle ORM and [Drizzle kit](https://orm.drizzle.team/kit-docs/overview). You can do this by running the following command:
+- 您应该已经安装了 Drizzle ORM 和 [Drizzle kit](https://orm.drizzle.team/kit-docs/overview)。您可以通过运行以下命令来完成安装：
 <Npm>
 drizzle-orm
 -D drizzle-kit
 </Npm>
-- You should have installed `dotenv` package for managing environment variables. Read more about this package [here](https://www.npmjs.com/package/dotenv).
-- You should have the latest version of [Supabase CLI](https://supabase.com/docs/guides/cli/getting-started#installing-the-supabase-cli) installed. (Only if you want to use the CLI for migrations).
+- 您应该安装了 `dotenv` 包来管理环境变量。了解更多关于该包的信息，请访问 [这里](https://www.npmjs.com/package/dotenv)。
+- 您应该安装了最新版本的 [Supabase CLI](https://supabase.com/docs/guides/cli/getting-started#installing-the-supabase-cli)。（仅当您想要使用 CLI 进行迁移时）。
 </Prerequisites>
 
-Check [Supabase documentation](https://supabase.com/docs/guides/database/connecting-to-postgres#connecting-with-drizzle) to learn how to connect to database with Drizzle ORM.
+查看 [Supabase 文档](https://supabase.com/docs/guides/database/connecting-to-postgres#connecting-with-drizzle) 以了解如何使用 Drizzle ORM 连接数据库。
 
-## Setup Supabase and Drizzle ORM
+## 设置 Supabase 和 Drizzle ORM
 
 <Steps>
-#### Create a new Supabase project
+#### 创建一个新的 Supabase 项目
 
-You can create new Supabase project in the [dashboard](https://supabase.com/dashboard) or by following this [link](https://database.new/).
+您可以在 [仪表板](https://supabase.com/dashboard) 上创建新的 Supabase 项目，或者按照此 [链接](https://database.new/) 进行操作。
 
-#### Setup connection string variable
+#### 设置连接字符串变量
 
-Navigate to [Database Settings](https://supabase.com/dashboard/project/_/settings/database) and copy the URI from the `Connection String` section. Make sure to use `connection pooling`. Remember to replace the password placeholder with your actual database password.
+转到 [数据库设置](https://supabase.com/dashboard/project/_/settings/database) 并复制 `连接字符串` 部分的 URI。确保使用 `连接池`。请记住将密码占位符替换为实际的数据库密码。
 
-Add `DATABASE_URL` variable to your `.env` file:
+将 `DATABASE_URL` 变量添加到您的 `.env` 文件中：
 
 ```plaintext
 DATABASE_URL=<CONNECTION_STRING>
 ```
 
-Read more about Connection Pooler and pooling modes in the [documentation](https://supabase.com/docs/guides/database/connecting-to-postgres#connection-pooler).
+在[文档](https://supabase.com/docs/guides/database/connecting-to-postgres#connection-pooler)中详细了解连接池和池模式。
 
-#### Connect Drizzle ORM to your database
+#### 将 Drizzle ORM 连接到您的数据库
 
-Create a `db.ts` file in the `src/db` directory and set up your database configuration:
+在 `src/db` 目录中创建一个 `db.ts` 文件，并设置数据库配置：
 
 ```typescript copy filename="src/db/db.ts"
 import 'dotenv/config';
@@ -56,9 +56,9 @@ const client = postgres(process.env.DATABASE_URL!);
 export const db = drizzle(client);
 ```
 
-#### Create tables
+#### 创建表
 
-Create a `schema.ts` file in the `src/db` directory and declare your tables:
+在 `src/db` 目录中创建一个 `schema.ts` 文件，并声明您的表：
 
 ```typescript copy filename="src/db/schema.ts"
 import { integer, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
@@ -90,11 +90,11 @@ export type InsertPost = typeof postsTable.$inferInsert;
 export type SelectPost = typeof postsTable.$inferSelect;
 ```
 
-#### Setup Drizzle config file
+#### 设置 Drizzle 配置文件
 
-**Drizzle config** - a configuration file that is used by [Drizzle Kit](https://orm.drizzle.team/kit-docs/overview) and contains all the information about your database connection, migration folder and schema files.
+**Drizzle 配置** - 一个由[Drizzle Kit](https://orm.drizzle.team/kit-docs/overview) 使用的配置文件，其中包含有关数据库连接、迁移文件夹和模式文件的所有信息。
 
-Create a `drizzle.config.ts` file in the root of your project and add the following content:
+在项目的根目录中创建一个 `drizzle.config.ts` 文件，并添加以下内容：
 
 ```typescript copy filename="drizzle.config.ts"
 import 'dotenv/config';
@@ -110,19 +110,19 @@ export default defineConfig({
 });
 ```
 
-#### Applying changes to the database
+#### 将更改应用到数据库
 
-You can generate migrations using `drizzle-kit generate` command and then run them using the `drizzle-kit migrate` command.
+您可以使用 `drizzle-kit generate` 命令生成迁移，然后使用 `drizzle-kit migrate` 命令运行迁移。
 
-Generate migrations:
+生成迁移：
 
 ```bash
 npx drizzle-kit generate
 ```
 
-These migrations are stored in the `supabase/migrations`  directory, as specified in your `drizzle.config.ts`. This directory will contain the SQL files necessary to update your database schema and a `meta` folder for storing snapshots of the schema at different migration stages.
+这些迁移存储在 `supabase/migrations` 目录中，如您的 `drizzle.config.ts` 中指定的那样。该目录将包含更新数据库架构所需的 SQL 文件，以及用于在不同迁移阶段存储架构快照的 `meta` 文件夹。
 
-Example of a generated migration:
+生成的迁移示例：
 
 ```sql
 CREATE TABLE IF NOT EXISTS "posts_table" (
@@ -149,15 +149,15 @@ EXCEPTION
 END $$;
 ```
 
-Run migrations:
+运行迁移：
 
 ```bash
 npx drizzle-kit migrate
 ```
 
-Learn more about [migration process](https://orm.drizzle.team/docs/migrations). You can also apply migtations using [Supabase CLI](https://supabase.com/docs/guides/cli/getting-started):
+了解更多关于[迁移过程](https://orm.drizzle.team/docs/migrations)的信息。您还可以使用 [Supabase CLI](https://supabase.com/docs/guides/cli/getting-started) 应用迁移：
 
-To apply migrations using the Supabase CLI, initialize local Supabase project, link it to your remote project and push changes to the database:
+使用 Supabase CLI 应用迁移，初始化本地 Supabase 项目，将其与远程项目连接，并将更改推送到数据库：
 
 ```bash
 supabase init
@@ -165,19 +165,19 @@ supabase link
 supabase db push
 ```
 
-Alternatively, you can push changes directly to the database using [Drizzle kit push command](/kit-docs/overview#prototyping-with-db-push):
+或者，您可以使用 [Drizzle kit push 命令](/kit-docs/overview#prototyping-with-db-push) 直接将更改推送到数据库：
 
 ```bash
 npx drizzle-kit push
 ```
 
-<Callout type="warning">Push command is good for situations where you need to quickly test new schema designs or changes in a local development environment, allowing for fast iterations without the overhead of managing migration files.</Callout>
+<Callout type="warning">Push 命令适用于需要快速测试本地开发环境中的新架构设计或更改的情况，可以实现快速迭代，无需管理迁移文件。</Callout>
 
 </Steps>
 
-## Basic file structure
+## 基本文件结构
 
-This is the basic file structure of the project. In the `src/db` directory, we have database-related files including connection in `db.ts` and schema definitions in `schema.ts`.
+这是项目的基本文件结构。在 `src/db` 目录中，我们有与数据库相关的文件，包括连接在 `db.ts` 中以及架构定义在 `schema.ts` 中。
 
 ```plaintext
 📦 <project root>
@@ -198,13 +198,13 @@ This is the basic file structure of the project. In the `src/db` directory, we h
  └ 📜 tsconfig.json
 ```
 
-## Query examples
+## 查询示例
 
-For instance, we create `src/db/queries.ts` file with the following queries.
+例如，我们创建了 `src/db/queries.ts` 文件，并在其中编写以下查询。
 
-#### Insert data
+#### 插入数据
 
-Read more about insert query in the [documentation](/docs/insert).
+请阅读[文档](/docs/insert)了解有关插入查询的更多信息。
 
 ```typescript copy filename="src/db/queries.ts" {4}
 import { db } from './db';
@@ -215,9 +215,9 @@ export async function createUser(data: InsertUser) {
 }
 ```
 
-#### Select data
+#### 查询数据
 
-Read more about select query in the [documentation](/docs/select).
+请阅读[文档](/docs/select)了解有关查询查询的更多信息。
 
 ```typescript copy filename="src/db/queries.ts" {5, 16, 41}
 import { asc, between, count, eq, getTableColumns, sql } from 'drizzle-orm';
@@ -282,26 +282,26 @@ export async function getPostsForLast24Hours(
 }
 ```
 
-Alternatively, you can use [relational query syntax](/docs/rqb).
+或者，您可以使用[关系查询语法](/docs/rqb).
 
-#### Update data
+#### 更新数据
 
-Read more about update query in the [documentation](/docs/update).
+请阅读[文档](/docs/update)了解有关更新查询的更多信息。
 
 ```typescript copy filename="src/db/queries.ts" {3}
-// imports
+// 导入
 
 export async function updatePost(id: SelectPost['id'], data: Partial<Omit<SelectPost, 'id'>>) {
   await db.update(postsTable).set(data).where(eq(postsTable.id, id));
 }
 ```
 
-#### Delete data
+#### 删除数据
 
-Read more about delete query in the [documentation](/docs/delete).
+请阅读[文档](/docs/delete)了解有关删除查询的更多信息。
 
 ```typescript copy filename="src/db/queries.ts" {3}
-// imports
+// 导入
 
 export async function deleteUser(id: SelectUser['id']) {
   await db.delete(usersTable).where(eq(usersTable.id, id));
