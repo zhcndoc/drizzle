@@ -38,19 +38,21 @@ drizzle-orm
 将 `DATABASE_URL` 变量添加到您的 `.env` 文件中：
 
 ```plaintext
-DATABASE_URL=<CONNECTION_STRING>
+DATABASE_URL=<YOUR_DATABASE_URL>
 ```
 
 在[文档](https://supabase.com/docs/guides/database/connecting-to-postgres#connection-pooler)中详细了解连接池和池模式。
 
 #### 将 Drizzle ORM 连接到您的数据库
 
-在 `src/db` 目录中创建一个 `db.ts` 文件，并设置数据库配置：
+在 `src/db` 目录中创建一个 `index.ts` 文件，并设置数据库配置：
 
-```typescript copy filename="src/db/db.ts"
-import 'dotenv/config';
+```typescript copy filename="src/db/index.ts"
+import { config } from 'dotenv';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
+
+config({ path: '.env' });
 
 const client = postgres(process.env.DATABASE_URL!);
 export const db = drizzle(client);
@@ -97,8 +99,10 @@ export type SelectPost = typeof postsTable.$inferSelect;
 在项目的根目录中创建一个 `drizzle.config.ts` 文件，并添加以下内容：
 
 ```typescript copy filename="drizzle.config.ts"
-import 'dotenv/config';
+import { config } from 'dotenv';
 import { defineConfig } from 'drizzle-kit';
+
+config({ path: '.env' });
 
 export default defineConfig({
   schema: './src/db/schema.ts',
@@ -183,9 +187,9 @@ npx drizzle-kit push
 📦 <project root>
  ├ 📂 src
  │   ├ 📂 db
- │   │  ├ 📜 db.ts
+ │   │  ├ 📜 index.ts
+ │   │  ├ 📜 queries.ts
  │   │  └ 📜 schema.ts
- │   └ 📜 index.ts
  ├ 📂 supabase
  │   ├ 📂 migrations
  │   │  ├ 📂 meta
@@ -193,6 +197,7 @@ npx drizzle-kit push
  │   │  │  └ 📜 0000_snapshot.json
  │   │  └ 📜 0000_watery_spencer_smythe.sql
  │   └ 📜 config.toml
+ ├ 📜 .env
  ├ 📜 drizzle.config.ts
  ├ 📜 package.json
  └ 📜 tsconfig.json

@@ -28,16 +28,16 @@ drizzle-orm
 </Npm>
 </Prerequisites>
 
-## Edge 兼容驱动程序
+## Edge-compatible driver
 
-使用 Drizzle ORM 与 Vercel Edge 函数时，您必须使用 Edge 兼容驱动程序，因为函数在 [Edge 运行时](https://vercel.com/docs/functions/runtimes/edge-runtime) 中运行，而不是在 Node.js 运行时，因此标准的 Node.js API 存在一些限制。
+When using Drizzle ORM with Vercel Edge functions you have to use edge-compatible drivers because the functions run in [Edge runtime](https://vercel.com/docs/functions/runtimes/edge-runtime) not in Node.js runtime, so there are some limitations of standard Node.js APIs.
 
-根据您的数据库方言，您可以选择下列任一驱动程序：
+You can choose one of these drivers according to your database dialect:
 
-- [Neon 无服务器驱动](/docs/get-started-postgresql#neon) 允许您访问任何 `PostgreSQL` 客户端，并在无服务器和边缘环境上通过 HTTP 或 WebSockets 查询数据。我们建议为 `非-Vercel Postgres` 客户端使用此驱动程序，因为 Vercel Postgres 驱动程序实现了特定的连接字符串检查，可能与其他 `PostgreSQL` 客户端不兼容。
-- [Vercel Postgres 驱动程序](/docs/get-started-postgresql#vercel-postgres) 建立在 `Neon 无服务器驱动` 之上，允许您访问任何 `PostgreSQL` 客户端。我们建议为 `Vercel Postgres` 客户端使用此驱动程序。
-- [PlanetScale 无服务器驱动](/docs/get-started-mysql#planetscale) 允许您访问任何 `MySQL` 客户端，并通过 HTTP 连接执行查询，这通常不被云提供商阻止。
-- [libSQL 客户端](/docs/get-started-sqlite#turso) 允许您访问[Turso](https://docs.turso.tech/introduction)数据库。
+- [Neon serverless driver](/docs/get-started-postgresql#neon) allows you to query your Neon Postgres databases from serverless and edge environments over HTTP or WebSockets in place of TCP. We recommend using this driver for connecting to `Neon Postgres`.
+- [Vercel Postgres driver](/docs/get-started-postgresql#vercel-postgres) is built on top of the `Neon serverless driver`. We recommend using this driver for connecting to `Vercel Postgres`.
+- [PlanetScale serverless driver](/docs/get-started-mysql#planetscale) allows you access any `MySQL` client and execute queries over an HTTP connection, which is generally not blocked by cloud providers.
+- [libSQL client](/docs/get-started-sqlite#turso) allows you to access [Turso](https://docs.turso.tech/introduction) database.
 
 ## 导航
 
@@ -72,7 +72,7 @@ export default defineConfig({
 在 `.env` 文件中配置数据库连接字符串：
 
 ```plaintext filename=".env"
-POSTGRES_URL="postgres://[user].xyejfgcvritnursacipt:[password]@aws-0-[region].pooler.supabase.com:6543/[db-name]"
+POSTGRES_URL="postgres://[user]:[password]@[host]-[region].aws.neon.tech:5432/[db-name]?sslmode=[ssl-mode]"
 ```
 
 #### 创建表

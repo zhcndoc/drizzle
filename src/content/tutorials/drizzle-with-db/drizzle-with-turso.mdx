@@ -81,10 +81,12 @@ TURSO_AUTH_TOKEN=
 
 #### 连接 Drizzle ORM 到您的数据库
 
-```typescript copy filename="src/db/db.ts"
-import 'dotenv/config';
+```typescript copy filename="src/db/index.ts"
+import { config } from 'dotenv';
 import { drizzle } from 'drizzle-orm/libsql';
 import { createClient } from '@libsql/client';
+
+config({ path: '.env' });
 
 const client = createClient({
   url: process.env.TURSO_CONNECTION_URL!,
@@ -134,8 +136,10 @@ export type SelectPost = typeof postsTable.$inferSelect;
 在项目根目录中创建一个 `drizzle.config.ts` 文件，并添加以下内容:
 
 ```typescript copy filename="drizzle.config.ts"
-import 'dotenv/config';
+import { config } from 'dotenv';
 import { defineConfig } from 'drizzle-kit';
+
+config({ path: '.env' });
 
 export default defineConfig({
   schema: './src/db/schema.ts',
@@ -203,14 +207,15 @@ npx drizzle-kit migrate
 📦 <project root>
  ├ 📂 src
  │   ├ 📂 db
- │   │  ├ 📜 db.ts
+ │   │  ├ 📜 index.ts
+ │   │  ├ 📜 queries.ts
  │   │  └ 📜 schema.ts
- │   └ 📜 index.ts
  ├ 📂 migrations
  │  ├ 📂 meta
  │  │  ├ 📜 _journal.json
  │  │  └ 📜 0000_snapshot.json
  │  └ 📜 0000_watery_spencer_smythe.sql
+ ├ 📜 .env
  ├ 📜 drizzle.config.ts
  ├ 📜 package.json
  └ 📜 tsconfig.json
