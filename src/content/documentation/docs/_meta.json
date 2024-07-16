@@ -14,6 +14,7 @@
   "sql-schema-declaration": "概述",
   "column-types": "列类型",
   "indexes-constraints": "索引和约束",
+  "sequences": "序列",
   "migrations": "迁移",
   "views": "视图",
   "schemas": "模式",
@@ -42,6 +43,7 @@
     "title": "进阶"
   },
   "set-operations": "集合操作",
+  "generated-columns": "生成列",
   "transactions": "事务",
   "batch-api": "批量 API",
   "dynamic-query-building": "动态查询构建",

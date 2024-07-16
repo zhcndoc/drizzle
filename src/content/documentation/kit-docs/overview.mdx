@@ -70,6 +70,30 @@ Drizzle Kit 允许你将 schema 拆分到不同的文件中，甚至在一个项
   ```
 </CodeTabs>
 
+You can also configure the prefixes for migrations, so they can be in a format that is compliant with the migration tool you are using or for your own convenience, for example Supabase would need `20240710095007_*.sql` format and drizzle has `0000_*.sql` be default
+
+You can check all the prefix options [here](/kit-docs/config-reference#migrationsprefix)
+
+<Callout type="warning">
+You can use prefixes only if you don't have any migration history already. The kit won't work properly if you mix prefix formats within the same migration folder. Please ensure you use only one prefix format throughout the project.
+
+We are working on making it possible to migrate from one prefix format to another and to ensure interoperability
+</Callout>
+
+<CodeTabs items={["drizzle.config.ts"]}>
+```ts
+import { defineConfig } from 'drizzle-kit'
+
+export default defineConfig({
+  schema: "./schema.ts",
+  dialect: 'postgresql',
+  migrations: {
+    prefix: 'supabase'
+  }
+})
+```
+</CodeTabs>
+
 ## Schema 更新
 每当你对 schema 进行更改时，只需要重新运行 `$ drizzle-kit generate`，
 它将根据大多数情况自动为你生成 SQL 迁移。
@@ -172,7 +196,7 @@ Drizzle Kit 允许你在 `TypeScript`、`JavaScript` 或 `JSON` 配置文件中�
 import { defineConfig } from 'drizzle-kit'
 
 export default defineConfig({
- schema: "./schema.ts",
+  schema: "./schema.ts",
   dialect: 'postgresql',
   dbCredentials: {
     url: process.env.DB_URL,
