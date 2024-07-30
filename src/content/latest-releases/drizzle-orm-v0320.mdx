@@ -1,18 +1,18 @@
 ---
-title: DrizzleORM v0.32.0 release
+title: DrizzleORM v0.32.0 发布
 pubDate: 2024-07-10
-description: Generated columns, identity columns, sequences and more
+description: 生成列、唯一标识列、序列等新功能
 ---
 
-# Release notes for `drizzle-orm@0.32.0` and `drizzle-kit@0.23.0`
+# `drizzle-orm@0.32.0` 和 `drizzle-kit@0.23.0` 的发布说明
 
-> It's not mandatory to upgrade both packages, but if you want to use the new features in both queries and migrations, you will need to upgrade both packages
+> 升级两个包不是强制性的，但如果您想在查询和迁移中使用新功能，您需要升级两个包。
 
-## New Features
+## 新特性
 
-### 🎉 MySQL `$returningId()` function
+### 🎉 MySQL 的 `$returningId()` 函数
 
-MySQL itself doesn't have native support for `RETURNING` after using `INSERT`. There is only one way to do it for `primary keys` with `autoincrement` (or `serial`) types, where you can access `insertId` and `affectedRows` fields. We've prepared an automatic way for you to handle such cases with Drizzle and automatically receive all inserted IDs as separate objects
+MySQL 本身不支持 `INSERT` 之后原生的 `RETURNING`。对于具有 `autoincrement`（或 `serial`）类型的 `primary keys`，只有一种方法可以做到这一点，你可以访问 `insertId` 和 `affectedRows` 字段。我们已经为 Drizzle 准备了一个自动处理此类情况的方式，并且会自动为你返回所有插入的 ID 作为独立对象。
 
 ```ts
 import { boolean, int, text, mysqlTable } from 'drizzle-orm/mysql-core';
@@ -28,7 +28,7 @@ const result = await db.insert(usersTable).values([{ name: 'John' }, { name: 'Jo
 //    ^? { id: number }[]
 ```
 
-Also with Drizzle, you can specify a `primary key` with `$default` function that will generate custom primary keys at runtime. We will also return those generated keys for you in the `$returningId()` call
+也通过 Drizzle，你可以指定一个 `primary key` 使用 `$default` 函数在运行时生成自定义主键。我们也会在 `$returningId()` 调用中为你返回这些生成的键。
 
 ```ts
 import { varchar, text, mysqlTable } from 'drizzle-orm/mysql-core';
@@ -44,21 +44,21 @@ const result = await db.insert(usersTableDefFn).values([{ name: 'John' }, { name
 //  ^? { customId: string }[]
 ```
 
-> If there is no primary keys -> type will be `{}[]` for such queries
+> 如果没有主键 -> 类型将会是 `{}[]` 对于此类查询。
 
-### 🎉 PostgreSQL Sequences
+### 🎉 PostgreSQL 序列
 
-You can now specify sequences in Postgres within any schema you need and define all the available properties
+您现在可以在 Postgres 中指定任何您需要的模式下的序列，并定义所有可用的属性。
 
-##### **Example**
+##### **示例**
 
 ```ts
 import { pgSchema, pgSequence } from "drizzle-orm/pg-core";
 
-// No params specified
+// 未指定任何参数
 export const customSequence = pgSequence("name");
 
-// Sequence with params
+// 带参数的序列
 export const customSequence = pgSequence("name", {
       startWith: 100,
       maxValue: 10000,
@@ -68,17 +68,17 @@ export const customSequence = pgSequence("name", {
       increment: 2
 });
 
-// Sequence in custom schema
+// 自定义模式中的序列
 export const customSchema = pgSchema('custom_schema');
 
 export const customSequence = customSchema.sequence("name");
 ```
 
-### 🎉 PostgreSQL Identity Columns
+### 🎉 PostgreSQL 唯一标识列
 
-[Source](https://wiki.postgresql.org/wiki/Don%27t_Do_This#Don.27t_use_serial): As mentioned, the `serial` type in Postgres is outdated and should be deprecated. Ideally, you should not use it. `Identity columns` are the recommended way to specify sequences in your schema, which is why we are introducing the `identity columns` feature
+[源](https://wiki.postgresql.org/wiki/Don%27t_Do_This#Don.27t_use_serial): 如前所述，Postgres 中的 `serial` 类型已经过时，应该被弃用。理想情况下，您不应该使用它。推荐的方式是使用唯一标识列在您的模式中指定序列，这就是为什么我们正在引入唯一标识列功能。
 
-##### **Example**
+##### **示例**
 
 ```ts
 import { pgTable, integer, text } from 'drizzle-orm/pg-core' 
@@ -90,17 +90,17 @@ export const ingredients = pgTable("ingredients", {
 });
 ```
 
-You can specify all properties available for sequences in the `.generatedAlwaysAsIdentity()` function. Additionally, you can specify custom names for these sequences
+您可以在 `.generatedAlwaysAsIdentity()` 函数中指定所有序列可用的属性。此外，您还可以为这些序列指定自定义名称。
 
-PostgreSQL docs [reference](https://www.postgresql.org/docs/current/sql-createtable.html#SQL-CREATETABLE-PARMS-GENERATED-IDENTITY).
+PostgreSQL 文档 [参考](https://www.postgresql.org/docs/current/sql-createtable.html#SQL-CREATETABLE-PARMS-GENERATED-IDENTITY)。
 
-### 🎉 PostgreSQL Generated Columns
+### 🎉 PostgreSQL 生成列
 
-You can now specify generated columns on any column supported by PostgreSQL to use with generated columns
+您现在可以在 Postgres 中指定任何 PostgreSQL 支持的列上使用生成列。
 
-##### **Example** with generated column for `tsvector`
+##### **示例** 使用 `tsvector` 生成列
 
-> Note: we will add `tsVector` column type before latest release
+> 注意：在最新发布之前，我们将添加 `tsVector` 列类型。
 
 ```ts
 import { SQL, sql } from "drizzle-orm";
@@ -129,7 +129,7 @@ export const test = pgTable(
 );
 ```
 
-In case you don't need to reference any columns from your table, you can use just `sql` template or a `string`
+在您不需要引用表中任何列的情况下，您可以在 `.generatedAlwaysAs()` 中使用 `sql` 模板或 `string`。
 
 ```ts
 export const users = pgTable("users", {
@@ -137,24 +137,24 @@ export const users = pgTable("users", {
   name: text("name"),
   generatedName: text("gen_name").generatedAlwaysAs(sql`hello world!`),
   generatedName1: text("gen_name1").generatedAlwaysAs("hello world!"),
-}),
+})
 ```
 
-### 🎉 MySQL Generated Columns
+### 🎉 MySQL 生成列
 
-You can now specify generated columns on any column supported by MySQL to use with generated columns
+您现在可以在 MySQL 中指定任何支持的列上使用生成列。
 
-You can specify both `stored` and `virtual` options, for more info you can check [MySQL docs](https://dev.mysql.com/doc/refman/8.4/en/create-table-generated-columns.html)
+您可以指定 `stored` 和 `virtual` 选项，更多信息您可以查看 [MySQL 文档](https://dev.mysql.com/doc/refman/8.4/en/create-table-generated-columns.html)。
 
-Also MySQL has a few limitation for such columns usage, which is described [here](https://dev.mysql.com/doc/refman/8.4/en/alter-table-generated-columns.html)
+同样，MySQL 对于这类列的使用有几个限制，这些限制在 [这里](https://dev.mysql.com/doc/refman/8.4/en/alter-table-generated-columns.html) 描述。
 
-Drizzle Kit will also have limitations for `push` command:
+Drizzle Kit 对于 `push` 命令也会有一些限制：
 
-1. You can't change the generated constraint expression and type using `push`. Drizzle-kit will ignore this change. To make it work, you would need to `drop the column`, `push`, and then `add a column with a new expression`. This was done due to the complex mapping from the database side, where the schema expression will be modified on the database side and, on introspection, we will get a different string. We can't be sure if you changed this expression or if it was changed and formatted by the database. As long as these are generated columns and `push` is mostly used for prototyping on a local database, it should be fast to `drop` and `create` generated columns. Since these columns are `generated`, all the data will be restored
+1. 您不能使用 `push` 更改生成约束表达式和类型。Drizzle-kit 将忽略这个更改。为了使它工作，您需要 `drop the column`，`push`，然后 `添加一个带新表达式的列`。这是因为从数据库侧映射的复杂性，在数据库侧，模式表达式将被修改，在我们进行内省时，我们将获得一个不同的字符串。我们不能确定你是否更改了这个表达式，或者是数据库更改和格式化了它。只要这些是生成列，并且 `push` 主要用于在本地数据库上进行原型设计，那么快速地 `drop` 和 `create` 生成列应该是可以的。由于这些列是 `generated`，所有数据都将被恢复。
 
-2. `generate` should have no limitations
+2. `generate` 应该没有限制。
 
-##### **Example**
+##### **示例**
 
 ```ts
 export const users = mysqlTable("users", {
@@ -169,50 +169,50 @@ export const users = mysqlTable("users", {
     (): SQL => sql`${schema2.users.name} || 'hello'`,
     { mode: "virtual" }
   ),
-}),
+})
 ```
 
-In case you don't need to reference any columns from your table, you can use just `sql` template or a `string` in `.generatedAlwaysAs()`
+在您不需要引用表中任何列的情况下，您可以在 `.generatedAlwaysAs()` 中使用 `sql` 模板或 `string`。
 
-### 🎉 SQLite Generated Columns
+### 🎉 SQLite 生成列
 
-You can now specify generated columns on any column supported by SQLite to use with generated columns
+您现在可以在 SQLite 中指定任何支持的列上使用生成列。
 
-You can specify both `stored` and `virtual` options, for more info you can check [SQLite docs](https://www.sqlite.org/gencol.html)
+您可以指定 `stored` 和 `virtual` 选项，更多信息您可以查看 [SQLite 文档](https://www.sqlite.org/gencol.html)。
 
-Also SQLite has a few limitation for such columns usage, which is described [here](https://www.sqlite.org/gencol.html)
+同样，SQLite 对于这类列的使用有几个限制，这些限制在 [这里](https://www.sqlite.org/gencol.html) 描述。
 
-Drizzle Kit will also have limitations for `push` and `generate` command:
+Drizzle Kit 对于 `push` 和 `generate` 命令也会有以下限制：
 
-1. You can't change the generated constraint expression with the stored type in an existing table. You would need to delete this table and create it again. This is due to SQLite limitations for such actions. We will handle this case in future releases (it will involve the creation of a new table with data migration).
+1. 您不能更改现有表中 `stored` 类型生成约束的表达式。您需要删除这个表并重新创建它。这是由于 SQLite 对于此类动作的限制。我们将在未来的版本中处理这种情况（它将涉及创建一个带有数据迁移的新表）。
 
-2. You can't add a `stored` generated expression to an existing column for the same reason as above. However, you can add a `virtual` expression to an existing column.
+2. 您不能在现有列中添加 `stored` 类型的生成表达式。但是您可以添加 `virtual` 表达式到现有列。
 
-3. You can't change a `stored` generated expression in an existing column for the same reason as above. However, you can change a `virtual` expression.
+3. 您不能更改现有列中的 `stored` 生成表达式。但是您可以更改 `virtual` 表达式。
 
-4. You can't change the generated constraint type from `virtual` to `stored` for the same reason as above. However, you can change from `stored` to `virtual`.
+4. 您不能将 `stored` 类型的生成表达式从 `virtual` 更改为 `stored`。但是您可以更改从 `stored` 到 `virtual`。
 
-## New Drizzle Kit features
+## 新 Drizzle Kit 功能
 
-### 🎉 Migrations support for all the new orm features
+### 🎉 支持所有或m 新功能
 
-PostgreSQL sequences, identity columns and generated columns for all dialects
+PostgreSQL 的序列、唯一标识列和所有方言的生成列。
 
 ### 🎉 New flag `--force` for `drizzle-kit push`
 
-You can auto-accept all data-loss statements using the push command. It's only available in CLI parameters. Make sure you always use it if you are fine with running data-loss statements on your database
+您可以使用 `push` 命令自动接受所有可能导致数据丢失的语句。这仅在 CLI 参数中可用。确保您总是使用它，如果您对在数据库上运行可能导致数据丢失的语句感到满意。
 
 ### 🎉 New `migrations` flag `prefix`
 
-You can now customize migration file prefixes to make the format suitable for your migration tools:
+您现在可以自定义迁移文件前缀，以使格式适合您的迁移工具：
 
-- `index` is the default type and will result in `0001_name.sql` file names;
-- `supabase` and `timestamp` are equal and will result in `20240627123900_name.sql` file names;
-- `unix` will result in unix seconds prefixes `1719481298_name.sql` file names;
-- `none` will omit the prefix completely;
+- `index` 是默认类型，将导致 `0001_name.sql` 文件名；
+- `supabase` 和 `timestamp` 是等价的，将导致 `20240627123900_name.sql` 文件名；
+- `unix` 将导致 Unix 秒前缀 `1719481298_name.sql` 文件名；
+- `none` 将完全省略前缀。
 
 
-##### **Example**: Supabase migrations format
+##### **示例**: Supabase 迁移格式
 ```ts
 import { defineConfig } from "drizzle-kit";
 

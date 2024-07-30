@@ -1,15 +1,15 @@
 ---
-title: DrizzleORM v0.31.3 release
+title: DrizzleORM v0.31.3 发布
 pubDate: 2024-07-08
-description: Prisma-Drizzle extension  
+description: Prisma-Drizzle 扩展
 ---
 
 ### Bug fixed
 
-- 🛠️ Fixed RQB behavior for tables with same names in different schemas
-- 🛠️ Fixed [BUG]: Mismatched type hints when using RDS Data API - #2097
+- 🛠️ 修复了在具有相同名称的不同架构中的表中的 RQB 行为
+- 🛠️ 修复了[BUG]：在使用 RDS 数据 API 时类型提示不匹配 - #2097
 
-### New Prisma-Drizzle extension  
+### 新 Prisma-Drizzle 扩展  
 
 ```ts
 import { PrismaClient } from '@prisma/client';
@@ -20,4 +20,4 @@ const prisma = new PrismaClient().$extends(drizzle());
 const users = await prisma.$drizzle.select().from(User);
 ```
 
-For more info, check docs: https://orm.drizzle.team/docs/prisma
+有关更多信息，请查看文档：https://orm.drizzle.team/docs/prisma
