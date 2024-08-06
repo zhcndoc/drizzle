@@ -47,9 +47,9 @@ import Callout from "@mdx/Callout.astro";
 postgres://username:password@ep-cool-darkness-123456.us-east-2.aws.neon.tech/neondb
 ```
 
-将 `DATABASE_URL` 环境变量添加到您的 `.env` 文件中，用来连接到 Neon 数据库。 
+将 `DATABASE_URL` 环境变量添加到您的 `.env` 或 `.env.local` 文件中，用来连接到 Neon 数据库。 
 
-```bash
+```text copy
 DATABASE_URL=NEON_DATABASE_CONNECTION_STRING
 ```
 
@@ -62,7 +62,7 @@ import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
 import { config } from "dotenv";
 
-config({ path: ".env" });
+config({ path: ".env" }); // or .env.local
 
 const sql = neon(process.env.DATABASE_URL!);
 export const db = drizzle(sql);
@@ -130,7 +130,7 @@ You can generate migrations using `drizzle-kit generate` command and then run th
 
 Generate migrations:
 
-```bash
+```bash copy
 npx drizzle-kit generate
 ```
 
@@ -165,13 +165,13 @@ END $$;
 
 Run migrations:
 
-```bash
+```bash copy
 npx drizzle-kit migrate
 ```
 
 Alternatively, you can push changes directly to the database using [Drizzle kit push command](/kit-docs/overview#prototyping-with-db-push):
 
-```bash
+```bash copy
 npx drizzle-kit push
 ```
 
@@ -189,7 +189,6 @@ npx drizzle-kit push
  ├ 📂 src
  │  ├ 📜 db.ts
  │  └ 📜 schema.ts
- │  └ 📜 queries.ts
  ├ 📂 migrations
  │  ├ 📂 meta
  │  │  ├ 📜 _journal.json
@@ -203,18 +202,22 @@ npx drizzle-kit push
 
 ## 查询示例
 
-For instance, we create `src/queries.ts` file with the following queries.
+例如，我们创建 `src/queries` 文件夹并针对每个操作创建单独的文件：insert、select、update、delete。
 
 #### 插入数据
 
-有关插入查询的更多信息，请参阅[文档](/docs/insert)。
+在[文档](/docs/insert)中了解更多关于插入查询的信息。
 
-```typescript copy filename="src/queries.ts" {4}
-import { db } from './db';
-import { InsertUser, usersTable } from './schema';
+```typescript copy filename="src/queries/insert.ts" {4, 8}
+import { db } from '../db';
+import { InsertPost, InsertUser, postsTable, usersTable } from '../schema';
 
 export async function createUser(data: InsertUser) {
   await db.insert(usersTable).values(data);
+}
+
+export async function createPost(data: InsertPost) {
+  await db.insert(postsTable).values(data);
 }
 ```
 
@@ -222,10 +225,10 @@ export async function createUser(data: InsertUser) {
 
 有关查询查询的更多信息，请参阅[文档](/docs/select)。
 
-```typescript copy filename="src/queries.ts" {5, 16, 41}
+```typescript copy filename="src/queries/select.ts" {5, 16, 41}
 import { asc, between, count, eq, getTableColumns, sql } from 'drizzle-orm';
-import { db } from './db';
-import { InsertUser, SelectUser, postsTable, usersTable } from './schema';
+import { db } from '../db';
+import { SelectUser, usersTable, postsTable } from '../schema';
 
 export async function getUserById(id: SelectUser['id']): Promise<
   Array<{
@@ -289,10 +292,12 @@ export async function getPostsForLast24Hours(
 
 #### 更新数据
 
-有关更新查询的更多信息，请参阅[文档](/docs/update)。
+在[文档](/docs/update)中了解更多关于更新查询的信息。
 
-```typescript copy filename="src/queries.ts" {3}
-// imports
+```typescript copy filename="src/queries/update.ts" {5}
+import { eq } from 'drizzle-orm';
+import { db } from '../db';
+import { SelectPost, postsTable } from '../schema';
 
 export async function updatePost(id: SelectPost['id'], data: Partial<Omit<SelectPost, 'id'>>) {
   await db.update(postsTable).set(data).where(eq(postsTable.id, id));
@@ -301,10 +306,12 @@ export async function updatePost(id: SelectPost['id'], data: Partial<Omit<Select
 
 #### 删除数据
 
-有关删除查询的更多信息，请参阅[文档](/docs/delete)。
+在[文档](/docs/delete)中了解有关删除查询的更多信息。
 
-```typescript copy filename="src/queries.ts" {3}
-// imports
+```typescript copy filename="src/queries/delete.ts" {5}
+import { db } from '../db';
+import { eq } from 'drizzle-orm';
+import { SelectUser, usersTable } from '../schema';
 
 export async function deleteUser(id: SelectUser['id']) {
   await db.delete(usersTable).where(eq(usersTable.id, id));

@@ -19,8 +19,14 @@ drizzle-orm
 -D drizzle-kit
 </Npm>
 - 您应该已经安装了 `dotenv` 包以管理环境变量。您可以在[这里](https://www.npmjs.com/package/dotenv)了解更多关于此包的信息。
-- 您应该已经安装了 Turso CLI。请查阅[文档](https://docs.turso.tech/cli/introduction)以了解更多信息。
+<Npm>
+  dotenv
+</Npm>
 - 您应该已经安装了 `@libsql/client` 包。请在[这里](https://www.npmjs.com/package/@libsql/client)了解更多关于此包的信息。
+<Npm>
+  @libsql/client
+</Npm>
+- 您应该已经安装了 Turso CLI。请查阅[文档](https://docs.turso.tech/cli/introduction)以了解更多信息。
 </Prerequisites>
 
 [Turso](https://docs.turso.tech/concepts) 是一个兼容 SQLite 的数据库，构建在 [libSQL](https://docs.turso.tech/libsql) 上，libSQL 是 SQLite 的开放提交分支。它支持每个组织的数十万个数据库的扩展，并支持复制到任何位置，包括您自己的服务器，以实现微秒级访问延迟。您可以在[这里](https://docs.turso.tech/concepts)了解更多有关 Turso 概念的信息。
@@ -72,21 +78,23 @@ turso db tokens create drizzle-turso-db
 
 #### 更新环境变量
 
-使用数据库连接 URL 和身份验证令牌更新您的 `.env` 文件。
+使用数据库连接 URL 和身份验证令牌更新您的 `.env` 或 `.env.local` 文件。
 
-```
+```text copy
 TURSO_CONNECTION_URL=
 TURSO_AUTH_TOKEN=
 ```
 
 #### 连接 Drizzle ORM 到您的数据库
 
+在 `src/db` 目录中创建一个 `index.ts` 文件，并设置您的数据库配置：
+
 ```typescript copy filename="src/db/index.ts"
 import { config } from 'dotenv';
 import { drizzle } from 'drizzle-orm/libsql';
 import { createClient } from '@libsql/client';
 
-config({ path: '.env' });
+config({ path: '.env' }); // or .env.local
 
 const client = createClient({
   url: process.env.TURSO_CONNECTION_URL!,
@@ -97,6 +105,8 @@ export const db = drizzle(client);
 ```
 
 #### 创建表
+
+在 `src/db` 目录下创建一个 `schema.ts` 文件，并声明你的表：
 
 ```typescript copy filename="src/db/schema.ts"
 import { sql } from 'drizzle-orm';
@@ -159,7 +169,7 @@ export default defineConfig({
 
 生成迁移:
 
-```bash
+```bash copy
 npx drizzle-kit generate
 ```
 
@@ -190,11 +200,15 @@ CREATE UNIQUE INDEX `users_email_unique` ON `users` (`email`);
 
 运行迁移:
 
-```bash
+```bash copy
 npx drizzle-kit migrate
 ```
 
-了解更多关于[迁移过程](https://orm.drizzle.team/docs/migrations)的信息。或者，您可以使用 [push 命令](/kit-docs/overview#prototyping-with-db-push)直接将更改推送到数据库。
+或者，您可以直接使用 [Drizzle Kit 推送命令](/kit-docs/overview#prototyping-with-db-push)将更改推送到数据库：
+
+```bash copy
+npx drizzle-kit push
+```
 
 <Callout type="warning">推送命令适用于需要在本地开发环境中快速测试新的模式设计或更改的情况，它允许快速迭代而无需管理迁移文件的开销。</Callout>
 </Steps>
@@ -208,7 +222,6 @@ npx drizzle-kit migrate
  ├ 📂 src
  │   ├ 📂 db
  │   │  ├ 📜 index.ts
- │   │  ├ 📜 queries.ts
  │   │  └ 📜 schema.ts
  ├ 📂 migrations
  │  ├ 📂 meta
@@ -223,18 +236,22 @@ npx drizzle-kit migrate
 
 ## 查询示例
 
-例如，我们创建了一个名为 `src/db/queries.ts` 的文件，其中包含以下查询。
+例如，我们创建 `src/db/queries` 文件夹，并针对每个操作创建单独的文件：insert、select、update、delete。
 
 #### 插入数据
 
 在[文档](/docs/insert)中阅读有关插入查询的更多信息。
 
-```typescript copy filename="src/db/queries.ts" {4}
-import { db } from './db';
-import { InsertUser, usersTable } from './schema';
+```typescript copy filename="src/db/queries/insert.ts" {4, 8}
+import { db } from '../index';
+import { InsertPost, InsertUser, postsTable, usersTable } from '../schema';
 
 export async function createUser(data: InsertUser) {
   await db.insert(usersTable).values(data);
+}
+
+export async function createPost(data: InsertPost) {
+  await db.insert(postsTable).values(data);
 }
 ```
 
@@ -242,10 +259,10 @@ export async function createUser(data: InsertUser) {
 
 在[文档](/docs/select)中阅读有关选择查询的更多信息。
 
-```typescript copy filename="src/db/queries.ts" {5, 16, 41}
+```typescript copy filename="src/db/queries/select.ts" {5, 16, 41}
 import { asc, count, eq, getTableColumns, gt, sql } from 'drizzle-orm';
-import { db } from './db';
-import { SelectUser, postsTable, usersTable } from './schema';
+import { db } from '../index';
+import { SelectUser, postsTable, usersTable } from '../schema';
 
 export async function getUserById(id: SelectUser['id']): Promise<
   Array<{
@@ -305,14 +322,16 @@ export async function getPostsForLast24Hours(
 }
 ```
 
-或者，您可以使用 [关系查询语法](/docs/rqb)。
+或者，您可以使用[关系查询语法](/docs/rqb)。
 
 #### 更新数据
 
 在[文档](/docs/update)中阅读有关更新查询的更多信息。
 
-```typescript copy filename="src/db/queries.ts" {3}
-// imports
+```typescript copy filename="src/db/queries/update.ts" {5}
+import { eq } from 'drizzle-orm';
+import { db } from '../index';
+import { SelectPost, postsTable } from '../schema';
 
 export async function updatePost(id: SelectPost['id'], data: Partial<Omit<SelectPost, 'id'>>) {
   await db.update(postsTable).set(data).where(eq(postsTable.id, id));
@@ -323,8 +342,10 @@ export async function updatePost(id: SelectPost['id'], data: Partial<Omit<Select
 
 在[文档](/docs/delete)中阅读有关删除查询的更多信息。
 
-```typescript copy filename="src/db/queries.ts" {3}
-// imports
+```typescript copy filename="src/db/queries/delete.ts" {5}
+import { eq } from 'drizzle-orm';
+import { db } from '../index';
+import { SelectUser, usersTable } from '../schema';
 
 export async function deleteUser(id: SelectUser['id']) {
   await db.delete(usersTable).where(eq(usersTable.id, id));
