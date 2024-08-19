@@ -116,17 +116,16 @@ export default defineConfig({
 </CodeTabs>
 
 ## 运行迁移
-我们在如何运行迁移方面没有固定意见，你可以使用生成的 SQL 文件手动运行迁移，使用外部工具运行迁移等等，
-或者使用 **Drizzle Kit** 或 **Drizzle ORM**。
+我们对如何运行迁移不持有意见，您可以手动运行它们使用 SQL 生成的文件，使用外部工具等等，或者使用 **Drizzle Kit** 或 **Drizzle ORM**。
 
 **使用 Drizzle Kit**
 
-你可以使用本地迁移 CLI 命令 `drizzle-kit migrate`。它将从 `drizzle.config.ts` 文件中收集所有所需的信息来运行迁移。
+您可以使用本地迁移 CLI 命令 `drizzle-kit migrate`。 它将从 `drizzle.config.ts` 文件中获取所有需要的信息来运行迁移，前提是之前已经运行了 `drizzle-kit generate` 。
 
-你可以在 `drizzle.config.ts` 中指定自定义的 schema 和 migration 表名。
-更多信息，请查看迁移[文档](/kit-docs/commands#apply-migrations)。
+您可以在 `drizzle.config.ts` 中指定自定义模式和迁移表名称。有关更多信息，请查看[文档](/kit-docs/commands#apply-migrations)。
 
 ```bash
+# 您需要在调用此命令之前运行 `drizzle-kit generate`。
 drizzle-kit migrate
 ```
 
