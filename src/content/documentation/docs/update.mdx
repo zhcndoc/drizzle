@@ -10,6 +10,16 @@ await db.update(users)
   .where(eq(users.name, 'Dan'));
 ```
 
+您传递给 `update` 的对象应该具有与数据库架构中列名匹配的键。
+对象中忽略 `undefined` 的值：要将列设置为 `null`，请传递 `null`。
+您可以将 SQL 作为值传递给更新对象，就像这样：
+
+```typescript copy
+await db.update(users)
+  .set({ updatedAt: sql`NOW()` })
+  .where(eq(users.name, 'Dan'));
+```
+
 ### 带返回值的更新
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'SQLite': true, 'MySQL': false }} />
 您可以在 PostgreSQL 和 SQLite 中更新一行并获取它回来：

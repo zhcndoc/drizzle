@@ -34,14 +34,14 @@ await db.transaction(async (tx) => {
 
 您可以将业务逻辑嵌入事务中，并在需要时回滚：
 
-```ts copy {6}
+```ts copy {7}
 const db = drizzle(...)
 
 await db.transaction(async (tx) => {
   const [account] = await tx.select({ balance: accounts.balance }).from(accounts).where(eq(users.name, 'Dan'));
   if (account.balance < 100) {
-    await tx.rollback()
-    return
+    // This throws an exception that rollbacks the transaction.
+    tx.rollback()
   }
 
   await tx.update(accounts).set({ balance: sql`${accounts.balance} - 100.00` }).where(eq(users.name, 'Dan'));

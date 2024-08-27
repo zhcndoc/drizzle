@@ -201,14 +201,14 @@ Drizzle ORM 支持表别名，这在您需要进行自连接时非常有用。
 ```typescript copy
 import { user } from "./schema";
 
-const parent = alias(user, "parent")
+const parent = aliasedTable(user, "parent")
 const result = db
   .select()
   .from(user)
-  .leftJoin(parent, eq(parent.id, user.id));
+  .leftJoin(parent, eq(parent.id, user.parentId));
 ```
 ```sql
-select ... from "user" left join "user" "parent" on "parent"."id" = "user"."id"
+select ... from "user" left join "user" "parent" on "parent"."id" = "user"."parent_id"
 ```
 ```typescript
 // result type
@@ -242,8 +242,8 @@ Drizzle ORM 从驱动程序中提供名称映射的结果，而不改变结构�
 
 您可以自由地以您想要的方式操作结果，这里是一个映射一对多关系数据的示例：
 ```typescript
-type User = typeof usersTable.$inferSelect;
-type Pet = typeof usersTable.$inferSelect;
+type User = typeof users.$inferSelect;
+type Pet = typeof pets.$inferSelect;
 
 const rows = db.select({
     user: users,

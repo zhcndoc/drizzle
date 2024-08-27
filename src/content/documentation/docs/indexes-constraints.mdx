@@ -755,11 +755,11 @@ Drizzle ORM 提供了几种声明外键的方法。
       userLastName: text("user_last_name"),
     }, (table) => {
       return {
-        userReference: foreignKey(() => ({
+        userReference: foreignKey({
           columns: [table.userFirstName, table.userLastName],
           foreignColumns: [user.firstName, user.lastName],
           name: "custom_name"
-        }))
+        })
       }
     });
     ```

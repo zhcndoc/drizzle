@@ -179,7 +179,7 @@ await withPagination(query.$dynamic(), asc(users.id));
 要实现它，可以这样做：
 
 ```ts copy {10}
-const getUsets = async (page = 1, pageSize = 10) => {
+const getUsers = async (page = 1, pageSize = 10) => {
    const sq = db
     .select({ id: users.id })
     .from(users)
