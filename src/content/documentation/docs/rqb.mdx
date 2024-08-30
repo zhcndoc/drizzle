@@ -402,6 +402,32 @@ export const posts = pgTable('posts', {
 });
 ```
 
+对于使用 `foreignKey` 操作符指定的约束，外键操作的语法格式如下：
+
+```typescript {18-19}
+import { foreignKey, pgTable, serial, text, integer } from 'drizzle-orm/pg-core';
+
+export const users = pgTable('users', {
+	id: serial('id').primaryKey(),
+	name: text('name'),
+});
+
+export const posts = pgTable('posts', {
+	id: serial('id').primaryKey(),
+	name: text('name'),
+	author: integer('author').notNull(),
+}, (table) => ({
+		fk: foreignKey({
+			name: "author_fk",
+			columns: [table.author],
+			foreignColumns: [users.id],
+		})
+			.onDelete('cascade')
+			.onUpdate('cascade')
+	}),
+);
+```
+
 ### 消除模糊关系
 
 Drizzle 还提供了 `relationName` 选项来消除在相同的两个表之间定义多个关系时的模糊关系。

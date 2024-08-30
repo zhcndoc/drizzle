@@ -169,6 +169,7 @@ npx drizzle-kit migrate
 ```
 
 了解更多关于 [迁移过程](https://orm.drizzle.team/docs/migrations)。您也可以使用 [Supabase CLI](https://supabase.com/docs/guides/cli/getting-started) 应用迁移：
+- 对于已经存在的表，请手动审查从 `npx drizzle-kit generate` 生成的迁移文件，并将任何不安全的纯创建语句（例如，`CREATE SCHEMA "auth";`）注释或调整，同时确保安全的条件创建语句（例如，`CREATE TABLE IF NOT EXISTS "auth"."users"`）得到正确处理。
 
 或者，您可以使用 Supabase CLI 直接将更改推送到数据库：
 
