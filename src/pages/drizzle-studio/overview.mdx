@@ -4,29 +4,29 @@ import Tabs from '@components/markdown/Tabs.astro';
 import Steps from '@components/markdown/Steps.astro';
 import Npm from "@components/markdown/Npm.astro";
 
-<CenteredLayout isStudio={true} customTitle="Meet Drizzle Studio">
-# Meet Drizzle Studio
-🖥 Drizzle Studio is a new way for you to explore SQL database on Drizzle projects.
+<CenteredLayout isStudio={true} customTitle="遇见 Drizzle Studio">
+# 遇见 Drizzle Studio
+🖥 Drizzle Studio 是一种新的方式，让你在 Drizzle 项目中探索 SQL 数据库。
 
 ![Drizzle Studio](@/assets/images/drizzle-studio.jpeg)
 
-Drizzle studio grabs your drizzle config file, connects to your database and lets you browse, add, 
-delete and update everything based on your existing drizzle sql schema. It supports explicit `null` and `empty string` values, 
-`booleans`, `numbers` and `big integers`, `json objects` and `json arrays`.
+Drizzle Studio 会抓取你的 Drizzle 配置文件，连接到你的数据库，并允许你浏览、添加、删除和更新所有内容，这些内容都是基于你的现有 
+Drizzle SQL 模式。它支持显式的 `null` 和 `empty string` 值，`booleans`，`numbers` 和 `big integers`，`json objects`
+和 `json arrays`。
 
-## Quick start
+## 快速开始
 <Steps>
 
-#### Install dependencies
-Check out extended docs for **[SQL dialect and drivers.](/docs/installation-and-db-connection)**
+#### 安装依赖
+查看 [SQL 方言和驱动程序的扩展文档](/docs/installation-and-db-connection)的详细文档。
 
 <Npm>
 drizzle-orm
 -D drizzle-kit
 </Npm>
 
-#### Prepare your database schema
-Check out extended schema declaration **[docs.](/docs/sql-schema-declaration)**
+#### 准备你的数据库模式
+查看扩展模式声明[文档](/docs/sql-schema-declaration)。
 ```typescript copy filename="schema.ts"
 import { pgTable, serial, text, varchar } from "drizzle-orm/pg-core";
 
@@ -37,8 +37,8 @@ export const users = pgTable('users', {
 });
 ```
 
-#### Prepare config file
-Check out extended config file **[docs.](/kit-docs/conf)**
+#### 准备配置文件
+查看扩展配置文件[文档](/kit-docs/conf)。
 ```typescript copy filename="drizzle.config.ts"
 import { defineConfig } from "drizzle-kit";
  
@@ -51,7 +51,7 @@ export default defineConfig({
   }
 });
 ```
-#### Launch Drizzle Studio
+#### 启动 Drizzle Studio
 <Tabs items={["npm", "pnpm", "yarn", "bun"]}>
 <Tab>
 ```bash copy
@@ -75,19 +75,19 @@ bunx drizzle-kit studio
 </Tab>
 </Tabs>
 
-You can launch studio with `port` cli flag to customise process port and `verbose` flag for extended SQL statements logging
+你可以使用 `port` CLI 标志来定制进程端口，以及使用 `verbose` 标志来扩展 SQL 语句的日志记录。
 ```bash
 yarn drizzle-kit studio --port 3000 --verbose
 ```
 
-By default, Drizzle Studio will be launched on the `https://local.drizzle.studio` host, and studio server will be launched on 127.0.0.1 host but you can specify any host you want
+默认情况下，Drizzle Studio 将会在 `https://local.drizzle.studio` 主机上启动，而 studio 服务器将在 127.0.0.1 主机上启动，但是你可以指定任何你想要的主机。
 ```bash
 yarn drizzle-kit studio --host 0.0.0.0
 ```
 </Steps>
 
 
-## What's next?
-We're going to massively improve and extend Drizzle Studio in the upcoming months!   
-Subscribe on [Twitter](https://twitter.com/DrizzleORM) and welcome to our [Discord](https://driz.link/discord)
+## 下一步是什么？
+在接下来的几个月里，我们将大幅改进和扩展 Drizzle Studio！
+订阅[推特](https://twitter.com/DrizzleORM)，欢迎来到我们的 [Discord](https://driz.link/discord)
 </CenteredLayout>

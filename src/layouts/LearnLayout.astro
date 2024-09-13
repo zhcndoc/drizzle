@@ -12,7 +12,7 @@ interface Props {
   customTitle?: string;
 }
 
-const defaultTitle = "Learn";
+const defaultTitle = "学习";
 
 const { pathname } = Astro.url;
 const { customTitle } = Astro.props;
@@ -21,10 +21,10 @@ const isOverview = pathname === "/learn";
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
   <BaseHead
-    title={`Drizzle ORM - ${customTitle || defaultTitle}`}
-    description="Drizzle ORM is a lightweight and performant TypeScript ORM with developer experience in mind."
+    title={`${customTitle || defaultTitle} - Drizzle ORM 中文文档`}
+    description="Drizzle ORM 是一个轻量级且高性能的 TypeScript ORM，旨在提升开发者的使用体验。"
   />
   <body class="banner-shown">
     <GlobalStyles />

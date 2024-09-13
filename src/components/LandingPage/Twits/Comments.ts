@@ -144,14 +144,14 @@ const Comments: IComment[] = [
     avatar: hisbvdis,
     name: "Roma Zvarych",
     login: "hisbvdis",
-    text: `I have finally switched from @prisma to @DrizzleORM.\nIt was not easy.\nDear Drizzle Team, you have created an awesome orm with awfull documentation.\nAnyway, good for you, thanks and good luck.`,
+    text: `我终于从 @prisma 切换到了 @DrizzleORM。\n这不是一件容易的事。\n亲爱的 Drizzle 团队，你们创造了一个很棒的 orm，但是文档很糟糕。\n无论如何，祝你们好运，谢谢。`,
     href: "https://x.com/hisbvdis/status/1807783878515400977",
   },
   {
     avatar: aokijs,
     name: "Aoki",
     login: "aokijs",
-    text: `Honestly, fuck the benchmarks. I don‘t care which one‘s faster. All I can say is that Drizzle made my life working with databases dramastically better and that‘s all that matters for me. Thanks for your hard work 🙏🏻`,
+    text: `坦白说，我不在乎哪个基准测试更快。我只能说，Drizzle 让我的数据库工作生活有了显著的改善，这一点对我来说才是最重要的。感谢你的辛勤工作 🙏🏻`,
     href: "https://x.com/aokijs/status/1833840766839325109",
   },
 ];

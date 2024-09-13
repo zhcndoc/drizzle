@@ -3,39 +3,39 @@ import BenchmarkHeader from "@components/layout/BenchmarkHeader.astro";
 
 import MdxBenchmark from "@components/LandingPage/Benchmark/MdxBenchmark";
 
-<CenteredLayout customTitle="Benchmarks">
+<CenteredLayout customTitle="基准测试">
 
 <BenchmarkHeader />
 
 <MdxBenchmark client:load />
 
-## How it works
+## 工作原理
 
-Drizzle has been originally designed to be a thin layer on top of SQL and introduce minimal runtime overhead and by introducing Prepared Statements and Relational Queries — we've [smashed it](https://medium.com/drizzle-stories/weve-built-typescript-orm-for-821-days-then-this-happened-71282a8b0206). It's now both fast and has exceptional DX and no n+1 problem for relational queries.
+Drizzle 最初被设计为一个位于 SQL 之上的薄层，引入最小的运行时开销，并通过引入预准备语句和关系查询，我们已经[打破了它](https://medium.com/drizzle-stories/weve-built-typescript-orm-for-821-days-then-this-happened-71282a8b0206)。现在它既快速又具有出色的 DX，并且没有关系查询的 n+1 问题。
 
-But how fast is it? Is it Drizzle or is it SQL who’s fast? What to measure?
+但是它有多快？是 Drizzle 快还是 SQL 快？测量什么？
 
-What is a meaningful benchmark?
-We’ve spent quite some time doing synthetic benchmarks with mitata, tested everything in one runtime and then in separate containerised so there’s no GC cross-influence, community made their own benchmarks and helped us allocate Relational Queries performance and row reads bottlenecks and make them really fast and efficient.
+什么是有意义的基准测试？
+我们花了很多时间使用 mitata 进行合成基准测试，在单个运行时中测试一切，然后在单独的容器化环境中测试，以确保没有 GC 交叉影响。社区成员制作了自己的基准测试，帮助我们分配关系查询性能和行读取瓶颈，并使它们变得非常快速和高效。
 
-We’ve tested different SQL dialects across all the competitors, and while we were crazy fast, in some cases 100+ times faster than Prisma with SQLite, we only wanted to share benchmarks that were meaningful for businesses and developers.
+我们测试了所有竞争对手的不同 SQL 方言，虽然我们在某些情况下比 Prisma 使用 SQLite 快 100 倍以上，但我们只希望分享对企业和开发者有意义的基准测试。
 
-From business perspective— request roundtrip is the most important metric when it comes down to the server-side performance. While you can influence network latency with services like Cloudflare Argo, on the server side it usually comes down to the database queries.
+从商业角度来看，请求往返是最重要的指标，当涉及到服务器性能时。虽然你可以通过像 Cloudflare Argo 这样的服务来影响网络延迟，但在服务器端，通常归结为数据库查询。
 
-We’ve composed a test case with a ~370k records in a PostgreSQL database and generated production-like E-commerce traffic benchmarks on 1GB ethernet to eliminate any discrepancies. On Lenovo M720q Drizzle can handle 4.6k reqs/s while maintaining a ~100ms p95 latency.
+我们使用了一个包含大约 370k 条记录的 PostgreSQL 数据库测试用例，并在 1GB 以太网上生成了类似生产的电子商务流量基准测试，以消除任何差异。在 Lenovo M720q 上，Drizzle 可以处理 4.6k reqs/s，同时保持约 100ms 的 p95 延迟。
 
 ![](@/assets/images/benchmark-result.webp)
 
-We ran our benchmarks on 2 separate machines, so that observer does not influence results. For database we're using PostgreSQL instance with 42MB of E-commerce data(~370k records).  
-K6 benchmarking instance lives on MacBook Air and makes [1M prepared requests](https://github.com/drizzle-team/drizzle-benchmarks/blob/main/data/requests.json) through 1GB ethernet to Lenovo M720q with Intel Core i3-9100T and 32GB of RAM.
+我们在两台不同的机器上运行了基准测试，以确保观察者不会影响结果。对于数据库，我们使用了一个包含 42MB 电子商务数据的 PostgreSQL 实例（大约 370k 条记录）。
+K6基准测试实例运行在 MacBook Ai r上，通过 1GB 以太网向配备 Intel Core i3-9100T 和 32GB RAM 的 Lenovo M720q 发送了 [1M 个预制请求](https://github.com/drizzle-team/drizzle-benchmarks/blob/main/data/requests.json)。
 
 ![image](@/assets/images/how-it-works.png)
 
 
-To run your own tests - follow instructions below!
+运行自己的测试 - 遵循以下说明！
 
-## Prepare test machine
-1. Spin up a docker container with PostgreSQL using `pnpm start:docker` command. You can configure a desired database port in `./src/docker.ts` file:
+## 准备测试机
+1. 使用 `pnpm start:docker` 命令启动一个包含 PostgreSQL 的 Docker 容器。你可以在 `./src/docker.ts` 文件中配置所需的数据库端口：
 ```ts
 ...
 }
@@ -43,19 +43,19 @@ To run your own tests - follow instructions below!
 const desiredPostgresPort = 5432; // change here
 main();
 ```
-2. Update `DATABASE_URL` with allocated database port in .env file:
+2. 在 .env 文件中使用分配的数据库端口更新 `DATABASE_URL`。
 ```ts
 DATABASE_URL="postgres://postgres:postgres@localhost:5432/postgres"
 ```
-3. Seed your database with test data using `pnpm start:seed` command, you can change the size of the database in `./src/seed.ts` file:
+3. 使用 `pnpm start:seed` 命令为你的数据库填充测试数据，你可以在 `./src/seed.ts` 文件中更改数据库的大小。
 ```ts
 ...
 }
 
 main("micro"); // nano | micro
 ```
-4. Make sure you have Node version 18 installed or above. You can use [`nvm use 18`](https://github.com/nvm-sh/nvm) command
-5. Start Drizzle/Prisma server:
+4. 确保你已经安装了 Node.js 版本 18 或更高版本。你可以使用 [`nvm use 18`](https://github.com/nvm-sh/nvm) 命令。
+5. 启动 Drizzle/Prisma 服务器：
 ```bash
 ## Drizzle
 pnpm start:drizzle
@@ -65,13 +65,13 @@ pnpm prepare:prisma
 pnpm start:prisma
 ```
 
-## Prepare testing machine
-1. Generate a list of http requests with `pnpm start:generate`. It will output a list of http requests to be run on the tested server | `./data/requests.json`
-2. Install [k6 load tester](https://k6.io/)
-3. Configure tested server url in `./k6.js` file
+## 准备测试机器
+1. 使用 `pnpm start:generate` 生成一个HTTP请求列表。它会将需要运行在测试服务器上的HTTP请求列表输出到 `./data/requests.json` 文件中。
+2. 安装 [k6 负载测试器](https://k6.io/)。
+3. 在 `./k6.js` 文件中配置测试服务器的URL。
 ```js
 // const host = `http://192.168.31.144:3000`; // drizzle
 const host = `http://192.168.31.144:3001`; // prisma
 ```
-4. Run tests with `k6 run bench.js` 🚀
+4. 使用 `k6 run bench.js` 运行测试 🚀
 </CenteredLayout>

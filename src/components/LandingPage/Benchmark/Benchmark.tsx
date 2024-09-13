@@ -32,10 +32,10 @@ const Benchmark = () => {
   return (
     <BenchmarkProvider>
       <div className={styles.wrap}>
-        <div className={styles.header}>Performance</div>
+        <div className={styles.header}>性能</div>
         <div className={styles.description}>
           <div className={styles.description__line}>
-            Drizzle doesn&apos;t slow you down
+            Drizzle 不会减慢你的速度
           </div>
         </div>
         <div className={styles.container}>
@@ -44,14 +44,14 @@ const Benchmark = () => {
             <div className={styles["blur-content"]}>
               {isShaking && (
                 <div className={styles["only-desktop"]}>
-                  Only available on Desktop 🖥️
+                  仅在桌面端可用 🖥️
                 </div>
               )}
               <a
                 href={"/benchmarks"}
                 className={isShaking ? styles["start-shaked"] : styles.start}
               >
-                Go to benchmark results
+                前往基准测试结果
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
@@ -78,7 +78,7 @@ const Benchmark = () => {
           />
         </div>
         <a href={"/benchmarks"} className={styles.benchmark_link}>
-          Go to benchmark results
+          前往基准测试结果
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="24"

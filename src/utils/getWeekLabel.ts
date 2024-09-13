@@ -15,10 +15,10 @@ export default (startDate: string): string => {
   const diffWeeks = Math.floor(diffTime / (7 * 24 * 60 * 60 * 1000));
 
   if (diffWeeks === 0) {
-    return "this week";
+    return "本周";
   } else if (diffWeeks === 1) {
-    return "last week";
+    return "上周";
   } else {
-    return `${diffWeeks}w ago`;
+    return `${diffWeeks} 周之前`;
   }
 };
