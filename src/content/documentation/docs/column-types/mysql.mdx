@@ -1,21 +1,29 @@
 ---
-title: MySQL 列类型
+title: MySQL column types
 ---
 import Section from '@components/markdown/Section.astro';
 import Callout from '@components/markdown/Callout.astro';
 
-我们对所有列类型都有原生支持，如果这还不够，请随意创建 **[自定义类型](/docs/custom-types)**。
+We have native support for all of them, yet if that's not enough for you, feel free to create **[custom types](/docs/custom-types)**.
 
-### 整数类型
+<Callout title='important' type='warning'>
+All examples in this part of the documentation do not use database column name aliases, and column names are generated from TypeScript keys. 
 
-有符号整数，根据值的大小存储在 `0`、`1`、`2`、`3`、`4`、`6` 或 `8` 字节中。
+You can use database aliases in column names if you want, and you can also use the `casing` parameter to define a mapping strategy for Drizzle. 
+
+You can read more about it [here](http://localhost:4321/docs/sql-schema-declaration#shape-your-data-schema)
+</Callout>
+
+### integer
+
+A signed integer, stored in `0`, `1`, `2`, `3`, `4`, `6`, or `8` bytes depending on the magnitude of the value.
 
 <Section>
 ```typescript
 import { int, mysqlTable } from "drizzle-orm/mysql-core";
 
 const table = mysqlTable('table', {
-	int: int('int')
+	int: int()
 });
 ```
 
@@ -26,14 +34,14 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### tinyint 类型
+### tinyint
 
 <Section>
 ```typescript
 import { tinyint, mysqlTable } from "drizzle-orm/mysql-core";
 
 const table = mysqlTable('table', {
-	tinyint: tinyint('tinyint')
+	tinyint: tinyint()
 });
 ```
 
@@ -44,14 +52,14 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### smallint 类型
+### smallint
 
 <Section>
 ```typescript
 import { smallint, mysqlTable } from "drizzle-orm/mysql-core";
 
 const table = mysqlTable('table', {
-	smallint: smallint('smallint')
+	smallint: smallint()
 });
 ```
 
@@ -62,14 +70,14 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### mediumint 类型
+### mediumint
 
 <Section>
 ```typescript
 import { mediumint, mysqlTable } from "drizzle-orm/mysql-core";
 
 const table = mysqlTable('table', {
-	mediumint: mediumint('mediumint')
+	mediumint: mediumint()
 });
 ```
 
@@ -80,40 +88,43 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### bigint 类型
+### bigint
 
 <Section>
 ```typescript
 import { bigint, mysqlTable } from "drizzle-orm/mysql-core";
 
 const table = mysqlTable('table', {
-	bigint: bigint('bigint', { mode: 'number' })
-	bigintUnsigned: bigint('bigintU', { mode: 'number', unsigned: true })
+	bigint: bigint({ mode: 'number' })
+	bigintUnsigned: bigint({ mode: 'number', unsigned: true })
 });
 
 bigint('...', { mode: 'number' | 'bigint' });
 
-// 也可以为 bigint 指定 unsigned 选项
+// You can also specify unsigned option for bigint
 bigint('...', { mode: 'number' | 'bigint', unsigned: true })
 ```
 
 ```sql
 CREATE TABLE `table` (
 	`bigint` bigint,
-	`bigintU` bigint unsigned,
+	`bigintUnsigned` bigint unsigned,
 );
 ```
 </Section>
-We've omitted config of `M` in `bigint(M)`, since it indicates the display width of the numeric type and 
 
-### real 类型
+We've omitted config of `M` in `bigint(M)`, since it indicates the display width of the numeric type 
+
+## ---
+
+### real
 
 <Section>
 ```typescript
 import { real, mysqlTable } from "drizzle-orm/mysql-core";
 
 const table = mysqlTable('table', {
-	real: real('real')
+	real: real()
 });
 ```
 
@@ -129,27 +140,27 @@ CREATE TABLE `table` (
 import { real, mysqlTable } from "drizzle-orm/mysql-core";
 
 const table = mysqlTable('table', {
-	realPrecision: real('real_precision', { precision: 1,}),
-	realPrecisionScale: real('real_precision_scale', { precision: 1, scale: 1,}),
+	realPrecision: real({ precision: 1,}),
+	realPrecisionScale: real({ precision: 1, scale: 1,}),
 });
 ```
 
 ```sql
 CREATE TABLE `table` (
-	`real_precision` real(1),
-	`real_precision_scale` real(1, 1),
+	`realPrecision` real(1),
+	`realPrecisionScale` real(1, 1),
 );
 ```
 </Section>
 
-### decimal 类型
+### decimal
 
 <Section>
 ```typescript
 import { decimal, mysqlTable } from "drizzle-orm/mysql-core";
 
 const table = mysqlTable('table', {
-	decimal: decimal('decimal')
+	decimal: decimal()
 });
 ```
 
@@ -165,20 +176,20 @@ CREATE TABLE `table` (
 import { decimal, mysqlTable } from "drizzle-orm/mysql-core";
 
 const table = mysqlTable('table', {
-	decimalPrecision: decimal('decimal_precision', { precision: 1,}),
-	decimalPrecisionScale: decimal('decimal_precision_scale', { precision: 1, scale: 1,}),
+	decimalPrecision: decimal({ precision: 1,}),
+	decimalPrecisionScale: decimal({ precision: 1, scale: 1,}),
 });
 ```
 
 ```sql
 CREATE TABLE `table` (
-	`decimal_precision` decimal(1),
-	`decimal_precision_scale` decimal(1, 1),
+	`decimalPrecision` decimal(1),
+	`decimalPrecisionScale` decimal(1, 1),
 );
 ```
 </Section>
 
-### double 类型
+### double
 
 <Section>
 ```typescript
@@ -201,27 +212,27 @@ CREATE TABLE `table` (
 import { double, mysqlTable } from "drizzle-orm/mysql-core";
 
 const table = mysqlTable('table', {
-	doublePrecision: double('double_precision', { precision: 1,}),
-	doublePrecisionScale: double('double_precision_scale', { precision: 1, scale: 1,}),
+	doublePrecision: double({ precision: 1,}),
+	doublePrecisionScale: double({ precision: 1, scale: 1,}),
 });
 ```
 
 ```sql
 CREATE TABLE `table` (
-	`double_precision` double(1),
-	`double_precision_scale` double(1, 1),
+	`doublePrecision` double(1),
+	`doublePrecisionScale` double(1, 1),
 );
 ```
 </Section>
 
-### float 类型
+### float
 
 <Section>
 ```typescript
 import { float, mysqlTable } from "drizzle-orm/mysql-core";
 
 const table = mysqlTable('table', {
-	float: float('float')
+	float: float()
 });
 ```
 
@@ -232,17 +243,19 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### serial 类型
+## ---
+
+### serial
 
 <Section>
 
-`SERIAL` 是 `BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE` 的别名。
+`SERIAL` is an alias for `BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE`.
 
 ```typescript
 import { serial, mysqlTable } from "drizzle-orm/mysql-core";
 
 const table = mysqlTable('table', {
-	serial: serial('serial')
+	serial: serial()
 });
 ```
 
@@ -253,14 +266,16 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### binary 类型
+## ---
+
+### binary
 
 <Section>
 ```typescript
 import { binary, mysqlTable } from "drizzle-orm/mysql-core";
 
 const table = mysqlTable('table', {
-	binary: binary('binary')
+	binary: binary()
 });
 ```
 
@@ -271,14 +286,14 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### varbinary 类型
+### varbinary
 
 <Section>
 ```typescript
 import { varbinary, mysqlTable } from "drizzle-orm/mysql-core";
 
 const table = mysqlTable('table', {
-	varbinary: varbinary('varbinary', { length: 2}),
+	varbinary: varbinary({ length: 2}),
 });
 ```
 
@@ -289,14 +304,16 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### char 类型
+## ---
+
+### char
 
 <Section>
 ```typescript
 import { char, mysqlTable } from "drizzle-orm/mysql-core";
 
 const table = mysqlTable('table', {
-	char: char('char'),
+	char: char(),
 });
 ```
 
@@ -307,18 +324,18 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### varchar 类型
-你可以使用 `{ enum: ["value1", "value2"] }` 配置来推断 `insert` 和 `select` 类型，它**不会**检查运行时的值。
+### varchar
+You can define `{ enum: ["value1", "value2"] }` config to infer `insert` and `select` types, it **won't** check runtime values.
 <Section>
 ```typescript
 import { varchar, mysqlTable } from "drizzle-orm/mysql-core";
 
 const table = mysqlTable('table', {
-	varchar: varchar('varchar', { length: 2 }),
+	varchar: varchar({ length: 2 }),
 });
 
-// 会被推断为 text: "value1" | "value2" | null
-varchar: varchar('varchar', { length: 6, enum: ["value1", "value2"] })
+// will be inferred as text: "value1" | "value2" | null
+varchar: varchar({ length: 6, enum: ["value1", "value2"] })
 ```
 
 ```sql
@@ -328,20 +345,20 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### text 类型
+### text
 
-你可以使用 `{ enum: ["value1", "value2"] }` 配置来推断 `insert` 和 `select` 类型，它**不会**检查运行时的值。
+You can define `{ enum: ["value1", "value2"] }` config to infer `insert` and `select` types, it **won't** check runtime values.
 
 <Section>
 ```typescript
 import { text, mysqlTable } from "drizzle-orm/mysql-core";
 
 const table = mysqlTable('table', {
-	text: text('text'),
+	text: text(),
 });
 
-// 会被推断为 text: "value1" | "value2" | null
-text: text('text', { enum: ["value1", "value2"] });
+// will be inferred as text: "value1" | "value2" | null
+text: text({ enum: ["value1", "value2"] });
 ```
 
 ```sql
@@ -351,14 +368,16 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### boolean 类型
+## ---
+
+### boolean
 
 <Section>
 ```typescript
 import { boolean, mysqlTable } from "drizzle-orm/mysql-core";
 
 const table = mysqlTable('table', {
-	boolean: boolean('boolean'),
+	boolean: boolean(),
 });
 ```
 
@@ -369,14 +388,16 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### date 类型
+## ---
+
+### date
 
 <Section>
 ```typescript
 import { boolean, mysqlTable } from "drizzle-orm/mysql-core";
 
 const table = mysqlTable('table', {
-	date: date('date'),
+	date: date(),
 });
 ```
 
@@ -387,14 +408,14 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### datetime 类型
+### datetime
 
 <Section>
 ```typescript
 import { datetime, mysqlTable } from "drizzle-orm/mysql-core";
 
 const table = mysqlTable('table', {
-	datetime: datetime('datetime'),
+	datetime: datetime(),
 });
 
 datetime('...', { mode: 'date' | "string"}),
@@ -413,7 +434,7 @@ CREATE TABLE `table` (
 import { datetime, mysqlTable } from "drizzle-orm/mysql-core";
 
 const table = mysqlTable('table', {
-	datetime: datetime('datetime', { mode: 'date', fsp: 6 }),
+	datetime: datetime({ mode: 'date', fsp: 6 }),
 });
 ```
 
@@ -424,15 +445,15 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### time 类型
+### time 
 
 <Section>
 ```typescript
 import { time, mysqlTable } from "drizzle-orm/mysql-core";
 
 const table = mysqlTable('table', {
-	time: time('time'),
-	timefsp: time('time_fsp', { fsp: 6 }),
+	time: time(),
+	timefsp: time({ fsp: 6 }),
 });
 	
 time('...', { fsp: 0..6 }),
@@ -441,19 +462,19 @@ time('...', { fsp: 0..6 }),
 ```sql
 CREATE TABLE `table` (
 	`time` time,
-	`time_fsp` time(6),
+	`timefsp` time(6),
 );
 ```
 </Section>
 
-### year 类型
+### year
 
 <Section>
 ```typescript
 import { year, mysqlTable } from "drizzle-orm/mysql-core";
 
 const table = mysqlTable('table', {
-	year: year('year'),
+	year: year(),
 });
 ```
 
@@ -464,14 +485,14 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### timestamp 类型
+### timestamp
 
 <Section>
 ```typescript
 import { timestamp, mysqlTable } from "drizzle-orm/mysql-core";
 
 const table = mysqlTable('table', {
-	timestamp: timestamp('timestamp'),
+	timestamp: timestamp(),
 });
 
 timestamp('...', { mode: 'date' | "string"}),
@@ -490,7 +511,7 @@ CREATE TABLE `table` (
 import { timestamp, mysqlTable } from "drizzle-orm/mysql-core";
 
 const table = mysqlTable('table', {
-	timestamp: timestamp('timestamp', { mode: 'date', fsp: 6 }),
+	timestamp: timestamp({ mode: 'date', fsp: 6 }),
 });
 ```
 
@@ -506,7 +527,7 @@ CREATE TABLE `table` (
 import { timestamp, mysqlTable } from "drizzle-orm/mysql-core";
 
 const table = mysqlTable('table', {
-	timestamp: timestamp('timestamp').defaultNow(),
+	timestamp: timestamp().defaultNow(),
 });
 ```
 
@@ -517,14 +538,16 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### json 类型
+## ---
+
+### json
 
 <Section>
 ```typescript
 import { json, mysqlTable } from "drizzle-orm/mysql-core";
 
 const table = mysqlTable('table', {
-	json: json('json'),
+	json: json(),
 });
 
 ```
@@ -536,27 +559,29 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-您可以为 json 对象推断指定 `.$type<..>()`，它**不会**检查运行时的值。
-它为默认值、插入和选择模式提供了编译时保护。
+You can specify `.$type<..>()` for json object inference, it **won't** check runtime values. 
+It provides compile time protection for default values, insert and select schemas.
 ```typescript
-// 会被推断为 { foo: string }
-json: json('json').$type<{ foo: string }>();
+// will be inferred as { foo: string }
+json: json().$type<{ foo: string }>();
 
-// 会被推断为 string[]
-json: json('json').$type<string[]>();
+// will be inferred as string[]
+json: json().$type<string[]>();
 
-// 不会被编译
-json: json('json').$type<string[]>().default({});
+// won't compile
+json: json().$type<string[]>().default({});
 ```
 
-## 枚举列
+## ---
+
+### enum
 
 <Section>
 ```typescript
 import { mysqlEnum, mysqlTable } from "drizzle-orm/mysql-core";
 
 const table = mysqlTable('table', {
-	mysqlEnum: mysqlEnum('popularity', ['unknown', 'known', 'popular']),
+	mysqlEnum: mysqlEnum(['unknown', 'known', 'popular']),
 });
 ```
 
@@ -567,10 +592,11 @@ CREATE TABLE `table` (
 ```
 </Section>
 
+## ---
 
-## 自定义列数据类型
+### Customizing data type
 
-每个列构建器都有一个 `.$type()` 方法，允许您自定义列的数据类型。这在处理未知或品牌类型时非常有用。
+Every column builder has a `.$type()` method, which allows you to customize the data type of the column. This is useful, for example, with unknown or branded types.
 
 ```ts
 type UserId = number & { __brand: 'user_id' };
@@ -580,21 +606,20 @@ type Data = {
 };
 
 const users = mysqlTable('users', {
-  id: int('id').$type<UserId>().primaryKey(),
-  jsonField: json('json_field').$type<Data>(),
+  id: int().$type<UserId>().primaryKey(),
+  jsonField: json().$type<Data>(),
 });
 ```
 
-## 列约束
-### Not null 约束
-`NOT NULL` 约束指定关联列不允许包含 `NULL` 值。
+### Not null
+`NOT NULL` constraint dictates that the associated column may not contain a `NULL` value.
 
 <Section>
 ```typescript
 import { int, mysqlTable } from "drizzle-orm/mysql-core";
 
 const table = mysqlTable('table', {
-	int: int('int').notNull(),
+	int: int().notNull(),
 });
 ```
 
@@ -605,19 +630,22 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### 默认值
+### Default value
 
-`DEFAULT` 子句指定在执行 `INSERT` 时，如果用户没有显式提供值，则使用的列的默认值。
-如果列定义没有明确的 `DEFAULT` 子句，那么列的默认值是 `NULL`。
+The `DEFAULT` clause specifies a default value to use for the column if no value
+is explicitly provided by the user when doing an `INSERT`.
+If there is no explicit `DEFAULT` clause attached to a column definition,
+then the default value of the column is `NULL`.
 
-显式的 `DEFAULT` 子句可以指定默认值是 `NULL`、字符串常量、blob 常量、有符号数字或括在括号中的任何常量表达式。
+An explicit `DEFAULT` clause may specify that the default value is `NULL`,
+a string constant, a blob constant, a signed-number, or any constant expression enclosed in parentheses.
 
 <Section>
 ```typescript
 import { int, mysqlTable } from "drizzle-orm/mysql-core";
 
 const table = mysqlTable('table', {
-	int: int('int').default(3),
+	int: int().default(3),
 });
 ```
 
@@ -628,12 +656,12 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-当使用 `$default()` 或 `$defaultFn()` 时，它们只是相同函数的不同别名，
-您可以在运行时生成默认值并在所有插入查询中使用这些值。
-这些函数可以帮助您利用各种实现，如 `uuid`、`cuid`、`cuid2` 等等。
+When using `$default()` or `$defaultFn()`, which are simply different aliases for the same function, 
+you can generate defaults at runtime and use these values in all insert queries. 
+These functions can assist you in utilizing various implementations such as `uuid`, `cuid`, `cuid2`, and many more.
 
 <Callout type="info" emoji="ℹ️">
-	注意：此值不会影响 `drizzle-kit` 的行为，它仅在 `drizzle-orm` 中运行时使用
+	Note: This value does not affect the `drizzle-kit` behavior, it is only used at runtime in `drizzle-orm`
 </Callout>
 
 ```ts
@@ -641,36 +669,38 @@ import { varchar, mysqlTable } from "drizzle-orm/mysql-core";
 import { createId } from '@paralleldrive/cuid2';
 
 const table = mysqlTable('table', {
-	id: varchar('id', { length: 128 }).$defaultFn(() => createId()),
+	id: varchar({ length: 128 }).$defaultFn(() => createId()),
 });
 ```
 
-当使用 `$onUpdate()` 或 `$onUpdateFn()` 时，它们只是相同函数的不同别名，
-您可以在运行时生成默认值并在所有更新查询中使用这些值。
+When using `$onUpdate()` or `$onUpdateFn()`, which are simply different aliases for the same function, 
+you can generate defaults at runtime and use these values in all update queries. 
 
-为列添加一个动态的更新值。当行更新时，将调用该函数，并且如果没有提供列值，则使用返回的值作为列值。
-如果未提供默认值（或 `$defaultFn`）值，则在插入行时也将调用该函数，并将返回的值用作列值。
+Adds a dynamic update value to the column. The function will be called when the row is updated, 
+and the returned value will be used as the column value if none is provided.
+If no default (or $defaultFn) value is provided, the function will be called
+when the row is inserted as well, and the returned value will be used as the column value.
 
 <Callout type="info" emoji="ℹ️">
-	注意：此值不会影响 `drizzle-kit` 的行为，它仅在 `drizzle-orm` 中运行时使用
+	Note: This value does not affect the `drizzle-kit` behavior, it is only used at runtime in `drizzle-orm`
 </Callout>
 
 ```ts
 import { text, mysqlTable } from "drizzle-orm/mysql-core";
 
 const table = mysqlTable('table', {
-    alwaysNull: text('always_null').$type<string | null>().$onUpdate(() => null),
+    alwaysNull: text().$type<string | null>().$onUpdate(() => null),
 });
 ```
 
-### 主键约束
+### Primary key 
 
 <Section>
 ```typescript
 import { int, mysqlTable } from "drizzle-orm/mysql-core";
 
 const table = mysqlTable('table', {
-	int: int('int').primaryKey(),
+	int: int().primaryKey(),
 });
 ```
 
@@ -681,14 +711,14 @@ CREATE TABLE `table` (
 ```
 </Section>
 
-### 自增约束
+### Auto increment
 
 <Section>
 ```typescript
 import { int, mysqlTable } from "drizzle-orm/mysql-core";
 
 const table = mysqlTable('table', {
-	int: int('int').autoincrement(),
+	int: int().autoincrement(),
 });
 ```
 

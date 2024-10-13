@@ -3,6 +3,7 @@ import Tab from '@components/markdown/Tab.astro';
 import Tabs from '@components/markdown/Tabs.astro';
 import Steps from '@components/markdown/Steps.astro';
 import Npm from "@components/markdown/Npm.astro";
+import Npx from "@components/markdown/Npx.astro";
 
 <CenteredLayout isStudio={true} customTitle="遇见 Drizzle Studio">
 # 遇见 Drizzle Studio
@@ -18,12 +19,12 @@ Drizzle SQL 模式。它支持显式的 `null` 和 `empty string` 值，`boolean
 <Steps>
 
 #### 安装依赖
-查看 [SQL 方言和驱动程序的扩展文档](/docs/installation-and-db-connection)的详细文档。
+确保先查看我们的[入门指南](/docs/get-started)！
 
-<Npm>
+<Npx>
 drizzle-orm
 -D drizzle-kit
-</Npm>
+</Npx>
 
 #### 准备你的数据库模式
 查看扩展模式声明[文档](/docs/sql-schema-declaration)。
@@ -38,7 +39,7 @@ export const users = pgTable('users', {
 ```
 
 #### 准备配置文件
-查看扩展配置文件[文档](/kit-docs/conf)。
+查看扩展配置文件[文档](/docs/drizzle-config-file)。
 ```typescript copy filename="drizzle.config.ts"
 import { defineConfig } from "drizzle-kit";
  

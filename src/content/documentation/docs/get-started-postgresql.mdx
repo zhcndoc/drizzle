@@ -4,477 +4,121 @@ import Npm from "@components/markdown/Npm.astro";
 import Callout from '@components/markdown/Callout.astro';
 import Steps from '@components/markdown/Steps.astro';
 import AnchorCards from '@components/markdown/AnchorCards.astro';
+import Prerequisites from "@mdx/Prerequisites.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+import WhatsNextPostgres from "@mdx/WhatsNextPostgres.astro";
 
-<AnchorCards cards={{
-  "Neon": "#neon",
-  "Xata": "#xata",
-  "Postgres.JS": "#postgresjs",
-  "node-postgres": "#node-postgres",
-  "Vercel Postgres" : "#vercel-postgres",
-  "Supabase": "#supabase",
-  "AWS Data API": "#aws-data-api",
-  "HTTP proxy": "#http-proxy"
-}}/>
+# Drizzle \<\> PostgreSQL
+<Prerequisites>
+- Database [connection basics](/docs/connect-overview) with Drizzle
+- node-postgres [basics](https://node-postgres.com/)
+- postgres.js [basics](https://github.com/porsager/postgres?tab=readme-ov-file#usage)
+</Prerequisites>
 
-## Neon Postgres
+Drizzle has native support for PostgreSQL connections with the `node-postgres` and `postgres.js` drivers.
 
-根据其 [官方网站](https://neon.tech) 描述，Neon 是一个完全托管的无服务器 Postgres。
+There are a few differences between the `node-postgres` and `postgres.js` drivers that we discovered while using both and integrating them with the Drizzle ORM. For example:
 
-Drizzle ORM 原生支持使用 `drizzle-orm/neon-serverless` 软件包的 [Neon 无服务器驱动程序](https://github.com/neondatabase/serverless)
-，以及用于访问 Neon Postgres 数据库的 [`postgres`](#postgresjs) 或 [`pg`](#node-postgres) 驱动程序。
-
-<Npm>
-drizzle-orm @neondatabase/serverless
--D drizzle-kit
-</Npm>
-
-使用 Neon 无服务器驱动程序，请查看 [Github](https://github.com/neondatabase/serverless)、[博客文章](https://blog.cloudflare.com/neon-postgres-database-from-workers/)、[Neon 文档](https://neon.tech/docs/serverless/serverless-driver)
-，您可以通过 HTTP 或 WebSockets 而不是 TCP 从无服务器环境（如 Cloudflare Workers 或 Vercel Edge Functions）访问 Neon 数据库。
-
-使用 HTTP 进行查询对于单个非交互式事务来说更快。如果您需要会话或交互式事务支持，或者完全兼容的 `pg` 驱动程序的即插即用替代方案，请使用 WebSockets。
-
-<Tabs items={['HTTP', 'WebSockets']}>
-<Tab>
-```typescript copy filename="index.ts"
-import { neon } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-http';
-
-const sql = neon(process.env.DRIZZLE_DATABASE_URL!);
-const db = drizzle(sql);
-
-const result = await db.select().from(...);
-```
-</Tab>
-<Tab>
-```typescript copy filename="index.ts"
-import { Pool } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
-
-const pool = new Pool({ connectionString: env.DATABASE_URL });
-const db = drizzle(pool)
-
-const result = await db.select().from(...);
-```
-<Callout type="warning" emoji="⚙️">
-  Additional configuration is required to use WebSockets in environments where the `WebSocket` global is not defined, such as Node.js.
-  
-  Add the `ws` and `bufferutil` packages to your project's dependencies, and set the `webSocketConstructor` config prior to creating a `Client` or `Pool` instance.
-
-  ```typescript
-  import { Pool, neonConfig } from '@neondatabase/serverless';
-  import ws from 'ws';
-  neonConfig.webSocketConstructor = ws;
-  ```
-</Callout>
-</Tab>
-</Tabs>
-
-有关在 Cloudflare Worker 中使用 Neon Serverless 驱动程序的示例，请参阅[此处](http://driz.link/neon-cf-ex)。
-
-要从服务器端环境使用 Neon，您可以使用 PostgresJS 驱动程序，如 Neon 的 [官方 Nodejs 文档](https://neon.tech/docs/guides/node) 中所述，请参阅 [PostgresJS 文档](#postgresjs)**。
-
-## Xata
-
-根据其 [官方网站](https://xata.io) 描述，Xata 是一个以可靠性、可扩展性和开发者体验为重点的 Postgres 数据平台。Xata Postgres 服务目前处于测试版，请参阅 [Xata 文档](https://xata.io/docs/postgres) 以了解如何在您的帐户中启用它。
-
-Drizzle ORM 原生支持使用 `drizzle-orm/xata` 包的 `xata` 驱动程序
-，以及 [`postgres`](#postgresjs) 或 [`pg`](#node-postgres) 驱动程序访问 Xata Postgres 数据库。
-
-<Npm>
-drizzle-orm @xata.io/client
--D drizzle-kit
-</Npm>
-
-您可以使用 HTTP 客户端或 TCP 客户端与 Xata 一起使用 Drizzle。HTTP 客户端不会创建到 Xata 服务器的持久连接，而 TCP 客户端会，并且可以用于在较高数量的请求下获得更好的性能。HTTP 客户端通常建议在无服务器环境（如 Cloudflare Workers 或 Vercel Edge Functions）中使用。TCP 客户端通常从长时间运行的服务器（如 Express.js 或 Fastify）中使用。
-
-以下示例使用 Xata 生成的客户端，您可以通过运行 [`xata init`](https://xata.io/docs/getting-started/installation) CLI 命令来获取它。
-
-<Tabs items={['HTTP', 'TCP', 'TCP (pool)']}>
-<Tab>
-```typescript copy filename="index.ts"
-import { drizzle } from 'drizzle-orm/xata-http';
-import { getXataClient } from './xata'; // Generated client
-
-const xata = getXataClient();
-const db = drizzle(xata);
-
-const result = await db.select().from(...);
-```
-</Tab>
-<Tab>
-```typescript copy filename="index.ts"
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { getXataClient } from './xata'; // Generated client
-import { Client } from 'pg';
-
-const xata = getXataClient();
-const client = new Client({ connectionString: xata.sql.connectionString });
-const db = drizzle(client);
-```
-</Tab>
-<Tab>
-```typescript copy filename="index.ts"
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { getXataClient } from './xata'; // Generated client
-import { Pool } from 'pg';
-
-const xata = getXataClient();
-const pool = new Pool({ connectionString: xata.sql.connectionString, max: 10 });
-const db = drizzle(pool);
-```
-</Tab>
-</Tabs>
-
-如果您不希望使用生成的 Xata 客户端，则还可以使用 [`postgres`](#postgresjs) 或 [`pg`](#node-postgres) 驱动程序与 Xata 一起使用，在这种情况下，您可以从 Xata 数据库的设置页面复制连接字符串。例如：
-
-```typescript copy filename="index.ts"
-import { pgTable, serial, text, varchar } from "drizzle-orm/pg-core";
-import { drizzle } from "drizzle-orm/node-postgres";
-import { Client } from "pg";
-const client = new Client({
-  connectionString: "postgresql://uni123:<YOUR_API_KEY>@us-east-1.sql.xata.sh/mydb:main?sslmode=require",
-});
-await client.connect();
-const db = drizzle(client);
-```
-
-有关使用 Drizzle 与 Xata 的更多详细信息，请参阅官方 [Xata 文档](https://xata.io/docs/integrations/drizzle)。
-
-## PGlite
-
-根据其 [官方网站](https://github.com/electric-sql/pglite) 描述，PGlite 是一个打包在 TypeScript 客户端库中的 WASM Postgres 构建包，可以在浏览器、Node.js 和 Bun 中运行 Postgres，无需安装任何其他依赖项。它经过 gzip 压缩之后只有 2.6MB 大小。
-
-它可以用作临时内存数据库，或者可以将数据持久化到文件系统（Node/Bun）或 indexedDB（浏览器）。
-
-与以前的「在浏览器中使用 Postgres」项目不同，PGlite 不使用 Linux 虚拟机 - 它只是 Postgres 在 WASM 中。
-
-<Npm>
-drizzle-orm @electric-sql/pglite
--D drizzle-kit
-</Npm>
-
-```typescript copy filename="index.ts"
-import { PGlite } from '@electric-sql/pglite';
-import { drizzle } from 'drizzle-orm/pglite';
-
-// In-memory Postgres
-const client = new PGlite();
-const db = drizzle(client);
-
-await db.select().from(users);
-```
-
-## Postgres.JS
-
-根据其 [官方网站](https://github.com/porsager/postgres) 描述，PostgresJS 是用于在 Node.js 和 Deno 中与 PostgreSQL 数据库进行交互的最快速完整特性的客户端。
-
-Drizzle ORM 原生支持 `drizzle-orm/postgres-js` 包的 `postgresjs` 驱动程序。
-
-<Npm>
-drizzle-orm postgres
--D drizzle-kit
-</Npm>
-
-```typescript copy filename="index.ts"
-import { drizzle } from 'drizzle-orm/postgres-js';
-import { migrate } from 'drizzle-orm/postgres-js/migrator';
-import postgres from 'postgres';
-
-// for migrations
-const migrationClient = postgres("postgres://postgres:adminadmin@0.0.0.0:5432/db", { max: 1 });
-migrate(drizzle(migrationClient), ...)
-
-// for query purposes
-const queryClient = postgres("postgres://postgres:adminadmin@0.0.0.0:5432/db");
-const db = drizzle(queryClient);
-await db.select().from(...)...
-```
-
-<Callout type="warning" emoji="⚙️">
-  对于使用 DDL 迁移的内置 `migrate` 功能，我们强烈建议使用 `max: 1` 连接配置。
-
-  对于查询目的，请随意使用适合自己业务需求的连接池大小。
-</Callout>
+- With `node-postgres`, you can install `pg-native` to boost the speed of both `node-postgres` and Drizzle by approximately 10%.
+- `node-postgres` supports providing type parsers on a per-query basis without globally patching things. For more details, see [Types Docs](https://node-postgres.com/features/queries#types).
+- `postgres.js` uses prepared statements by default, which you may need to opt out of. This could be a potential issue in AWS environments, among others, so please keep that in mind.
+- If there's anything else you'd like to contribute, we'd be happy to receive your PRs [here](https://github.com/drizzle-team/drizzle-orm-docs/pulls)
 
 ## node-postgres
-
-根据其 [官方网站](https://node-postgres.com/) 描述，node-postgres 是与 PostgreSQL 数据库进行交互的一组 Node.js 模块。
-
-Drizzle ORM 原生支持 `drizzle-orm/pg` 包的 `pg` 驱动程序。
-
+#### Step 1 - Install packages
 <Npm>
 drizzle-orm pg
 -D drizzle-kit @types/pg
 </Npm>
 
+#### Step 2 - Initialize the driver and make a query
+<CodeTabs items={["node-postgres", "node-postgres with config"]}>
+```typescript copy
+// Make sure to install the 'pg' package 
+import { drizzle } from 'drizzle-orm/connect';
 
-您可以使用单个 `client` 连接或一个 `pool` 连接来连接到 PostgreSQL 数据库。
-<Tabs items={['客户端连接', '池连接']}>
-  <Tab>
-```typescript copy filename="index.ts"
-import { pgTable, serial, text, varchar } from "drizzle-orm/pg-core";
-import { drizzle } from "drizzle-orm/node-postgres";
-import { Client } from "pg";
-
-const client = new Client({
-  connectionString: "postgres://user:password@host:port/db",
-});
-
-// or
-const client = new Client({
-  host: "127.0.0.1",
-  port: 5432,
-  user: "postgres",
-  password: "password",
-  database: "db_name",
-});
-
-await client.connect();
-const db = drizzle(client);
+const db = await drizzle("node-postgres", process.env.DATABASE_URL);
+ 
+const result = await db.execute('select 1');
 ```
-</Tab>
-<Tab>
-```typescript copy filename="index.ts"
+```typescript copy
+// Make sure to install the 'pg' package 
+import { drizzle } from 'drizzle-orm/connect';
+
+// You can specify any property from the node-postgres connection options
+const db = await drizzle("node-postgres", { 
+  connection: { 
+    connectionString: process.env.DATABASE_URL,
+    ssl: true
+  }
+});
+ 
+const result = await db.execute('select 1');
+```
+</CodeTabs>
+
+If you need a synchronous connection, you can use our additional connection API, 
+where you specify a driver connection and pass it to the Drizzle instance.
+
+```typescript copy
+// Make sure to install the 'pg' package 
 import { pgTable, serial, text, varchar } from "drizzle-orm/pg-core";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 
 const pool = new Pool({
-  connectionString: "postgres://user:password@host:port/db",
+  connectionString: process.env.DATABASE_URL,
 });
-
-// or
-const pool = new Pool({
-  host: "127.0.0.1",
-  port: 5432,
-  user: "postgres",
-  password: "password",
-  database: "db_name",
-});
-
 const db = drizzle(pool);
-```
-</Tab>
-</Tabs>
-
-### Cloudflare Workers
-
-现在，Cloudflare Workers 支持 TCP 连接，[可以使用](https://developers.cloudflare.com/workers/databases/connect-to-postgres/) `node-postgres` 连接到连接池器，例如 pgBouncer。
-
-```typescript copy filename="worker.ts"
-import { Client } from "pg";
-import { drizzle } from "drizzle-orm/node-postgres";
-
-export default {
-  async fetch(
-    request: Request,
-    env: Env,
-    ctx: ExecutionContext
-  ): Promise<Response> {
-    const client = new Client({ connectionString: env.DATABASE_URL });
-    await client.connect();
-    const db = drizzle(client);
-    const result = await db.select().from(...);
-
-    // Clean up the client, ensuring we don't kill the worker before that is completed.
-    ctx.waitUntil(client.end());
-    return new Response(now);
-  }
-}
+ 
+const result = await db.execute('select 1');
 ```
 
-<Callout type="warning" emoji="⚙️">
-对于使用 DDL 迁移的内置 `migrate` 功能，我们强烈建议使用 `max: 1` 连接配置。
-
-对于查询目的，请根据业务需求使用适当的连接池大小。
-</Callout>
-
-## Vercel Postgres
-
-根据其 [官方网站](https://vercel.com/docs/storage/vercel-postgres) 描述，Vercel Postgres 是一个无服务器的 SQL 数据库，特别设计用于与 Vercel Functions 集成。
-
-Drizzle ORM 原生支持使用 `drizzle-orm/vercel-postgres` 包的 **[@vercel/postgres](https://vercel.com/docs/storage/vercel-postgres)** 无服务器驱动程序，并支持通过 `postgesql://` 访问 Vercel Postgres 的 **[`postgres`](#postgresjs)** 或 **[`pg`](#node-postgres)** 驱动程序。
-
-查看官方 **[Vercel Postgres + Drizzle](https://vercel.com/docs/storage/vercel-postgres/using-an-orm#drizzle)** 文档。
-
-<Steps>
-
-#### 安装依赖项
-
-<Npm>
-drizzle-orm @vercel/postgres
--D drizzle-kit
-</Npm>
-
-#### 准备 Vercel Postgres
-
-按照 **[官方文档](https://vercel.com/docs/storage/vercel-postgres/quickstart)** 设置项目。
-
-#### 进行第一个查询
-
-```typescript copy filename="index.ts"
-import { sql } from '@vercel/postgres';
-import { drizzle } from 'drizzle-orm/vercel-postgres';
-
-const db = drizzle(sql)
-const result = await db.select().from(...);
-```
-</Steps>
-
-使用 **[@vercel/postgres](https://vercel.com/docs/storage/vercel-postgres)** 无服务器包
-您可以通过无 TCP 可用的服务器端和无服务器环境，例如 Cloudflare Workers，通过 WebSockets 访问 Vercel Postgres。
-
-如果您打算从服务器端环境使用 Vercel Postgres，则可以使用 `@vercel/postgres` 或直接通过 `postgesql://` 访问该 DB
-，使用 **[`postgres`](#postgresjs)** 或 **[`pg`](#node-postgres)**。
-
-
-## Supabase
-
-根据其 [官方网站](https://supabase.com/docs) 描述，Supabase 是一个开源的 Firebase 替代品，用于构建安全且性能卓越的最小配置 Postgres 后端。
-
-查看官方 **[Supabase + Drizzle](https://supabase.com/docs/guides/database/connecting-to-postgres#connecting-with-drizzle)** 文档。
-
-<Steps>
-
-#### 安装依赖项
-
+## postgres.js
+#### Step 1 - Install packages
 <Npm>
 drizzle-orm postgres
 -D drizzle-kit
 </Npm>
 
-#### 创建模型
-
-```typescript copy filename="schema.ts"
-import { pgTable, serial, text, varchar } from "drizzle-orm/pg-core";
-
-export const users = pgTable('users', {
-  id: serial('id').primaryKey(),
-  fullName: text('full_name'),
-  phone: varchar('phone', { length: 256 }),
-});
-```
-
-#### 进行第一个查询
-
-```typescript copy filename="index.ts"
-import { drizzle } from 'drizzle-orm/postgres-js'
-import postgres from 'postgres'
-import { users } from './schema'
-
-const connectionString = process.env.DATABASE_URL
-
-const client = postgres(connectionString)
-const db = drizzle(client);
-
-const allUsers = await db.select().from(users);
-```
-
-#### 连接池（可选）
-
-如果决定通过 Supabase 使用连接池（在 [此处](https://supabase.com/docs/guides/database/connecting-to-postgres#connection-pooler) 有描述），并启用了 "Transaction" 池模式，则确保关闭 prepare，因为不支持预处理语句。
-
-```typescript copy filename="index.ts"
-import { drizzle } from 'drizzle-orm/postgres-js'
-import postgres from 'postgres'
-import { users } from './schema'
-
-const connectionString = process.env.DATABASE_URL
-
-// Disable prefetch as it is not supported for "Transaction" pool mode 
-const client = postgres(connectionString, { prepare: false })
-const db = drizzle(client);
-
-const allUsers = await db.select().from(users);
-```
-
-</Steps>
-
-通过连接池器连接到您的数据库进行 **无服务器环境**，通过直连连接到您的数据库进行 **长时间运行的服务器**。
-
-
-## AWS Data API
-
-Drizzle ORM 原生支持使用 `drizzle-orm/aws-data-api` 包的 `aws-sdk` 驱动程序。
-
-<Npm>
-drizzle-orm @aws-sdk/client-rds-data @aws-sdk/credential-providers
--D drizzle-kit
-</Npm>
-
-
-```typescript copy filename="index.ts"
-import { drizzle } from 'drizzle-orm/aws-data-api/pg';
-import { RDSDataClient } from '@aws-sdk/client-rds-data';
-import { fromIni } from '@aws-sdk/credential-providers';
-
-const rdsClient = new RDSDataClient({
-  	credentials: fromIni({ profile: process.env['PROFILE'] }),
-		region: 'us-east-1',
-});
-
-const db = drizzle(rdsClient, {
-  database: process.env['DATABASE']!,
-  secretArn: process.env['SECRET_ARN']!,
-  resourceArn: process.env['RESOURCE_ARN']!,
-});
-
-await db.select().from(...)...;
-```
-
-## HTTP 代理
-
-驱动程序实现示例
-
+#### Step 2 - Initialize the driver and make a query
+<CodeTabs items={["postgres.js", "postgres.js with config"]}>
 ```typescript copy
-import { drizzle } from 'drizzle-orm/pg-proxy';
+import { drizzle } from 'drizzle-orm/connect';
 
-const db = drizzle(async (sql, params, method) => {
-  try {
-    const rows = await axios.post('http://localhost:3000/query', { sql, params, method });
+const db = await drizzle("postgres-js", process.env.DATABASE_URL);
 
-    return { rows: rows.data };
-  } catch (e: any) {
-    console.error('Error from pg proxy server: ', e.response.data)
-    return { rows: [] };
+const result = await db.execute('select 1');
+```
+```typescript copy
+import { drizzle } from 'drizzle-orm/connect';
+
+// You can specify any property from the postgres-js connection options
+const db = await drizzle("postgres-js", { 
+  connection: { 
+    url: process.env.DATABASE_URL, 
+    ssl: true 
   }
 });
+
+const result = await db.execute('select 1');
+```
+</CodeTabs>
+
+If you need a synchronous connection, you can use our additional connection API, 
+where you specify a driver connection and pass it to the Drizzle instance.
+
+```typescript copy
+// Make sure to install the 'postgres' package
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
+
+const queryClient = postgres(process.env.DATABASE_URL);
+const db = drizzle(queryClient);
+
+const result = await db.execute('select 1');
 ```
 
-服务器实现示例
+#### What's next?
 
-```ts
-import { Client } from 'pg';
-import express from 'express';
-
-const app = express();
-
-app.use(express.json());
-const port = 3000;
-
-const client = new Client('postgres://postgres:postgres@localhost:5432/postgres');
-
-app.post('/query', async (req, res) => {
-	const { sql, params, method } = req.body;
-
-	// prevent multiple queries
-	const sqlBody = sql.replace(/;/g, '');
-
-    try {
-        const result = await client.query({
-            text: sqlBody,
-            values: params,
-            rowMode: method === 'all' ? 'array': undefined,
-        });
-		res.send(result.rows);
-	} catch (e: any) {
-		res.status(500).json({ error: e });
-	}
-
-	res.status(500).json({ error: 'Unknown method value' });
-});
-
-app.listen(port, () => {
-	console.log(`Example app listening on port ${port}`);
-});
-```
+<WhatsNextPostgres/>

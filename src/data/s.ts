@@ -251,10 +251,31 @@ export const sponsorsData: ISponsor[] = [
     isActive: true,
     imageType: ImageType.SVG,
     darkStyle: {
-      padding: "8px",
+      padding: "10px",
     },
     lightStyle: {
-      padding: "8px",
+      padding: "10px",
+    },
+  },
+  {
+    tier: {
+      name: "$1000 a month",
+      isOneTime: false,
+    },
+    sponsorEntity: {
+      __typename: "Organization",
+      login: "driz.link/tembo",
+      name: "Tembo",
+      avatarUrl: "/images/tembo.png",
+    },
+    createdAt: "2024-06-07T13:32:16Z",
+    isActive: true,
+    imageType: ImageType.IMAGE,
+    darkStyle: {
+      padding: "11px",
+    },
+    lightStyle: {
+      padding: "11px",
     },
   },
   {
