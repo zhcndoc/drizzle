@@ -16,57 +16,57 @@ import SetupConfig from '@mdx/get-started/SetupConfig.mdx';
 
 <Breadcrumbs/>
 
-# Get Started with Drizzle and MySQL
+# 开始使用 Drizzle 和 MySQL
 
 <Prerequisites>  
-  - **dotenv** - package for managing environment variables - [read here](https://www.npmjs.com/package/dotenv)
-  - **tsx** - package for running TypeScript files - [read here](https://tsx.is/)
-  - **mysql2** - package for querying your MySQL database - [read here](https://github.com/sidorares/node-mysql2)
+  - **dotenv** - 管理环境变量的包 - [查看这里](https://www.npmjs.com/package/dotenv)
+  - **tsx** - 运行 TypeScript 文件的包 - [查看这里](https://tsx.is/)
+  - **mysql2** - 查询您的 MySQL 数据库的包 - [查看这里](https://github.com/sidorares/node-mysql2)
 </Prerequisites>
 
-To use Drizzle with a MySQL database, you should use the `mysql2` driver
+要使用 Drizzle 与 MySQL 数据库，您应使用 `mysql2` 驱动
 
-According to the **[official website](https://github.com/sidorares/node-mysql2)**, 
-`mysql2` is a MySQL client for Node.js with focus on performance.  
+根据 **[官方网站](https://github.com/sidorares/node-mysql2)**， 
+`mysql2` 是一个专注于性能的 Node.js MySQL 客户端。  
 
-Drizzle ORM natively supports `mysql2` with `drizzle-orm/mysql2` package.
+Drizzle ORM 原生支持 `mysql2`，使用 `drizzle-orm/mysql2` 包。
 
 <FileStructure/>
 
-#### Step 1 - Install **mysql2** package
+#### 步骤 1 - 安装 **mysql2** 包
 
 <InstallPackages lib='mysql2'/>
 
-#### Step 2 - Setup connection variables
+#### 步骤 2 - 设置连接变量
 
 <SetupEnv env_variable='DATABASE_URL' />
 
-<Callout title='tips'>
-If you don't have a MySQL database yet and want to create one for testing, you can use our guide on how to set up MySQL in Docker.
+<Callout title='提示'>
+如果您还没有 MySQL 数据库并想要创建一个用于测试，您可以使用我们关于如何在 Docker 中设置 MySQL 的指南。
 
-The MySQL in Docker guide is available [here](/docs/guides/mysql-local-setup). Go set it up, generate a database URL (explained in the guide), and come back for the next steps
+Docker 中的 MySQL 指南可以在 [这里](/docs/guides/mysql-local-setup) 找到。去设置一下，生成一个数据库 URL（指南中有解释），然后回来进行下一步
 </Callout>
 
-#### Step 3 - Connect Drizzle ORM to the database
+#### 步骤 3 - 将 Drizzle ORM 连接到数据库
 
 <ConnectMySQL/>
 
-#### Step 4 - Create a table
+#### 步骤 4 - 创建一个表
 
 <CreateTable/>
 
-#### Step 5 - Setup Drizzle config file
+#### 步骤 5 - 设置 Drizzle 配置文件
 
 <SetupConfig dialect='mysql' env_variable='DATABASE_URL'/>
 
-#### Step 6 - Applying changes to the database
+#### 步骤 6 - 将更改应用到数据库
 
 <ApplyChanges />
 
-#### Step 7 - Seed and Query the database
+#### 步骤 7 - 填充和查询数据库
 
 <QueryDatabase dialect='mysql2' env_variable='DATABASE_URL'/>
 
-#### Step 8 - Run index.ts file
+#### 步骤 8 - 运行 index.ts 文件
 
 <RunFile/>

@@ -16,50 +16,49 @@ import SetupConfig from '@mdx/get-started/SetupConfig.mdx';
 
 <Breadcrumbs/>
 
-# Get Started with Drizzle and TiDB
+# 开始使用 Drizzle 和 TiDB
 
 <Prerequisites>  
-  - **dotenv** - package for managing environment variables - [read here](https://www.npmjs.com/package/dotenv)
-  - **tsx** - package for running TypeScript files - [read here](https://tsx.is/)
-  - **TiDB** - The Distributed SQL Database by PingCAP - [read here](https://www.pingcap.com/)
-  - **serverless-js** - package for serverless and edge compute platforms that require HTTP external connections - [read here](https://github.com/tidbcloud/serverless-js)
+  - **dotenv** - 管理环境变量的包 - [查看这里](https://www.npmjs.com/package/dotenv)
+  - **tsx** - 运行 TypeScript 文件的包 - [查看这里](https://tsx.is/)
+  - **TiDB** - PingCAP 的分布式 SQL 数据库 - [查看这里](https://www.pingcap.com/)
+  - **serverless-js** - 用于需要 HTTP 外部连接的无服务器和边缘计算平台的包 - [查看这里](https://github.com/tidbcloud/serverless-js)
 </Prerequisites>
 
-<Callout title='important' type='warning'>
-For this tutorial, we will use the `@tidbcloud/serverless` driver to make **HTTP** calls. If you need to
-connect to TiDB through TCP, you can refer to our [MySQL Get Started](/docs/get-started/mysql-new) page
+<Callout title='重要' type='warning'>
+在本教程中，我们将使用 `@tidbcloud/serverless` 驱动程序进行 **HTTP** 调用。如果您需要通过 TCP 连接到 TiDB，可以参考我们的 [MySQL 开始使用](/docs/get-started/mysql-new) 页面
 </Callout>
 
 <FileStructure/>
 
-#### Step 1 - Install **@tidbcloud/serverless** package
+#### 第一步 - 安装 **@tidbcloud/serverless** 包
 
 <InstallPackages lib='@tidbcloud/serverless'/>
 
-#### Step 2 - Setup connection variables
+#### 第二步 - 设置连接变量
 
 <SetupEnv env_variable='DATABASE_URL' />
 
-#### Step 3 - Connect Drizzle ORM to the database
+#### 第三步 - 将 Drizzle ORM 连接到数据库
 
 <ConnectTiDB/>
 
-#### Step 4 - Create a table
+#### 第四步 - 创建一个表
 
 <CreateTable/>
 
-#### Step 5 - Setup Drizzle config file
+#### 第五步 - 设置 Drizzle 配置文件
 
 <SetupConfig dialect='mysql' env_variable='DATABASE_URL'/>
 
-#### Step 6 - Applying changes to the database
+#### 第六步 - 将更改应用到数据库
 
 <ApplyChanges />
 
-#### Step 7 - Seed and Query the database
+#### 第七步 - 填充并查询数据库
 
 <QueryDatabase dialect='tidb-serverless' env_variable='DATABASE_URL'/>
 
-#### Step 8 - Run index.ts file
+#### 第八步 - 运行 index.ts 文件
 
 <RunFile/>

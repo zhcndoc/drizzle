@@ -22,47 +22,47 @@ import UpdateSchema from '@mdx/get-started/postgresql/UpdateSchema.mdx';
 
 <Breadcrumbs/>
 
-# Get Started with Drizzle and Vercel Postgres in existing project
+# 在现有项目中开始使用 Drizzle 和 Vercel Postgres
 
 <Prerequisites>
-  - **dotenv** - package for managing environment variables - [read here](https://www.npmjs.com/package/dotenv)
-  - **tsx** - package for running TypeScript files - [read here](https://tsx.is/)
-  - **Vercel Postgres database** - [read here](https://vercel.com/docs/storage/vercel-postgres)
-  - **Vercel Postgres driver** - [read here](https://vercel.com/docs/storage/vercel-postgres/sdk) & [GitHub](https://github.com/vercel/storage/tree/main/packages/postgres)
+  - **dotenv** - 管理环境变量的包 - [查看这里](https://www.npmjs.com/package/dotenv)
+  - **tsx** - 运行 TypeScript 文件的包 - [查看这里](https://tsx.is/)
+  - **Vercel Postgres 数据库** - [查看这里](https://vercel.com/docs/storage/vercel-postgres)
+  - **Vercel Postgres 驱动** - [查看这里](https://vercel.com/docs/storage/vercel-postgres/sdk) & [GitHub](https://github.com/vercel/storage/tree/main/packages/postgres)
 </Prerequisites>
 
 <FileStructure/>
 
-#### Step 1 - Install required package
+#### 步骤 1 - 安装所需包
 <InstallPackages lib='@vercel/postgres'/>
 
-#### Step 2 - Setup connection variables
+#### 步骤 2 - 设置连接变量
 
 <SetupEnv env_variable='POSTGRES_URL' />
 
-<Callout title='warning'>
-It's important to name the variable `POSTGRES_URL` for Vercel Postgres.
+<Callout title='警告'>
+务必将变量命名为 `POSTGRES_URL`，以用于 Vercel Postgres。
 
-In the Vercel Postgres storage tab, you can find the `.env.local` tab and copy the `POSTGRES_URL` variable
+在 Vercel Postgres 存储标签中，您可以找到 `.env.local` 标签并复制 `POSTGRES_URL` 变量。
 </Callout>
 
-#### Step 3 - Setup Drizzle config file
+#### 步骤 3 - 设置 Drizzle 配置文件
 
 <SetupConfig dialect='postgresql' env_variable='POSTGRES_URL'/>
 
-#### Step 4 - Introspect your database
+#### 步骤 4 - 反向工程您的数据库
 
 <IntrospectPostgreSQL/>
 
-#### Step 5 - Transfer code to your actual schema file
+#### 步骤 5 - 将代码转移到您的实际架构文件中
 
 <TransferCode/>
 
-#### Step 6 - Connect Drizzle ORM to the database
+#### 步骤 6 - 将 Drizzle ORM 连接到数据库
 
 <ConnectVercel/>
 
-#### Step 7 - Query the database
+#### 步骤 7 - 查询数据库
 
 ```typescript copy filename="src/index.ts"
 import 'dotenv/config';
@@ -79,10 +79,10 @@ async function main() {
   };
 
   await db.insert(usersTable).values(user);
-  console.log('New user created!')
+  console.log('新用户已创建！')
 
   const users = await db.select().from(usersTable);
-  console.log('Getting all users from the database: ', users)
+  console.log('从数据库获取所有用户: ', users)
   /*
   const users: {
     id: number;
@@ -98,28 +98,28 @@ async function main() {
       age: 31,
     })
     .where(eq(usersTable.email, user.email));
-  console.log('User info updated!')
+  console.log('用户信息已更新！')
 
   await db.delete(usersTable).where(eq(usersTable.email, user.email));
-  console.log('User deleted!')
+  console.log('用户已删除！')
 }
 
 main();
 ```
 
-#### Step 8 - Run index.ts file
+#### 步骤 8 - 运行 index.ts 文件
 
 <RunFile/>
 
-#### Step 9 - Update your table schema (optional)
+#### 步骤 9 - 更新您的表架构（可选）
 
 <UpdateSchema/>
 
-#### Step 10 - Applying changes to the database (optional)
+#### 步骤 10 - 将更改应用到数据库（可选）
 
 <ApplyChanges />
 
-#### Step 11 - Query the database with a new field (optional)
+#### 步骤 11 - 使用新字段查询数据库（可选）
 
 ```typescript copy filename="src/index.ts"
 import 'dotenv/config';
@@ -137,10 +137,10 @@ async function main() {
   };
 
   await db.insert(usersTable).values(user);
-  console.log('New user created!')
+  console.log('新用户已创建！')
 
   const users = await db.select().from(usersTable);
-  console.log('Getting all users from the database: ', users)
+  console.log('从数据库获取所有用户: ', users)
   /*
   const users: {
     id: number;
@@ -157,10 +157,10 @@ async function main() {
       age: 31,
     })
     .where(eq(usersTable.email, user.email));
-  console.log('User info updated!')
+  console.log('用户信息已更新！')
 
   await db.delete(usersTable).where(eq(usersTable.email, user.email));
-  console.log('User deleted!')
+  console.log('用户已删除！')
 }
 
 main();

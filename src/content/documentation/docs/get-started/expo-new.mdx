@@ -19,26 +19,26 @@ import ConnectLibsql from '@mdx/get-started/sqlite/ConnectLibsql.mdx';
 
 <Breadcrumbs/>
 
-# Get Started with Drizzle and Expo
+# 开始使用 Drizzle 和 Expo
 
 <Prerequisites>  
-  - **Expo SQLite** - A library that provides access to a database that can be queried through a SQLite API - [read here](https://docs.expo.dev/versions/latest/sdk/sqlite/)
+  - **Expo SQLite** - 一个可通过 SQLite API 查询的数据库访问库 - [在此阅读](https://docs.expo.dev/versions/latest/sdk/sqlite/)
 </Prerequisites>
 
 
-#### Step 1 - Setup a project from Expo Template
+#### 步骤 1 - 从 Expo 模板设置项目
 <Npx>
 create expo-app --template blank-typescript
 </Npx>
 
-You can read more about this template [here](https://docs.expo.dev/more/create-expo/#create-a-new-project).
+您可以在 [此处](https://docs.expo.dev/more/create-expo/#create-a-new-project) 了解更多关于此模板的信息。
 
-#### Basic file structure
+#### 基本文件结构
 
-After installing the template and adding the `db` folder, you'll find the following content: In the `db/schema.ts` file with drizzle table definitions. The `drizzle` folder contains SQL migration files and snapshots
+安装模板并添加 `db` 文件夹后，您将找到以下内容：在 `db/schema.ts` 文件中定义的 drizzle 表。`drizzle` 文件夹包含 SQL 迁移文件和快照
 
 ```plaintext
-📦 <project root>
+📦 <项目根目录>
  ├ 📂 assets
  ├ 📂 drizzle
  ├ 📂 db
@@ -53,20 +53,20 @@ After installing the template and adding the `db` folder, you'll find the follow
  └ 📜 tsconfig.json
 ```
 
-#### Step 2 - Install expo-sqlite package
+#### 步骤 2 - 安装 expo-sqlite 包
 <Npx>
 expo install expo-sqlite
 </Npx>
 
-#### Step 3 - Install required packages
+#### 步骤 3 - 安装所需的包
 <Npm>
   drizzle-orm
   -D drizzle-kit
 </Npm>
 
-#### Step 4 - Connect Drizzle ORM to the database
+#### 步骤 4 - 将 Drizzle ORM 连接到数据库
 
-Create a `App.tsx` file in the root directory and initialize the connection:
+在根目录下创建一个 `App.tsx` 文件并初始化连接：
 
 ```ts
 import * as SQLite from 'expo-sqlite';
@@ -77,9 +77,9 @@ const expo = SQLite.openDatabaseSync('db.db');
 const db = drizzle(expo);
 ```
 
-#### Step 4 - Create a table
+#### 步骤 5 - 创建表
 
-Create a `schema.ts` file in the `db` directory and declare your table:
+在 `db` 目录下创建一个 `schema.ts` 文件并声明您的表：
 
 ```typescript copy filename="src/db/schema.ts"
 import { int, sqliteTable, text } from "drizzle-orm/sqlite-core";
@@ -92,11 +92,11 @@ export const usersTable = sqliteTable("users_table", {
 });
 ```
 
-#### Step 5 - Setup Drizzle config file
+#### 步骤 6 - 设置 Drizzle 配置文件
 
-**Drizzle config** - a configuration file that is used by [Drizzle Kit](/docs/kit-overview) and contains all the information about your database connection, migration folder and schema files.
+**Drizzle 配置** - 一个用于 [Drizzle Kit](/docs/kit-overview) 的配置文件，包含有关您的数据库连接、迁移文件夹和架构文件的所有信息。
 
-Create a `drizzle.config.ts` file in the root of your project and add the following content:
+在项目根目录下创建一个 `drizzle.config.ts` 文件并添加以下内容：
 
 ```ts
 import { defineConfig } from 'drizzle-kit';
@@ -109,9 +109,9 @@ export default defineConfig({
 });
 ```
 
-#### Step 6 - Setup `metro` config
+#### 步骤 7 - 设置 `metro` 配置
 
-Create a file `metro.config.js` in root folder and add this code inside:
+在根目录下创建一个文件 `metro.config.js` 并在其中添加以下代码：
 
 ```js copy filename="metro.config.js"
 const { getDefaultConfig } = require('expo/metro-config');
@@ -121,29 +121,29 @@ config.resolver.sourceExts.push('sql');
 module.exports = config;
 ```
 
-#### Step 7 - Update `babel` config
+#### 步骤 8 - 更新 `babel` 配置
 ```js copy filename="metro.config.js"
 module.exports = function(api) {
   api.cache(true);
   return {
     presets: ['babel-preset-expo'],
-    plugins: [["inline-import", { "extensions": [".sql"] }]] // <-- add this
+    plugins: [["inline-import", { "extensions": [".sql"] }]] // <-- 添加此行
   };
 };
 ```
 
-#### Step 8 - Applying changes to the database
+#### 步骤 9 - 对数据库应用更改
 
-With Expo, you would need to generate migrations using the `drizzle-kit generate` command and then apply them at runtime using the `drizzle-orm` `migrate()` function
+使用 Expo，您需要通过 `drizzle-kit generate` 命令生成迁移，并通过 `drizzle-orm` 的 `migrate()` 函数在运行时应用它们。
 
-Generate migrations:
+生成迁移：
 ```bash copy
 npx drizzle-kit generate
 ```
 
-#### Step 9 - Apply migrations and query your db:
+#### 步骤 10 - 应用迁移并查询数据库：
 
-Let's **App.tsx** file with migrations and queries to create, read, update, and delete users
+让我们在 **App.tsx** 文件中执行迁移和查询，以创建、读取、更新和删除用户。
 
 ```ts copy
 import { Text, View } from 'react-native';
@@ -184,7 +184,7 @@ export default function App() {
   if (error) {
     return (
       <View>
-        <Text>Migration error: {error.message}</Text>
+        <Text>迁移错误: {error.message}</Text>
       </View>
     );
   }
@@ -192,7 +192,7 @@ export default function App() {
   if (!success) {
     return (
       <View>
-        <Text>Migration is in progress...</Text>
+        <Text>迁移进行中...</Text>
       </View>
     );
   }
@@ -200,7 +200,7 @@ export default function App() {
   if (items === null || items.length === 0) {
     return (
       <View>
-        <Text>Empty</Text>
+        <Text>空</Text>
       </View>
     );
   }
@@ -224,7 +224,7 @@ export default function App() {
 }
 ```
 
-#### Step 10 - Prebuild and run expo app
+#### 步骤 11 - 预构建并运行 expo 应用
 
 <CodeTabs items={['npm', 'yarn', 'pnpm', 'bun']}>
 ```bash copy

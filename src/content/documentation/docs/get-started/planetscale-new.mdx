@@ -16,29 +16,28 @@ import SetupConfig from '@mdx/get-started/SetupConfig.mdx';
 
 <Breadcrumbs/>
 
-# Get Started with Drizzle and PlanetScale
+# 开始使用 Drizzle 和 PlanetScale
 
 <Prerequisites>  
-  - **dotenv** - package for managing environment variables - [read here](https://www.npmjs.com/package/dotenv)
-  - **tsx** - package for running TypeScript files - [read here](https://tsx.is/)
-  - **PlanetScale** - MySQL database platform - [read here](https://planetscale.com/)
-  - **database-js** - PlanetScale serverless driver - [read here](https://github.com/planetscale/database-js)
+  - **dotenv** - 管理环境变量的包 - [点击这里阅读](https://www.npmjs.com/package/dotenv)
+  - **tsx** - 运行 TypeScript 文件的包 - [点击这里阅读](https://tsx.is/)
+  - **PlanetScale** - MySQL 数据库平台 - [点击这里阅读](https://planetscale.com/)
+  - **database-js** - PlanetScale 无服务器驱动程序 - [点击这里阅读](https://github.com/planetscale/database-js)
 </Prerequisites>
 
-<Callout title='important' type='warning'>
-For this tutorial, we will use the `database-js` driver to make **HTTP** calls to the PlanetScale database. If you need to
-connect to PlanetScale through TCP, you can refer to our [MySQL Get Started](/docs/get-started/mysql-new) page
+<Callout title='重要' type='warning'>
+在本教程中，我们将使用 `database-js` 驱动程序通过 **HTTP** 调用 PlanetScale 数据库。如果您需要通过 TCP 连接到 PlanetScale，可以参考我们的 [MySQL 入门](/docs/get-started/mysql-new) 页面。
 </Callout>
 
 <FileStructure/>
 
-#### Step 1 - Install **@planetscale/database** package
+#### 步骤 1 - 安装 **@planetscale/database** 包
 
 <InstallPackages lib='@planetscale/database'/>
 
-#### Step 2 - Setup connection variables
+#### 步骤 2 - 设置连接变量
 
-Create a `.env` file in the root of your project and add your database connection variable:
+在项目根目录下创建一个 `.env` 文件，并添加您的数据库连接变量：
 
 ```plaintext copy
 DATABASE_HOST=
@@ -46,30 +45,30 @@ DATABASE_USERNAME=
 DATABASE_PASSWORD=
 ```
 
-<Callout title='tips'>
-To get all the necessary environment variables to connect through the `database-js` driver, you can check the [PlanetScale docs](https://planetscale.com/docs/tutorials/planetscale-serverless-driver-node-example#use-the-sample-repository)
+<Callout title='提示'>
+要获取通过 `database-js` 驱动程序连接所需的所有环境变量，请查看 [PlanetScale 文档](https://planetscale.com/docs/tutorials/planetscale-serverless-driver-node-example#use-the-sample-repository)
 </Callout>
 
-#### Step 3 - Connect Drizzle ORM to the database
+#### 步骤 3 - 将 Drizzle ORM 连接到数据库
 
 <ConnectPlanetScale/>
 
-#### Step 4 - Create a table
+#### 步骤 4 - 创建一个表
 
 <CreateTable/>
 
-#### Step 5 - Setup Drizzle config file
+#### 步骤 5 - 设置 Drizzle 配置文件
 
 <SetupConfig dialect='mysql' env_variable='DATABASE_URL'/>
 
-#### Step 6 - Applying changes to the database
+#### 步骤 6 - 将更改应用到数据库
 
 <ApplyChanges />
 
-#### Step 7 - Seed and Query the database
+#### 步骤 7 - 种子数据并查询数据库
 
 <QueryPlanetScale />
 
-#### Step 8 - Run index.ts file
+#### 步骤 8 - 运行 index.ts 文件
 
 <RunFile/>

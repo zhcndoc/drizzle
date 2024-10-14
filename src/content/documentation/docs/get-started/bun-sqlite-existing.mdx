@@ -20,71 +20,71 @@ import UpdateSchema from '@mdx/get-started/sqlite/UpdateSchema.mdx';
 
 <Breadcrumbs/>
 
-# Get Started with Drizzle and SQLite in existing project
+# 在现有项目中使用 Drizzle 和 SQLite 入门
 
 <Prerequisites>  
-  - **dotenv** - package for managing environment variables - [read here](https://www.npmjs.com/package/dotenv)
-  - **tsx** - package for running TypeScript files - [read here](https://tsx.is/)
-  - **bun** - javaScript all-in-one toolkit - [read here](https://bun.sh/)
-  - **bun:sqlite** - native implementation of a high-performance SQLite3 driver - [read here](https://bun.sh/docs/api/sqlite)
+  - **dotenv** - 管理环境变量的包 - [在这里阅读](https://www.npmjs.com/package/dotenv)
+  - **tsx** - 运行 TypeScript 文件的包 - [在这里阅读](https://tsx.is/)
+  - **bun** - 一体化 JavaScript 工具包 - [在这里阅读](https://bun.sh/)
+  - **bun:sqlite** - 高性能 SQLite3 驱动的原生实现 - [在这里阅读](https://bun.sh/docs/api/sqlite)
 </Prerequisites>
 
 <FileStructure />
 
-#### Step 1 - Install required packages
+#### 第一步 - 安装所需的包
 
 <Npm>
   drizzle-orm dotenv
   -D drizzle-kit tsx @types/bun
 </Npm>
 
-#### Step 2 - Setup connection variables
+#### 第二步 - 设置连接变量
 
 <SetupEnv env_variable='DB_FILE_NAME' />
 
-<Callout type='info' title='important'>
-For example, if you have an SQLite database file in the root of your project, you can use this example:
+<Callout type='info' title='重要'>
+例如，如果您的项目根目录中有一个 SQLite 数据库文件，可以使用以下示例：
 ```plaintext copy
 DB_FILE_NAME=mydb.sqlite
 ```
 </Callout>
 
 
-#### Step 3 - Setup Drizzle config file
+#### 第三步 - 设置 Drizzle 配置文件
 
 <SetupConfig dialect='sqlite' env_variable='DB_FILE_NAME'/>
 
-#### Step 4 - Introspect your database
+#### 第四步 - 对您的数据库进行自省
 
 <IntrospectSqlite/>
 
-#### Step 5 - Transfer code to your actual schema file
+#### 第五步 - 将代码转移到您的实际架构文件中
 
 <TransferCode/>
 
-#### Step 6 - Connect Drizzle ORM to the database
+#### 第六步 - 将 Drizzle ORM 连接到数据库
 
 <ConnectBun/>
 
-#### Step 7 - Query the database
+#### 第七步 - 查询数据库
 
 <QueryDatabase dialect='bun:sqlite' env_variable='DB_FILE_NAME' />
 
-#### Step 8 - Run index.ts file
+#### 第八步 - 运行 index.ts 文件
 
-To run a script with `bun`, use the following command:
+要使用 `bun` 运行脚本，请使用以下命令：
 ```bash copy
 bun src/index.ts
 ```
 
-#### Step 9 - Update your table schema (optional)
+#### 第九步 - 更新您的表架构（可选）
 
 <UpdateSchema/>
 
-#### Step 9 - Applying changes to the database (optional)
+#### 第九步 - 将更改应用到数据库（可选）
 
 <ApplyChanges/>
 
-#### Step 10 - Query the database with a new field (optional)
+#### 第十步 - 使用新字段查询数据库（可选）
 
 <QueryDatabaseUpdated dialect='bun:sqlite' env_variable='DB_FILE_NAME' />

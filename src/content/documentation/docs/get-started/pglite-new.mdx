@@ -19,44 +19,44 @@ import SetupEnv from '@mdx/get-started/SetupEnv.mdx';
 
 <Breadcrumbs/>
 
-# Get Started with Drizzle and PGlite
+# 快速开始 Drizzle 和 PGlite
 
 <Prerequisites>
-  - **dotenv** - package for managing environment variables - [read here](https://www.npmjs.com/package/dotenv)
-  - **tsx** - package for running TypeScript files - [read here](https://tsx.is/)
-  - **ElectricSQL** - [website](https://electric-sql.com/)
-  - **pglite driver** - [docs](https://pglite.dev/) & [GitHub](https://github.com/electric-sql/pglite)
+  - **dotenv** - 用于管理环境变量的包 - [阅读这里](https://www.npmjs.com/package/dotenv)
+  - **tsx** - 运行 TypeScript 文件的包 - [阅读这里](https://tsx.is/)
+  - **ElectricSQL** - [官网](https://electric-sql.com/)
+  - **pglite 驱动** - [文档](https://pglite.dev/) & [GitHub](https://github.com/electric-sql/pglite)
 </Prerequisites>
 
 <FileStructure/>
 
-#### Step 1 - Install all needed packages
+#### 步骤 1 - 安装所有所需的包
 <InstallPackages lib='@electric-sql/pglite' />
 
-#### Step 2 - Setup connection variables
+#### 步骤 2 - 设置连接变量
 
 <SetupEnv env_variable='DATABASE_URL' />
 
-#### Step 3 - Connect Drizzle ORM to the database
+#### 步骤 3 - 将 Drizzle ORM 连接到数据库
 
 <ConnectPgLite/>
 
-#### Step 4 - Create a table
+#### 步骤 4 - 创建一个表
 
 <CreateTable />
 
-#### Step 5 - Setup Drizzle config file
+#### 步骤 5 - 设置 Drizzle 配置文件
 
 <SetupConfig dialect='postgresql' env_variable='DATABASE_URL'/>
 
-#### Step 6 - Applying changes to the database
+#### 步骤 6 - 将更改应用到数据库
 
 <ApplyChanges />
 
-#### Step 7 - Seed and Query the database
+#### 步骤 7 - 添加数据并查询数据库
 
 <QueryDatabase dialect='pglite' env_variable='DATABASE_URL'/>
 
-#### Step 8 - Run index.ts file
+#### 步骤 8 - 运行 index.ts 文件
 
 <RunFile/>

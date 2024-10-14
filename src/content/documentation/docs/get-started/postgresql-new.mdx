@@ -19,54 +19,53 @@ import SetupEnv from '@mdx/get-started/SetupEnv.mdx';
 
 <Breadcrumbs/>
 
-# Get Started with Drizzle and PostgreSQL
+# 使用 Drizzle 和 PostgreSQL 开始
 
 <Prerequisites>
-  - **dotenv** - package for managing environment variables - [read here](https://www.npmjs.com/package/dotenv)
-  - **tsx** - package for running TypeScript files - [read here](https://tsx.is/)
-  - **node-postgres** - package for querying your PostgreSQL database - [read here](https://node-postgres.com/)
+  - **dotenv** - 管理环境变量的包 - [点击这里阅读](https://www.npmjs.com/package/dotenv)
+  - **tsx** - 运行 TypeScript 文件的包 - [点击这里阅读](https://tsx.is/)
+  - **node-postgres** - 查询 PostgreSQL 数据库的包 - [点击这里阅读](https://node-postgres.com/)
 </Prerequisites>
 
-Drizzle has native support for PostgreSQL connections with the `node-postgres` and `postgres.js` drivers.
+Drizzle 对 `node-postgres` 和 `postgres.js` 驱动程序的 PostgreSQL 连接提供原生支持。
 
-We will use `node-postgres` for this get started example. But if you want to find more ways to connect to postgresql check
-our [PostgreSQL Connection](/docs/get-started-postgresql) page 
+我们将在这个入门示例中使用 `node-postgres`。但如果你想找到更多连接 PostgreSQL 的方式，可以查看我们的 [PostgreSQL 连接](/docs/get-started-postgresql) 页面。
 
 <FileStructure/>
 
-#### Step 1 - Install **node-postgres** package
+#### 第 1 步 - 安装 **node-postgres** 包
 <InstallPackages lib='pg' devlib=' @types/pg'/>
 
-#### Step 2 - Setup connection variables
+#### 第 2 步 - 设置连接变量
 
 <SetupEnv env_variable='DATABASE_URL' />
 
-<Callout title='tips'>
-If you don't have a PostgreSQL database yet and want to create one for testing, you can use our guide on how to set up PostgreSQL in Docker.
+<Callout title='提示'>
+如果你还没有 PostgreSQL 数据库并想创建一个进行测试，你可以查看我们的指南，了解如何在 Docker 中设置 PostgreSQL。
 
-The PostgreSQL in Docker guide is available [here](/docs/guides/postgresql-local-setup). Go set it up, generate a database URL (explained in the guide), and come back for the next steps
+Docker 中的 PostgreSQL 设置指南可以在 [这里](/docs/guides/postgresql-local-setup) 找到。去设置它，生成一个数据库 URL（在指南中有说明），然后回来进行下一步。
 </Callout>
 
-#### Step 3 - Connect Drizzle ORM to the database
+#### 第 3 步 - 将 Drizzle ORM 连接到数据库
 
 <ConnectPostgreSQL/>
 
-#### Step 4 - Create a table
+#### 第 4 步 - 创建一个表
 
 <CreateTable />
 
-#### Step 5 - Setup Drizzle config file
+#### 第 5 步 - 设置 Drizzle 配置文件
 
 <SetupConfig dialect='postgresql' env_variable='DATABASE_URL'/>
 
-#### Step 6 - Applying changes to the database
+#### 第 6 步 - 将更改应用到数据库
 
 <ApplyChanges />
 
-#### Step 7 - Seed and Query the database
+#### 第 7 步 - 向数据库填充数据并查询
 
 <QueryDatabase dialect='node-postgres' env_variable='DATABASE_URL'/>
 
-#### Step 8 - Run index.ts file
+#### 第 8 步 - 运行 index.ts 文件
 
 <RunFile/>

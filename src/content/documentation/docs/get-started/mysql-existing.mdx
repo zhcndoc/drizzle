@@ -20,56 +20,56 @@ import TransferCode from '@mdx/get-started/TransferCode.mdx';
 
 <Breadcrumbs/>
 
-# Get Started with Drizzle and MySQL in existing project
+# 在现有项目中使用 Drizzle 和 MySQL 快速入门
 
 <Prerequisites>  
-  - **dotenv** - package for managing environment variables - [read here](https://www.npmjs.com/package/dotenv)
-  - **tsx** - package for running TypeScript files - [read here](https://tsx.is/)
-  - **mysql2** - package for querying your MySQL database - [read here](https://github.com/sidorares/node-mysql2)
+  - **dotenv** - 管理环境变量的包 - [点击阅读](https://www.npmjs.com/package/dotenv)
+  - **tsx** - 运行 TypeScript 文件的包 - [点击阅读](https://tsx.is/)
+  - **mysql2** - 查询您的 MySQL 数据库的包 - [点击阅读](https://github.com/sidorares/node-mysql2)
 </Prerequisites>
 
 <FileStructure/>
 
-#### Step 1 - Install the `mysql2` package
+#### 第 1 步 - 安装 `mysql2` 包
 
 <InstallPackages lib='mysql2'/>
 
-#### Step 2 - Setup connection variables
+#### 第 2 步 - 设置连接变量
 
 <SetupEnv env_variable='DATABASE_URL' />
 
-#### Step 3 - Setup Drizzle config file
+#### 第 3 步 - 设置 Drizzle 配置文件
 
 <SetupConfig dialect='mysql' env_variable='DATABASE_URL'/>
 
-#### Step 4 - Introspect your database
+#### 第 4 步 - 内省您的数据库
 
 <IntrospectMySQL/>
 
-#### Step 5 - Transfer code to your actual schema file
+#### 第 5 步 - 将代码转移到您的实际模式文件
 
 <TransferCode/>
 
-#### Step 6 - Connect Drizzle ORM to the database
+#### 第 6 步 - 将 Drizzle ORM 连接到数据库
 
 <ConnectMySQL/>
 
-#### Step 7 - Query the database
+#### 第 7 步 - 查询数据库
 
 <QueryDatabase dialect='mysql2' env_variable='DATABASE_URL'/>
 
-#### Step 8 - Run index.ts file
+#### 第 8 步 - 运行 index.ts 文件
 
 <RunFile/>
 
-#### Step 9 - Update your table schema (optional)
+#### 第 9 步 - 更新您的表模式（可选）
 
 <UpdateSchema/>
 
-#### Step 10 - Applying changes to the database (optional)
+#### 第 10 步 - 将更改应用于数据库（可选）
 
 <ApplyChanges/>
 
-#### Step 11 - Query the database with a new field (optional)
+#### 第 11 步 - 使用新字段查询数据库（可选）
 
 <QueryDatabaseUpdated dialect='mysql2' env_variable='DATABASE_URL' />

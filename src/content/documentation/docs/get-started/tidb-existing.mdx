@@ -20,57 +20,57 @@ import TransferCode from '@mdx/get-started/TransferCode.mdx';
 
 <Breadcrumbs/>
 
-# Get Started with Drizzle and TiDB in existing project
+# 在现有项目中开始使用 Drizzle 和 TiDB
 
 <Prerequisites>  
-  - **dotenv** - package for managing environment variables - [read here](https://www.npmjs.com/package/dotenv)
-  - **tsx** - package for running TypeScript files - [read here](https://tsx.is/)
-  - **TiDB** - The Distributed SQL Database by PingCAP - [read here](https://www.pingcap.com/)
-  - **serverless-js** - package for serverless and edge compute platforms that require HTTP external connections - [read here](https://github.com/tidbcloud/serverless-js)
+  - **dotenv** - 用于管理环境变量的包 - [详细阅读](https://www.npmjs.com/package/dotenv)
+  - **tsx** - 用于运行 TypeScript 文件的包 - [详细阅读](https://tsx.is/)
+  - **TiDB** - PingCAP 提供的分布式 SQL 数据库 - [详细阅读](https://www.pingcap.com/)
+  - **serverless-js** - 用于需要 HTTP 外部连接的无服务器和边缘计算平台的包 - [详细阅读](https://github.com/tidbcloud/serverless-js)
 </Prerequisites>
 
 <FileStructure/>
 
-#### Step 1 - Install **@tidbcloud/serverless** package
+#### 第一步 - 安装 **@tidbcloud/serverless** 包
 
 <InstallPackages lib='@tidbcloud/serverless'/>
 
-#### Step 2 - Setup connection variables
+#### 第二步 - 设置连接变量
 
 <SetupEnv env_variable='DATABASE_URL' />
 
-#### Step 3 - Setup Drizzle config file
+#### 第三步 - 设置 Drizzle 配置文件
 
 <SetupConfig dialect='mysql' env_variable='DATABASE_URL'/>
 
-#### Step 4 - Introspect your database
+#### 第四步 - 反向工程数据库
 
 <IntrospectMySQL/>
 
-#### Step 5 - Transfer code to your actual schema file
+#### 第五步 - 将代码转移到实际的模式文件
 
 <TransferCode/>
 
-#### Step 6 - Connect Drizzle ORM to the database
+#### 第六步 - 将 Drizzle ORM 连接到数据库
 
 <ConnectTiDB/>
 
-#### Step 7 - Query the database
+#### 第七步 - 查询数据库
 
 <QueryDatabase dialect='tidb-serverless' env_variable='DATABASE_URL'/>
 
-#### Step 8 - Run index.ts file
+#### 第八步 - 运行 index.ts 文件
 
 <RunFile/>
 
-#### Step 9 - Update your table schema (optional)
+#### 第九步 - 更新你的表模式（可选）
 
 <UpdateSchema/>
 
-#### Step 10 - Applying changes to the database (optional)
+#### 第十步 - 将更改应用到数据库（可选）
 
 <ApplyChanges/>
 
-#### Step 11 - Query the database with a new field (optional)
+#### 第十一步 - 使用新字段查询数据库（可选）
 
 <QueryDatabaseUpdated dialect='tidb-serverless' env_variable='DATABASE_URL' />

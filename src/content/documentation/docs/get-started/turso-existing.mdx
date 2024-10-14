@@ -22,40 +22,40 @@ import QueryTursoUpdated from '@mdx/get-started/sqlite/QueryTursoUpdated.mdx';
 
 <Breadcrumbs/>
 
-# Get Started with Drizzle and Turso in existing project
+# 在现有项目中使用 Drizzle 和 Turso 开始
 
 <Prerequisites>  
-  - **dotenv** - package for managing environment variables - [read here](https://www.npmjs.com/package/dotenv)
-  - **tsx** - package for running TypeScript files - [read here](https://tsx.is/)
-  - **turso** - SQLite for Production - [read here](https://turso.tech/)
-  - **libsql** - a fork of SQLite optimized for low query latency, making it suitable for global applications - [read here](https://docs.turso.tech/libsql)
+  - **dotenv** - 用于管理环境变量的包 - [阅读这里](https://www.npmjs.com/package/dotenv)
+  - **tsx** - 运行 TypeScript 文件的包 - [阅读这里](https://tsx.is/)
+  - **turso** - 生产环境中的 SQLite - [阅读这里](https://turso.tech/)
+  - **libsql** - 性能优化的 SQLite 分支，适合全球应用 - [阅读这里](https://docs.turso.tech/libsql)
 </Prerequisites>
 
 <FileStructure />
 
-#### Step 1 - Install required packages
+#### 第一步 - 安装所需的包
 
 <InstallPackages lib='@libsql/client'/>
 
-#### Step 2 - Setup connection variables
+#### 第二步 - 设置连接变量
 
-Create a `.env` file in the root of your project and add you Turso database url and auth token:
+在你的项目根目录创建一个 `.env` 文件，并添加你的 Turso 数据库 URL 和认证令牌：
 
 ```plaintext copy
 TURSO_DATABASE_URL=
 TURSO_AUTH_TOKEN=
 ```
 
-<Callout type='info' title='important'>
-If you don't know your `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` values, you can refer to the LibSQL Driver SDK tutorial. 
-Check it out [here](https://docs.turso.tech/sdk/ts/quickstart), then return with all the values generated and added to the `.env` file
+<Callout type='info' title='重要'>
+如果你不知道你的 `TURSO_DATABASE_URL` 和 `TURSO_AUTH_TOKEN` 值，可以参考 LibSQL Driver SDK 教程。 
+查看 [这里](https://docs.turso.tech/sdk/ts/quickstart)，完成后再回来将所有生成的值添加到 `.env` 文件中
 </Callout>
 
-#### Step 3 - Setup Drizzle config file
+#### 第三步 - 设置 Drizzle 配置文件
 
-**Drizzle config** - a configuration file that is used by [Drizzle Kit](/docs/kit-overview) and contains all the information about your database connection, migration folder and schema files.
+**Drizzle 配置** - 用于 [Drizzle Kit](/docs/kit-overview) 的配置文件，包含你的数据库连接、迁移文件夹和模式文件的信息。
 
-Create a `drizzle.config.ts` file in the root of your project and add the following content:
+在项目根目录创建一个 `drizzle.config.ts` 文件，并添加以下内容：
 
 ```typescript copy filename="drizzle.config.ts"
 import 'dotenv/config';
@@ -72,24 +72,24 @@ export default defineConfig({
 });
 ```
 
-#### Step 4 - Introspect your database
+#### 第四步 - 反向工程你的数据库
 
 <IntrospectSqlite/>
 
-#### Step 5 - Transfer code to your actual schema file
+#### 第五步 - 将代码转移到你的实际模式文件
 
 <TransferCode/>
 
-#### Step 6 - Connect Drizzle ORM to the database
+#### 第六步 - 连接 Drizzle ORM 到数据库
 
-Create a `index.ts` file in the `src` directory and initialize the connection:
+在 `src` 目录创建一个 `index.ts` 文件并初始化连接：
 
 ```typescript copy
 import 'dotenv/config';
 import { drizzle } from 'drizzle-orm/connect';
 
 async function main() {
-  // You can specify any property from the libsql connection options
+  // 你可以指定 libsql 连接选项中的任何属性
   const db = await drizzle("turso", { 
     connection: { 
         url: process.env.TURSO_DATABASE_URL!, 
@@ -101,8 +101,8 @@ async function main() {
 main();
 ```
 
-If you need a synchronous connection, you can use our additional connection API, 
-where you specify a driver connection and pass it to the Drizzle instance.
+如果你需要同步连接，可以使用我们的额外连接 API，
+在其中指定驱动连接并将其传递给 Drizzle 实例。
 
 ```typescript copy
 import 'dotenv/config';
@@ -120,22 +120,22 @@ async function main() {
 main();
 ```
 
-#### Step 7 - Query the database
+#### 第七步 - 查询数据库
 
 <QueryTurso/>
 
-#### Step 8 - Run index.ts file
+#### 第八步 - 运行 index.ts 文件
 
 <RunFile/>
 
-#### Step 9 - Update your table schema (optional)
+#### 第九步 - 更新你的表模式（可选）
 
 <UpdateSchema/>
 
-#### Step 9 - Applying changes to the database (optional)
+#### 第九步 - 将更改应用到数据库（可选）
 
 <ApplyChanges/>
 
-#### Step 10 - Query the database with a new field (optional)
+#### 第十步 - 使用新字段查询数据库（可选）
 
 <QueryTursoUpdated />

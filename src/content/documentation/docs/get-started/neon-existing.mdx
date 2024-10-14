@@ -22,55 +22,55 @@ import UpdateSchema from '@mdx/get-started/postgresql/UpdateSchema.mdx';
 
 <Breadcrumbs/>
 
-# Get Started with Drizzle and Neon in existing project
+# 在现有项目中开始使用 Drizzle 和 Neon
 
 <Prerequisites>
-  - **dotenv** - package for managing environment variables - [read here](https://www.npmjs.com/package/dotenv)
-  - **tsx** - package for running TypeScript files - [read here](https://tsx.is/)
-  - **Neon** - serverless Postgres platform - [read here](https://neon.tech/docs/introduction)
+  - **dotenv** - 管理环境变量的包 - [点击这里阅读](https://www.npmjs.com/package/dotenv)
+  - **tsx** - 运行 TypeScript 文件的包 - [点击这里阅读](https://tsx.is/)
+  - **Neon** - 无服务器的 Postgres 平台 - [点击这里阅读](https://neon.tech/docs/introduction)
 </Prerequisites>
 
 <FileStructure/>
 
-#### Step 1 - Install **@neondatabase/serverless** package
+#### 步骤 1 - 安装 **@neondatabase/serverless** 包
 <InstallPackages lib='@neondatabase/serverless'/>
 
-#### Step 2 - Setup connection variables
+#### 步骤 2 - 设置连接变量
 
 <SetupEnv env_variable='DATABASE_URL' />
 
-#### Step 3 - Setup Drizzle config file
+#### 步骤 3 - 设置 Drizzle 配置文件
 
 <SetupConfig dialect='postgresql' env_variable='DATABASE_URL'/>
 
-#### Step 4 - Introspect your database
+#### 步骤 4 - 对数据库进行探测
 
 <IntrospectPostgreSQL/>
 
-#### Step 5 - Transfer code to your actual schema file
+#### 步骤 5 - 将代码转移到实际的模式文件
 
 <TransferCode/>
 
-#### Step 6 - Connect Drizzle ORM to the database
+#### 步骤 6 - 将 Drizzle ORM 连接到数据库
 
 <ConnectNeon/>
 
-#### Step 7 - Query the database
+#### 步骤 7 - 查询数据库
 
 <QueryDatabase dialect='neon-http' env_variable='DATABASE_URL'/>
 
-#### Step 8 - Run index.ts file
+#### 步骤 8 - 运行 index.ts 文件
 
 <RunFile/>
 
-#### Step 9 - Update your table schema (optional)
+#### 步骤 9 - 更新你的表结构（可选）
 
 <UpdateSchema/>
 
-#### Step 10 - Applying changes to the database (optional)
+#### 步骤 10 - 将更改应用于数据库（可选）
 
 <ApplyChanges />
 
-#### Step 11 - Query the database with a new field (optional)
+#### 步骤 11 - 用新字段查询数据库（可选）
 
 <QueryDatabaseUpdated dialect='neon-http' env_variable='DATABASE_URL' />

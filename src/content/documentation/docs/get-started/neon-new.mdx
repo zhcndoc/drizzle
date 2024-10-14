@@ -19,49 +19,49 @@ import SetupEnv from '@mdx/get-started/SetupEnv.mdx';
 
 <Breadcrumbs/>
 
-# Get Started with Drizzle and Neon
+# 开始使用 Drizzle 和 Neon
 
 <Prerequisites>
-  - **dotenv** - package for managing environment variables - [read here](https://www.npmjs.com/package/dotenv)
-  - **tsx** - package for running TypeScript files - [read here](https://tsx.is/)
-  - **Neon** - serverless Postgres platform - [read here](https://neon.tech/docs/introduction)
+  - **dotenv** - 管理环境变量的包 - [阅读这里](https://www.npmjs.com/package/dotenv)
+  - **tsx** - 运行 TypeScript 文件的包 - [阅读这里](https://tsx.is/)
+  - **Neon** - 无服务器的 Postgres 平台 - [阅读这里](https://neon.tech/docs/introduction)
 </Prerequisites>
 
-Drizzle has native support for Neon connections with the `neon-http` and `neon-websockets` drivers. These use the **neon-serverless** driver under the hood.  
+Drizzle 对 Neon 连接有原生支持，使用 `neon-http` 和 `neon-websockets` 驱动。这些驱动在底层使用 **neon-serverless** 驱动。  
   
-With the `neon-http` and `neon-websockets` drivers, you can access a Neon database from serverless environments over HTTP or WebSockets instead of TCP. Querying over HTTP is faster for single, non-interactive transactions.  
+通过 `neon-http` 和 `neon-websockets` 驱动，您可以通过 HTTP 或 WebSockets 从无服务器环境访问 Neon 数据库，而不是使用 TCP。通过 HTTP 查询对于单个非交互式事务而言速度更快。  
   
-If you need session or interactive transaction support, or a fully compatible drop-in replacement for the `pg` driver, you can use the WebSocket-based `neon-serverless` driver. You can connect to a Neon database directly using [Postgres](/docs/get-started/postgresql-new)
+如果您需要会话或交互式事务支持，或者完全兼容的 `pg` 驱动替代品，您可以使用基于 WebSocket 的 `neon-serverless` 驱动。您可以直接使用 [Postgres](/docs/get-started/postgresql-new) 连接到 Neon 数据库。
 
 <FileStructure/>
 
-#### Step 1 - Install **@neondatabase/serverless** package
+#### 步骤 1 - 安装 **@neondatabase/serverless** 包
 <InstallPackages lib='@neondatabase/serverless'/>
 
-#### Step 2 - Setup connection variables
+#### 步骤 2 - 设置连接变量
 
 <SetupEnv env_variable='DATABASE_URL' />
 
-#### Step 3 - Connect Drizzle ORM to the database
+#### 步骤 3 - 将 Drizzle ORM 连接到数据库
 
 <ConnectNeon/>
 
-#### Step 4 - Create a table
+#### 步骤 4 - 创建表
 
 <CreateTable />
 
-#### Step 5 - Setup Drizzle config file
+#### 步骤 5 - 设置 Drizzle 配置文件
 
 <SetupConfig dialect='postgresql' env_variable='DATABASE_URL'/>
 
-#### Step 6 - Applying changes to the database
+#### 步骤 6 - 将更改应用到数据库
 
 <ApplyChanges />
 
-#### Step 7 - Seed and Query the database
+#### 步骤 7 - 种子并查询数据库
 
 <QueryDatabase dialect='neon-http' env_variable='DATABASE_URL'/>
 
-#### Step 8 - Run index.ts file
+#### 步骤 8 - 运行 index.ts 文件
 
 <RunFile/>

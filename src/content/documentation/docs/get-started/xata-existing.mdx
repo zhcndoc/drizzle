@@ -22,56 +22,56 @@ import UpdateSchema from '@mdx/get-started/postgresql/UpdateSchema.mdx';
 
 <Breadcrumbs/>
 
-# Get Started with Drizzle and Xata in existing project
+# 在现有项目中开始使用 Drizzle 和 Xata
 
 <Prerequisites>
-  - **dotenv** - package for managing environment variables - [read here](https://www.npmjs.com/package/dotenv)
-  - **tsx** - package for running TypeScript files - [read here](https://tsx.is/)
-  - **Xata database** - [read here](https://xata.io/docs)
-  - **Xata driver** - [read here](https://xata.io/docs/sdk/typescript/overview) & [GitHub](https://github.com/xataio/client-ts)
+  - **dotenv** - 用于管理环境变量的包 - [阅读这里](https://www.npmjs.com/package/dotenv)
+  - **tsx** - 用于运行 TypeScript 文件的包 - [阅读这里](https://tsx.is/)
+  - **Xata 数据库** - [阅读这里](https://xata.io/docs)
+  - **Xata 驱动程序** - [阅读这里](https://xata.io/docs/sdk/typescript/overview) & [GitHub](https://github.com/xataio/client-ts)
 </Prerequisites>
 
 <FileStructure/>
 
-#### Step 1 - Install **@xata.io/client** package
+#### 步骤 1 - 安装 **@xata.io/client** 包
 <InstallPackages lib='@xata.io/client'/>
 
-#### Step 2 - Setup connection variables
+#### 步骤 2 - 设置连接变量
 
 <SetupEnv env_variable='DATABASE_URL' />
 
-#### Step 3 - Setup Drizzle config file
+#### 步骤 3 - 设置 Drizzle 配置文件
 
 <SetupConfig dialect='postgresql' env_variable='DATABASE_URL'/>
 
-#### Step 4 - Introspect your database
+#### 步骤 4 - 检查你的数据库
 
 <IntrospectPostgreSQL/>
 
-#### Step 5 - Transfer code to your actual schema file
+#### 步骤 5 - 将代码转移到实际的架构文件
 
 <TransferCode/>
 
-#### Step 6 - Connect Drizzle ORM to the database
+#### 步骤 6 - 将 Drizzle ORM 连接到数据库
 
 <ConnectXata/>
 
-#### Step 7 - Query the database
+#### 步骤 7 - 查询数据库
 
 <QueryXata />
 
-#### Step 8 - Run index.ts file
+#### 步骤 8 - 运行 index.ts 文件
 
 <RunFile/>
 
-#### Step 9 - Update your table schema (optional)
+#### 步骤 9 - 更新你的表架构（可选）
 
 <UpdateSchema/>
 
-#### Step 10 - Applying changes to the database (optional)
+#### 步骤 10 - 将更改应用到数据库（可选）
 
 <ApplyChanges />
 
-#### Step 11 - Query the database with a new field (optional)
+#### 步骤 11 - 使用新字段查询数据库（可选）
 
 <QueryXataUpdated />
