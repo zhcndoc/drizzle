@@ -162,7 +162,7 @@ const Comments: IComment[] = [
     avatar: silvenon,
     name: "Matija Marohnić",
     login: "silvenon",
-    text: `Every time I hear about @DrizzleORM.`,
+    text: `每次我听说 @DrizzleORM。`,
     href: "https://x.com/silvenon/status/1843003214402314695",
     twitImage: silvenonTwit,
   },
