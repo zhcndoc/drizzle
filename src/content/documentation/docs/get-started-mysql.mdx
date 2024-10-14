@@ -6,19 +6,20 @@ import WhatsNextPostgres from "@mdx/WhatsNextPostgres.astro";
 
 # Drizzle \<\> MySQL
 
-To use Drizzle with a MySQL database, you should use the `mysql2` driver
+要在 MySQL 数据库中使用 Drizzle，您应该使用 `mysql2` 驱动程序。
 
-根据其 [官方网站](https://github.com/sidorares/node-mysql2) 描述，`mysql2` 是一个专注于性能的 Node.js MySQL 客户端。
+根据 **[官方网站](https://github.com/sidorares/node-mysql2)**， 
+`mysql2` 是一个专注于性能的 Node.js MySQL 客户端。
 
-Drizzle ORM 使用 `drizzle-orm/mysql2` 包原生支持 `mysql2`。
+Drizzle ORM 原生支持 `mysql2`，使用 `drizzle-orm/mysql2` 包。
 
-#### Step 1 - Install packages
+#### 第一步 - 安装包
 <Npm>
 drizzle-orm mysql2
 -D drizzle-kit
 </Npm>
 
-#### Step 2 - Initialize the driver and make a query
+#### 第二步 - 初始化驱动并进行查询
 <CodeTabs items={['mysql2', 'mysql with config']}>
 ```typescript copy
 import { drizzle } from "drizzle-orm/connect";
@@ -30,15 +31,15 @@ const response = await db.select().from(...)
 ```typescript copy
 import { drizzle } from "drizzle-orm/connect";
 
-// You can specify any property from the mysql2 connection options
+// 您可以指定 mysql2 连接选项中的任何属性
 const db = await drizzle("mysql2", { connection:{ uri: process.env.DATABASE_URL }});
 
 const response = await db.select().from(...)
 ```
 </CodeTabs>
 
-If you need a synchronous connection, you can use our additional connection API, where you specify a driver connection and pass it to the Drizzle instance.
-There're two ways you can connect to the MySQL with `mysql2` driver, either single `client` connection or a `pool`.
+如果您需要同步连接，可以使用我们的附加连接 API，您可以在该 API 中指定驱动程序连接并将其传递给 Drizzle 实例。
+您可以使用 `mysql2` 驱动程序通过两种方式连接到 MySQL：单个 `client` 连接或 `pool`。
 
 <CodeTabs items={['Client connection', 'Pool connection']}>
   ```typescript copy
@@ -70,11 +71,11 @@ There're two ways you can connect to the MySQL with `mysql2` driver, either sing
 </CodeTabs>
 
 <Callout type="warning" emoji="⚙️">
-对于带有 DDL 迁移的内置 `migrate()` 函数，我们和驱动程序强烈建议使用单个 `client` 连接连接到 MySQL。
+  对于内置的 `migrate` 函数以及 DDL 迁移，我们强烈建议您使用单个 `client` 连接。
 
-对于查询目的，请根据业务需求随意使用 `client` 或 `pool`。
+  对于查询目的，可以根据您的业务需求使用 `client` 或 `pool`。
 </Callout>
 
-#### What's next?
+#### 接下来是什么？
 
 <WhatsNextPostgres/>

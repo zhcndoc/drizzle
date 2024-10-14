@@ -1,9 +1,11 @@
 import Tab from '@components/markdown/Tab.astro';
 import Tabs from '@components/markdown/Tabs.astro';
 
-# 读取副本
+# 阅读副本
 
-当你的项目涉及一组读取副本实例，并且你需要一个方便的方法来管理来自读取副本的 SELECT 查询，以及在主实例上执行创建、删除和更新操作时，你可以利用 Drizzle 中的 `withReplicas()` 函数
+当您的项目涉及一组读取副本实例，并且您需要一种便捷的方法来管理来自读取副本的 
+SELECT 查询，以及在主实例上执行创建、删除和更新操作时，您可以在 Drizzle 中利用 
+`withReplicas()` 函数。
 
 <Tabs items={["PostgreSQL", "MySQL", "SQLite"]}>
 <Tab>
@@ -90,7 +92,8 @@ const db = withReplicas(primaryDb, [read1, read2]);
 </Tab>
 </Tabs>
 
-你现在可以像以前一样使用 `db` 实例。Drizzle 会自动处理读取副本和主实例之间的选择
+您现在可以像之前一样使用 `db` 实例。
+Drizzle 将自动处理读取副本和主实例之间的选择。
 
 ```ts
 // 从 read1 连接或 read2 连接读取
@@ -100,18 +103,20 @@ await db.select().from(usersTable)
 await db.delete(usersTable).where(eq(usersTable.id, 1))
 ```
 
-你可以使用 `$primary` 键来强制使用主实例进行读取操作
+您可以使用 `$primary` 键强制即使在读取操作中也使用主实例。
 
 ```ts
 // 从主实例读取
 await db.$primary.select().from(usersTable);
 ```
 
-使用 Drizzle，你还可以指定选择读取副本的自定义逻辑。
-你可以做出加权决策或任何其他自定义选择方法来随机选择读取副本。
-这是一个选择读取副本的自定义逻辑的实现示例，其中第一个副本有 70% 的机会被选择，第二个副本有 30% 的机会被选中。
+使用 Drizzle，您还可以指定选择读取副本的自定义逻辑。
+您可以做出加权决定或任何其他自定义选择方法以随机选择读取副本。
+以下是选择读取副本的自定义逻辑实现示例，
+第一个副本被选择的概率为 70%，
+第二个副本被选择的概率为 30%。
 
-请记住，你可以为读取副本实现任何类型的随机选择方法
+请记住，您可以实施任何类型的随机选择方法来选择读取副本。
 
 ```ts
 const db = withReplicas(primaryDb, [read1, read2], (replicas) => {

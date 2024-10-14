@@ -9,25 +9,25 @@ import CodeTabs from "@mdx/CodeTabs.astro";
 # Drizzle \<\> Turso
 
 <Prerequisites>
-- Database [connection basics](/docs/connect-overview) with Drizzle
-- Turso Database - [website](https://docs.turso.tech/introduction)
-- LibSQL driver - [website](https://docs.turso.tech/sdk/ts/reference) & [GitHub](https://github.com/tursodatabase/libsql-client-ts)
+- 数据库 [连接基础](/docs/connect-overview) 与 Drizzle
+- Turso 数据库 - [网站](https://docs.turso.tech/introduction)
+- LibSQL 驱动 - [网站](https://docs.turso.tech/sdk/ts/reference) & [GitHub](https://github.com/tursodatabase/libsql-client-ts)
 </Prerequisites>
 
-According to the **[official website](https://turso.tech/drizzle)**, 
-Turso is a **[libSQL](https://github.com/libsql/libsql)** powered edge SQLite database as a service.
+根据 **[官方网站](https://turso.tech/drizzle)**， 
+Turso 是一个 **[libSQL](https://github.com/libsql/libsql)** 驱动的边缘 SQLite 数据库服务。
   
-Drizzle ORM natively supports libSQL driver, 
-we embrace SQL dialects and dialect specific drivers and syntax and mirror most popular 
-SQLite-like `all`, `get`, `values` and `run` query methods syntax. 
+Drizzle ORM 原生支持 libSQL 驱动， 
+我们拥抱 SQL 方言以及特定方言的驱动和语法，并且镜像最流行的 
+类似 SQLite 的 `all`、`get`、`values` 和 `run` 查询方法语法。 
 
-#### Step 1 - Install packages
+#### 第一步 - 安装包
 <Npm>
 drizzle-orm @libsql/client
 -D drizzle-kit
 </Npm>
 
-#### Step 2 - Initialize the driver and make a query
+#### 第二步 - 初始化驱动并执行查询
 ```typescript copy
 import { drizzle } from 'drizzle-orm/connect';
 
@@ -39,8 +39,8 @@ const db = await drizzle('libsql', { connection: {
 const result = await db.select().from(...)
 ```
 
-If you need a synchronous connection, you can use our additional connection API, 
-where you specify a driver connection and pass it to the Drizzle instance.
+如果需要同步连接，可以使用我们的附加连接 API， 
+在其中指定驱动连接并将其传递给 Drizzle 实例。
 
 ```typescript copy
 import { drizzle } from 'drizzle-orm/libsql';
@@ -56,6 +56,6 @@ const db = drizzle(client);
 const result = await db.select().from(users).all()
 ```
 
-#### What's next?
+#### 接下来呢？
 
 <WhatsNextPostgres/>

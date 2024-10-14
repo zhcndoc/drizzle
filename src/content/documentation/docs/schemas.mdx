@@ -4,13 +4,13 @@ import IsSupportedChipGroup from '@components/markdown/IsSupportedChipGroup.astr
 import Section from '@components/markdown/Section.astro';
 import Callout from '@components/markdown/Callout.astro';
 
-# 表模式
+# 表结构
 
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': true, 'SQLite': false }} />
 
-Drizzle ORM 为 PostgreSQL 和 MySQL 方言提供了声明 SQL 模式的 API。
+Drizzle ORM 为 PostgreSQL 和 MySQL 方言提供了一个用于声明 SQL 架构的 API。
 
-如果在 schema 中声明了一个实体，查询生成器将在查询中添加 schema 名称：<br/>
+如果在架构中声明了一个实体，查询构建器会在查询中添加架构名称：<br/>
 `select * from "schema"."users"`
 
 <Tabs items={['PostgreSQL', 'MySQL', "SQLite"]}>
@@ -67,11 +67,11 @@ Drizzle ORM 为 PostgreSQL 和 MySQL 方言提供了声明 SQL 模式的 API。
     </Section>
   </Tab>
   <Tab>
-  SQLite 不支持模式 😕
+  SQLite 不支持架构 😕
   </Tab>
 </Tabs>
 
-{/* TODO: ??? example > **Warning**
-> If you will have tables with same names in different schemas then drizzle will respond with `never[]` error in result types and error from database
+{/* TODO: ??? 示例 > **警告**
+> 如果你在不同的架构中有同名表，则 drizzle 会在结果类型中响应 `never[]` 错误，并从数据库返回错误
 >
-> In this case you may use [alias syntax](./joins#join-aliases-and-self-joins) */}
+> 在这种情况下，你可以使用 [别名语法](./joins#join-aliases-and-self-joins) */}

@@ -2,8 +2,8 @@ import Callout from '@components/markdown/Callout.astro';
 
 # 动态查询构建
 
-默认情况下，由于 Drizzle 中的所有查询构建器都尽可能遵循 SQL 规范，因此大多数方法只能调用一次。
-例如，在 `SELECT` 语句中可能只有一个 `WHERE` 子句，因此只能调用一次 `.where()`：
+默认情况下，Drizzle 中的所有查询构建器尽量遵循 SQL，因此大多数方法只能调用一次。
+例如，在 `SELECT` 语句中，可能只有一个 `WHERE` 子句，因此你只能调用一次 `.where()`：
 
 ```ts
 const query = db
@@ -13,14 +13,14 @@ const query = db
 	.where(eq(users.name, 'John')); // ❌ 类型错误 - where() 只能调用一次
 ```
 
-在以前的 ORM 版本中，当没有实施此类限制时，特别是对于该示例来说，对于许多用户来说，这是一个令人困惑的地方，因为他们期望查询构建器能够将多个 `.where()` 调用合并为一个条件。
+在以前的 ORM 版本中，由于没有实现这些限制，特别是这个例子对许多用户来说是个困惑，因为他们期望查询构建器能够“合并”多个 `.where()` 调用成为一个条件。
 
-这种行为对于传统的查询构建很有用，即一次创建整个查询。
-然而，当你想要动态构建查询时，它会成为一个问题，即如果你有一个共享的函数，它需要一个查询构建器并对其进行增强。
-为了解决这个问题，Drizzle 提供了一种特殊的动态模式用于查询构建器，它取消了只能调用方法一次的限制。
+这种行为对于传统查询构建很有用，即在一次性创建整个查询时。
+然而，当你想动态构建查询时，比如拥有一个接收查询构建器并进行增强的共享函数时，这就成了一个问题。
+为了解决这个问题，Drizzle 提供了一个特殊的“动态”模式，用于查询构建器，这消除了只能调用方法一次的限制。
 要启用它，你需要在查询构建器上调用 `.$dynamic()`。
 
-让我们通过实现一个简单的 `withPagination` 函数来看看它是如何工作的，该函数根据提供的页码和可选的每页大小将 `LIMIT` 和 `OFFSET` 子句添加到查询中：
+让我们通过实现一个简单的 `withPagination` 函数来看看它是如何工作的，该函数根据提供的页码和可选的页面大小，为查询添加 `LIMIT` 和 `OFFSET` 子句：
 
 ```ts
 function withPagination<T extends PgSelect>(
@@ -35,10 +35,10 @@ const query = db.select().from(users).where(eq(users.id, 1));
 withPagination(query, 1); // ❌ 类型错误 - 查询构建器未处于动态模式
 
 const dynamicQuery = query.$dynamic();
-withPagination(dynamicQuery, 1); // ✅ OK
+withPagination(dynamicQuery, 1); // ✅ 正常
 ```
 
-注意，`withPagination` 函数是泛型的，这允许你在其中修改查询构建器的结果类型，例如通过添加一个连接：
+请注意，`withPagination` 函数是泛型的，这使你能够在其中修改查询构建器的结果类型，例如通过添加连接：
 
 ```ts
 function withFriends<T extends PgSelect>(qb: T) {
@@ -49,9 +49,9 @@ let query = db.select().from(users).where(eq(users.id, 1)).$dynamic();
 query = withFriends(query);
 ```
 
-这是可能的，因为 `PgSelect` 和其他类似类型专门设计用于动态查询构建。它们只能在动态模式下使用。
+这可能是因为 `PgSelect` 和其他类似类型专门设计用于动态查询构建。它们只能在动态模式下使用。
 
-下面是可以在动态查询构建中用作泛型参数的所有类型列表：
+以下是可以作为泛型参数用于动态查询构建的所有类型列表：
 
 {
 
@@ -59,27 +59,27 @@ query = withFriends(query);
 	<thead align='center'>
 		<tr>
 			<td>
-				<b>Dialect</b>
+				<b>方言</b>
 			</td>
 			<td colspan='4'>
-				<b>Type</b>
+				<b>类型</b>
 			</td>
 		</tr>
 		<tr>
 			<td>
-				<b>Query</b>
+				<b>查询</b>
 			</td>
 			<td>
-				<b>Select</b>
+				<b>选择</b>
 			</td>
 			<td>
-				<b>Insert</b>
+				<b>插入</b>
 			</td>
 			<td>
-				<b>Update</b>
+				<b>更新</b>
 			</td>
 			<td>
-				<b>Delete</b>
+				<b>删除</b>
 			</td>
 		</tr>
 	</thead>
@@ -150,7 +150,9 @@ query = withFriends(query);
 }
 
 <Callout type='info'>
-	`...QueryBuilder` 类型是与 [独立查询构建器实例](/docs/goodies#standalone-query-builder) 一起使用的。数据库查询构建器是它们的子类，因此你也可以使用它们。
+	`...QueryBuilder` 类型用于与 [独立查询构建器实例](/docs/goodies#standalone-query-builder) 一起使用。
+	数据库查询构建器是它们的子类，
+	因此你也可以使用它们。
 
     ```ts
     	import { QueryBuilder } from 'drizzle-orm/pg-core';

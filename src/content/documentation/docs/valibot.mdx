@@ -2,7 +2,7 @@ import Npm from '@components/markdown/Npm.astro';
 
 # drizzle-valibot
 
-`drizzle-valibot` 是一个 **[Drizzle ORM](https://github.com/drizzle-team/drizzle-orm)** 的插件，它允许您从 Drizzle ORM 模式中生成 **[valibot](https://valibot.dev/)** 模式。
+`drizzle-valibot` 是一个 **[Drizzle ORM](https://github.com/drizzle-team/drizzle-orm)** 的插件，允许你从 Drizzle ORM 模式生成 **[valibot](https://valibot.dev/)** 模式。
 
 ### 安装依赖
 
@@ -10,7 +10,7 @@ import Npm from '@components/markdown/Npm.astro';
 drizzle-valibot
 </Npm>
 
-# 使用方法
+# 使用
 
 ```ts
 import { pgEnum, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
@@ -25,24 +25,24 @@ const users = pgTable('users', {
 	createdAt: timestamp('created_at').notNull().defaultNow(),
 });
 
-// 插入用户的模式 - 可以用来验证 API 请求
+// 用于插入用户的模式 - 可用于验证 API 请求
 const insertUserSchema = createInsertSchema(users);
 
-// 选择用户的模式 - 可以用来验证 API 响应
+// 用于选择用户的模式 - 可用于验证 API 响应
 const selectUserSchema = createSelectSchema(users);
 
-// 覆盖字段
+// 重写字段
 const insertUserSchema = createInsertSchema(users, {
 	role: string(),
 });
 
-// 精炼字段 - 如果您想在它们在最终模式中变为可选/可为空之前改变字段
+// 精炼字段 - 如果你想在最终模式变为可为 null/可选之前更改字段，这很有用
 const insertUserSchema = createInsertSchema(users, {
 	id: (schema) => number([minValue(0)]),
 	role: string(),
 });
 
-// 使用方法
+// 用法
 
 const isUserValid = parse(insertUserSchema, {
 	name: 'John Doe',

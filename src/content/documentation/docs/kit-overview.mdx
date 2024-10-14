@@ -10,25 +10,25 @@ import Npx from '@components/markdown/Npx.astro';
 import Steps from '@components/markdown/Steps.astro';
 import Prerequisites from "@mdx/Prerequisites.astro"
 
-# Migrations with Drizzle Kit
+# 使用 Drizzle Kit 进行迁移
 <Prerequisites>
-- Get started with Drizzle and `drizzle-kit` - [read here](/docs/get-started)
-- Drizzle schema foundamentals - [read here](/docs/sql-schema-declaration)
-- Database connection basics - [read here](/docs/connect-overview)
-- Drizzle migrations foundamentals - [read here](/docs/migrations)
+- 开始使用 Drizzle 和 `drizzle-kit` - [点击这里阅读](/docs/get-started)
+- Drizzle 架构基础 - [点击这里阅读](/docs/sql-schema-declaration)
+- 数据库连接基础 - [点击这里阅读](/docs/connect-overview)
+- Drizzle 迁移基础 - [点击这里阅读](/docs/migrations)
 </Prerequisites>
 
 
-**Drizzle Kit** is a CLI tool for managing SQL database migrations with Drizzle.
+**Drizzle Kit** 是一个用于管理 SQL 数据库迁移的 CLI 工具。
 <Npm>
   drizzle-kit
 </Npm>
 <Callout type="warning">
-Make sure to first go through Drizzle [get started](/docs/get-started) and [migration foundamentals](/docs/migrations) and pick SQL migration flow that suites your business needs best. 
+确保首先阅读 Drizzle 的 [入门指南](/docs/get-started) 和 [迁移基础](/docs/migrations)，并选择最适合您业务需求的 SQL 迁移流程。
 </Callout>
 
-Based on your schema, Drizzle Kit let's you generate and run SQL migration files, 
-push schema directly to the database, pull schema from database, spin up drizzle studio and has a couple of utility commands.
+根据您的架构，Drizzle Kit 让您生成和运行 SQL 迁移文件，
+直接将架构推送到数据库，从数据库中提取架构，启动 Drizzle Studio，并具有一些实用命令。
 <Npx>
 drizzle-kit generate
 drizzle-kit migrate
@@ -42,28 +42,28 @@ drizzle-kit studio
 
 |                                                      |                                                                                                                                                                    |
 | :--------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`drizzle-kit generate`](/docs/drizzle-kit-generate) | lets you generate SQL migration files based on your Drizzle schema either upon declaration or on subsequent changes, [see here](/docs/drizzle-kit-generate).       |
-| [`drizzle-kit migrate`](/docs/drizzle-kit-migrate)   | lets you apply generated SQL migration files to your database, [see here](/docs/drizzle-kit-migrate).                                                              |
-| [`drizzle-kit pull`](/docs/drizzle-kit-pull)         | lets you pull(introspect) database schema, convert it to Drizzle schema and save it to your codebase, [see here](/docs/drizzle-kit-pull)                           |
-| [`drizzle-kit push`](/docs/drizzle-kit-push)         | lets you push your Drizzle schema to database either upon declaration or on subsequent schema changes, [see here](/docs/drizzle-kit-push)                          |
-| [`drizzle-kit studio`](/docs/drizzle-kit-studio)     | will connect to your database and spin up proxy server for Drizzle Studio which you can use for convenient database browsing, [see here](/docs/drizzle-kit-studio) |
-| [`drizzle-kit check`](/docs/drizzle-kit-check)       | will walk through all generate migrations and check for any race conditions(collisions) of generated migrations, [see here](/docs/drizzle-kit-check)               |
-| [`drizzle-kit up`](/docs/drizzle-kit-up)             | used to upgrade snapshots of previously generated migrations, [see here](/docs/drizzle-kit-up)                                                                     |
+| [`drizzle-kit generate`](/docs/drizzle-kit-generate) | 让您根据 Drizzle 架构生成 SQL 迁移文件，无论是声明时还是后续更改时，[点击这里查看](/docs/drizzle-kit-generate)。       |
+| [`drizzle-kit migrate`](/docs/drizzle-kit-migrate)   | 让您将生成的 SQL 迁移文件应用到您的数据库，[点击这里查看](/docs/drizzle-kit-migrate)。                                                              |
+| [`drizzle-kit pull`](/docs/drizzle-kit-pull)         | 让您提取（内省）数据库架构，将其转换为 Drizzle 架构并保存在您的代码库中，[点击这里查看](/docs/drizzle-kit-pull)。                           |
+| [`drizzle-kit push`](/docs/drizzle-kit-push)         | 让您在声明或后续架构更改时将 Drizzle 架构推送到数据库，[点击这里查看](/docs/drizzle-kit-push)。                          |
+| [`drizzle-kit studio`](/docs/drizzle-kit-studio)     | 将连接到您的数据库并为 Drizzle Studio 启动代理服务器，您可以使用它方便地浏览数据库，[点击这里查看](/docs/drizzle-kit-studio)。 |
+| [`drizzle-kit check`](/docs/drizzle-kit-check)       | 将遍历所有生成的迁移并检查生成的迁移是否存在竞态条件（冲突），[点击这里查看](/docs/drizzle-kit-check)。               |
+| [`drizzle-kit up`](/docs/drizzle-kit-up)             | 用于升级之前生成的迁移快照，[点击这里查看](/docs/drizzle-kit-up)                                                                     |
 <br/>
 
-Drizzle Kit is configured through [drizzle.config.ts](/docs/drizzle-config-file) configuration file or via CLI params.<br/>
-It's required to at least provide SQL `dialect` and `schema` path for Drizzle Kit to know how to generate migrations.
+Drizzle Kit 通过 [drizzle.config.ts](/docs/drizzle-config-file) 配置文件或 CLI 参数进行配置。<br/>
+至少需要提供 SQL `dialect` 和 `schema` 路径，以便 Drizzle Kit 知道如何生成迁移。
 ```
-📦 <project root>
+📦 <项目根目录>
  ├ 📂 drizzle
  ├ 📂 src
  ├ 📜 .env
- ├ 📜 drizzle.config.ts  <--- Drizzle config file
+ ├ 📜 drizzle.config.ts  <--- Drizzle 配置文件
  ├ 📜 package.json
  └ 📜 tsconfig.json
 ```
 
-<CodeTabs items={["simple config", "extended config"]}>
+<CodeTabs items={["简单配置", "扩展配置"]}>
 ```ts
 import { defineConfig } from "drizzle-kit";
 
@@ -106,14 +106,14 @@ export default defineConfig({
 ```
 </CodeTabs>
 
-You can provide Drizzle Kit config path via CLI param, it's very useful when you have multiple database stages or multiple databases or different databases on the same project:
+您可以通过 CLI 参数提供 Drizzle Kit 配置路径，这在您有多个数据库阶段或多个数据库，或同一项目中有不同数据库时非常有用：
 
 <Npx>
   drizzle-kit push --config=drizzle-dev.drizzle.config
   drizzle-kit push --config=drizzle-prod.drizzle.config
 </Npx>
 ```plaintext {5-6}
-📦 <project root>
+📦 <项目根目录>
  ├ 📂 drizzle
  ├ 📂 src
  ├ 📜 .env

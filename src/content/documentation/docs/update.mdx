@@ -2,7 +2,7 @@ import IsSupportedChipGroup from '@components/markdown/IsSupportedChipGroup.astr
 import Callout from '@components/markdown/Callout.astro';
 import Section from '@components/markdown/Section.astro';
 
-# SQL Update
+# SQL 更新
 
 ```typescript copy
 await db.update(users)
@@ -10,9 +10,9 @@ await db.update(users)
   .where(eq(users.name, 'Dan'));
 ```
 
-您传递给 `update` 的对象应该具有与数据库架构中列名匹配的键。
-对象中忽略 `undefined` 的值：要将列设置为 `null`，请传递 `null`。
-您可以将 SQL 作为值传递给更新对象，就像这样：
+传递给 `update` 的对象应具有与数据库架构中的列名相匹配的键。
+对象中值为 `undefined` 的键会被忽略：要将列设置为 `null`，请传递 `null`。
+您可以将 SQL 作为值传递，以在更新对象中使用，如下所示：
 
 ```typescript copy
 await db.update(users)
@@ -22,7 +22,7 @@ await db.update(users)
 
 ### 带返回值的更新
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'SQLite': true, 'MySQL': false }} />
-您可以在 PostgreSQL 和 SQLite 中更新一行并获取它回来：
+您可以在 PostgreSQL 和 SQLite 中更新行并返回它：
 ```typescript copy
 const updatedUserId: { updatedId: number }[] = await db.update(users)
   .set({ name: 'Mr. Dan' })
@@ -30,13 +30,13 @@ const updatedUserId: { updatedId: number }[] = await db.update(users)
   .returning({ updatedId: users.id });
 ```
 
-## WITH 更新子句
+## 使用 UPDATE 子句
 
 <Callout>
-  查看如何使用 WITH 语句与 [select](/docs/select#with-clause)、[insert](/docs/insert#with-insert-clause)、[delete](/docs/delete#with-delete-clause)
+  查看如何在 [select](/docs/select#with-clause)、[insert](/docs/insert#with-insert-clause)、[delete](/docs/delete#with-delete-clause) 中使用 WITH 语句
 </Callout>
 
-使用 `with` 子句可以帮助您通过将复杂的查询拆分为称为公用表表达式（CTEs）的较小子查询来简化复杂查询：
+使用 `with` 子句可以通过将复杂查询拆分为称为公共表表达式 (CTE) 的较小子查询来简化查询：
 <Section>
 ```typescript copy
 const averagePrice = db.$with('average_price').as(

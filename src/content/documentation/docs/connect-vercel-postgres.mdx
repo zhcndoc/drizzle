@@ -10,33 +10,33 @@ import WhatsNextPostgres from "@mdx/WhatsNextPostgres.astro";
 # Drizzle \<\> Vercel Postgres
 
 <Prerequisites>
-- Database [connection basics](/docs/connect-overview) with Drizzle
-- Vercel Postgres database - [website](https://vercel.com/docs/storage/vercel-postgres)
-- Vercel Postgres driver - [docs](https://vercel.com/docs/storage/vercel-postgres/sdk) & [GitHub](https://github.com/vercel/storage/tree/main/packages/postgres)
-- Drizzle PostgreSQL drivers - [docs](/docs/get-started-postgresql)
+- 数据库 [连接基础](/docs/connect-overview) 与 Drizzle
+- Vercel Postgres 数据库 - [网站](https://vercel.com/docs/storage/vercel-postgres)
+- Vercel Postgres 驱动 - [文档](https://vercel.com/docs/storage/vercel-postgres/sdk) & [GitHub](https://github.com/vercel/storage/tree/main/packages/postgres)
+- Drizzle PostgreSQL 驱动 - [文档](/docs/get-started-postgresql)
 </Prerequisites>
 
-According to their **[official website](https://vercel.com/docs/storage/vercel-postgres)**,
-Vercel Postgres is a serverless SQL database designed to integrate with Vercel Functions.
+根据他们的 **[官方网站](https://vercel.com/docs/storage/vercel-postgres)**，
+Vercel Postgres 是一个无服务器 SQL 数据库，旨在与 Vercel Functions 集成。
 
-Drizzle ORM natively supports both **[@vercel/postgres](https://vercel.com/docs/storage/vercel-postgres)** serverless
-driver with `drizzle-orm/vercel-postgres` package and **[`postgres`](#postgresjs)** or **[`pg`](#node-postgres)**
-drivers to access Vercel Postgres through `postgesql://`
+Drizzle ORM 原生支持 **[@vercel/postgres](https://vercel.com/docs/storage/vercel-postgres)** 无服务器
+驱动以及 `drizzle-orm/vercel-postgres` 包和 **[`postgres`](#postgresjs)** 或 **[`pg`](#node-postgres)**
+驱动通过 `postgesql://` 访问 Vercel Postgres。
 
-Check out the official **[Vercel Postgres + Drizzle](https://vercel.com/docs/storage/vercel-postgres/using-an-orm#drizzle)** docs.
+查看官方 **[Vercel Postgres + Drizzle](https://vercel.com/docs/storage/vercel-postgres/using-an-orm#drizzle)** 文档。
 
-#### Step 1 - Install packages
+#### 步骤 1 - 安装包
 
 <Npm>
 drizzle-orm @vercel/postgres
 -D drizzle-kit
 </Npm>
 
-#### Step 2 - Prepare Vercel Postgres
+#### 步骤 2 - 准备 Vercel Postgres
 
-Setup a project according to the **[official docs.](https://vercel.com/docs/storage/vercel-postgres/quickstart)** 
+根据 **[官方文档](https://vercel.com/docs/storage/vercel-postgres/quickstart)** 设置项目。
 
-#### Step 3 - Initialize the driver and make a query
+#### 步骤 3 - 初始化驱动并进行查询
 
 ```typescript copy
 import { drizzle } from 'drizzle-orm/connect';
@@ -46,8 +46,8 @@ const db = await drizzle("vercel-postgres");
 const result = await db.execute('select 1');
 ```
 
-If you need a synchronous connection, you can use our additional connection API, 
-where you specify a driver connection and pass it to the Drizzle instance.
+如果您需要同步连接，您可以使用我们的附加连接 API，
+在这里您指定一个驱动连接并将其传递给 Drizzle 实例。
 
 ```typescript copy
 import { sql } from '@vercel/postgres';
@@ -58,14 +58,14 @@ const db = drizzle(sql)
 const result = await db.execute('select 1');
 ```
 
-With **[@vercel/postgres](https://vercel.com/docs/storage/vercel-postgres)** severless package
-you can access Vercel Postgres from either serverful or serverless environments with no TCP available,
-like Cloudflare Workers, through websockets.  
+使用 **[@vercel/postgres](https://vercel.com/docs/storage/vercel-postgres)** 无服务器包
+您可以通过 websockets 从无 TCP 可用的服务器和无服务器环境访问 Vercel Postgres，
+如 Cloudflare Workers。
   
-If you're about to use Vercel Postgres from a _serverfull_ environment, you can do it
-either with `@vercel/postgres` or directly access the DB through `postgesql://` with 
-either **[`postgres`](#postgresjs)** or **[`pg`](#node-postgres)**.
+如果您打算从 _服务器_ 环境使用 Vercel Postgres，您可以选择使用 `@vercel/postgres` 
+或直接通过 `postgesql://` 访问数据库，使用 
+**[`postgres`](#postgresjs)** 或 **[`pg`](#node-postgres)**。
 
-#### What's next?
+#### 接下来是什么？
 
 <WhatsNextPostgres/>

@@ -1,52 +1,52 @@
 import IsSupportedChipGroup from '@components/markdown/IsSupportedChipGroup.astro';
 import Callout from '@components/markdown/Callout.astro';
 
-# Sequences
+# 序列
 
 <Callout type="info">
-To use this feature you would need to have `drizzle-orm@0.32.0` or higher and `drizzle-kit@0.23.0` or higher
+要使用此功能，您需要安装 `drizzle-orm@0.32.0` 或更高版本，以及 `drizzle-kit@0.23.0` 或更高版本
 </Callout>
 
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'SQLite': false, 'MySQL': false }} />
 
-Sequences in PostgreSQL are special single-row tables created to generate unique identifiers, often used for auto-incrementing primary key values. They provide a thread-safe way to generate unique sequential values across multiple sessions.
+PostgreSQL 中的序列是特殊的单行表，用于生成唯一标识符，通常用于自动递增的主键值。它们提供了一种线程安全的方式，以在多个会话中生成唯一的连续值。
 <br/>
 
-**Key Features**
-- Creation and Initialization: Use CREATE SEQUENCE to create a new sequence. Parameters such as increment value, start value, min/max values, and cache size can be specified.
+**关键特性**
+- 创建和初始化：使用 CREATE SEQUENCE 创建新序列。可以指定增量值、起始值、最小/最大值和缓存大小等参数。
 
-- Manipulation Functions
-    - `nextval('sequence_name')`: Advances the sequence and returns the next value.
-    - `currval('sequence_name')`: Returns the current value of the sequence for the current session.
-    - `setval('sequence_name', value)`: Sets the sequence's current value.
-    - `lastval()`: Returns the last value returned by nextval in the current session.
+- 操作函数
+    - `nextval('sequence_name')`：推进序列并返回下一个值。
+    - `currval('sequence_name')`：返回当前会话中序列的当前值。
+    - `setval('sequence_name', value)`：设置序列的当前值。
+    - `lastval()`：返回当前会话中由 nextval 返回的最后一个值。
 
-- Ownership: Sequences can be linked to table columns using the OWNED BY clause. Dropping the table or column will automatically drop the associated sequence.
-- Cycling: Sequences can be set to cycle when they reach their maximum or minimum value using the CYCLE option. The default is NO CYCLE.
-- Caching: Sequence values can be preallocated using the CACHE option for improved performance.
+- 所有权：序列可以通过 OWNED BY 子句与表列链接。删除表或列时，将自动删除相关序列。
+- 循环：当序列达到其最大值或最小值时，可以使用 CYCLE 选项设置为循环。默认值为 NO CYCLE。
+- 缓存：可以使用 CACHE 选项预分配序列值以提高性能。
 <br/>
 
-**Limitations**
-- Gaps: Sequences are not gapless. Aborted transactions or crashes can lead to gaps in the sequence values.
-- Concurrency: While sequences provide unique values across sessions, the values may be out of order when considering all sessions.
-- No Rollback: Changes to sequences are not rolled back if a transaction fails. This ensures unique values but can lead to gaps.
-- Crash Recovery: Unlogged sequences or sequences modified before a crash might not be properly restored to their previous state.
+**限制**
+- 间隙：序列不是无间隙的。已中止的事务或崩溃可能导致序列值出现间隙。
+- 并发性：虽然序列在会话之间提供唯一值，但考虑所有会话时，这些值可能会乱序。
+- 不可回滚：如果事务失败，则序列的更改不会回滚。这确保了唯一值，但可能会导致间隙。
+- 崩溃恢复：未记录的序列或在崩溃前已修改的序列可能无法正确恢复到其先前状态。
 <br/>
 
-**Practical Use**
-- Default Behavior: By default, sequences increment by 1 and start at 1.
-- Custom Behavior: Custom start points, increments, min/max values, and cycling can be specified.
-- Associations: Commonly associated with table columns for auto-incrementing fields, making management of unique identifiers seamless.
+**实际使用**
+- 默认行为：默认情况下，序列每次递增 1，从 1 开始。
+- 自定义行为：可以指定自定义的起始点、增量、最小/最大值和循环。
+- 关联性：通常与表列关联，用于自动递增字段，使唯一标识符的管理变得无缝。
 <br/>
 
-**Usage Example**
+**使用示例**
 ```ts
 import { pgSchema, pgSequence } from "drizzle-orm/pg-core";
 
-// No params specified
+// 未指定参数
 export const customSequence = pgSequence("name");
 
-// Sequence with params
+// 带参数的序列
 export const customSequence = pgSequence("name", {
       startWith: 100,
       maxValue: 10000,
@@ -56,7 +56,7 @@ export const customSequence = pgSequence("name", {
       increment: 2
 });
 
-// Sequence in custom schema
+// 自定义架构中的序列
 export const customSchema = pgSchema('custom_schema');
 export const customSequence = customSchema.sequence("name");
 ```

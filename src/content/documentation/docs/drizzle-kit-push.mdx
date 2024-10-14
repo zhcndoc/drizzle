@@ -14,24 +14,24 @@ import DriversExamples from "@mdx/DriversExamples.mdx"
 # `drizzle-kit push`
 
 <Prerequisites>
-  - Get started with Drizzle and `drizzle-kit` - [read here](/docs/get-started)
-  - Drizzle schema foundamentals - [read here](/docs/sql-schema-declaration) 
-  - Database connection basics - [read here](/docs/connect-overview) 
-  - Drizzle migrations foundamentals - [read here](/docs/migrations) 
-  - Drizzle Kit [overview](/docs/kit-overview) and [config file](/docs/drizzle-config-file) docs
+  - 从 Drizzle 和 `drizzle-kit` 开始 - [点击这里阅读](/docs/get-started)
+  - Drizzle 模式基础 - [点击这里阅读](/docs/sql-schema-declaration) 
+  - 数据库连接基础 - [点击这里阅读](/docs/connect-overview) 
+  - Drizzle 迁移基础 - [点击这里阅读](/docs/migrations) 
+  - Drizzle Kit [概述](/docs/kit-overview) 和 [配置文件](/docs/drizzle-config-file) 文档
 </Prerequisites>
 
 
-`drizzle-kit push` lets you literally push your schema and subsequent schema changes directly to the
-database while omitting SQL files generation, it's designed to cover [code first](/docs/migrations)
-approach of Drizzle migrations.
+`drizzle-kit push` 允许你直接将你的模式及后续的模式变化推送到数据库，
+同时省略 SQL 文件的生成，
+旨在覆盖 Drizzle 迁移的 [代码优先](/docs/migrations) 方法。
 
-<Callout collapsed="How it works under the hood?">
-When you run Drizzle Kit `push` command it will:
-1. Read through your Drizzle schema file(s) and compose a json snapshot of your schema
-2. Pull(introspect) database schema 
-3. Based on differences between those two it will generate SQL migrations
-4. Apply SQL migrations to the database
+<Callout collapsed="它是如何在内部工作的？">
+当你运行 Drizzle Kit 的 `push` 命令时，它会：
+1. 读取你的 Drizzle 模式文件并组成一个 JSON 快照
+2. 拉取（内省）数据库模式 
+3. 根据这两者之间的差异生成 SQL 迁移
+4. 将 SQL 迁移应用到数据库
 
 <Section>
 ```typescript filename="src/schema.ts"
@@ -60,21 +60,21 @@ export const users = p.pgTable("users", {
 </Section>
 </Callout>
 
-It's the best approach for rapid prototyping and we've seen dozens of teams
-and solo developers successfully using it as a primary migrations flow in their production applications.
-It pairs exceptionally well with blue/green deployment strategy and serverless databases like
-[Planetscale](https://planetscale.com/), [Neon](https://neon.tech/), [Turso](https://turso.tech/drizzle) and others.
+这是快速原型设计的最佳方法，
+我们已经看到数十个团队和独立开发者成功地将其作为他们生产应用中的主要迁移流程。
+它与蓝绿部署策略和无服务器数据库如
+[Planetscale](https://planetscale.com/)、[Neon](https://neon.tech/)、[Turso](https://turso.tech/drizzle) 等非常契合。
 
 <br/>
 <hr/>
 <br/>
 
 
-`drizzle-kit push` requires you to specify `dialect`, path to the `schema` file(s) and either
-database connection `url` or `user:password@host:port/db` params, you can provide them
-either via [drizzle.config.ts](/docs/drizzle-config-file) config file or via CLI options:
+`drizzle-kit push` 需要你指定 `dialect`、模式文件的路径，
+并提供数据库连接的 `url` 或 `user:password@host:port/db` 参数，
+你可以通过 [drizzle.config.ts](/docs/drizzle-config-file) 配置文件或 CLI 选项提供它们：
 
-<CodeTabs items={["With config file", "With CLI options"]}>
+<CodeTabs items={["使用配置文件", "使用 CLI 选项"]}>
 <Section>
 ```ts
 // drizzle.config.ts
@@ -99,23 +99,23 @@ npx drizzle-kit push --dialect=postgresql --schema=./src/schema.ts --url=postgre
 
 </CodeTabs>
 
-### Schema files path
+### 模式文件路径
 
-You can have a single `schema.ts` file or as many schema files as you want spread out across the project.
-Drizzle Kit requires you to specify path(s) to them as a [glob](https://www.digitalocean.com/community/tools/glob?comments=true&glob=/**/*.js&matches=false&tests=//%20This%20will%20match%20as%20it%20ends%20with%20'.js'&tests=/hello/world.js&tests=//%20This%20won't%20match!&tests=/test/some/globs) via `schema` configuration option.
+你可以有一个单独的 `schema.ts` 文件，也可以根据需要在项目中分散多个模式文件。
+Drizzle Kit 要求你通过 `schema` 配置选项作为 [glob](https://www.digitalocean.com/community/tools/glob?comments=true&glob=/**/*.js&matches=false&tests=//%20This%20will%20match%20as%20it%20ends%20with%20'.js'&tests=/hello/world.js&tests=//%20This%20won't%20match!&tests=/test/some/globs) 指定它们的路径。
 
 <SchemaFilePaths />
 
-### Multiple configuration files in one project
+### 项目中多个配置文件
 
-You can have multiple config files in the project, it's very useful when you have multiple database stages or multiple databases or different databases on the same project:
+你可以在项目中有多个配置文件，当你有多个数据库阶段、多个数据库或同一项目中的不同数据库时，这非常有用：
 
 <Npx>
   drizzle-kit push --config=drizzle-dev.config.ts
   drizzle-kit push --config=drizzle-prod.config.ts
 </Npx>
 ```plaintext {5-6}
-📦 <project root>
+📦 <项目根目录>
  ├ 📂 drizzle
  ├ 📂 src
  ├ 📜 .env
@@ -125,33 +125,33 @@ You can have multiple config files in the project, it's very useful when you hav
  └ 📜 tsconfig.json
 ```
 
-### Specifying database driver
+### 指定数据库驱动
 <Callout type="warning">
-**Expo SQLite** and **OP SQLite** are on-device(per-user) databases, there's no way to `push` migrations there.<br/>
-For embedded databases Drizzle provides **embedded migrations** - check out our [get started](/docs/get-started/expo-new) guide.
+**Expo SQLite** 和 **OP SQLite** 是设备上的（每用户）数据库，无法在其中 `push` 迁移。<br/>
+对于嵌入式数据库，Drizzle 提供了 **嵌入式迁移** - 查看我们的 [快速开始](/docs/get-started/expo-new) 指南。
 </Callout>
-Drizzle Kit does not come with a pre-bundled database driver, 
-it will automatically pick available database driver from your current project based on the `dialect` - [see discussion](https://github.com/drizzle-team/drizzle-orm/discussions/2203).
+Drizzle Kit 不包含预打包的数据库驱动，
+它将根据当前项目的 `dialect` 自动选择可用的数据库驱动 - [查看讨论](https://github.com/drizzle-team/drizzle-orm/discussions/2203)。
 
-Mostly all drivers of the same dialect share the same set of connection params, 
-as for exceptions like `aws-data-api`, `pglight` and `d1-http` - you will have to explicitly specify `driver` param.
+大多数同一方言的驱动程序共享相同的连接参数，
+至于像 `aws-data-api`、`pglight` 和 `d1-http` 的例外情况，你将需要显式指定 `driver` 参数。
 
 <DriversExamples/>
 
-### Including tables, schemas and extensions
-`drizzle-kit push` will by default manage all tables in `public` schema.
-You can configure list of tables, schemas and extensions via `tablesFilters`, `schemaFilter` and `extensionFilters` options.
+### 包括表、模式和扩展
+`drizzle-kit push` 默认管理 `public` 模式中的所有表。
+你可以通过 `tablesFilters`、`schemaFilter` 和 `extensionFilters` 选项配置表、模式和扩展的列表。
 
 |                     |                                                                                               |
 | :------------------ | :-------------------------------------------------------------------------------------------- |
-| `tablesFilter`      | `glob` based table names filter, e.g. `["users", "user_info"]` or `"user*"`. Default is `"*"` |
-| `schemaFilter`      | Schema names filter, e.g. `["public", "drizzle"]`. Default is `["public"]`                    |
-| `extensionsFilters` | List of installed database extensions, e.g. `["postgis"]`. Default is `[]`                    |
+| `tablesFilter`      | 基于 `glob` 的表名过滤器，例如 `["users", "user_info"]` 或 `"user*" `。默认是 `"*"` |
+| `schemaFilter`      | 模式名过滤器，例如 `["public", "drizzle"]`。默认是 `["public"]`                    |
+| `extensionsFilters` | 已安装数据库扩展的列表，例如 `["postgis"]`。默认是 `[]`                    |
 <br/>
 
-Let's configure drizzle-kit to only operate with **all tables** in **public** schema
-and let drizzle-kit know that there's a **postgis** extension installed, 
-which creates it's own tables in public schema, so drizzle can ignore them.
+让我们配置 drizzle-kit 只操作 **public** 模式中的 **所有表**，
+并让 drizzle-kit 知道有一个安装的 **postgis** 扩展，
+它会在 public 模式中创建自己的表，因此 drizzle 可以忽略它们。
 
 <Section>
 ```ts filename="drizzle.config.ts" {9-11}
@@ -173,17 +173,17 @@ npx drizzle-kit push
 ```
 </Section>
 
-### Extended list of configurations
+### 扩展的配置选项列表
 
-`drizzle-kit push` has a list of cli-only options
+`drizzle-kit push` 有一些仅限于 CLI 的选项
 
 <rem025/>
 
 |           |                                                          |
 | :-------- | :---------------------------------------------------     |
-| `verbose` | print all SQL statements prior to execution              |
-| `strict`  | always ask for approval before executing SQL statements  |
-| `force`   | auto-accept all data-loss statements                     |
+| `verbose` | 执行前打印所有 SQL 语句                                   |
+| `strict`  | 执行 SQL 语句前始终要求确认                             |
+| `force`   | 自动接受所有数据丢失的语句                               |
 <br/>
 <Npx>
 drizzle-kit push --strict --verbose --force
@@ -192,24 +192,24 @@ drizzle-kit push --strict --verbose --force
 <br/>
 <hr/>
 <br/>
-We recommend configuring `drizzle-kit` through [drizzle.config.ts](/docs/drizzle-config-file) file, 
-yet you can provide all configuration options through CLI if necessary, e.g. in CI/CD pipelines, etc.
+我们推荐通过 [drizzle.config.ts](/docs/drizzle-config-file) 文件配置 `drizzle-kit`，
+但如果有必要，你可以通过 CLI 提供所有配置选项，例如在 CI/CD 管道中等。
 
 |                     |            |                                                                           |
 | :------------------ | :--------- | :------------------------------------------------------------------------ |
-| `dialect`           | `required` | Database dialect, one of <Dialects/>                                      |
-| `schema`            | `required` | Path to typescript schema file(s) or folder(s) with multiple schema files |
-| `driver`            |            | Drivers exceptions <Drivers/>                                             |
-| `tablesFilter`      |            | Table name filter                                                         |
-| `schemaFilter`      |            | Schema name filter. Default: `["public"]`                                 |
-| `extensionsFilters` |            | Database extensions internal database filters                             |
-| `url`               |            | Database connection string                                                |
-| `user`              |            | Database user                                                             |
-| `password`          |            | Database password                                                         |
-| `host`              |            | Host                                                                      |
-| `port`              |            | Port                                                                      |
-| `database`          |            | Database name                                                             |
-| `config`            |            | Config file path, default=`drizzle.config.ts`                             |
+| `dialect`           | `required` | 数据库方言，必须是 <Dialects/>                                      |
+| `schema`            | `required` | 指向 TypeScript 模式文件或包含多个模式文件的文件夹的路径 |
+| `driver`            |            | 驱动程序例外 <Drivers/>                                             |
+| `tablesFilter`      |            | 表名过滤器                                                         |
+| `schemaFilter`      |            | 模式名称过滤器。默认：`["public"]`                                 |
+| `extensionsFilters` |            | 数据库扩展内部数据库过滤器                             |
+| `url`               |            | 数据库连接字符串                                                |
+| `user`              |            | 数据库用户                                                             |
+| `password`          |            | 数据库密码                                                         |
+| `host`              |            | 主机                                                                      |
+| `port`              |            | 端口                                                                      |
+| `database`          |            | 数据库名称                                                             |
+| `config`            |            | 配置文件路径，默认=`drizzle.config.ts`                             |
 
 <Npx>
 drizzle-kit push dialect=postgresql schema=src/schema.ts url=postgresql://user:password@host:port/dbname
@@ -218,11 +218,11 @@ drizzle-kit push dialect=postgresql schema=src/schema.ts --tablesFilter='user*' 
 </Npx>
 
 
-### Extended example
-Let's declare drizzle schema in the project and push it to the database via `drizzle-kit push` command
+### 扩展示例
+让我们在项目中声明 drizzle 模式并通过 `drizzle-kit push` 命令将其推送到数据库
 
 ```plaintext
-📦 <project root>
+📦 <项目根目录>
  ├ 📂 src
  │ ├ 📜 schema.ts
  │ └ 📜 index.ts
@@ -251,12 +251,12 @@ export const users = p.pgTable("users", {
 ```
 </CodeTabs>
 
-Now let's run
+现在让我们运行
 ```shell
 npx drizzle-kit push
 ```
 
-it will pull existing(empty) schema from the database and generate SQL migration and apply it under the hood
+它将从数据库中拉取现有（空）模式，生成 SQL 迁移并在后台应用它
 ```sql
 CREATE TABLE "users"(
   id serial primary key,
@@ -264,4 +264,4 @@ CREATE TABLE "users"(
 )
 ```
 
-DONE ✅
+完成 ✅

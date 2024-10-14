@@ -5,12 +5,13 @@ import CodeTab from '@components/markdown/CodeTab.astro';
 
 # 集合操作
 
-SQL 集合操作将多个查询块的结果合并为一个结果。 SQL 标准定义了以下三种集合操作: `UNION`，`INTERSECT`，`EXCEPT`，`UNION ALL`，`INTERSECT ALL`，`EXCEPT ALL`。
+SQL 集合操作将多个查询块的结果结合成单个结果。
+SQL 标准定义了以下三种集合操作：`UNION`、`INTERSECT`、`EXCEPT`、`UNION ALL`、`INTERSECT ALL`、`EXCEPT ALL`。
 
-### 并集 (Union)
-将来自两个查询块的所有结果合并为一个结果，省略重复项。
+### 并集（Union）
+将两个查询块的所有结果组合成单个结果，省略任何重复项。
 
-获取来自 customers 和 users 表的所有名称，排除重复项。
+获取 customers 和 users 表中的所有名称，不带重复。
 
 <Tabs items={["PostgreSQL", "MySQL", "SQLite"]}>
   <Tab>
@@ -186,10 +187,13 @@ SQL 集合操作将多个查询块的结果合并为一个结果。 SQL 标准�
   </Tab> 
 </Tabs>
 
-### 并集全部 (Union All)
-将来自两个查询块的所有结果合并为一个结果，包括重复项。
+### 并集所有（Union All）
+将两个查询块的所有结果组合成单个结果，包括重复项。
 
-假设您有两个表，一个表示在线销售，另一个表示实体店销售。在这种情况下，您希望将两个表的数据合并为一个结果集。由于可能存在重复交易，您希望保留所有记录而不消除重复项。
+考虑一个场景，你有两个表，一个表示在线销售，
+另一个表示门店销售。在这种情况下，你想把两个表的数据结合成一个结果集。
+由于可能会有重复的交易，
+你希望保留所有记录，而不消除重复项。
 
 <Tabs items={["PostgreSQL", "MySQL", "SQLite"]}>
   <Tab>
@@ -321,7 +325,7 @@ SQL 集合操作将多个查询块的结果合并为一个结果。 SQL 标准�
     union all 
     select "transaction_id" from "in_store_sales"
     ```
-    </CodeTab>
+	</CodeTab>
     <CodeTab>
     ```ts copy
     import { onlineSales, inStoreSales } from './schema'
@@ -362,13 +366,16 @@ SQL 集合操作将多个查询块的结果合并为一个结果。 SQL 标准�
   </Tab> 
 </Tabs>
 
-### 交集 (Intersect)
-仅合并两个查询块结果中共有的行，省略重复项。
+### 交集（Intersect）
+仅结合两个查询块的结果中共通的行，省略任何重复项。
 
-假设您有两个存储有关学生课程选修信息的表。您想找到两个不同部门之间共有的课程，
-但您希望得到不同的课程名称，并且不考虑相同学生多次选修同一门课程。
+假设你有两个表存储有关学生课程注册的信息。
+你想找到两个不同系间共同的课程，
+但你希望课程名是唯一的，
+并且不想计算同一个学生在同一课程下的多个注册。
 
-在这种情况下，您希望找到两个部门之间共有的课程，但不想多次计数相同课程，即使同一部门的多个学生都选修了它。
+在此场景中，你希望找到两个系间的共同课程，
+但不希望同一课程即使被同一系的多个学生注册也计数多次。
 
 <Tabs items={["PostgreSQL", "MySQL", "SQLite"]}>
   <Tab>
@@ -523,12 +530,17 @@ SQL 集合操作将多个查询块的结果合并为一个结果。 SQL 标准�
   </Tab> 
 </Tabs>
 
-### 交集全部 (Intersect All)
-仅合并两个查询块结果中共有的行，包括重复项。
+### 交集所有（Intersect All）
+仅结合两个查询块的结果中共通的行，包括重复项。
 
-假设您有两个包含客户订单数据的表，并且您想要确定普通客户和 VIP 客户都订购的产品。在这种情况下，您希望跟踪每个产品的数量，即使不同客户多次订购同一产品。
+让我们考虑一个场景，你有两个表包含有关客户订单的数据，
+你想识别普通客户和 VIP 客户都订单的产品。
+在这种情况下，你想更好地跟踪每种产品的数量，
+即使不同客户多次下单。
 
-在这种情况下，您希望找到普通客户和 VIP 客户都订购的产品，但您希望保留数量信息，即使相同产品被不同客户多次订购。
+在此场景中，你希望找到普通客户和 VIP 客户都下单的产品，
+但你希望保留数量信息，
+即使同一产品被不同的客户多次下单。
 
 <Tabs items={["PostgreSQL", "MySQL"]}>
   <Tab>
@@ -599,7 +611,7 @@ SQL 集合操作将多个查询块的结果合并为一个结果。 SQL 标准�
   </CodeTabs>
   </Tab> 
   <Tab>
-    <CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
+  <CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
 	<CodeTab>
 	```typescript copy
     import { intersectAll } from 'drizzle-orm/mysql-core'
@@ -626,7 +638,7 @@ SQL 集合操作将多个查询块的结果合并为一个结果。 SQL 标准�
     <CodeTab>
     ```ts copy
     import { regularCustomerOrders, vipCustomerOrders } from './schema'
-
+ 
     const result = await db
         .select({
           productId: regularCustomerOrders.productId,
@@ -644,11 +656,11 @@ SQL 集合操作将多个查询块的结果合并为一个结果。 SQL 标准�
     ```
     ```sql
     select `product_id`, `quantity_ordered` from `regular_customer_orders`
-    intersect all 
+    intersect all
     select `product_id`, `quantity_ordered` from `vip_customer_orders`
     ```
     </CodeTab>
-    <CodeTab>
+	<CodeTab>
 	```typescript copy
     import { int, mysqlTable } from "drizzle-orm/mysql-core";
 
@@ -669,13 +681,16 @@ SQL 集合操作将多个查询块的结果合并为一个结果。 SQL 标准�
   </Tab> 
 </Tabs>
 
-### 差集 (Except)
-对于两个查询块 A 和 B，返回 A 中独有的结果，即不包含在 B 中的结果，省略重复项。
+### 差集（Except）
+对于两个查询块 A 和 B，返回不在 B 中的 A 的所有结果，省略任何重复项。
 
-假设您有两个存储员工项目分配信息的表。您想找到仅属于一个部门且与另一个部门不共享的项目，排除重复项。
+假设你有两个表存储有关员工项目分配的信息。
+你想找到唯一属于一个部门并且不与另一个部门共享的项目，
+排除重复项。
 
-在这种情况下，您想要确定仅属于一个部门且与另一个部门不共享的项目。您不想多次计数相同的项目，
-即使同一部门的多个员工被分配到它。
+在此场景中，你想识别唯一属于一个部门而不与另一个部门共享的项目。
+你不希望同一项目计数多次，
+即使同一部门的多个员工都被分配给该项目。
 
 <Tabs items={["PostgreSQL", "MySQL", "SQLite"]}>
   <Tab>
@@ -830,12 +845,15 @@ SQL 集合操作将多个查询块的结果合并为一个结果。 SQL 标准�
   </Tab> 
 </Tabs>
 
-### 差集全部 (Except All)
-对于两个查询块 A 和 B，返回 A 中独有的结果，即不包含在 B 中的结果，包括重复项。
+### 差集所有（Except All）
+对于两个查询块 A 和 B，返回不在 B 中的 A 的所有结果，包括重复项。
 
-假设您有两个包含客户订单数据的表，并且您想要确定仅由普通客户（没有 VIP 客户）订购的产品。在这种情况下，您希望跟踪每个产品的数量，即使不同普通客户多次订购同一产品。
+让我们考虑一个场景，你有两个表包含有关客户订单的数据，
+你想识别仅普通客户（没有 VIP 客户）下单的产品。
+在这种情况下，你希望保留每种产品的数量信息，即使不同的普通客户多次下单。
 
-在这种情况下，您想要找到仅由普通客户订购（没有 VIP 客户订购）的产品。您希望保留数量信息，即使不同普通客户多次订购同一产品。
+在此场景中，你希望找到仅由普通客户下单的产品，并且不由 VIP 客户下单。
+你希望保留数量信息，即使同一产品被不同的普通客户多次下单。
 
 <Tabs items={["PostgreSQL", "MySQL"]}>
   <Tab>

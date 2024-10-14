@@ -10,28 +10,28 @@ import CodeTabs from "@mdx/CodeTabs.astro";
 # Drizzle \<\> TiDB Serverless
 
 <Prerequisites>
-- Database [connection basics](/docs/connect-overview) with Drizzle
-- TiDB database - [website](https://docs.pingcap.com/)
-- TiDB HTTP Driver - [website](https://docs.pingcap.com/tidbcloud/serverless-driver)
-- Drizzle MySQL drivers - [docs](/docs/get-started-mysql)
+- 数据库 [连接基础](/docs/connect-overview) 与 Drizzle
+- TiDB 数据库 - [官网](https://docs.pingcap.com/)
+- TiDB HTTP 驱动 - [官网](https://docs.pingcap.com/tidbcloud/serverless-driver)
+- Drizzle MySQL 驱动 - [文档](/docs/get-started-mysql)
 </Prerequisites>
 
-According to the **[official website](https://www.pingcap.com/tidb-serverless/)**, 
-TiDB Serverless is a fully-managed, autonomous DBaaS with split-second cluster provisioning and consumption-based pricing.
+根据 **[官方网站](https://www.pingcap.com/tidb-serverless/)**, 
+TiDB Serverless 是一款完全托管、自主的 DBaaS，具备瞬时集群配置和基于消费的定价。
 
 <Callout type="info" emoji="ℹ️">
-TiDB Serverless is compatible with MySQL, so you can use [MySQL connection guide](/docs/get-started-mysql) to connect to it.
+TiDB Serverless 兼容 MySQL，因此您可以使用 [MySQL 连接指南](/docs/get-started-mysql) 进行连接。
 </Callout>
 
-TiDB Serverless provides an [HTTP driver](https://docs.pingcap.com/tidbcloud/serverless-driver) for edge environments. It is natively supported by Drizzle ORM via `drizzle-orm/tidb-serverless` package.
+TiDB Serverless 提供了一种 [HTTP 驱动](https://docs.pingcap.com/tidbcloud/serverless-driver) 用于边缘环境。它通过 `drizzle-orm/tidb-serverless` 包被 Drizzle ORM 原生支持。
 
-#### Step 1 - Install packages
+#### 步骤 1 - 安装包
 <Npm>
 drizzle-orm @tidbcloud/serverless
 -D drizzle-kit
 </Npm>
 
-#### Step 2 - Initialize the driver and make a query
+#### 步骤 2 - 初始化驱动并执行查询
 ```typescript copy filename="index.ts"
 import { drizzle } from 'drizzle-orm/connect';
 
@@ -40,8 +40,8 @@ const db = await drizzle('tidb-serverless', { connection: { url: process.env.TID
 const response = await db.select().from(...)
 ```
 
-If you need a synchronous connection, you can use our additional connection API, 
-where you specify a driver connection and pass it to the Drizzle instance.
+如果您需要同步连接，可以使用我们的额外连接 API，
+在此可以指定驱动连接并将其传递给 Drizzle 实例。
 
 ```typescript copy"
 import { connect } from '@tidbcloud/serverless';
@@ -51,6 +51,6 @@ const client = connect({ url: '...' });
 const db = drizzle(client);
 ```
 
-#### What's next?
+#### 下一步？
 
 <WhatsNextPostgres/>

@@ -3,36 +3,36 @@ import Callout from '@components/markdown/Callout.astro';
 import Section from '@components/markdown/Section.astro';
 
 # SQL 删除
-你可以删除表中的所有行:
+您可以删除表中的所有行：
 ```typescript copy
 await db.delete(users);
 ```
-你也可以使用过滤器和条件进行删除:
+您还可以使用过滤器和条件删除：
 ```typescript copy
 await db.delete(users).where(eq(users.name, 'Dan'));
 ```
 
-### 删除并返回
+### 带返回值的删除
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'SQLite': true, 'MySQL': false }} />
-在 PostgreSQL 和 SQLite 中，你可以删除一行并将其返回:
+您可以在 PostgreSQL 和 SQLite 中删除一行并获取返回值：
 ```typescript copy
 const deletedUser = await db.delete(users)
   .where(eq(users.name, 'Dan'))
   .returning();
 
-// partial return
+// 部分返回
 const deletedUserIds: { deletedId: number }[] = await db.delete(users)
   .where(eq(users.name, 'Dan'))
   .returning({ deletedId: users.id });
 ```
 
-## WITH DELETE 子句
+## 使用 WITH DELETE 子句
 
 <Callout>
-  查看如何在 [select](/docs/select#with-clause)、[insert](/docs/insert#with-insert-clause)、[update](/docs/update#with-update-clause) 中使用 WITH 语句
+  查看如何使用 WITH 语句与 [选择](/docs/select#with-clause)、[插入](/docs/insert#with-insert-clause)、[更新](/docs/update#with-update-clause)
 </Callout>
 
-使用 `with` 子句可以通过将复杂查询拆分为称为公共表达式的较小子查询来简化复杂查询:
+使用 `with` 子句可以通过将复杂查询分割成称为公共表表达式（CTE）的小子查询来简化复杂查询：
 <Section>
 ```typescript copy
 const averageAmount = db.$with('average_amount').as(

@@ -3,10 +3,11 @@ import Tabs from '@components/markdown/Tabs.astro';
 
 # 事务
 
-SQL 事务是一组或多个 SQL 语句的集合，这些语句与数据库交互。
-整个事务可以作为一个单一的逻辑单元提交给数据库，或者作为一个单一的逻辑单元回滚（撤销）。
+SQL 事务是一个或多个与数据库交互的 SQL 语句的组合。
+一个事务可以作为一个单一的逻辑单元提交到数据库，
+或者作为一个单一的逻辑单元回滚（撤销）。
 
-Drizzle ORM 提供了运行 SQL 语句的事务 API：
+Drizzle ORM 提供了在事务中运行 SQL 语句的 API：
 
 ```ts copy
 const db = drizzle(...)
@@ -17,7 +18,7 @@ await db.transaction(async (tx) => {
 });
 ```
 
-Drizzle ORM 支持带有嵌套事务 API 的 `savepoints`：
+Drizzle ORM 支持 `savepoints` 以及嵌套事务 API：
 
 ```ts copy {7-9}
 const db = drizzle(...)
@@ -32,7 +33,7 @@ await db.transaction(async (tx) => {
 });
 ```
 
-您可以将业务逻辑嵌入事务中，并在需要时回滚：
+您可以将业务逻辑嵌入到事务中，并在需要时回滚：
 
 ```ts copy {7}
 const db = drizzle(...)
@@ -40,7 +41,7 @@ const db = drizzle(...)
 await db.transaction(async (tx) => {
   const [account] = await tx.select({ balance: accounts.balance }).from(accounts).where(eq(users.name, 'Dan'));
   if (account.balance < 100) {
-    // This throws an exception that rollbacks the transaction.
+    // 这将抛出一个异常，从而回滚事务。
     tx.rollback()
   }
 
@@ -63,7 +64,7 @@ const newBalance: number = await db.transaction(async (tx) => {
 });
 ```
 
-您可以使用事务与 **[关系查询](/docs/rqb)** 一起使用：
+您可以使用事务与 **[关系查询](/docs/rqb)**：
 
 ```ts
 const db = drizzle(..., { schema })
@@ -81,7 +82,7 @@ await db.transaction(async (tx) => {
 
 
 
-我们提供了特定于方言的事务配置 API：
+我们提供特定于方言的事务配置 API：
 
 <Tabs items={["PostgreSQL", "MySQL", "SQLite"]}>
 <Tab>

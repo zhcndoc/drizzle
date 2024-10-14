@@ -9,26 +9,26 @@ import CodeTabs from "@mdx/CodeTabs.astro";
 # Drizzle \<\> Bun SQLite
 
 <Prerequisites>
-- Database [connection basics](/docs/connect-overview) with Drizzle
-- Bun - [website](https://bun.sh/docs)
-- Bun SQLite driver - [docs](https://bun.sh/docs/api/sqlite)
+- 数据库 [连接基础](/docs/connect-overview) 与 Drizzle
+- Bun - [网站](https://bun.sh/docs)
+- Bun SQLite 驱动 - [文档](https://bun.sh/docs/api/sqlite)
 </Prerequisites>
 
-According to the **[official website](https://bun.sh/)**, Bun is a fast all-in-one JavaScript runtime. 
+根据 **[官方网站](https://bun.sh/)**，Bun 是一个快速的全能 JavaScript 运行时。
 
-Drizzle ORM natively supports **[`bun:sqlite`](https://bun.sh/docs/api/sqlite)** module and it's crazy fast 🚀  
+Drizzle ORM 原生支持 **[`bun:sqlite`](https://bun.sh/docs/api/sqlite)** 模块，速度非常快 🚀
 
-We embraces SQL dialects and dialect specific drivers and syntax and unlike any other ORM, 
-for synchronous drivers like `bun:sqlite` we have both **async** and **sync** APIs and we mirror most popular 
-SQLite-like `all`, `get`, `values` and `run` query methods syntax.
+我们支持 SQL 方言和特定于方言的驱动和语法，与其他 ORM 不同，
+对于像 `bun:sqlite` 这样的同步驱动，我们提供 **异步** 和 **同步** API，
+并且我们镜像了大多数流行的 SQLite 风格的 `all`、`get`、`values` 和 `run` 查询方法的语法。
 
-#### Step 1 - Install packages
+#### 步骤 1 - 安装软件包
 <Npm>
 drizzle-orm
 -D drizzle-kit
 </Npm>
 
-#### Step 2 - Initialize the driver and make a query
+#### 步骤 2 - 初始化驱动并执行查询
 ```typescript copy
 import { drizzle } from 'drizzle-orm/connect';
 
@@ -37,8 +37,8 @@ const db = drizzle("bun:sqlite");
 const result = await db.select().from(...);
 ```
 
-If you need a synchronous connection, you can use our additional connection API, 
-where you specify a driver connection and pass it to the Drizzle instance.
+如果你需要同步连接，可以使用我们的额外连接 API，
+在这里你可以指定驱动连接并将其传递给 Drizzle 实例。
 
 ```typescript copy
 import { drizzle } from 'drizzle-orm/bun-sqlite';
@@ -50,7 +50,7 @@ const db = drizzle(sqlite);
 const result = await db.select().from(...);
 ```
 
-If you want to use **sync** APIs:
+如果你想使用 **同步** API：
 ```typescript copy
 import { drizzle } from 'drizzle-orm/bun-sqlite';
 import { Database } from 'bun:sqlite';
@@ -64,6 +64,6 @@ const result = db.select().from(users).values();
 const result = db.select().from(users).run();
 ```
 
-#### What's next?
+#### 接下来做什么？
 
 <WhatsNextPostgres/>

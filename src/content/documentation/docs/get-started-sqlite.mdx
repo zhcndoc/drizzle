@@ -8,24 +8,24 @@ import WhatsNextPostgres from "@mdx/WhatsNextPostgres.astro";
 
 # Drizzle \<\> SQLite
 
-Drizzle has native support for SQLite connections with the `libsql` and `better-sqlite3` drivers.
-  
-There are a few differences between the `libsql` and `better-sqlite3` drivers that we discovered while using both and integrating them with the Drizzle ORM. For example:
+Drizzle 原生支持使用 `libsql` 和 `better-sqlite3` 驱动程序连接 SQLite。
 
-At the driver level, there may not be many differences between the two, but the main one is that `libSQL` can connect to both SQLite files and `Turso` remote databases. LibSQL is a fork of SQLite that offers a bit more functionality compared to standard SQLite, such as:
+在使用这两种驱动程序并将其与 Drizzle ORM 集成时，我们发现它们之间有一些差异。例如：
 
-- More ALTER statements are available with the `libSQL` driver, allowing you to manage your schema more easily than with just `better-sqlite3`.
-- You can configure the encryption at rest feature natively.
-- A large set of extensions supported by the SQLite database is also supported by `libSQL`.
+在驱动程序层面，这两者之间可能没有太多差异，但主要的区别在于 `libSQL` 可以连接到 SQLite 文件和 `Turso` 远程数据库。LibSQL 是 SQLite 的一个分支，提供了比标准 SQLite 更多的功能，例如：
+
+- `libSQL` 驱动程序支持更多的 ALTER 语句，使您能够比仅使用 `better-sqlite3` 更轻松地管理您的模式。
+- 您可以原生配置静态加密功能。
+- `libSQL` 还支持 SQLite 数据库支持的大量扩展。
 
 ## libsql
-#### Step 1 - Install packages
+#### 第一步 - 安装包
 <Npm>
 drizzle-orm @libsql/client
 -D drizzle-kit
 </Npm>
 
-#### Step 2 - Initialize the driver and make a query
+#### 第二步 - 初始化驱动程序并执行查询
 <CodeTabs items={["libsql", "libsql with config", "turso alias"]}>
 ```typescript copy
 import { drizzle } from 'drizzle-orm/connect';
@@ -37,7 +37,7 @@ const result = await db.execute('select 1');
 ```typescript copy
 import { drizzle } from 'drizzle-orm/connect';
 
-// You can specify any property from the libsql connection options
+// 您可以指定 libsql 连接选项中的任何属性
 const db = await drizzle("libsql", { connection: { url:'', authToken: '' }});
  
 const result = await db.execute('select 1');
@@ -45,15 +45,15 @@ const result = await db.execute('select 1');
 ```typescript copy
 import { drizzle } from 'drizzle-orm/connect';
 
-// You can specify any property from the libsql connection options
+// 您可以指定 libsql 连接选项中的任何属性
 const db = await drizzle("turso", { connection: { url:'', authToken: '' }});
  
 const result = await db.execute('select 1');
 ```
 </CodeTabs>
 
-If you need a synchronous connection, you can use our additional connection API, 
-where you specify a driver connection and pass it to the Drizzle instance.
+如果您需要同步连接，可以使用我们的额外连接 API，
+在该 API 中您指定驱动程序连接并将其传递给 Drizzle 实例。
 
 ```typescript copy
 import { drizzle } from 'drizzle-orm/libsql';
@@ -66,13 +66,13 @@ const result = await db.execute('select 1');
 ```
 
 ## better-sqlite3
-#### Step 1 - Install packages
+#### 第一步 - 安装包
 <Npm>
 drizzle-orm better-sqlite3
 -D drizzle-kit @types/better-sqlite3
 </Npm>
 
-#### Step 2 - Initialize the driver and make a query
+#### 第二步 - 初始化驱动程序并执行查询
 <CodeTabs items={["better-sqlite3", "better-sqlite3 with config"]}>
 ```typescript copy
 import { drizzle } from 'drizzle-orm/connect';
@@ -84,15 +84,15 @@ const result = await db.execute('select 1');
 ```typescript copy
 import { drizzle } from 'drizzle-orm/connect';
 
-// You can specify any property from the better-sqlite3 connection options
+// 您可以指定 better-sqlite3 连接选项中的任何属性
 const db = await drizzle("better-sqlite3", { connection: { source: process.env.DATABASE_URL }});
 
 const result = await db.execute('select 1');
 ```
 </CodeTabs>
 
-If you need a synchronous connection, you can use our additional connection API, 
-where you specify a driver connection and pass it to the Drizzle instance.
+如果您需要同步连接，可以使用我们的额外连接 API，
+在该 API 中您指定驱动程序连接并将其传递给 Drizzle 实例。
 
 ```typescript copy
 import { drizzle } from 'drizzle-orm/better-sqlite3';
@@ -104,6 +104,6 @@ const db = drizzle(sqlite);
 const result = await db.execute('select 1');
 ```
 
-#### What's next?
+#### 下一步是什么？
 
 <WhatsNextPostgres/>

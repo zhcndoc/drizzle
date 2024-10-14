@@ -5,14 +5,14 @@ import Steps from '@components/markdown/Steps.astro';
 
 
 # Drizzle \<\> Expo SQLite
-According to the **[official website](https://expo.dev/)**, Expo is an ecosystem of tools to develop, build and ship applications on React Native. 
-It's powered by Hermes JavaScript runtime and Metro bundler, Drizzle Expo driver is built to natively support both.  
+根据 **[官方网站](https://expo.dev/)**，Expo是一个用于开发、构建和发布React Native应用程序的工具生态系统。 
+它由Hermes JavaScript运行时和Metro捆绑器提供支持，Drizzle Expo驱动程序旨在原生支持这两者。  
   
-Drizzle ORM has the best in class toolkit for Expo SQLite:
-- Native ORM driver for Expo SQLite ✅
-- [Drizzle Kit](/docs/kit-overview) support for migration generation and bundling in application ✅
-- [Drizzle Studio](https://github.com/drizzle-team/drizzle-studio-expo) dev tools plugin to browse on device database ✅
-- Live Queries ✅
+Drizzle ORM为Expo SQLite提供了业界最佳的工具包：
+- Expo SQLite的原生ORM驱动程序 ✅
+- [Drizzle Kit](/docs/kit-overview)支持迁移生成和应用程序中的捆绑 ✅
+- [Drizzle Studio](https://github.com/drizzle-team/drizzle-studio-expo)开发工具插件，用于浏览设备数据库 ✅
+- 实时查询 ✅
   
 <Npm>
 drizzle-orm expo-sqlite@next
@@ -28,19 +28,19 @@ const db = drizzle(expo);
 
 await db.select().from(users);
 ```
-#### Live Queries
-With `useLiveQuery` hook you can make any Drizzle query reactive:
+#### 实时查询
+使用 `useLiveQuery` 钩子，您可以使任何Drizzle查询变为响应式：
 ```ts
 import { useLiveQuery, drizzle } from 'drizzle-orm/expo-sqlite';
 import { openDatabaseSync } from 'expo-sqlite/next';
 import { Text } from 'react-native';
 import * as schema from './schema';
 
-const expo = openDatabaseSync('db.db', { enableChangeListener: true }); // <-- enable change listeners
+const expo = openDatabaseSync('db.db', { enableChangeListener: true }); // <-- 启用更改监听器
 const db = drizzle(expo);
 
 const App = () => {
-  // Re-renders automatically when data changes
+  // 当数据更改时自动重新渲染
   const { data } = useLiveQuery(db.select().from(schema.users));
   return <Text>{JSON.stringify(data)}</Text>;
 };
@@ -48,27 +48,27 @@ const App = () => {
 export default App;
 ```
 
-#### Expo SQLite migrations with Drizzle Kit
-You can use Drizzle Kit for SQL migration generation.  
-Please make sure to check how [Drizzle migrations](/docs/kit-overview) work before proceeding.  
-Expo / React Native requires you to have SQL migrations bundled into the app and we've got you covered.  
+#### 使用Drizzle Kit进行Expo SQLite迁移
+您可以使用Drizzle Kit进行SQL迁移生成。  
+在继续之前，请确保检查[Drizzle迁移](/docs/kit-overview)的工作原理。  
+Expo / React Native要求您将SQL迁移捆绑到应用程序中，我们已经为您提供支持。  
 
 <Steps>
-#### Install babel plugin
-It's necessary to bundle SQL migration files as string directly to your bundle.
+#### 安装babel插件
+将SQL迁移文件作为字符串直接打包到您的包中是必要的。
 ```shell
 npm install babel-plugin-inline-import
 ```
 
-#### Update config files.
-You will need to update `babel.config.js`, `metro.config.js` and `drizzle.config.ts` files
+#### 更新配置文件。
+您需要更新 `babel.config.js`、`metro.config.js` 和 `drizzle.config.ts` 文件
 ```js filename='babel.config.js'
 module.exports = function(api) {
   api.cache(true);
 
   return {
     presets: ['babel-preset-expo'],
-    plugins: [["inline-import", { "extensions": [".sql"] }]] // <-- add this
+    plugins: [["inline-import", { "extensions": [".sql"] }]] // <-- 添加此项
   };
 };
 ```
@@ -79,12 +79,12 @@ const { getDefaultConfig } = require('expo/metro-config');
 /** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(__dirname);
 
-config.resolver.sourceExts.push('sql'); // <--- add this
+config.resolver.sourceExts.push('sql'); // <--- 添加此项
 
 module.exports = config;
 ```
 
-Make sure to have `dialect: 'sqlite'` and `driver: 'expo'` in Drizzle Kit config
+确保在Drizzle Kit配置中设置 `dialect: 'sqlite'` 和 `driver: 'expo'`
 ```ts filename="drizzle.config.ts"
 import type { Config } from 'drizzle-kit';
 
@@ -92,19 +92,19 @@ export default {
 	schema: './db/schema.ts',
 	out: './drizzle',
   dialect: 'sqlite',
-	driver: 'expo', // <--- very important
+	driver: 'expo', // <--- 非常重要
 } satisfies Config;
 ```
 
-#### Generate migrations
-After creating SQL schema file and drizzle.config.ts file, you can generate migrations
+#### 生成迁移
+在创建SQL模式文件和drizzle.config.ts文件后，您可以生成迁移
 ```bash
 npx drizzle-kit generate
 ```
 
-#### Add migrations to your app
-Now you need to import `migrations.js` file into your Expo/React Native app from `./drizzle` folder. 
-You can run migrations on application startup using our custom `useMigrations` migrations hook on in `useEffect` hook manually as you want.
+#### 将迁移添加到您的应用程序
+现在您需要从 `./drizzle` 文件夹中将 `migrations.js` 文件导入到您的Expo/React Native应用中。 
+您可以使用我们自定义的 `useMigrations` 迁移钩子在应用程序启动时运行迁移，手动在 `useEffect` 钩子中按您希望的方式进行。
 
 ```ts filename="App.tsx"
 import { drizzle } from "drizzle-orm/expo-sqlite";
@@ -122,7 +122,7 @@ export default function App() {
   if (error) {
     return (
       <View>
-        <Text>Migration error: {error.message}</Text>
+        <Text>迁移错误: {error.message}</Text>
       </View>
     );
   }
@@ -130,12 +130,12 @@ export default function App() {
   if (!success) {
     return (
       <View>
-        <Text>Migration is in progress...</Text>
+        <Text>迁移正在进行中...</Text>
       </View>
     );
   }
 
-  return ...your application component;
+  return ...你的应用组件;
 }
 ```
 </Steps>

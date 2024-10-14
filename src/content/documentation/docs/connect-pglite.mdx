@@ -11,26 +11,26 @@ import WhatsNextPostgres from "@mdx/WhatsNextPostgres.astro";
 # Drizzle \<\> PGlite
 
 <Prerequisites>
-- Database [connection basics](/docs/connect-overview) with Drizzle
-- ElectricSQL - [website](https://electric-sql.com/)
-- PgLite driver - [docs](https://pglite.dev/) & [GitHub](https://github.com/electric-sql/pglite)
+- 数据库 [连接基础知识](/docs/connect-overview) 与 Drizzle
+- ElectricSQL - [网站](https://electric-sql.com/)
+- PgLite 驱动 - [文档](https://pglite.dev/) & [GitHub](https://github.com/electric-sql/pglite)
 </Prerequisites>
 
-According to the **[official repo](https://github.com/electric-sql/pglite)**, PGlite is a WASM Postgres build packaged into a TypeScript client library that enables you to run Postgres in the browser, Node.js and Bun, with no need to install any other dependencies. It is only 2.6mb gzipped.
+根据 **[官方仓库](https://github.com/electric-sql/pglite)**，PGlite 是一个将 Postgres 打包到 TypeScript 客户端库中的 WASM 构建，使您能够在浏览器、Node.js 和 Bun 中运行 Postgres，而无需安装任何其他依赖项。压缩后只有 2.6mb。
 
-It can be used as an ephemeral in-memory database, or with persistence either to the file system (Node/Bun) or indexedDB (Browser).
+它可以用作短暂的内存数据库，或持久化到文件系统（Node/Bun）或 indexedDB（浏览器）。
 
-Unlike previous "Postgres in the browser" projects, PGlite does not use a Linux virtual machine - it is simply Postgres in WASM.
+与之前的“浏览器中的 Postgres”项目不同，PGlite 不使用 Linux 虚拟机 - 它只是 WASM 中的 Postgres。
 
-#### Step 1 - Install packages
+#### 第 1 步 - 安装软件包
 
 <Npm>
 drizzle-orm @electric-sql/pglite
 -D drizzle-kit
 </Npm>
 
-#### Step 2 - Initialize the driver and make a query
-<CodeTabs items={["In-Memory", "In directory", "With extra config options"]}>
+#### 第 2 步 - 初始化驱动并进行查询
+<CodeTabs items={["内存中", "目录中", "使用额外配置选项"]}>
 ```typescript copy"
 import { drizzle } from 'drizzle-orm/connect';
 
@@ -48,27 +48,27 @@ await db.select().from(...);
 ```typescript copy"
 import { drizzle } from 'drizzle-orm/connect';
 
-// connection is a native PGLite configuration
+// connection 是一个本地 PGLite 配置
 const db = drizzle('pglite', { connection: { dataDir: 'path-to-dir' }});
 
 await db.select().from(...);
 ```
 </CodeTabs>
 
-If you need a synchronous connection, you can use our additional connection API, 
-where you specify a driver connection and pass it to the Drizzle instance.
+如果您需要一个同步连接，可以使用我们的额外连接 API，
+在其中指定一个驱动程序连接并将其传递给 Drizzle 实例。
 
 ```typescript copy"
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 
-// In-memory Postgres
+// 内存中的 Postgres
 const client = new PGlite();
 const db = drizzle(client);
 
 await db.select().from(users);
 ```
 
-#### What's next?
+#### 接下来是什么？
 
 <WhatsNextPostgres/>

@@ -3,12 +3,12 @@ import CodeTab from '@components/markdown/CodeTab.astro';
 import Section from '@components/markdown/Section.astro';
 
 # 连接 [SQL]
-SQL 中的连接子句用于基于它们之间的相关列将 2 个或更多表组合在一起。
-Drizzle ORM 连接语法是 SQL 相似性和类型安全性的平衡。
+SQL 中的连接子句用于组合 2 个或更多表，基于它们之间的相关列。
+Drizzle ORM 的连接语法是在 SQL 类似性与类型安全性之间取得平衡。
 
 ## 连接类型
 Drizzle ORM 提供了 `INNER JOIN`、`FULL JOIN`、`LEFT JOIN` 和 `RIGHT JOIN` 的 API。
-让我们快速看一下基于以下表模式示例：
+让我们快速浏览一下基于以下表模式的示例：
 ```typescript copy
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
@@ -31,7 +31,7 @@ const result = await db.select().from(users).leftJoin(pets, eq(users.id, pets.ow
 select ... from "users" left join "pets" on "users"."id" = "pets"."owner_id"
 ```
 ```typescript
-// result type
+// 结果类型
 const result: {
     user: {
         id: number;
@@ -55,7 +55,7 @@ const result = await db.select().from(users).rightJoin(pets, eq(users.id, pets.o
 select ... from "users" right join "pets" on "users"."id" = "pets"."owner_id"
 ```
 ```typescript
-// result type
+// 结果类型
 const result: {
     user: {
         id: number;
@@ -78,7 +78,7 @@ const result = await db.select().from(users).innerJoin(pets, eq(users.id, pets.o
 select ... from "users" inner join "pets" on "users"."id" = "pets"."owner_id"
 ```
 ```typescript
-// result type
+// 结果类型
 const result: {
     user: {
         id: number;
@@ -101,7 +101,7 @@ const result = await db.select().from(users).fullJoin(pets, eq(users.id, pets.ow
 select ... from "users" full join "pets" on "users"."id" = "pets"."owner_id"
 ```
 ```typescript
-// result type
+// 结果类型
 const result: {
     user: {
         id: number;
@@ -117,7 +117,8 @@ const result: {
 </Section>
 
 ## 部分选择
-如果您需要选择特定字段子集或需要平铺响应类型，Drizzle ORM 支持带部分选择的连接，并将自动推断返回类型基于 `.select({ ... })` 结构。
+如果您需要选择特定字段子集或具有扁平响应类型，
+Drizzle ORM 支持部分选择的连接，并将根据 `.select({ ... })` 结构自动推断返回类型。
 <Section>
 ```typescript copy
 await db.select({
@@ -129,16 +130,17 @@ await db.select({
 select "users"."id", "pets"."id" from "users" left join "pets" on "users"."id" = "pets"."owner_id"
 ```
 ```typescript
-// result type
+// 结果类型
 const result: {
   userId: number;
   petId: number | null;
 }[];
 ```
 </Section>
-您可能已经注意到 `petId` 现在可以是 null，这是因为我们进行了左连接，可能存在没有宠物的用户。
+您可能注意到 `petId` 现在可以为 null，这是因为我们正在进行左连接，并且可能有没有宠物的用户。
 
-在使用 `sql` 运算符进行部分选择字段和聚合时，当需要时，您应该使用 `sql<type | null>` 以正确推断结果类型，这是您的责任！
+在使用 `sql` 操作符进行字段的部分选择和汇总时，
+记住使用 `sql<type | null>` 以正确推断结果类型，这完全取决于您！
 <Section>
 ```typescript copy
 const result = await db.select({
@@ -146,14 +148,14 @@ const result = await db.select({
   petId: pets.id,
   petName1: sql`upper(${pets.name})`,
   petName2: sql<string | null>`upper(${pets.name})`,
-  //˄we should explicitly tell 'string | null' in type, since we're left joining that field
+  //˄我们应该在类型中明确指出 'string | null'，因为我们正在左连接该字段
 }).from(user).leftJoin(pets, eq(users.id, pets.ownerId))
 ```
 ```sql
 select "users"."id", "pets"."id", upper("pets"."name")... from "users" left join "pets" on "users"."id" = "pets"."owner_id"
 ```
 ```typescript
-// result type
+// 结果类型
 const result: {
   userId: number;
   petId: number | null;
@@ -162,7 +164,8 @@ const result: {
 }[];
 ```
 </Section>
-为了在连接具有大量列的表时避免出现大量可空字段，我们可以使用我们的**嵌套选择对象语法**，我们的智能类型推断将使整个对象变为可空，而不是使所有表字段都变为可空！
+为了避免在连接具有大量列的表时出现大量可为 null 的字段，我们可以利用我们的 **嵌套选择对象语法**，
+我们的智能类型推断将使整个对象变为可为 null，而不是将所有表字段都设为可为 null！
 <Section>
 ```typescript copy
 await db.select({
@@ -179,7 +182,7 @@ await db.select({
 select ... from "users" full join "pets" on "users"."id" = "pets"."owner_id"
 ```
 ```typescript
-// result type
+// 结果类型
 const result: {
     userId: number | null;
     userName: string | null;
@@ -193,9 +196,9 @@ const result: {
 </Section>
 
 ## 别名和自连接
-Drizzle ORM 支持表别名，这在您需要进行自连接时非常有用。
+Drizzle ORM 支持表别名，这在您需要进行自连接时非常方便。
 
-假设您需要获取带有其父级用户的用户信息：
+假设您需要获取带有父母的用户：
 <CodeTabs items={["index.ts", "schema.ts"]}>
 <CodeTab>
 ```typescript copy
@@ -211,7 +214,7 @@ const result = db
 select ... from "user" left join "user" "parent" on "parent"."id" = "user"."parent_id"
 ```
 ```typescript
-// result type
+// 结果类型
 const result: {
     user: {
         id: number;
@@ -238,9 +241,9 @@ export const user = pgTable("user", {
 </CodeTabs>
 
 ## 聚合结果
-Drizzle ORM 从驱动程序中提供名称映射的结果，而不改变结构。
+Drizzle ORM 从驱动程序传递名称映射的结果，而无需更改结构。
 
-您可以自由地以您想要的方式操作结果，这里是一个映射一对多关系数据的示例：
+您可以自由地操作结果，下面是映射多对一关系数据的示例：
 ```typescript
 type User = typeof users.$inferSelect;
 type Pet = typeof pets.$inferSelect;
@@ -268,7 +271,7 @@ const result = rows.reduce<Record<number, { user: User; pets: Pet[] }>>(
   {}
 );
 
-// result type
+// 结果类型
 const result: Record<number, {
     user: User;
     pets: Pet[];
@@ -313,7 +316,7 @@ const usersToChatGroups = sqliteTable('usersToChatGroups', {
 });
 
 
-// querying user group with id 1 and all the participants(users)
+// 查询 ID 为 1 的用户组及所有参与者（用户）
 db.select()
   .from(usersToChatGroups)
   .leftJoin(users, eq(usersToChatGroups.userId, users.id))

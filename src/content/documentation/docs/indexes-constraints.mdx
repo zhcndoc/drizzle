@@ -3,19 +3,22 @@ import Tabs from '@components/markdown/Tabs.astro';
 import Callout from '@components/markdown/Callout.astro';
 import Section from '@components/markdown/Section.astro';
 
-# 索引和约束
+# 索引与约束
 
 ## 约束
 
-SQL 约束是对表列施加的规则。它们用于防止无效数据进入数据库。
+SQL 约束是强加于表列的规则。它们用于防止无效数据被输入数据库。
 
-这可以确保数据库中的数据的准确性和可靠性。
+这确保了数据库中数据的准确性和可靠性。
 
 ### 默认值
 
-`DEFAULT` 子句指定如果用户在进行 `INSERT` 操作时未提供值，则在列上使用的默认值。如果列定义不附加显式的 `DEFAULT` 子句，则列的默认值为 `NULL`。
+`DEFAULT` 子句指定如果用户在进行 `INSERT` 时未提供值，则使用该列的默认值。
+如果列定义没有附加显式的 `DEFAULT` 子句，
+则该列的默认值为 `NULL`。
 
-显式的 `DEFAULT` 子句可以指定默认值为 `NULL`，字符串常量，Blob 常量，有符号数或用括号括起来的任何常量表达式。
+显式的 `DEFAULT` 子句可以指定默认值为 `NULL`，
+字符串常量，BLOB 常量，带符号数字或任何用括号括起来的常量表达式。
 
 <Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
   <Tab>
@@ -76,7 +79,7 @@ SQL 约束是对表列施加的规则。它们用于防止无效数据进入数�
     ```
     ```sql
     CREATE TABLE `table` (
-      `int1` integer DEFAULT 42
+      `int1` integer DEFAULT 42,
       `int2` integer DEFAULT (abs(42))
     );
     ```
@@ -87,9 +90,10 @@ SQL 约束是对表列施加的规则。它们用于防止无效数据进入数�
 
 ### 非空
 
-默认情况下，列可以存储 **NULL** 值。`NOT NULL` 约束强制列 **不** 接受 **NULL** 值。
+默认情况下，一个列可以包含 **NULL** 值。`NOT NULL` 约束强制一个列 **不** 接受 **NULL** 值。
 
-这将确保字段始终包含一个值，这意味着您无法插入新记录或更新记录而不给此字段添加值。
+这强制字段始终包含一个值，这意味着您不能插入新记录，
+或在没有为该字段添加值的情况下更新记录。
 
 <Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
   <Tab>
@@ -135,7 +139,7 @@ SQL 约束是对表列施加的规则。它们用于防止无效数据进入数�
         numInt: integer('numInt').notNull() 
       });
       ```
- 
+
       ```sql
       CREATE TABLE table (
         `numInt` integer NOT NULL
@@ -146,11 +150,11 @@ SQL 约束是对表列施加的规则。它们用于防止无效数据进入数�
   </Tab>
 </Tabs>
 
-### 唯一性
+### 唯一
 
-`UNIQUE` 约束确保列中的所有值都是不同的。
+`UNIQUE` 约束确保列中的所有值均不同。
 
-`UNIQUE` 约束和 `PRIMARY KEY` 约束都为列或一组列提供了唯一性保证。
+`UNIQUE` 和 `PRIMARY KEY` 约束为列或列集提供了唯一性保证。
 
 `PRIMARY KEY` 约束自动具有 `UNIQUE` 约束。
 
@@ -180,8 +184,8 @@ SQL 约束是对表列施加的规则。它们用于防止无效数据进入数�
         unq2: unique('custom_name').on(t.id, t.name)
       }));
 
-      // In Postgres 15.0+ NULLS NOT DISTINCT is available
-      // This example demonstrates both available usages
+      // 在 Postgres 15.0 及以上版本中，NULLS NOT DISTINCT 可用
+      // 此示例演示了所有可用的用法
       export const userNulls = pgTable('user_nulls_example', {
         id: integer('id').unique("custom_name", { nulls: 'not distinct' }),
       }, (t) => ({
@@ -191,10 +195,10 @@ SQL 约束是对表列施加的规则。它们用于防止无效数据进入数�
 
       ```sql
       CREATE TABLE IF NOT EXISTS "composite_example" (
-	    "id" integer,
-        "name" text,
-        CONSTRAINT "composite_example_id_name_unique" UNIQUE("id","name"),
-        CONSTRAINT "custom_name" UNIQUE("id","name")
+	      "id" integer,
+          "name" text,
+          CONSTRAINT "composite_example_id_name_unique" UNIQUE("id","name"),
+          CONSTRAINT "custom_name" UNIQUE("id","name")
       );
 
       CREATE TABLE IF NOT EXISTS "table" (
@@ -208,9 +212,9 @@ SQL 约束是对表列施加的规则。它们用于防止无效数据进入数�
       );
 
       CREATE TABLE IF NOT EXISTS "user_nulls_example" (
-	    "id" integer,
-	    CONSTRAINT "custom_name" UNIQUE NULLS NOT DISTINCT("id"),
-	    CONSTRAINT "user_nulls_example_id_unique" UNIQUE NULLS NOT DISTINCT("id")
+	      "id" integer,
+	      CONSTRAINT "custom_name" UNIQUE NULLS NOT DISTINCT("id"),
+	      CONSTRAINT "user_nulls_example_id_unique" UNIQUE NULLS NOT DISTINCT("id")
       );
       ```
     </Section>
@@ -250,10 +254,10 @@ SQL 约束是对表列施加的规则。它们用于防止无效数据进入数�
       );
 
       CREATE TABLE `composite_example` (
-	    `id` int,
-	    `name` varchar(256),
-	    CONSTRAINT `composite_example_id_name_unique` UNIQUE(`id`,`name`),
-	    CONSTRAINT `custom_name` UNIQUE(`id`,`name`)
+	      `id` int,
+	      `name` varchar(256),
+	      CONSTRAINT `composite_example_id_name_unique` UNIQUE(`id`,`name`),
+	      CONSTRAINT `custom_name` UNIQUE(`id`,`name`)
       );
       ```
     </Section>
@@ -305,16 +309,16 @@ SQL 约束是对表列施加的规则。它们用于防止无效数据进入数�
   </Tab>
 </Tabs>
 
-### 检查条件
+### 检查
 
-`CHECK` 约束用于限制可放置在列中的值范围。
+`CHECK` 约束用于限制可以放入列的值范围。
 
-如果在列上定义了 `CHECK` 约束，它将仅允许为此列指定的某些值。
+如果您在列上定义了 `CHECK` 约束，则仅允许此列的某些值。
 
-如果在表上定义了 `CHECK` 约束，它可以根据行中其他列的值来限制特定列中的值。
+如果您在表上定义了 `CHECK` 约束，则可以根据行中其他列的值限制某些列中的值。
 
 <Callout type="error" emoji="🛑">
-  DRIZZLE ORM 尚未实现此功能
+  在 DRIZZLE ORM 中尚未实现
 </Callout>
 
 ### 主键
@@ -322,7 +326,7 @@ SQL 约束是对表列施加的规则。它们用于防止无效数据进入数�
 `PRIMARY KEY` 约束唯一标识表中的每条记录。
 主键必须包含 `UNIQUE` 值，并且不能包含 `NULL` 值。
 
-一个表只能有 **一个** 主键；并且在该表中，此主键可以由单个字段或多个字段组成。
+一个表只能有 **一个** 主键；在表中，该主键可以由单个列或多个列（字段）组成。
 
 <Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
   <Tab>
@@ -407,9 +411,9 @@ SQL 约束是对表列施加的规则。它们用于防止无效数据进入数�
 
 ### 复合主键
 
-与 `PRIMARY KEY` 类似，复合主键使用多个字段在表中唯一标识每条记录。
+与 `PRIMARY KEY` 相似，复合主键使用多个字段唯一标识表中的每条记录。
 
-Drizzle ORM 提供了一个独立的 `primaryKey` 运算符来实现这一点：
+Drizzle ORM 提供一个独立的 `primaryKey` 操作符来实现这一点：
 <Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
   <Tab>
     <Section>
@@ -530,11 +534,11 @@ Drizzle ORM 提供了一个独立的 `primaryKey` 运算符来实现这一点：
 
 ### 外键
 
-`FOREIGN KEY` 约束用于防止破坏表之间链接的操作。
-`FOREIGN KEY` 是一个字段（或一组字段），它引用另一个表中的 `PRIMARY KEY`。
-具有外键的表称为子表，具有主键的表称为引用表或父表。
+`FOREIGN KEY` 约束用于防止会破坏表之间链接的操作。
+`FOREIGN KEY` 是一个表中的字段（或字段集合），它引用了另一个表中的 `PRIMARY KEY`。
+带有外键的表称为子表，带有主键的表称为引用表或父表。
 
-Drizzle ORM 提供了几种声明外键的方法。
+Drizzle ORM 提供多种声明外键的方法。
 您可以在列声明语句中声明它们：
 
 <Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
@@ -591,7 +595,8 @@ Drizzle ORM 提供了几种声明外键的方法。
   </Tab>
 </Tabs>
 
-如果您想进行自引用，由于 TypeScript 的限制，您必须显式设置引用回调的返回类型或使用一个独立的 `foreignKey` 运算符。
+如果您想进行自我引用，由于 TypeScript 的限制，
+您将必须显式设置引用回调的返回类型或使用独立的 `foreignKey` 操作符。
 
 <Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
   <Tab>
@@ -604,7 +609,7 @@ Drizzle ORM 提供了几种声明外键的方法。
       parentId: integer("parent_id").references((): AnyPgColumn => user.id)
     });
 
-    // or
+    // 或
     export const user = pgTable("user", {
       id: serial("id"),
       name: text("name"),
@@ -619,7 +624,7 @@ Drizzle ORM 提供了几种声明外键的方法。
       };
     });
     ```
-   
+
   </Tab>
   <Tab>
     ```typescript {6,16-19}
@@ -631,7 +636,7 @@ Drizzle ORM 提供了几种声明外键的方法。
       parentId: int("parent_id").references((): AnyMySqlColumn => user.id),
     });
 
-    // or
+    // 或
     export const user = mysqlTable("user", {
       id: int("id").primaryKey().autoincrement(),
       name: text("name"),
@@ -646,7 +651,7 @@ Drizzle ORM 提供了几种声明外键的方法。
       };
     });
     ```
-    
+
   </Tab>
   <Tab>
     ```typescript {6,16-19}
@@ -658,7 +663,7 @@ Drizzle ORM 提供了几种声明外键的方法。
       parentId: integer("parent_id").references((): AnySQLiteColumn => user.id)
     });
 
-    //or
+    // 或
     export const user = sqliteTable("user", {
       id: integer("id").primaryKey({ autoIncrement: true }),
       name: text("name"),
@@ -676,7 +681,7 @@ Drizzle ORM 提供了几种声明外键的方法。
 
   </Tab>
 </Tabs>
-要声明多列外键，可以使用专用的 `foreignKey` 运算符：
+要声明多列外键，可以使用专用的 `foreignKey` 操作符：
 <Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
   <Tab>
     ```typescript copy {4-5,14-15,18-21}
@@ -687,7 +692,7 @@ Drizzle ORM 提供了几种声明外键的方法。
       lastName: text("lastName"),
     }, (table) => {
       return {
-        pk: primaryKey({ columns: [table.firstName, table.lastName]}),
+        pk: primaryKey({ columns: [table.firstName, table.lastName] }),
       };
     });
 
@@ -699,7 +704,7 @@ Drizzle ORM 提供了几种声明外键的方法。
       return {
         userReference: foreignKey({
           columns: [table.userFirstName, table.userLastName],
-          foreignColumns: [user.firstName, user.lastName]
+          foreignColumns: [user.firstName, user.lastName],
           name: "custom_fk"
         })
       }
@@ -716,7 +721,7 @@ Drizzle ORM 提供了几种声明外键的方法。
       lastName: text("lastName"),
     }, (table) => {
       return {
-        pk: primaryKey({ columns: [table.firstName, table.lastName]}),
+        pk: primaryKey({ columns: [table.firstName, table.lastName] }),
       };
     });
 
@@ -745,7 +750,7 @@ Drizzle ORM 提供了几种声明外键的方法。
       lastName: text("lastName"),
     }, (table) => {
       return {
-        pk: primaryKey({ columns: [table.firstName, table.lastName]}),
+        pk: primaryKey({ columns: [table.firstName, table.lastName] }),
       };
     });
 
@@ -769,7 +774,7 @@ Drizzle ORM 提供了几种声明外键的方法。
 
 ## 索引
 
-Drizzle ORM 提供了对索引和唯一索引的 API 声明：
+Drizzle ORM 提供 `index` 和 `unique index` 声明的 API：
 
 <Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
   <Tab>
@@ -798,26 +803,26 @@ Drizzle ORM 提供了对索引和唯一索引的 API 声明：
     ```
     </Section>
     <Callout type="warning" emoji="⚠️">
-      对于 `drizzle-kit@0.22.0` 和 `drizzle-orm@0.31.0` `drizzle-kit` 之前的版本仅支持索引 `name` 和 `on()` 参数。
+      对于版本低于 `drizzle-kit@0.22.0` 和 `drizzle-orm@0.31.0` 的情况，`drizzle-kit` 只支持索引 `name` 和 `on()` 参数。
 
-      在 `drizzle-kit@0.22.0` 和 `drizzle-orm@0.31.0` 版本之后，drizzle-kit 中支持所有字段！
+      在 `drizzle-kit@0.22.0` 和 `drizzle-orm@0.31.0` 版本之后，所有字段均得到支持！
     </Callout>
 
 
-    从 0.31.0 开始，Drizzle ORM 的新索引 API 提供了用于创建索引的所有参数集：
+    从 0.31.0 开始，Drizzle ORM 的新索引 API 提供了创建索引的所有参数集：
 
 ```ts
-// First example, with `.on()`
+// 第一个示例，使用 `.on()`
 index('name')
-  .on(table.column1.asc(), table.column2.nullsFirst(), ...) or .onOnly(table.column1.desc().nullsLast(), table.column2, ...)
+  .on(table.column1.asc(), table.column2.nullsFirst(), ...) 或 .onOnly(table.column1.desc().nullsLast(), table.column2, ...)
   .concurrently()
   .where(sql``)
   .with({ fillfactor: '70' })
 
-// Second Example, with `.using()`
+// 第二个示例，使用 `.using()`
 index('name')
   .using('btree', table.column1.asc(), sql`lower(${table.column2})`, table.column1.op('text_ops'))
-  .where(sql``) // sql expression
+  .where(sql``) // sql 表达式
   .with({ fillfactor: '70' })
 ```
 
@@ -848,16 +853,16 @@ index('name')
     ```
     </Section>
     <Callout type="warning" emoji="⚠️">
-      目前的 `drizzle-kit` 只支持索引的 `name` 和 `on()` 参数。
+      目前 `drizzle-kit` 仅支持索引 `name` 和 `on()` 参数。
     </Callout>
 
-     Drizzle ORM 提供了用于索引创建的所有参数：
+     Drizzle ORM 提供创建索引的所有参数集：
 
     ```typescript
-    // Index declaration reference
+    // 索引声明参考
     index("name")
       .on(table.name)
-      .algorythm("default") // "default" | "copy" | "inplace"
+      .algorithm("default") // "default" | "copy" | "inplace"
       .using("btree") // "btree" | "hash"
       .lock("default") // "none" | "default" | "exclusive" | "shared"
     ```
@@ -888,7 +893,7 @@ index('name')
     ```
     </Section>
 
-     Drizzle ORM 提供了用于索引创建的所有参数：
+     Drizzle ORM 提供创建索引的所有参数集：
      
     ```typescript
     // 索引声明参考

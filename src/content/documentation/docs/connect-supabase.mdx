@@ -10,22 +10,22 @@ import WhatsNextPostgres from "@mdx/WhatsNextPostgres.astro";
 # Drizzle \<\> Supabase
 
 <Prerequisites>
-- Database [connection basics](/docs/connect-overview) with Drizzle
-- Drizzle PostgreSQL drivers - [docs](/docs/get-started-postgresql)
+- 数据库 [连接基础](/docs/connect-overview) 与 Drizzle
+- Drizzle PostgreSQL 驱动 - [文档](/docs/get-started-postgresql)
 </Prerequisites>
 
-According to the **[official website](https://supabase.com/docs)**, Supabase is an open source Firebase alternative for building secure and performant Postgres backends with minimal configuration.
+根据 **[官方网站](https://supabase.com/docs)**，Supabase 是一个开源的 Firebase 替代品，旨在使用最小的配置构建安全且高性能的 Postgres 后端。
 
-Checkout official **[Supabase + Drizzle](https://supabase.com/docs/guides/database/connecting-to-postgres#connecting-with-drizzle)** docs.
+查看官方 **[Supabase + Drizzle](https://supabase.com/docs/guides/database/connecting-to-postgres#connecting-with-drizzle)** 文档。
 
-#### Step 1 - Install packages
+#### 第一步 - 安装软件包
 
 <Npm>
 drizzle-orm postgres
 -D drizzle-kit
 </Npm>
 
-#### Step 2 - Initialize the driver and make a query
+#### 第二步 - 初始化驱动并进行查询
 
 ```typescript copy filename="index.ts"
 import { drizzle } from 'drizzle-orm'
@@ -34,8 +34,8 @@ const db = drizzle('postgres-js', process.env.DATABASE_URL);
 
 const allUsers = await db.select().from(...);
 ```
-If you need a synchronous connection, you can use our additional connection API, 
-where you specify a driver connection and pass it to the Drizzle instance.
+如果您需要同步连接，可以使用我们的额外连接 API，
+在其中指定一个驱动连接并将其传递给 Drizzle 实例。
 
 ```typescript copy filename="index.ts"
 import { drizzle } from 'drizzle-orm/postgres-js'
@@ -47,22 +47,22 @@ const db = drizzle(client);
 const allUsers = await db.select().from(...);
 ```
 
-If you decide to use connection pooling via Supabase (described [here](https://supabase.com/docs/guides/database/connecting-to-postgres#connection-pooler)), and have "Transaction" pool mode enabled, then ensure to turn off prepare, as prepared statements are not supported. 
+如果您决定通过 Supabase 使用连接池（在 [这里](https://supabase.com/docs/guides/database/connecting-to-postgres#connection-pooler) 描述），并启用了“事务”池模式，则确保将 prepare 关闭，因为不支持预编译语句。
 
 ```typescript copy filename="index.ts"
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
 
-// Disable prefetch as it is not supported for "Transaction" pool mode 
+// 禁用预取，因为在“事务”池模式下不支持 
 const client = postgres(process.env.DATABASE_URL, { prepare: false })
 const db = drizzle(client);
 
 const allUsers = await db.select().from(...);
 ```
 
-Connect to your database using the Connection Pooler for **serverless environments**, and the Direct Connection for **long-running servers**.
+使用连接池连接到您的数据库以适应 **无服务器环境**，而在 **长时间运行的服务器** 中使用直接连接。
 
-#### What's next?
+#### 接下来是什么？
 
 <WhatsNextPostgres/>
 

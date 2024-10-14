@@ -8,56 +8,56 @@ import Prerequisites from "@mdx/Prerequisites.astro";
 import CodeTabs from "@/components/markdown/CodeTabs.astro";
 import Section from "@mdx/Section.astro";
 
-# Drizzle HTTP proxy
+# Drizzle HTTP 代理
 
 <Prerequisites>
-- Database [connection basics](/docs/connect-overview) with Drizzle
+- 数据库 [连接基础](/docs/connect-overview) 与 Drizzle
 </Prerequisites>
 
-How an HTTP Proxy works and why you might need it
+HTTP 代理的工作原理以及您可能需要它的原因
 
-Drizzle Proxy is used when you need to implement your own driver communication with the database. 
-It can be used in several cases, such as adding custom logic at the query stage with existing drivers. 
-The most common use is with an HTTP driver, which sends queries to your server with the database, executes the query 
-on your database, and responds with raw data that Drizzle ORM can then map to results
+Drizzle Proxy 在您需要实现自己的驱动程序与数据库的通信时使用。 
+它可以在几种情况下使用，例如在现有驱动程序的查询阶段添加自定义逻辑。 
+最常见的用法是与 HTTP 驱动程序一起使用，它将查询发送到您的数据库服务器，执行查询 
+并以原始数据响应，Drizzle ORM 然后可以将其映射为结果。
 
-<Callout collapsed="How it works under the hood?">
+<Callout collapsed="它是如何在底层工作的？">
 ```                                  
 ┌───────────────────────────┐                 ┌─────────────────────────────┐              
-│       Drizzle ORM         │                 │  HTTP Server with Database  │             
+│       Drizzle ORM         │                 │  带数据库的 HTTP 服务器    │             
 └─┬─────────────────────────┘                 └─────────────────────────┬───┘             
   │                                                ^                    │
-  │-- 1. Build query         2. Send built query --│                    │
+  │-- 1. 构建查询         2. 发送构建的查询 --│                    │
   │                                                │                    │
   │              ┌───────────────────────────┐     │                    │
   └─────────────>│                           │─────┘                    │ 
-                 │      HTTP Proxy Driver    │                          │
+                 │      HTTP 代理驱动        │                          │
   ┌──────────────│                           │<─────────────┬───────────┘
   │              └───────────────────────────┘              │
-  │                                                  3. Execute a query + send raw results back
-  │-- 4. Map data and return        
+  │                                                  3. 执行查询 + 返回原始结果
+  │-- 4. 映射数据并返回        
   │                   
   v
 ```
 </Callout>
 
-Drizzle ORM also supports simply using asynchronous callback function for executing SQL.
+Drizzle ORM 还支持简单地使用异步回调函数来执行 SQL。
 
-- `sql` is a query string with placeholders.
-- `params` is an array of parameters.
-- One of the following values will set for `method` depending on the SQL statement - `run`, `all`, `values` or `get`.
+- `sql` 是带占位符的查询字符串。
+- `params` 是参数数组。
+- 根据 SQL 语句，`method` 将被设置为 `run`、`all`、`values` 或 `get` 之一。
 
-Drizzle always waits for `{rows: string[][]}` or `{rows: string[]}` for the return value.
+Drizzle 总是等待返回值为 `{rows: string[][]}` 或 `{rows: string[]}`。
 
-- When the `method` is `get`, you should return a value as `{rows: string[]}`.
-- Otherwise, you should return `{rows: string[][]}`.
+- 当 `method` 为 `get` 时，您应该返回一个作为 `{rows: string[]}` 的值。
+- 否则，您应该返回 `{rows: string[][]}`。
 
 <br/>
 
 <CodeTabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
 <Section>
 ```typescript copy
-// Example of driver implementation
+// 驱动程序实现示例
 import { drizzle } from 'drizzle-orm/pg-proxy';
 
 const db = drizzle(async (sql, params, method) => {
@@ -66,13 +66,13 @@ const db = drizzle(async (sql, params, method) => {
 
     return { rows: rows.data };
   } catch (e: any) {
-    console.error('Error from pg proxy server: ', e.response.data)
+    console.error('来自 pg 代理服务器的错误：', e.response.data)
     return { rows: [] };
   }
 });
 ```
 ```ts
-// Example of server implementation
+// 服务器实现示例
 import { Client } from 'pg';
 import express from 'express';
 
@@ -86,31 +86,31 @@ const client = new Client('postgres://postgres:postgres@localhost:5432/postgres'
 app.post('/query', async (req, res) => {
 	const { sql, params, method } = req.body;
 
-	// prevent multiple queries
+	// 防止多次查询
 	const sqlBody = sql.replace(/;/g, '');
 
     try {
         const result = await client.query({
             text: sqlBody,
             values: params,
-            rowMode: method === 'all' ? 'array': undefined,
+            rowMode: method === 'all' ? 'array' : undefined,
         });
 		res.send(result.rows);
 	} catch (e: any) {
 		res.status(500).json({ error: e });
 	}
 
-	res.status(500).json({ error: 'Unknown method value' });
+	res.status(500).json({ error: '未知的方法值' });
 });
 
 app.listen(port, () => {
-	console.log(`Example app listening on port ${port}`);
+	console.log(`示例应用监听在端口 ${port}`);
 });
 ```
 </Section>
 <Section>
 ```typescript copy
-// Example of driver implementation
+// 驱动程序实现示例
 import { drizzle } from 'drizzle-orm/mysql-proxy';
 
 const db = drizzle(async (sql, params, method) => {
@@ -119,13 +119,13 @@ const db = drizzle(async (sql, params, method) => {
 
     return { rows: rows.data };
   } catch (e: any) {
-    console.error('Error from mysql proxy server: ', e.response.data)
+    console.error('来自 mysql 代理服务器的错误：', e.response.data)
     return { rows: [] };
   }
 });
 ```
 ```ts
-// Example of server implementation
+// 服务器实现示例
 import * as mysql from 'mysql2/promise';
 import express from 'express';
 
@@ -140,7 +140,7 @@ const main = async () => {
     app.post('/query', async (req, res) => {
     	const { sql, params, method } = req.body;
 
-      // prevent multiple queries
+      // 防止多次查询
     	const sqlBody = sql.replace(/;/g, '');
 
       try {
@@ -164,11 +164,11 @@ const main = async () => {
     	} else if (method === 'execute') {
     		res.send(result);
     	}
-    	res.status(500).json({ error: 'Unknown method value' });
+    	res.status(500).json({ error: '未知的方法值' });
     });
 
     app.listen(port, () => {
-    	console.log(`Example app listening on port ${port}`);
+    	console.log(`示例应用监听在端口 ${port}`);
     });
 }
 
@@ -185,17 +185,17 @@ const db = drizzle(async (sql, params, method) => {
 
     return { rows: rows.data };
   } catch (e: any) {
-    console.error('Error from sqlite proxy server: ', e.response.data)
+    console.error('来自 sqlite 代理服务器的错误：', e.response.data)
     return { rows: [] };
   }
 });
 ```
 
-**Batch support**
+**批量支持**
 
-Sqlite Proxy supports batch requests, the same as it's done for all other drivers. Check full [docs](/docs/batch-api)
+Sqlite Proxy 支持批量请求，和其他驱动程序的处理方式相同。请查看完整的 [文档](/docs/batch-api)
 
-You will need to specify a specific callback for batch queries and handle requests to proxy server:
+您需要为批量查询指定特定的回调，并处理对代理服务器的请求：
 
 ```ts
 import { drizzle } from 'drizzle-orm/sqlite-proxy';
@@ -203,26 +203,26 @@ import { drizzle } from 'drizzle-orm/sqlite-proxy';
 type ResponseType = { rows: any[][] | any[] }[];
 
 const db = drizzle(async (sql, params, method) => {
-  // single queries logic. Same as in code above
+  // 单查询逻辑。和上面的代码相同
 }, async (queries: { sql: string, params: any[], method: 'all' | 'run' | 'get' | 'values'}[]) => {
 		try {
 			const result: ResponseType = await axios.post('http://localhost:3000/batch', { queries });
 
 			return result;
 		} catch (e: any) {
-			console.error('Error from sqlite proxy server:', e);
+			console.error('来自 sqlite 代理服务器的错误：', e);
 			throw e;
 		}
 	});
 ```
 
-And then you can use `db.batch([])` method, that will proxy all queries
+然后您可以使用 `db.batch([])` 方法，这将代理所有查询。
 
 <Callout>
-  Response from the batch should be an array of raw values (an array within an array), in the same order as they were sent to the proxy server
+  批量响应应为原始值的数组（数组中的数组），顺序与它们发送到代理服务器时相同。
 </Callout>
 
-Unless you plan on writing every SQL query by hand, a table declaration is helpful:
+除非您打算手动编写每个 SQL 查询，否则表声明是很有帮助的：
 ```typescript copy
 import { sql } from "drizzle-orm";
 import { text, integer, sqliteTable } from "drizzle-orm/sqlite-core";
@@ -233,7 +233,7 @@ const users = sqliteTable('users', {
   intModifiers: integer('int_modifiers', { mode: 'boolean' }).notNull().default(false),
 });
 ```
-For more details about column types, see the **[SQLite column types in Drizzle.](/docs/column-types/sqlite)**
+有关列类型的更多详细信息，请参见 **[SQLite 中的列类型在 Drizzle.](/docs/column-types/sqlite)**
 </Section>
 </CodeTabs>
 

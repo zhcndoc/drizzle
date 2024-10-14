@@ -1,16 +1,17 @@
-# Drizzle 服务器无服务性能
+# Drizzle 无服务器性能
 
-在 `无服务函数`（如 AWS Lamba 或 Vercel 服务器函数，它们基于 AWS Lamba）上您可以获得巨大的好处，因为它们可以长达 15 分钟，并且可以重复使用数据库连接和预编译语句。
+使用 `无服务器函数`（如 AWS Lambda 或 Vercel Server Functions，它们基于 AWS Lambda）可以获得巨大的好处，
+因为它们可以运行最长达 15 分钟，并且可以重用数据库连接和预编译语句。
 
-另一方面，`边缘函数` tend 倾向于在被调用后立即清理，这导致几乎没有性能收益。
+另一方面，`边缘函数` 在被调用后往往会立即清理，因此几乎没有性能优势。
 
-要重用您的数据库连接和预编译语句，您只需在处理程序范围之外声明它们：
+要重用您的数据库连接和预编译语句，您只需在处理程序作用域之外声明它们：
 ```ts
 const databaseConnection = ...;
 const db = drizzle(databaseConnection);
 const prepared = db.select().from(...).prepare();
 
-// AWS handler
+// AWS 处理程序
 export const handler = async (event: APIGatewayProxyEvent) => {
   return prepared.execute();
 }

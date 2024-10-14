@@ -2,9 +2,9 @@ import IsSupportedChipGroup from '@components/markdown/IsSupportedChipGroup.astr
 import Section from '@components/markdown/Section.astro';
 
 # 过滤器和条件运算符
-我们原生支持所有特定方言的过滤器和条件运算符。
+我们原生支持所有特定于方言的过滤器和条件运算符。
 
-你可以从 `drizzle-orm` 导入所有过滤器和条件运算符：
+您可以从 `drizzle-orm` 导入所有过滤器和条件：
 ```typescript copy
 import { eq, ne, gt, gte, ... } from "drizzle-orm";
 ```
@@ -160,7 +160,7 @@ SELECT * FROM table WHERE table.column1 < table.column2
 ### lte
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': true, 'SQLite': true }} />
   
-值小于或等于 `n`.
+值小于或等于 `n`。
 
 <Section>
 ```typescript
@@ -191,7 +191,7 @@ SELECT * FROM table WHERE table.column1 <= table.column2
 ### exists
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': true, 'SQLite': true }} />
   
-Value exists
+值存在
 <Section>
 ```typescript
 import { exists } from "drizzle-orm";
@@ -258,7 +258,7 @@ SELECT * FROM table WHERE table.column IS NOT NULL
 ### inArray
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': true, 'SQLite': true }} />
   
-值在值数组中
+值在值的数组中
 <Section>
 ```typescript
 import { inArray } from "drizzle-orm";
@@ -287,7 +287,7 @@ SELECT * FROM table WHERE table.column IN (SELECT table2.column FROM table2)
 ### notInArray
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': true, 'SQLite': true }} />
   
-值不在值数组中
+值不在值的数组中
 <Section>
 ```typescript
 import { notInArray } from "drizzle-orm";
@@ -361,14 +361,14 @@ db.select().from(table).where(like(table.column, "%llo wor%"));
 ```
 
 ```sql
-SELECT * FROM table  WHERE table.column LIKE '%llo wor%'
+SELECT * FROM table WHERE table.column LIKE '%llo wor%'
 ```
 </Section>
 
 ### ilike
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': false, 'SQLite': false }} />
   
-值类似于其他值，不区分大小写
+值与某个其他值相似，不区分大小写
 <Section>
 ```typescript
 import { ilike } from "drizzle-orm";
@@ -384,7 +384,7 @@ SELECT * FROM table WHERE table.column ILIKE '%llo wor%'
 ### notIlike
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': true, 'SQLite': true }} />
   
-值不类似于其他值，不区分大小写
+值与某个其他值不相似，不区分大小写
 <Section>
 ```typescript
 import { notIlike } from "drizzle-orm";
@@ -455,7 +455,7 @@ SELECT * FROM table WHERE (table.column > 5 OR table.column < 7)
 ### arrayContains
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': false, 'SQLite': false }} />
   
-测试列或表达式是否包含作为第二个参数传递的列表的所有元素
+测试某个列或表达式是否包含作为第二个参数传递的列表中的所有元素
 
 <Section>
 ```typescript
@@ -480,7 +480,7 @@ select "id" from "posts" where "posts"."tags" @> (select "tags" from "posts" whe
 ### arrayContained
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': false, 'SQLite': false }} />
   
-测试作为第二个参数传递的列表是否包含列或表达式的所有元素
+测试作为第二个参数传递的列表是否包含某个列或表达式中的所有元素
 
 <Section>
 ```typescript
@@ -498,7 +498,7 @@ select "id" from "posts" where "posts"."tags" <@ {Typescript,ORM};
 ### arrayOverlaps
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': false, 'SQLite': false }} />
   
-测试列或表达式是否包含作为第二个参数传递的列表的任何元素。
+测试某个列或表达式是否包含作为第二个参数传递的列表中的任何元素。
 
 <Section>
 ```typescript

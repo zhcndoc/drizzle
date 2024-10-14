@@ -5,28 +5,28 @@ import Flex from "@mdx/Flex.astro"
 import LinksList from "@mdx/LinksList.astro"
 import Prerequisites from "@mdx/Prerequisites.astro";
 
-# Drizzle Queries + CRUD
+# Drizzle 查询 + CRUD
 
 <Prerequisites>
-  - How to define your schema - [Schema Fundamentals](/docs/sql-schema-declaration)
-  - How to connect to the database - [Connection Fundamentals](/docs/connect-overview)
+  - 如何定义你的架构 - [架构基础](/docs/sql-schema-declaration)
+  - 如何连接数据库 - [连接基础](/docs/connect-overview)
 </Prerequisites>
 
-Drizzle gives you a few ways for querying you database and it's up to you to decide which one you'll need in your next project.
-It can be either SQL-like syntax or Relational Syntax. Let's check them:
+Drizzle 为你提供了几种查询数据库的方法，你可以根据下一个项目的需求来选择。
+它可以是 SQL 类似语法或关系语法。让我们来看看它们：
 
-## Why SQL-like?
+## 为什么选择 SQL 类似语法？
 \
-**If you know SQL, you know Drizzle.**
+**如果你知道 SQL，你就能掌握 Drizzle。**
 
-Other ORMs and data frameworks tend to deviate from or abstract away SQL, leading to a double learning curve: you need to learn both SQL and the framework's API.
+其他 ORM 和数据框架往往偏离或抽象 SQL，这导致了双重学习曲线：你需要同时学习 SQL 和框架的 API。
 
-Drizzle is the opposite.
-We embrace SQL and built Drizzle to be SQL-like at its core, so you have little to no learning curve and full access to the power of SQL.
+Drizzle 则恰恰相反。
+我们拥抱 SQL，并将 Drizzle 的核心构建成类似 SQL 的形式，以便你几乎没有学习曲线，并能完全利用 SQL 的强大功能。
 
 <Section>
 ```typescript copy
-// Access your data
+// 访问你的数据
 await db
   .select()
 	.from(posts)
@@ -41,12 +41,12 @@ WHERE posts.id = 10
 ```
 </Section>
 
-With SQL-like syntax, you can replicate much of what you can do with pure SQL and know 
-exactly what Drizzle will do and what query will be generated. You can perform a wide range of queries, 
-including select, insert, update, delete, as well as using aliases, WITH clauses, subqueries, prepared statements, 
-and more. Let's look at more examples
+使用 SQL 类似语法，你可以复制大部分纯 SQL 中可以做的事情，
+并清楚知道 Drizzle 将执行什么以及会生成什么查询。你可以执行各种范围的查询，
+包括选择、插入、更新、删除，以及使用别名、WITH 子句、子查询、准备语句等。
+让我们看更多示例。
 
-<CodeTabs items={['insert', 'update', 'delete']}>
+<CodeTabs items={['插入', '更新', '删除']}>
 <Section>
 ```ts
 await db.insert(users).values({ email: 'user@gmail.com' })
@@ -77,16 +77,16 @@ DELETE FROM users WHERE users.id = 1
 </Section>
 </CodeTabs>
 
-## Why not SQL-like?
+## 为什么不选择 SQL 类似语法？
 
-We're always striving for a perfectly balanced solution. While SQL-like queries cover 100% of your needs, 
-there are certain common scenarios where data can be queried more efficiently.
+我们始终在追求一个完美平衡的解决方案。虽然 SQL 类似查询可以满足 100% 的需求，
+但在某些常见场景中，数据的查询可以更高效。
 
-We've built the Queries API so you can fetch relational, nested data from the database in the most convenient 
-and performant way, without worrying about joins or data mapping.
+我们构建了查询 API，以便你可以以最方便和高效的方式从数据库中获取关系型、嵌套数据，
+而无需担心联接或数据映射。
 
-**Drizzle always outputs exactly one SQL query**. Feel free to use it with serverless databases,
-and never worry about performance or roundtrip costs!
+**Drizzle 总是输出确切的一个 SQL 查询**。可以放心地与无服务器数据库一起使用，
+而无需担心性能或往返成本！
 
 <Section>
 ```ts
@@ -101,12 +101,12 @@ SELECT * FROM users ...
 ``` */}
 </Section>
 
-## Advanced
-With Drizzle, queries can be composed and partitioned in any way you want. You can compose filters 
-independently from the main query, separate subqueries or conditional statements, and much more. 
-Let's check a few advanced examples:
+## 高级
+使用 Drizzle，查询可以以你想要的任何方式组合和分区。
+你可以独立于主查询组合过滤器，分离子查询或条件语句，等等。
+让我们来看几个高级示例：
 
-#### Compose a WHERE statement and then use it in a query
+#### 组合一个 WHERE 语句，然后在查询中使用它
 ```ts
 async function getProductsBy({
   name,
@@ -130,7 +130,7 @@ async function getProductsBy({
 }
 ```
 
-#### Separate subqueries into different variables, and then use them in the main query
+#### 将子查询分离到不同变量中，然后在主查询中使用它们
 ```ts
 const subquery = db
 	.select()
@@ -144,26 +144,26 @@ const mainQuery = await db
 	.leftJoin(subquery, eq(subquery.internal_staff.userId, ticket.staffId));
 ```
 
-#### What's next?
+#### 接下来是什么？
 <br/>
 <Flex>
   <LinksList 
-    title='Access your data'
+    title='访问你的数据'
     links={[
-        ["Query", "/docs/rqb"], 
-        ["Select", "/docs/select"],
-        ["Insert", "/docs/insert"],
-        ["Update", "/docs/update"],
-        ["Delete", "/docs/delete"],
-        ["Filters", "/docs/operators"],
-        ["Joins", "/docs/joins"],
-        ["sql`` operator", "/docs/sql"],
+        ["查询", "/docs/rqb"], 
+        ["选择", "/docs/select"],
+        ["插入", "/docs/insert"],
+        ["更新", "/docs/update"],
+        ["删除", "/docs/delete"],
+        ["过滤器", "/docs/operators"],
+        ["联接", "/docs/joins"],
+        ["sql`` 操作符", "/docs/sql"],
       ]}
   />
   <LinksList 
-    title='Zero to Hero'
+    title='从零到英雄'
     links={[
-        ["Migrations", "/docs/migrations"], 
+        ["迁移", "/docs/migrations"], 
       ]}
   />
 </Flex>

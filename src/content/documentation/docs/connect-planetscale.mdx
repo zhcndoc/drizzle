@@ -10,28 +10,28 @@ import CodeTabs from "@mdx/CodeTabs.astro";
 # Drizzle \<\> PlanetScale
 
 <Prerequisites>
-- Database [connection basics](/docs/connect-overview) with Drizzle
-- PlanetScale database - [website](https://planetscale.com/docs)
-- PlanetScale http driver - [GitHub](https://github.com/planetscale/database-js)
-- Drizzle MySQL drivers - [docs](/docs/get-started-mysql)
+- 数据库 [连接基础]( /docs/connect-overview) 与 Drizzle
+- PlanetScale 数据库 - [官网](https://planetscale.com/docs)
+- PlanetScale HTTP 驱动 - [GitHub](https://github.com/planetscale/database-js)
+- Drizzle MySQL 驱动 - [文档]( /docs/get-started-mysql)
 </Prerequisites>
 
-According to the **[official website](https://planetscale.com/)**, 
-PlanetScale is the world's most advanced serverless MySQL platform.
+根据 **[官方网站](https://planetscale.com/)**， 
+PlanetScale 是世界上最先进的无服务器 MySQL 平台。
 
-With Drizzle ORM you can access PlanetScale over http
-through their official **[`database-js`](https://github.com/planetscale/database-js)**
-driver from serverless and serverfull environments with our `drizzle-orm/planetscale-serverless` package.
+使用 Drizzle ORM，您可以通过官方的
+**[`database-js`](https://github.com/planetscale/database-js)**
+驱动程序，通过无服务器和有服务器环境访问 PlanetScale，使用我们的 `drizzle-orm/planetscale-serverless` 包。
 
-You can also access PlanetScale through TCP with `mysql2` driver — **[see here.](/docs/get-started-mysql)**
+您还可以通过 TCP 使用 `mysql2` 驱动访问 PlanetScale — **[请参见此处.](/docs/get-started-mysql)**
 
-#### Step 1 - Install packages
+#### 步骤 1 - 安装软件包
 <Npm>
 drizzle-orm @planetscale/database
 -D drizzle-kit
 </Npm>
 
-#### Step 2 - Initialize the driver and make a query
+#### 步骤 2 - 初始化驱动并进行查询
 ```typescript copy"
 import { drizzle } from "drizzle-orm/connect";
 
@@ -44,8 +44,8 @@ const db = await drizzle('planetscale', { connection: {
 const response = await db.select().from(...)
 ```
 
-If you need a synchronous connection, you can use our additional connection API, 
-where you specify a driver connection and pass it to the Drizzle instance.
+如果您需要同步连接，可以使用我们的附加连接 API， 
+在其中指定驱动连接并将其传递给 Drizzle 实例。
 
 ```typescript copy"
 import { drizzle } from "drizzle-orm/planetscale-serverless";
@@ -60,9 +60,9 @@ const client = new Client({
 const db = drizzle(client);
 ```
 
-Make sure to checkout the PlanetScale official **[MySQL courses](https://planetscale.com/courses/mysql-for-developers/introduction/course-introduction)**, 
-we think they're outstanding 🙌
+确保查看 PlanetScale 官方的 **[MySQL 课程](https://planetscale.com/courses/mysql-for-developers/introduction/course-introduction)**， 
+我们认为它们非常棒 🙌
 
-#### What's next?
+#### 接下来做什么？
 
 <WhatsNextPostgres/>

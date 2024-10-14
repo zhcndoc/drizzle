@@ -1,16 +1,16 @@
 import Npm from "@components/markdown/Npm.astro";
 
 # 快速开始
-让我们通过 `PostgreSQL` + `postgresjs` 构建一个快速开始的应用，并运行我们的第一个迁移。
+让我们构建一个快速启动的应用程序，使用 `PostgreSQL` + `postgresjs` 并运行我们的第一个迁移。
 
-首先，我们需要安装 `drizzle-orm` 和 `drizzle-kit`：
+我们需要做的第一件事是安装 `drizzle-orm` 和 `drizzle-kit`：
 
 <Npm>
 drizzle-orm postgres
 -D drizzle-kit
 </Npm>
 
-让我们声明我们的 `schema.ts`：
+现在让我们声明我们的 `schema.ts`：
 
 ```plaintext {4}
 📦 <项目根目录>
@@ -51,11 +51,11 @@ export default defineConfig({
 });
 ```
 
-将 `generate` 和 `migrate` 命令添加到 `package.json` 中，并运行我们的第一个迁移生成命令：
+将 `generate` 和 `migrate` 命令添加到 `package.json`，并运行我们的第一个迁移生成：
 
 ```json filename="package.json" {5,6}
 {
-  "name": "first time?",
+  "name": "第一次?",
   "version": "0.0.1",
   "scripts": {
     "generate": "drizzle-kit generate",
@@ -70,7 +70,7 @@ $ npm run generate
 [✓] 你的 SQL 迁移文件 ➜ drizzle/0000_pale_mister_fear.sql 🚀
 ```
 
-完成了！我们现在有了我们的第一个 SQL 迁移文件 🥳
+完成！我们现在有了我们的第一个 SQL 迁移文件 🥳
 ```plaintext {4}
 📦 <项目根目录>
  ├ 📂 drizzle
@@ -80,12 +80,12 @@ $ npm run generate
  ├ 📜 drizzle.config.ts
  └ 📜 package.json
 ```
-现在让我们运行我们的第一个数据库迁移：
+现在让我们将第一个迁移运行到数据库中：
 
 ```shell filename="terminal"
 $ npm run migrate
 ```
 
-就是这样，朋友们！  
+就是这样，各位！  
 
-**我的个人祝贺 🎉**
+**我个人的祝贺 🎉**

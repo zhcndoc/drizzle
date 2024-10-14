@@ -1,13 +1,14 @@
 import Tab from '@components/markdown/Tab.astro';
 import Tabs from '@components/markdown/Tabs.astro';
 
-# 定义自定义类型的常见方式
+# 定义自定义类型的常用方法
 
 ## 示例
 
-了解 `customType` 函数如何使用的最佳方式，是查看如何使用 Drizzle ORM 的 `customType` 函数定义现有的 PostgreSQL 和 MySQL 数据类型。
+查看 `customType` 定义如何工作的最佳方法是检查如何使用 Drizzle ORM 中的 `customType` 函数定义 postgres 和 mysql 中现有的数据类型。
 
-<Tabs items={['PostgreSQL 数据类型', 'MySQL 数据类型']}>
+
+<Tabs items={['Postgres 数据类型', 'MySql 数据类型']}>
   <Tab>
 
 **Serial**
@@ -90,7 +91,7 @@ const customTimestamp = customType<
 });
 ```
 
-所有类型的使用方法与 Drizzle ORM 中定义的函数相同。例如:
+所有类型的用法与 Drizzle ORM 中定义的函数相同。例如：
 
 ```typescript copy
 const usersTable = pgTable('users', {
@@ -185,7 +186,7 @@ const customTimestamp = customType<
 });
 ```
 
-所有类型的使用方法与 Drizzle ORM 中定义的函数相同。例如:
+所有类型的用法与 Drizzle ORM 中定义的函数相同。例如：
 
 ```typescript copy
 const usersTable = mysqlTable('userstest', {
@@ -202,35 +203,35 @@ const usersTable = mysqlTable('userstest', {
   </Tab>
 </Tabs>
 
-## 类型定义的 TS 文档
+## 自定义类型定义的 TS 文档
 
-可以查看 `types` 和 `param` 定义的 TS 文档。
+您可以查看 `types` 和 `param` 定义的 ts-doc。
 
 ```typescript
 export type CustomTypeValues = {
   /**
-   * Required type for custom column, that will infer proper type model
+   * 自定义列所需的类型，将推断适当的类型模型
    *
-   * Examples:
+   * 示例：
    *
-   * If you want your column to be `string` type after selecting/or on inserting - use `data: string`. Like `text`, `varchar`
+   * 如果您希望您的列在选择/插入后为 `string` 类型 - 使用 `data: string`。如 `text`，`varchar`
    *
-   * If you want your column to be `number` type after selecting/or on inserting - use `data: number`. Like `integer`
+   * 如果您希望您的列在选择/插入后为 `number` 类型 - 使用 `data: number`。如 `integer`
    */
   data: unknown;
 
   /**
-   * Type helper, that represents what type database driver is accepting for specific database data type
+   * 类型助手，表示数据库驱动程序接受特定数据库数据类型的类型
    */
   driverData?: unknown;
 
   /**
-   * What config type should be used for {@link CustomTypeParams} `dataType` generation
+   * {@link CustomTypeParams} `dataType` 生成应使用什么配置类型
    */
   config?: Record<string, unknown>;
 
   /**
-   * If your custom data type should be notNull by default you can use `notNull: true`
+   * 如果您的自定义数据类型应默认不为空，您可以使用 `notNull: true`
    *
    * @example
    * const customSerial = customType<{ data: number, notNull: true, default: true }>({
@@ -242,7 +243,7 @@ export type CustomTypeValues = {
   notNull?: boolean;
 
   /**
-   * If your custom data type has default you can use `default: true`
+   * 如果您的自定义数据类型有默认值，您可以使用 `default: true`
    *
    * @example
    * const customSerial = customType<{ data: number, notNull: true, default: true }>({
@@ -256,28 +257,28 @@ export type CustomTypeValues = {
 
 export interface CustomTypeParams<T extends CustomTypeValues> {
   /**
-   * Database data type string representation, that is used for migrations
+   * 用于迁移的数据库数据类型字符串表示
    * @example
    * ```
    * `jsonb`, `text`
    * ```
    *
-   * If database data type needs additional params you can use them from `config` param
+   * 如果数据库数据类型需要附加参数，您可以从 `config` 参数中使用它们
    * @example
    * ```
    * `varchar(256)`, `numeric(2,3)`
    * ```
    *
-   * To make `config` be of specific type please use config generic in {@link CustomTypeValues}
+   * 要使 `config` 为特定类型，请在 {@link CustomTypeValues} 中使用配置泛型
    *
    * @example
-   * Usage example
+   * 使用示例
    * ```
    *   dataType() {
    *     return 'boolean';
    *   },
    * ```
-   * Or
+   * 或
    * ```
    *   dataType(config) {
    *     return typeof config.length !== 'undefined' ? `varchar(${config.length})` : `varchar`;
@@ -287,9 +288,9 @@ export interface CustomTypeParams<T extends CustomTypeValues> {
   dataType: (config: T['config']) => string;
 
   /**
-   * Optional mapping function, between user input and driver
+   * 可选的映射函数，介于用户输入和驱动程序之间
    * @example
-   * For example, when using jsonb we need to map JS/TS object to string before writing to database
+   * 例如，当使用 jsonb 时，我们需要将 JS/TS 对象映射为字符串，然后写入数据库
    * ```
    * toDriver(value: TData): string {
    *   return JSON.stringify(value);
@@ -299,9 +300,9 @@ export interface CustomTypeParams<T extends CustomTypeValues> {
   toDriver?: (value: T['data']) => T['driverData'];
 
   /**
-   * Optional mapping function, that is responsible for data mapping from database to JS/TS code
+   * 可选的映射函数，负责将数据从数据库映射到 JS/TS 代码
    * @example
-   * For example, when using timestamp we need to map string Date representation to JS Date
+   * 例如，当使用时间戳时，我们需要将字符串日期表示映射为 JS 日期
    * ```
    * fromDriver(value: string): Date {
    *  return new Date(value);

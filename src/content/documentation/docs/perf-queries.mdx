@@ -2,18 +2,22 @@ import Tab from '@components/markdown/Tab.astro';
 import Tabs from '@components/markdown/Tabs.astro';
 
 # 查询性能
-当涉及 **Drizzle** 时 — 我们是一个薄的 TypeScript 层，位于 SQL 之上，几乎没有额外开销，并且为了使其实际为 0，您可以利用我们的预处理语句 API。
+谈到 **Drizzle** — 我们是一个薄薄的 TypeScript 层，位于 SQL 之上，几乎没有开销，
+为了使其真正达到 0，您可以利用我们的预编译语句 API。
 
-**当您在数据库上运行查询时，会发生几件事情：**
-- 查询构建器的所有配置都被连接到 SQL 字符串中
+**当您在数据库上运行查询时，会发生几件事：**
+- 查询构建器的所有配置都被连接到 SQL 字符串
 - 该字符串和参数被发送到数据库驱动程序
-- 驱动程序将 SQL 查询编译为二进制 SQL 可执行格式，并将其发送到数据库
+- 驱动程序将 SQL 查询编译为二进制 SQL 执行格式并发送到数据库
 
-使用预处理语句，您可以在 Drizzle ORM 端一次进行 SQL 连接，然后数据库驱动程序能够重用预编译的二进制 SQL，而不是一直解析查询。这对大型 SQL 查询有极大的性能优势。
+通过预编译语句，您只需在 Drizzle ORM 端进行一次 SQL 连接，
+然后数据库驱动程序就能够重用预编译的二进制 SQL，而不是每次都解析查询。
+这在处理大型 SQL 查询时具有极大的性能优势。
 
-不同的数据库驱动程序以不同的方式支持预处理语句，有时候 Drizzle ORM 甚至可以比 [**better-sqlite3 驱动程序更快。**](https://twitter.com/_alexblokh/status/1593593415907909634)
+不同的数据库驱动程序以不同的方式支持预编译语句，有时
+Drizzle ORM 可以比 [**更好的 sqlite3 驱动程序更快。**](https://twitter.com/_alexblokh/status/1593593415907909634)
 
-## 预处理语句
+## 预编译语句
 <Tabs items={["PostgreSQL", "MySQL", "SQLite"]}>
   <Tab>
     ```typescript copy {3}
@@ -51,7 +55,7 @@ import Tabs from '@components/markdown/Tabs.astro';
 </Tabs>
 
 ## 占位符
-每当您需要嵌入动态运行时值时 - 您可以使用 `sql.placeholder(...)` api
+每当您需要嵌入动态运行时值时 - 您可以使用 `sql.placeholder(...)` API
 <Tabs items={["PostgreSQL", "MySQL", "SQLite"]}>
   <Tab>
     ```ts {6,9-10,15,18}
