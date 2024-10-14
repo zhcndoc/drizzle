@@ -1,14 +1,14 @@
 ---
 title: DrizzleORM v0.30.10 发布
 pubDate: 2024-05-01
-description: 向所有 WHERE 表达式添加了 '.if()' 函数，并修复了 AWS DataAPI 中对会话 '.all'，'.values'，'.execute' 函数的内部映射。
+description: 向所有 WHERE 表达式添加了 '.if()' 函数，并修复了 AWS DataAPI 中会话的 '.all'、'.values'、'.execute' 函数的内部映射。
 ---
 
 ## 新特性
 
-### 🎉 在所有 WHERE 表达式中添加了 `.if()` 函数
+### 🎉 向所有 WHERE 表达式添加了 `.if()` 函数
 
-#### 选择所有视图数量大于 100 的帖子
+#### 选择所有浏览量超过 100 的帖子
 
 ```ts {5}
 async function someFunction(views = 0) {
@@ -21,6 +21,6 @@ async function someFunction(views = 0) {
 
 ## Bug 修复
 
-- 修复了 AWS DataAPI 中对会话 `.all`、`.values`、`.execute` 函数的内部映射
+- 修复了 AWS DataAPI 中会话 `.all`、`.values`、`.execute` 函数的内部映射
 
-在[文档](/docs/get-started-postgresql#aws-data-api)中阅读如何使用 AWS DataAPI 入门指南。
+在 [文档](/docs/get-started-postgresql#aws-data-api) 中阅读 AWS DataAPI 的入门指南。

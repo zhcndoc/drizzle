@@ -1,40 +1,40 @@
 ---
-title: DrizzleORM v0.29.2 release
+title: DrizzleORM v0.29.2 发布
 pubDate: 2023-12-25
-description: Implemented enhancements in the planescale relational tests. Corrected string escaping for empty PgArrays. Rectified syntax error for the exists function in SQLite. Ensured proper handling of dates in AWS Data API. Resolved the Hermes mixins constructor issue.
+description: 实现了 planescale 关系测试中的增强。修正了空 PgArrays 的字符串转义。纠正了 SQLite 中 exists 函数的语法错误。确保在 AWS Data API 中正确处理日期。解决了 Hermes mixins 构造函数问题。
 ---
 
-## Fixes: 
+## 修复:
 
-- Added improvements to the planescale relational tests ([#1579](https://github.com/drizzle-team/drizzle-orm/pull/1579))
-- FIX: correct string escaping for empty PgArrays ([#1640](https://github.com/drizzle-team/drizzle-orm/pull/1640))
-- Fix wrong syntax for exists fn in sqlite ([#1647](https://github.com/drizzle-team/drizzle-orm/pull/1647))
-- Properly handle dates in AWS Data API
-- Fix Hermes mixins constructor issue
+- 为 planescale 关系测试添加了改进 ([#1579](https://github.com/drizzle-team/drizzle-orm/pull/1579))
+- 修复: 修正了空 PgArrays 的字符串转义 ([#1640](https://github.com/drizzle-team/drizzle-orm/pull/1640))
+- 修复 SQLite 中 exists 函数的语法错误 ([#1647](https://github.com/drizzle-team/drizzle-orm/pull/1647))
+- 正确处理 AWS Data API 中的日期
+- 修复 Hermes mixins 构造函数问题
 
-## ESLint Drizzle Plugin, v0.2.3
+## ESLint Drizzle 插件，v0.2.3
 
 ```bash copy
 npm i eslint-plugin-drizzle@0.2.3
 ```
 
-🎉 [ESLint] Add support for functions and improve error messages
+🎉 [ESLint] 添加对函数的支持，并改善错误信息
 
-- Allowed Drizzle object to be or to be retrieved from a function, e.g.
-- Added better context to the suggestion in the error message.
+- 允许 Drizzle 对象作为函数使用或从函数中检索，例如：
+- 在错误信息的建议中增加了更好的上下文。
 
-For more info you can check [docs](/docs/eslint-plugin)
-## New Drivers
+更多信息可以查看 [文档](/docs/eslint-plugin)
+## 新驱动
 
-**🎉 Expo SQLite Driver is available**
+**🎉 Expo SQLite 驱动已上线**
 
-For starting with [Expo SQLite Driver](/docs/get-started-sqlite#expo-sqlite), you need to install `expo-sqlite` and `drizzle-orm` packages.
+要开始使用 [Expo SQLite 驱动](/docs/get-started-sqlite#expo-sqlite)，您需要安装 `expo-sqlite` 和 `drizzle-orm` 包。
 
 ```bash copy
 npm install drizzle-orm expo-sqlite@next
 ```
 
-Then, you can use it like this:
+然后，您可以像这样使用它：
 
 ```ts copy {4,6}
 import { drizzle } from "drizzle-orm/expo-sqlite";
@@ -46,24 +46,24 @@ const db = drizzle(expoDb);
 
 await db.select().from(...)...
 
-// or
+// 或者
 
 db.select().from(...).then(...);
 
-// or
+// 或者
 
 db.select().from(...).all();
 ```
 
-If you want to use Drizzle Migrations, you need to update babel and metro configuration files.
+如果您想使用 Drizzle Migrations，需要更新 babel 和 metro 配置文件。
 
-1. Install `babel-plugin-inline-import` package.
+1. 安装 `babel-plugin-inline-import` 包。
 
 ```bash copy
 npm install babel-plugin-inline-import
 ```
 
-2. Update `babel.config.js` and `metro.config.js` files.
+2. 更新 `babel.config.js` 和 `metro.config.js` 文件。
 
 ```ts filename="babel.config.js" copy {6}
 module.exports = function(api) {
@@ -87,7 +87,7 @@ const config = getDefaultConfig(__dirname);
 module.exports = config;
 ```
 
-3. Create `drizzle.config.ts` file in your project root folder.
+3. 在您的项目根目录中创建 `drizzle.config.ts` 文件。
 
 ```ts copy
 import type { Config } from 'drizzle-kit';
@@ -100,13 +100,13 @@ export default {
 } satisfies Config;
 ```
 
-After creating schema file and drizzle.config.ts file, you can generate migrations like this:
+创建 schema 文件和 drizzle.config.ts 文件后，您可以像这样生成迁移：
 
 ```bash copy
 npx drizzle-kit generate
 ```
 
-Then you need to import `migrations.js` file in your `App.tsx` file from `./drizzle` folder and use hook `useMigrations` or `migrate` function.
+然后您需要在 `App.tsx` 文件中从 `./drizzle` 文件夹导入 `migrations.js` 文件，并使用钩子 `useMigrations` 或 `migrate` 函数。
 
 ```ts copy {4,11}
 import { drizzle } from "drizzle-orm/expo-sqlite";
@@ -124,7 +124,7 @@ export default function App() {
     if (error) {
         return (
             <View>
-                <Text>Migration error: {error.message}</Text>
+                <Text>迁移错误: {error.message}</Text>
             </View>
         );
     }
@@ -132,11 +132,11 @@ export default function App() {
     if (!success) {
         return (
             <View>
-                <Text>Migration is in progress...</Text>
+                <Text>迁移进行中...</Text>
             </View>
         );
     }
 
-    return ...your application component;
+    return ...您的应用组件;
 }
 ```

@@ -1,5 +1,5 @@
 ---
-title: "Drizzle with Vercel Edge Functions"
+title: "使用 Vercel Edge Functions 进行 Drizzle"
 date: "2024-04-17"
 svgs: ['<svg width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="9.63139" height="40.8516" rx="4.8157" transform="matrix(0.873028 0.48767 -0.497212 0.867629 43.4805 67.3037)" fill="currentColor"></rect><rect width="9.63139" height="40.8516" rx="4.8157" transform="matrix(0.873028 0.48767 -0.497212 0.867629 76.9395 46.5342)" fill="currentColor"></rect><rect width="9.63139" height="40.8516" rx="4.8157" transform="matrix(0.873028 0.48767 -0.497212 0.867629 128.424 46.5352)" fill="currentColor"></rect><rect width="9.63139" height="40.8516" rx="4.8157" transform="matrix(0.873028 0.48767 -0.497212 0.867629 94.957 67.3037)" fill="currentColor"></rect></svg>', <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 5L4 19H20L12 5Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>]
 ---
@@ -10,20 +10,20 @@ import Steps from '@mdx/Steps.astro';
 import Section from "@mdx/Section.astro";
 import Callout from "@mdx/Callout.astro";
 
-This tutorial demonstrates how to use Drizzle ORM with [Vercel Functions](https://vercel.com/docs/functions) in [Edge runtime](https://vercel.com/docs/functions/runtimes/edge-runtime).
+本教程演示如何在[Edge 运行时](https://vercel.com/docs/functions/runtimes/edge-runtime)中使用 Drizzle ORM 与 [Vercel Functions](https://vercel.com/docs/functions)。
 
 <Prerequisites>
-- You should have the latest version of [Vercel CLI](https://vercel.com/docs/cli#) installed.
+- 您应该安装了最新版本的 [Vercel CLI](https://vercel.com/docs/cli#)。
 <Npm>
 -g vercel
 </Npm>
 
-- You should have an existing Next.js project or create a new one using the following command:
+- 您应该已有一个现有的 Next.js 项目，或使用以下命令创建一个新的项目：
 
 ```bash copy
 npx create-next-app@latest --typescript
 ```
-- You should have installed Drizzle ORM and [Drizzle kit](/docs/kit-overview). You can do this by running the following command:
+- 您应该已安装 Drizzle ORM 和 [Drizzle kit](/docs/kit-overview)。您可以通过运行以下命令来安装它：
 <Npm>
 drizzle-orm
 -D drizzle-kit
@@ -31,43 +31,43 @@ drizzle-orm
 </Prerequisites>
 
 <Callout type="warning">
-In case you face the issue with resolving dependencies during installation:
+如果您在安装过程中遇到依赖关系解析问题：
 
-If you're not using React Native, forcing the installation with `--force` or `--legacy-peer-deps` should resolve the issue. If you are using React Native, then you need to use the exact version of React which is compatible with your React Native version.
+如果您不是在使用 React Native，可以通过强制安装 `--force` 或 `--legacy-peer-deps` 来解决此问题。如果您使用的是 React Native，则需要使用与您的 React Native 版本兼容的 React 的精确版本。
 </Callout>
 
-## Edge-compatible driver
+## 兼容 Edge 的驱动程序
 
-When using Drizzle ORM with Vercel Edge functions you have to use edge-compatible drivers because the functions run in [Edge runtime](https://vercel.com/docs/functions/runtimes/edge-runtime) not in Node.js runtime, so there are some limitations of standard Node.js APIs.
+在使用 Vercel Edge 函数与 Drizzle ORM 时，您必须使用兼容 Edge 的驱动程序，因为函数在 [Edge 运行时](https://vercel.com/docs/functions/runtimes/edge-runtime) 中运行，而不是在 Node.js 运行时，这样标准 Node.js API 存在一些限制。
 
-You can choose one of these drivers according to your database dialect:
+您可以根据您的数据库方言选择以下驱动程序之一：
 
-- [Neon serverless driver](/docs/get-started-postgresql#neon) allows you to query your Neon Postgres databases from serverless and edge environments over HTTP or WebSockets in place of TCP. We recommend using this driver for connecting to `Neon Postgres`.
-- [Vercel Postgres driver](/docs/get-started-postgresql#vercel-postgres) is built on top of the `Neon serverless driver`. We recommend using this driver for connecting to `Vercel Postgres`.
-- [PlanetScale serverless driver](/docs/get-started-mysql#planetscale) allows you access any `MySQL` client and execute queries over an HTTP connection, which is generally not blocked by cloud providers.
-- [libSQL client](/docs/get-started-sqlite#turso) allows you to access [Turso](https://docs.turso.tech/introduction) database.
+- [Neon 无服务器驱动程序](/docs/get-started-postgresql#neon) 允许您通过 HTTP 或 WebSockets 而不是 TCP 从无服务器和边缘环境查询您的 Neon Postgres 数据库。我们推荐使用此驱动程序来连接到 `Neon Postgres`。
+- [Vercel Postgres 驱动程序](/docs/get-started-postgresql#vercel-postgres) 构建于 `Neon 无服务器驱动程序` 之上。我们推荐使用此驱动程序来连接到 `Vercel Postgres`。
+- [PlanetScale 无服务器驱动程序](/docs/get-started-mysql#planetscale) 允许您访问任何 `MySQL` 客户端并通过 HTTP 连接执行查询，这通常不受云提供商的阻止。
+- [libSQL 客户端](/docs/get-started-sqlite#turso) 允许您访问 [Turso](https://docs.turso.tech/introduction) 数据库。
 
-## Navigation
+## 导航
 
-- Navigate directly to the [Neon Postgres](/docs/tutorials/drizzle-with-vercel-edge-functions#neon-postgres) section.
-- Navigate directly to the [Vercel Postgres](/docs/tutorials/drizzle-with-vercel-edge-functions#vercel-postgres) section.
-- Navigate directly to the [PlanetScale](/docs/tutorials/drizzle-with-vercel-edge-functions#planetscale) section.
-- Navigate directly to the [Turso](/docs/tutorials/drizzle-with-vercel-edge-functions#turso) section.
+- 直接导航至 [Neon Postgres](/docs/tutorials/drizzle-with-vercel-edge-functions#neon-postgres) 部分。
+- 直接导航至 [Vercel Postgres](/docs/tutorials/drizzle-with-vercel-edge-functions#vercel-postgres) 部分。
+- 直接导航至 [PlanetScale](/docs/tutorials/drizzle-with-vercel-edge-functions#planetscale) 部分。
+- 直接导航至 [Turso](/docs/tutorials/drizzle-with-vercel-edge-functions#turso) 部分。
 
 ### Neon Postgres
 
 <Steps>
-#### Install the `@neondatabase/serverless` driver
+#### 安装 `@neondatabase/serverless` 驱动程序
 
-Install the `@neondatabase/serverless` driver:
+安装 `@neondatabase/serverless` 驱动程序：
 
 <Npm>
 @neondatabase/serverless
 </Npm>
 
-#### Create a table
+#### 创建一个表
 
-Create a `schema.ts` file in the `src/db` directory and declare a table schema:
+在 `src/db` 目录中创建一个 `schema.ts` 文件并声明一个表架构：
 
 ```typescript copy filename="src/db/schema.ts"
 import { pgTable, serial, text } from "drizzle-orm/pg-core";
@@ -80,11 +80,11 @@ export const usersTable = pgTable('users_table', {
 })
 ```
 
-#### Setup Drizzle config file
+#### 设置 Drizzle 配置文件
 
-**Drizzle config** - a configuration file that is used by [Drizzle Kit](/docs/kit-overview) and contains all the information about your database connection, migration folder and schema files.
+**Drizzle 配置** - 由 [Drizzle Kit](/docs/kit-overview) 使用的配置文件，包含有关您的数据库连接、迁移文件夹和架构文件的所有信息。
 
-Create a `drizzle.config.ts` file in the root of your project and add the following content:
+在项目根目录创建 `drizzle.config.ts` 文件并添加以下内容：
 
 ```typescript copy filename="drizzle.config.ts"
 import { defineConfig } from "drizzle-kit";
@@ -98,25 +98,25 @@ export default defineConfig({
 });
 ```
 
-Configure your database connection string in the `.env` file:
+在 `.env` 文件中配置您的数据库连接字符串：
 
 ```plaintext filename=".env"
 POSTGRES_URL="postgres://[user]:[password]@[host]-[region].aws.neon.tech:5432/[db-name]?sslmode=[ssl-mode]"
 ```
 
-#### Applying changes to the database
+#### 将更改应用到数据库
 
-You can generate migrations using `drizzle-kit generate` command and then run them using the `drizzle-kit migrate` command.
+您可以使用 `drizzle-kit generate` 命令生成迁移，然后使用 `drizzle-kit migrate` 命令运行它们。
 
-Generate migrations:
+生成迁移：
 
 ```bash copy
 npx drizzle-kit generate
 ```
 
-These migrations are stored in the `drizzle` directory, as specified in your `drizzle.config.ts`. This directory will contain the SQL files necessary to update your database schema and a `meta` folder for storing snapshots of the schema at different migration stages.
+这些迁移存储在 `drizzle` 目录中，如您的 `drizzle.config.ts` 中所指定。该目录将包含更新数据库架构所需的 SQL 文件和用于存储不同迁移阶段/schema 快照的 `meta` 文件夹。
 
-Example of a generated migration:
+生成迁移的示例：
 
 ```sql
 CREATE TABLE IF NOT EXISTS "users_table" (
@@ -128,23 +128,23 @@ CREATE TABLE IF NOT EXISTS "users_table" (
 );
 ```
 
-Run migrations:
+运行迁移：
 
 ```bash copy
 npx drizzle-kit migrate
 ```
 
-Alternatively, you can push changes directly to the database using [Drizzle kit push command](/docs/kit-overview#prototyping-with-db-push):
+或者，您可以使用 [Drizzle kit push 命令](/docs/kit-overview#prototyping-with-db-push) 将更改直接推送到数据库：
 
 ```bash copy
 npx drizzle-kit push
 ```
 
-<Callout type="warning">Push command is good for situations where you need to quickly test new schema designs or changes in a local development environment, allowing for fast iterations without the overhead of managing migration files.</Callout>
+<Callout type="warning">Push 命令适合需要快速测试新架构设计或更改的情况，允许在本地开发环境中快速迭代，而无需管理迁移文件的开销。</Callout>
 
-#### Connect Drizzle ORM to your database
+#### 将 Drizzle ORM 连接到您的数据库
 
-Create a `index.ts` file in the `src/db` directory and set up your database configuration:
+在 `src/db` 目录中创建一个 `index.ts` 文件并设置您的数据库配置：
 
 ```typescript copy filename="src/db/index.ts"
 import { Pool } from '@neondatabase/serverless';
@@ -155,17 +155,17 @@ const pool = new Pool({ connectionString: process.env.POSTGRES_URL! });
 export const db = drizzle(pool)
 ```
 
-#### Create an API route
+#### 创建 API 路由
 
-Create `route.ts` file in `src/app/api/hello` directory. To learn more about how to write a function, see the [Functions API Reference](https://vercel.com/docs/functions/functions-api-reference) and [Vercel Functions Quickstart](https://vercel.com/docs/functions/quickstart).
+在 `src/app/api/hello` 目录中创建 `route.ts` 文件。有关如何编写函数的更多信息，请参见 [Functions API Reference](https://vercel.com/docs/functions/functions-api-reference) 和 [Vercel Functions Quickstart](https://vercel.com/docs/functions/quickstart)。
 
 ```ts copy filename="src/app/api/hello/route.ts"
 import { db } from "@/db";
 import { usersTable } from "@/db/schema";
 import { NextResponse } from "next/server";
 
-export const dynamic = 'force-dynamic'; // static by default, unless reading the request
-export const runtime = 'edge' // specify the runtime to be edge
+export const dynamic = 'force-dynamic'; // 默认为静态，除非读取请求
+export const runtime = 'edge' // 指定运行时为边缘
 
 export async function GET(request: Request) {
   const users = await db.select().from(usersTable)
@@ -174,15 +174,15 @@ export async function GET(request: Request) {
 }
 ```
 
-#### Test your code locally
+#### 在本地测试您的代码
 
-Run the `next dev` command to start your local development server:
+运行 `next dev` 命令以启动本地开发服务器：
 
 ```bash copy
 npx next dev
 ```
 
-Navigate to the route you created `(e.g. /api/hello)` in your browser:
+在浏览器中导航至您创建的路由 `(例如 /api/hello)`：
 
 ```plaintext
 {
@@ -191,45 +191,45 @@ Navigate to the route you created `(e.g. /api/hello)` in your browser:
 }
 ```
 
-#### Deploy your project
+#### 部署您的项目
 
-Create a new project in the [dashboard](https://vercel.com/new) or run the `vercel` command to deploy your project:
+在 [仪表板](https://vercel.com/new) 中创建一个新项目或运行 `vercel` 命令以部署您的项目：
 
 ```bash copy
 vercel
 ```
 
-Add `POSTGRES_URL` environment variable:
+添加 `POSTGRES_URL` 环境变量：
 
 ```bash copy
 vercel env add POSTGRES_URL
 ```
 
-Redeploy your project to update your environment variables:
+重新部署您的项目以更新环境变量：
 
 ```bash copy
 vercel
 ```
 </Steps>
 
-Finally, you can use URL of the deployed project and navigate to the route you created `(e.g. /api/hello)` to access your edge function.
+最后，您可以使用已部署项目的 URL 并导航至您创建的路由 `(例如 /api/hello)` 以访问您的边缘函数。
 
 ### Vercel Postgres
 
-You can check quickstart guide for Drizzle with Vercel Postgres client in the [documentation](/docs/get-started-postgresql#vercel-postgres).
+您可以在 [文档](/docs/get-started-postgresql#vercel-postgres) 中查看 Drizzle 与 Vercel Postgres 客户端的快速入门指南。
 
 <Steps>
-#### Install the `@vercel/postgres` driver
+#### 安装 `@vercel/postgres` 驱动程序
 
-Install the `@vercel/postgres` driver:
+安装 `@vercel/postgres` 驱动程序：
 
 <Npm>
 @vercel/postgres
 </Npm>
 
-#### Create a table
+#### 创建一个表
 
-Create a `schema.ts` file in the `src/db` directory and declare a table schema:
+在 `src/db` 目录中创建一个 `schema.ts` 文件并声明一个表架构：
 
 ```typescript copy filename="src/db/schema.ts"
 import { pgTable, serial, text } from "drizzle-orm/pg-core";
@@ -242,11 +242,11 @@ export const usersTable = pgTable('users_table', {
 })
 ```
 
-#### Setup Drizzle config file
+#### 设置 Drizzle 配置文件
 
-**Drizzle config** - a configuration file that is used by [Drizzle Kit](/docs/kit-overview) and contains all the information about your database connection, migration folder and schema files.
+**Drizzle 配置** - 由 [Drizzle Kit](/docs/kit-overview) 使用的配置文件，包含有关您的数据库连接、迁移文件夹和架构文件的所有信息。
 
-Create a `drizzle.config.ts` file in the root of your project and add the following content:
+在项目根目录创建 `drizzle.config.ts` 文件并添加以下内容：
 
 ```typescript copy filename="drizzle.config.ts"
 import { defineConfig } from "drizzle-kit";
@@ -260,25 +260,25 @@ export default defineConfig({
 });
 ```
 
-Configure your database connection string in the `.env` file:
+在 `.env` 文件中配置您的数据库连接字符串：
 
 ```plaintext filename=".env"
 POSTGRES_URL="postgres://[user]:[password]@[host]-[region].aws.neon.tech:5432/[db-name]?sslmode=[ssl-mode]"
 ```
 
-#### Applying changes to the database
+#### 将更改应用到数据库
 
-You can generate migrations using `drizzle-kit generate` command and then run them using the `drizzle-kit migrate` command.
+您可以使用 `drizzle-kit generate` 命令生成迁移，然后使用 `drizzle-kit migrate` 命令运行它们。
 
-Generate migrations:
+生成迁移：
 
 ```bash copy
 npx drizzle-kit generate
 ```
 
-These migrations are stored in the `drizzle` directory, as specified in your `drizzle.config.ts`. This directory will contain the SQL files necessary to update your database schema and a `meta` folder for storing snapshots of the schema at different migration stages.
+这些迁移存储在 `drizzle` 目录中，如您的 `drizzle.config.ts` 中所指定。该目录将包含更新数据库架构所需的 SQL 文件和用于存储不同迁移阶段/schema 快照的 `meta` 文件夹。
 
-Example of a generated migration:
+生成迁移的示例：
 
 ```sql
 CREATE TABLE IF NOT EXISTS "users_table" (
@@ -290,23 +290,23 @@ CREATE TABLE IF NOT EXISTS "users_table" (
 );
 ```
 
-Run migrations:
+运行迁移：
 
 ```bash copy
 npx drizzle-kit migrate
 ```
 
-Alternatively, you can push changes directly to the database using [Drizzle kit push command](/docs/kit-overview#prototyping-with-db-push):
+或者，您可以使用 [Drizzle kit push 命令](/docs/kit-overview#prototyping-with-db-push) 将更改直接推送到数据库：
 
 ```bash copy
 npx drizzle-kit push
 ```
 
-<Callout type="warning">Push command is good for situations where you need to quickly test new schema designs or changes in a local development environment, allowing for fast iterations without the overhead of managing migration files.</Callout>
+<Callout type="warning">Push 命令适合需要快速测试新架构设计或更改的情况，允许在本地开发环境中快速迭代，而无需管理迁移文件的开销。</Callout>
 
-#### Connect Drizzle ORM to your database
+#### 将 Drizzle ORM 连接到您的数据库
 
-Create a `index.ts` file in the `src/db` directory and set up your database configuration:
+在 `src/db` 目录中创建一个 `index.ts` 文件并设置您的数据库配置：
 
 ```typescript copy filename="src/db/index.ts"
 import { sql } from '@vercel/postgres';
@@ -315,9 +315,9 @@ import { drizzle } from 'drizzle-orm/vercel-postgres';
 export const db = drizzle(sql)
 ```
 
-#### Create an API route
+#### 创建 API 路由
 
-Create `route.ts` in `src/app/api/hello` directory. To learn more about how to write a function, see the [Functions API Reference](https://vercel.com/docs/functions/functions-api-reference) and [Vercel Functions Quickstart](https://vercel.com/docs/functions/quickstart).
+在 `src/app/api/hello` 目录中创建 `route.ts` 文件。有关如何编写函数的更多信息，请参见 [Functions API Reference](https://vercel.com/docs/functions/functions-api-reference) 和 [Vercel Functions Quickstart](https://vercel.com/docs/functions/quickstart)。
 
 ```ts copy filename="src/app/api/hello/route.ts"
 
@@ -325,8 +325,8 @@ import { db } from "@/db";
 import { usersTable } from "@/db/schema";
 import { NextResponse } from "next/server";
 
-export const dynamic = 'force-dynamic'; // static by default, unless reading the request
-export const runtime = 'edge' // specify the runtime to be edge
+export const dynamic = 'force-dynamic'; // 默认为静态，除非读取请求
+export const runtime = 'edge' // 指定运行时为边缘
 
 export async function GET(request: Request) {
   const users = await db.select().from(usersTable)
@@ -335,15 +335,15 @@ export async function GET(request: Request) {
 }
 ```
 
-#### Test your code locally
+#### 在本地测试您的代码
 
-Run the `next dev` command to start your local development server:
+运行 `next dev` 命令以启动本地开发服务器：
 
 ```bash copy
 npx next dev
 ```
 
-Navigate to the route you created `(e.g. /api/hello)` in your browser:
+在浏览器中导航至您创建的路由 `(例如 /api/hello)`：
 
 ```plaintext
 {
@@ -352,45 +352,45 @@ Navigate to the route you created `(e.g. /api/hello)` in your browser:
 }
 ```
 
-#### Deploy your project
+#### 部署您的项目
 
-Create a new project in the [dashboard](https://vercel.com/new) or run the `vercel` command to deploy your project:
+在 [仪表板](https://vercel.com/new) 中创建一个新项目或运行 `vercel` 命令以部署您的项目：
 
 ```bash copy
 vercel
 ```
 
-Add `POSTGRES_URL` environment variable:
+添加 `POSTGRES_URL` 环境变量：
 
 ```bash copy
 vercel env add POSTGRES_URL
 ```
 
-Redeploy your project to update your environment variables:
+重新部署您的项目以更新环境变量：
 
 ```bash copy
 vercel
 ```
 </Steps>
 
-Finally, you can use URL of the deployed project and navigate to the route you created `(e.g. /api/hello)` to access your edge function.
+最后，您可以使用已部署项目的 URL 并导航至您创建的路由 `(例如 /api/hello)` 以访问您的边缘函数。
 
 ### PlanetScale
 
-In this tutorial we use [PlanetScale MySQL](https://planetscale.com/).
+在本教程中我们使用 [PlanetScale MySQL](https://planetscale.com/)。
 
 <Steps>
-#### Install the `@planetscale/database` driver
+#### 安装 `@planetscale/database` 驱动程序
 
-Install the `@planetscale/database` driver:
+安装 `@planetscale/database` 驱动程序：
 
 <Npm>
 @planetscale/database
 </Npm>
 
-#### Create a table
+#### 创建一个表
 
-Create a `schema.ts` file in the `src/db` directory and declare a table schema:
+在 `src/db` 目录中创建一个 `schema.ts` 文件并声明一个表架构：
 
 ```typescript copy filename="src/db/schema.ts"
 import { mysqlTable, serial, text } from "drizzle-orm/mysql-core";
@@ -403,11 +403,11 @@ export const usersTable = mysqlTable('users_table', {
 })
 ```
 
-#### Setup Drizzle config file
+#### 设置 Drizzle 配置文件
 
-**Drizzle config** - a configuration file that is used by [Drizzle Kit](/docs/kit-overview) and contains all the information about your database connection, migration folder and schema files.
+**Drizzle 配置** - 由 [Drizzle Kit](/docs/kit-overview) 使用的配置文件，包含有关您的数据库连接、迁移文件夹和架构文件的所有信息。
 
-Create a `drizzle.config.ts` file in the root of your project and add the following content:
+在项目根目录创建 `drizzle.config.ts` 文件并添加以下内容：
 
 ```typescript copy filename="drizzle.config.ts"
 import { defineConfig } from "drizzle-kit";
@@ -421,25 +421,25 @@ export default defineConfig({
 });
 ```
 
-Configure your database connection string in the `.env` file:
+在 `.env` 文件中配置您的数据库连接字符串：
 
 ```plaintext filename=".env"
 MYSQL_URL="mysql://[user]:[password]@[host].[region].psdb.cloud/[db-name]?ssl={'rejectUnauthorized':[ssl-rejectUnauthorized]}"
 ```
 
-#### Applying changes to the database
+#### 将更改应用到数据库
 
-You can generate migrations using `drizzle-kit generate` command and then run them using the `drizzle-kit migrate` command.
+您可以使用 `drizzle-kit generate` 命令生成迁移，然后使用 `drizzle-kit migrate` 命令运行它们。
 
-Generate migrations:
+生成迁移：
 
 ```bash copy
 npx drizzle-kit generate
 ```
 
-These migrations are stored in the `drizzle` directory, as specified in your `drizzle.config.ts`. This directory will contain the SQL files necessary to update your database schema and a `meta` folder for storing snapshots of the schema at different migration stages.
+这些迁移存储在 `drizzle` 目录中，如您的 `drizzle.config.ts` 中所指定。该目录将包含更新数据库架构所需的 SQL 文件和用于存储不同迁移阶段/schema 快照的 `meta` 文件夹。
 
-Example of a generated migration:
+生成迁移的示例：
 
 ```sql
 CREATE TABLE `users_table` (
@@ -452,23 +452,23 @@ CREATE TABLE `users_table` (
 );
 ```
 
-Run migrations:
+运行迁移：
 
 ```bash copy
 npx drizzle-kit migrate
 ```
 
-Alternatively, you can push changes directly to the database using [Drizzle kit push command](/docs/kit-overview#prototyping-with-db-push):
+或者，您可以使用 [Drizzle kit push 命令](/docs/kit-overview#prototyping-with-db-push) 将更改直接推送到数据库：
 
 ```bash copy
 npx drizzle-kit push
 ```
 
-<Callout type="warning">Push command is good for situations where you need to quickly test new schema designs or changes in a local development environment, allowing for fast iterations without the overhead of managing migration files.</Callout>
+<Callout type="warning">Push 命令适合需要快速测试新架构设计或更改的情况，允许在本地开发环境中快速迭代，而无需管理迁移文件的开销。</Callout>
 
-#### Connect Drizzle ORM to your database
+#### 将 Drizzle ORM 连接到您的数据库
 
-Create a `index.ts` file in the `src/db` directory and set up your database configuration:
+在 `src/db` 目录中创建一个 `index.ts` 文件并设置您的数据库配置：
 
 ```typescript copy filename="src/db/index.ts"
 import { drizzle } from "drizzle-orm/planetscale-serverless";
@@ -481,17 +481,17 @@ const client = new Client({
 export const db = drizzle(client)
 ```
 
-#### Create an API route
+#### 创建 API 路由
 
-Create `route.ts` in `src/app/api/hello` directory. To learn more about how to write a function, see the [Functions API Reference](https://vercel.com/docs/functions/functions-api-reference) and [Vercel Functions Quickstart](https://vercel.com/docs/functions/quickstart).
+在 `src/app/api/hello` 目录中创建 `route.ts` 文件。有关如何编写函数的更多信息，请参见 [Functions API Reference](https://vercel.com/docs/functions/functions-api-reference) 和 [Vercel Functions Quickstart](https://vercel.com/docs/functions/quickstart)。
 
 ```ts copy filename="src/app/api/hello/route.ts"
 import { db } from "@/app/db/db";
 import { usersTable } from "@/app/db/schema";
 import { NextResponse } from "next/server";
 
-export const dynamic = 'force-dynamic'; // static by default, unless reading the request
-export const runtime = 'edge' // specify the runtime to be edge
+export const dynamic = 'force-dynamic'; // 默认为静态，除非读取请求
+export const runtime = 'edge' // 指定运行时为边缘
 
 export async function GET(request: Request) {
   const users = await db.select().from(usersTable)
@@ -500,15 +500,15 @@ export async function GET(request: Request) {
 }
 ```
 
-#### Test your code locally
+#### 在本地测试您的代码
 
-Run the `next dev` command to start your local development server:
+运行 `next dev` 命令以启动本地开发服务器：
 
 ```bash copy
 npx next dev
 ```
 
-Navigate to the route you created `(e.g. /api/hello)` in your browser:
+在浏览器中导航至您创建的路由 `(例如 /api/hello)`：
 
 ```plaintext
 {
@@ -517,45 +517,45 @@ Navigate to the route you created `(e.g. /api/hello)` in your browser:
 }
 ```
 
-#### Deploy your project
+#### 部署您的项目
 
-Create a new project in the [dashboard](https://vercel.com/new) or run the `vercel` command to deploy your project:
+在 [仪表板](https://vercel.com/new) 中创建一个新项目或运行 `vercel` 命令以部署您的项目：
 
 ```bash copy
 vercel
 ```
 
-Add `MYSQL_URL` environment variable:
+添加 `MYSQL_URL` 环境变量：
 
 ```bash copy
 vercel env add MYSQL_URL
 ```
 
-Redeploy your project to update your environment variables:
+重新部署您的项目以更新环境变量：
 
 ```bash copy
 vercel
 ```
 </Steps>
 
-Finally, you can use URL of the deployed project and navigate to the route you created `(e.g. /api/hello)` to access your edge function.
+最后，您可以使用已部署项目的 URL 并导航至您创建的路由 `(例如 /api/hello)` 以访问您的边缘函数。
 
 ### Turso
 
-You can check [quickstart guide](/docs/get-started-sqlite#turso) or [tutorial](/docs/tutorials/drizzle-with-turso) for Drizzle with Turso in the documentation.
+您可以在文档中查看 Drizzle 与 Turso 的 [快速入门指南](/docs/get-started-sqlite#turso) 或 [教程](/docs/tutorials/drizzle-with-turso)。
 
 <Steps>
-#### Install the `@libsql/client` driver
+#### 安装 `@libsql/client` 驱动程序
 
-Install the `@libsql/client` driver:
+安装 `@libsql/client` 驱动程序：
 
 <Npm>
 @libsql/client
 </Npm>
 
-#### Create a table
+#### 创建一个表
 
-Create a `schema.ts` file in the `src/db` directory and declare a table schema:
+在 `src/db` 目录中创建一个 `schema.ts` 文件并声明一个表架构：
 
 ```typescript copy filename="src/db/schema.ts"
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
@@ -568,11 +568,11 @@ export const usersTable = sqliteTable('users_table', {
 })
 ```
 
-#### Setup Drizzle config file
+#### 设置 Drizzle 配置文件
 
-**Drizzle config** - a configuration file that is used by [Drizzle Kit](/docs/kit-overview) and contains all the information about your database connection, migration folder and schema files.
+**Drizzle 配置** - 由 [Drizzle Kit](/docs/kit-overview) 使用的配置文件，包含有关您的数据库连接、迁移文件夹和架构文件的所有信息。
 
-Create a `drizzle.config.ts` file in the root of your project and add the following content:
+在项目根目录创建 `drizzle.config.ts` 文件并添加以下内容：
 
 ```typescript copy filename="drizzle.config.ts"
 import { defineConfig } from "drizzle-kit";
@@ -588,26 +588,26 @@ export default defineConfig({
 });
 ```
 
-Configure your database connection string and auth token in the `.env` file:
+在 `.env` 文件中配置您的数据库连接字符串和身份验证令牌：
 
 ```plaintext filename=".env"
 TURSO_CONNECTION_URL="libsql://[db-name].turso.io"
 TURSO_AUTH_TOKEN="[auth-token]"
 ```
 
-#### Applying changes to the database
+#### 将更改应用到数据库
 
-You can generate migrations using `drizzle-kit generate` command and then run them using the `drizzle-kit migrate` command.
+您可以使用 `drizzle-kit generate` 命令生成迁移，然后使用 `drizzle-kit migrate` 命令运行它们。
 
-Generate migrations:
+生成迁移：
 
 ```bash copy
 npx drizzle-kit generate
 ```
 
-These migrations are stored in the `drizzle` directory, as specified in your `drizzle.config.ts`. This directory will contain the SQL files necessary to update your database schema and a `meta` folder for storing snapshots of the schema at different migration stages.
+这些迁移存储在 `drizzle` 目录中，如您的 `drizzle.config.ts` 中所指定。该目录将包含更新数据库架构所需的 SQL 文件和用于存储不同迁移阶段/schema 快照的 `meta` 文件夹。
 
-Example of a generated migration:
+生成迁移的示例：
 
 ```sql
 CREATE TABLE `users_table` (
@@ -620,23 +620,23 @@ CREATE TABLE `users_table` (
 CREATE UNIQUE INDEX `users_table_email_unique` ON `users_table` (`email`);
 ```
 
-Run migrations:
+运行迁移：
 
 ```bash copy
 npx drizzle-kit migrate
 ```
 
-Alternatively, you can push changes directly to the database using [Drizzle kit push command](/docs/kit-overview#prototyping-with-db-push):
+或者，您可以使用 [Drizzle kit push 命令](/docs/kit-overview#prototyping-with-db-push) 将更改直接推送到数据库：
 
 ```bash copy
 npx drizzle-kit push
 ```
 
-<Callout type="warning">Push command is good for situations where you need to quickly test new schema designs or changes in a local development environment, allowing for fast iterations without the overhead of managing migration files.</Callout>
+<Callout type="warning">Push 命令适合需要快速测试新架构设计或更改的情况，允许在本地开发环境中快速迭代，而无需管理迁移文件的开销。</Callout>
 
-#### Connect Drizzle ORM to your database
+#### 将 Drizzle ORM 连接到您的数据库
 
-Create a `index.ts` file in the `src/db` directory and set up your database configuration:
+在 `src/db` 目录中创建一个 `index.ts` 文件并设置您的数据库配置：
 
 ```typescript copy filename="src/db/index.ts"
 import { drizzle } from 'drizzle-orm/libsql';
@@ -650,17 +650,17 @@ const client = createClient({
 export const db = drizzle(client)
 ```
 
-#### Create an API route
+#### 创建 API 路由
 
-Create `route.ts` in `src/app/api/hello` directory. To learn more about how to write a function, see the [Functions API Reference](https://vercel.com/docs/functions/functions-api-reference) and [Vercel Functions Quickstart](https://vercel.com/docs/functions/quickstart).
+在 `src/app/api/hello` 目录中创建 `route.ts` 文件。有关如何编写函数的更多信息，请参见 [Functions API Reference](https://vercel.com/docs/functions/functions-api-reference) 和 [Vercel Functions Quickstart](https://vercel.com/docs/functions/quickstart)。
 
 ```ts copy filename="src/app/api/hello/route.ts"
 import { db } from "@/app/db/db";
 import { usersTable } from "@/app/db/schema";
 import { NextResponse } from "next/server";
 
-export const dynamic = 'force-dynamic'; // static by default, unless reading the request
-export const runtime = 'edge' // specify the runtime to be edge
+export const dynamic = 'force-dynamic'; // 默认为静态，除非读取请求
+export const runtime = 'edge' // 指定运行时为边缘
 
 export async function GET(request: Request) {
   const users = await db.select().from(usersTable)
@@ -669,15 +669,15 @@ export async function GET(request: Request) {
 }
 ```
 
-#### Test your code locally
+#### 在本地测试您的代码
 
-Run the `next dev` command to start your local development server:
+运行 `next dev` 命令以启动本地开发服务器：
 
 ```bash copy
 npx next dev
 ```
 
-Navigate to the route you created `(e.g. /api/hello)` in your browser:
+在浏览器中导航至您创建的路由 `(例如 /api/hello)`：
 
 ```plaintext
 {
@@ -686,31 +686,31 @@ Navigate to the route you created `(e.g. /api/hello)` in your browser:
 }
 ```
 
-#### Deploy your project
+#### 部署您的项目
 
-Create a new project in the [dashboard](https://vercel.com/new) or run the `vercel` command to deploy your project:
+在 [仪表板](https://vercel.com/new) 中创建一个新项目或运行 `vercel` 命令以部署您的项目：
 
 ```bash copy
 vercel
 ```
 
-Add `TURSO_CONNECTION_URL` environment variable:
+添加 `TURSO_CONNECTION_URL` 环境变量：
 
 ```bash copy
 vercel env add TURSO_CONNECTION_URL
 ```
 
-Add `TURSO_AUTH_TOKEN` environment variable:
+添加 `TURSO_AUTH_TOKEN` 环境变量：
 
 ```bash copy
 vercel env add TURSO_AUTH_TOKEN
 ```
 
-Redeploy your project to update your environment variables:
+重新部署您的项目以更新环境变量：
 
 ```bash copy
 vercel
 ```
 </Steps>
 
-Finally, you can use URL of the deployed project and navigate to the route you created `(e.g. /api/hello)` to access your edge function.
+最后，您可以使用已部署项目的 URL 并导航至您创建的路由 `(例如 /api/hello)` 以访问您的边缘函数。

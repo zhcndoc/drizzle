@@ -1,5 +1,5 @@
 ---
-title: SQL Cursor-based pagination
+title: SQL 基于游标的分页
 slug: cursor-based-pagination
 ---
 
@@ -12,13 +12,13 @@ import Prerequisites from "@mdx/Prerequisites.astro";
 <IsSupportedChipGroup chips={{PostgreSQL: true, MySQL: true, SQLite: true}}/>
 
 <Prerequisites>
-- Get started with [PostgreSQL](/docs/get-started-postgresql), [MySQL](/docs/get-started-mysql) and [SQLite](/docs/get-started-sqlite)
-- [Select statement](/docs/select) with [order by clause](/docs/select#order-by)
-- [Relational queries](/docs/rqb) with [order by clause](/docs/rqb#order-by)
-- [Indices](/docs/indexes-constraints)
+- 了解如何使用 [PostgreSQL](/docs/get-started-postgresql)、[MySQL](/docs/get-started-mysql) 和 [SQLite](/docs/get-started-sqlite) 
+- 使用 [order by 子句](/docs/select#order-by) 的 [选择语句](/docs/select)
+- 使用 [order by 子句](/docs/rqb#order-by) 的 [关系查询](/docs/rqb)
+- [索引](/docs/indexes-constraints)
 </Prerequisites>
 
-This guide demonstrates how to implement `cursor-based` pagination in Drizzle:
+本指南演示如何在 Drizzle 中实现 `基于游标` 的分页：
 
 <CodeTabs items={["index.ts", "schema.ts"]}>
   <CodeTab>
@@ -32,12 +32,12 @@ This guide demonstrates how to implement `cursor-based` pagination in Drizzle:
     await db
       .select()
       .from(users)
-      .where(cursor ? gt(users.id, cursor) : undefined) // if cursor is provided, get rows after it
-      .limit(pageSize) // the number of rows to return
-      .orderBy(asc(users.id)); // ordering
+      .where(cursor ? gt(users.id, cursor) : undefined) // 如果提供了游标，则获取其后的行
+      .limit(pageSize) // 返回的行数
+      .orderBy(asc(users.id)); // 排序
   };
 
-  // pass the cursor of the last row of the previous page (id)
+  // 传递前一页最后一行的游标 (id)
   await nextUserPage(3);
   ```
 
@@ -46,7 +46,7 @@ This guide demonstrates how to implement `cursor-based` pagination in Drizzle:
   ```
 
   ```ts
-  // next page, 4-6 rows returned
+  // 下一页，返回第 4-6 行
   [
     {
       id: 4,
@@ -108,14 +108,14 @@ This guide demonstrates how to implement `cursor-based` pagination in Drizzle:
 
 </CodeTabs>
 
-If you need dynamic order by you can do like below:
+如果需要动态排序，可以像下面这样做：
 
 ```ts copy {6,8}
 const nextUserPage = async (order: 'asc' | 'desc' = 'asc', cursor?: number, pageSize = 3) => {
   await db
     .select()
     .from(users)
-    // cursor comparison
+    // 游标比较
     .where(cursor ? (order === 'asc' ? gt(users.id, cursor) : lt(users.id, cursor)) : undefined)
     .limit(pageSize)
     .orderBy(order === 'asc' ? asc(users.id) : desc(users.id));
@@ -123,14 +123,14 @@ const nextUserPage = async (order: 'asc' | 'desc' = 'asc', cursor?: number, page
 
 await nextUserPage();
 await nextUserPage('asc', 3);
-// descending order
+// 降序
 await nextUserPage('desc');
 await nextUserPage('desc', 7);
 ```
 
-The main idea of this pagination is to use cursor as a pointer to a specific row in a dataset, indicating the end of the previous page. For correct ordering and cursor comparison, cursor should be unique and sequential.
+这种分页的主要思想是使用游标作为数据集中某一行的指针，表示上一页的结束。为了确保正确的排序和游标比较，游标应该是唯一的且是顺序的。
 
-If you need to order by a non-unique and non-sequential column, you can use multiple columns for cursor. This is how you can do it:
+如果需要按非唯一且非顺序的列排序，可以使用多个列作为游标。以下是如何做的：
 
 <Section>
 ```ts copy {14,15,16,17,18,19,22}
@@ -158,7 +158,7 @@ const nextUserPage = async (
     .orderBy(asc(users.firstName), asc(users.id));
 };
 
-// pass the cursor from previous page (id & firstName)
+// 传递来自前一页的游标 (id & firstName)
 await nextUserPage({
   id: 2,
   firstName: 'Alex',
@@ -172,7 +172,7 @@ select * from users
 ```
 
 ```ts
-// next page, 4-6 rows returned
+// 下一页，返回第 4-6 行
 [
   {
     id: 1,
@@ -196,14 +196,14 @@ select * from users
 ```
 </Section>
 
-Make sure to create indices for the columns that you use for cursor to make query efficient.
+确保为用于游标的列创建索引，以提高查询效率。
 
 <Section>
 ```ts copy {7,8}
 import { index, ...imports } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
-// columns declaration
+// 列声明
 },
 (t) => ({
   firstNameIndex: index('first_name_index').on(t.firstName).asc(),
@@ -213,14 +213,14 @@ export const users = pgTable('users', {
 ```
 
 ```sql
--- As of now drizzle-kit only supports index name and on() param, so you have to add order manually
+-- 目前 drizzle-kit 只支持索引名和 on() 参数，所以您需要手动添加顺序
 CREATE INDEX IF NOT EXISTS "first_name_index" ON "users" ("first_name" ASC);
 CREATE INDEX IF NOT EXISTS "first_name_and_id_index" ON "users" ("first_name" ASC,"id" ASC);
 ```
 </Section>
 
-If you are using primary key which is not sequential (e.g. `UUIDv4`), you should add sequential column (e.g. `created_at` column) and use multiple cursor.
-This is how you can do it:
+如果您使用的是非顺序的主键（例如 `UUIDv4`），您应该添加一个顺序列（例如 `created_at` 列）并使用多个游标。
+以下是如何做的：
 
 <Section>
 ```ts copy {12,13,14,15,16,17,18,21}
@@ -236,7 +236,7 @@ const nextUserPage = async (
     .select()
     .from(users)
     .where(
-      // make sure to add indices for the columns that you use for cursor
+      // 确保为您用于游标的列添加索引
       cursor
         ? or(
             gt(users.createdAt, cursor.createdAt),
@@ -248,7 +248,7 @@ const nextUserPage = async (
     .orderBy(asc(users.createdAt), asc(users.id));
 };
 
-// pass the cursor from previous page (id & createdAt)
+// 传递来自前一页的游标 (id & createdAt)
 await nextUserPage({
   id: '66ed00a4-c020-4dfd-a1ca-5d2e4e54d174',
   createdAt: new Date('2024-03-09T17:59:36.406Z'),
@@ -256,7 +256,7 @@ await nextUserPage({
 ```
 </Section>
 
-Drizzle has useful relational queries API, that lets you easily implement `cursor-based` pagination:
+Drizzle 具有有用的关系查询 API，使您可以轻松实现 `基于游标` 的分页：
 
 ```ts copy {7,8,9}
 import * as schema from './db/schema';
@@ -271,12 +271,12 @@ const nextUserPage = async (cursor?: number, pageSize = 3) => {
   });
 };
 
-// next page, cursor of last row of the first page (id = 3)
+// 下一页，前一页最后一行的游标 (id = 3)
 await nextUserPage(3);
 ```
 
-**Benefits** of `cursor-based` pagination: consistent query results, with no skipped or duplicated rows due to insert or delete operations, and greater efficiency compared to `limit/offset` pagination because it does not need to scan and skip previous rows to access the next page.
+**基于游标的** 分页的 **优点**：一致的查询结果，没有因插入或删除操作导致的跳过或重复的行，并且相比于 `limit/offset` 分页效率更高，因为它不需要扫描和跳过先前的行来访问下一页。
 
-**Drawbacks** of `cursor-based` pagination: the inability to directly navigate to a specific page and complexity of implementation. Since you add more columns to the sort order, you'll need to add more filters to the `where` clause for the cursor comparison to ensure consistent pagination.
+**基于游标的** 分页的 **缺点**：无法直接导航到特定页面，且实现复杂。由于您将更多列添加到排序顺序中，则需要在 `where` 子句中添加更多过滤器以进行游标比较，以确保分页的一致性。
 
-So, if you need to directly navigate to a specific page or you need simpler implementation of pagination, you should consider using [offset/limit](/docs/guides/limit-offset-pagination) pagination instead.
+因此，如果您需要直接导航到特定页面或需要更简单的分页实现，您应该考虑使用 [offset/limit](/docs/guides/limit-offset-pagination) 分页。

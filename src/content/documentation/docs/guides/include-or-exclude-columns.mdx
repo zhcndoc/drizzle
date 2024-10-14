@@ -1,5 +1,5 @@
 ---
-title: 在查询中包含或排除某些列
+title: 在查询中包含或排除列
 slug: include-or-exclude-columns
 ---
 
@@ -12,17 +12,15 @@ import CodeTab from '@components/markdown/CodeTab.astro';
 <IsSupportedChipGroup chips={{PostgreSQL: true, MySQL: true, SQLite: true}}/>
 
 <Prerequisites>
-- 从[这里](/docs/get-started-postgresql)开始使用 PostgreSQL
-- 从[这里](/docs/get-started-mysql)开始使用 MySQL
-- 从[这里](/docs/get-started-sqlite)开始使用 SQLite
+- 开始使用 [PostgreSQL](/docs/get-started-postgresql), [MySQL](/docs/get-started-mysql) 和 [SQLite](/docs/get-started-sqlite)
 - [选择语句](/docs/select)
-- [获取类型定义的表列](/docs/goodies#get-typed-table-columns)
+- [获取类型化表列](/docs/goodies#get-typed-table-columns)
 - [连接](/docs/joins)
 - [关系查询](/docs/rqb)
-- [关系查询的部分选择](/docs/rqb#partial-fields-select)
+- [使用关系查询的部分选择](/docs/rqb#partial-fields-select)
 </Prerequisites>
 
-Drizzle 提供了灵活的 API 来在查询中包含或排除某些列。要包含所有列，可以使用 `.select()` 方法，示例如下：
+Drizzle 提供了灵活的 API 用于在查询中包含或排除列。要包含所有列，可以使用 `.select()` 方法，如下所示：
 
 <CodeTabs items={["index.ts", "schema.ts"]}>
 	<CodeTab>
@@ -57,7 +55,7 @@ Drizzle 提供了灵活的 API 来在查询中包含或排除某些列。要包�
 	```
 </CodeTabs>
 
-要包含特定的列，可以使用 `.select()` 方法，示例如下：
+要包含特定列，可以使用 `.select()` 方法，如下所示：
 
 <Section>
   ```ts copy {1}
@@ -72,7 +70,7 @@ Drizzle 提供了灵活的 API 来在查询中包含或排除某些列。要包�
   ```
 </Section>
 
-要包含所有列和额外的列，可以使用 `getTableColumns()` 函数，示例如下：
+要包含所有列并添加额外列，可以使用 `getTableColumns()` 工具函数，如下所示：
 
 <Section>
   ```ts copy {5,6}
@@ -98,7 +96,7 @@ Drizzle 提供了灵活的 API 来在查询中包含或排除某些列。要包�
   ```
 </Section>
 
-要排除某些列，可以使用 `getTableColumns()` 函数，示例如下：
+要排除列，可以使用 `getTableColumns()` 工具函数，如下所示：
 
 <Section>
   ```ts copy {3,5}
@@ -106,7 +104,7 @@ Drizzle 提供了灵活的 API 来在查询中包含或排除某些列。要包�
 
   const { content, ...rest } = getTableColumns(posts); // 排除 "content" 列
 
-  await db.select({ ...rest }).from(posts); // 选择其它所有列
+  await db.select({ ...rest }).from(posts); // 选择所有其他列
   ```
 
   ```ts
@@ -119,7 +117,7 @@ Drizzle 提供了灵活的 API 来在查询中包含或排除某些列。要包�
   ```
 </Section>
 
-以下是如何在关系查询中包含或排除列：
+这就是如何在连接中包含或排除列：
 
 <CodeTabs items={["index.ts", "schema.ts"]}>
   <CodeTab>
@@ -127,13 +125,13 @@ Drizzle 提供了灵活的 API 来在查询中包含或排除某些列。要包�
     import { eq, getTableColumns } from 'drizzle-orm';
     import { comments, posts, users } from './db/schema';
 
-    // 从 "comments" 中排除 "userId" 列和 "postId" 列
+    // 从 "comments" 中排除 "userId" 和 "postId" 列
     const { userId, postId, ...rest } = getTableColumns(comments);
 
     await db
       .select({
-        postId: posts.id, // 从 "posts" 中包含 "id" 列
-        comment: { ...rest }, // 包含其它所有列
+        postId: posts.id, // 包含 "posts" 中的 "id" 列
+        comment: { ...rest }, // 包含所有其他列
         user: users, // 等同于 getTableColumns(users)
       })
       .from(posts)
@@ -186,7 +184,7 @@ Drizzle 提供了灵活的 API 来在查询中包含或排除某些列。要包�
   ```
 </CodeTabs>
 
-Drizzle 提供了有用的关系查询 API，可以轻松地在查询中包含或排除列。以下是如何包含所有列：
+Drizzle 提供了有用的关系查询 API，使您可以轻松包含或排除查询中的列。这就是如何包含所有列：
 
 <CodeTabs items={["index.ts", "schema.ts"]}>
   <CodeTab>
@@ -221,7 +219,7 @@ Drizzle 提供了有用的关系查询 API，可以轻松地在查询中包含�
 	```
 </CodeTabs>
 
-以下是如何使用关系查询来包含特定的列：
+这就是如何使用关系查询包含特定列：
 
 <Section>
   ```ts copy {2,3,4}
@@ -240,7 +238,7 @@ Drizzle 提供了有用的关系查询 API，可以轻松地在查询中包含�
   ```
 </Section>
 
-以下是如何使用关系查询来包含所有列和额外的列：
+这就是如何使用关系查询包含所有列并添加额外列：
 
 <Section>
   ```ts copy {4,5,6}
@@ -265,7 +263,7 @@ Drizzle 提供了有用的关系查询 API，可以轻松地在查询中包含�
   ```
 </Section>
 
-以下是如何使用关系查询来排除列：
+这就是如何使用关系查询排除列：
 
 <Section>
   ```ts copy {2,3,4}
@@ -286,7 +284,7 @@ Drizzle 提供了有用的关系查询 API，可以轻松地在查询中包含�
   ```
 </Section>
 
-以下是如何在关系查询中包含或排除列和关系：
+这就是如何使用关系查询包含或排除与关系相关的列：
 
 <CodeTabs items={["index.ts", "schema.ts"]}>
   <CodeTab>
@@ -306,7 +304,7 @@ Drizzle 提供了有用的关系查询 API，可以轻松地在查询中包含�
           postId: false, // 排除 "postId" 列
         },
       },
-      user: true, // 包含 "users" 表的所有列
+      user: true, // 包含 "users" 表中的所有列
     },
   });
   ```
@@ -372,7 +370,7 @@ Drizzle 提供了有用的关系查询 API，可以轻松地在查询中包含�
   ```
 </CodeTabs>
 
-以下是如何创建有条件的选择的自定义解决方案：
+这就是如何创建自定义条件选择解决方案：
 
 <CodeTabs items={["index.ts", "schema.ts"]}>
   <CodeTab>

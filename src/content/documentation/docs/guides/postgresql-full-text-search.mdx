@@ -1,5 +1,5 @@
 ---
-title: PostgreSQL full-text search
+title: PostgreSQL 全文搜索
 slug: postgresql-full-text-search
 ---
 
@@ -9,16 +9,16 @@ import CodeTabs from '@components/markdown/CodeTabs.astro';
 import CodeTab from '@components/markdown/CodeTab.astro';
 
 <Prerequisites>
-- Get started with [PostgreSQL](/docs/get-started-postgresql)
-- [Select statement](/docs/select)
-- [Indexes](/docs/indexes-constraints#indexes)
-- [sql operator](/docs/sql)
-- You should have `drizzle-orm@0.31.0` and `drizzle-kit@0.22.0` or higher.  
+- 开始使用 [PostgreSQL](/docs/get-started-postgresql)
+- [选择语句](/docs/select)
+- [索引](/docs/indexes-constraints#indexes)
+- [SQL 操作符](/docs/sql)
+- 需要使用 `drizzle-orm@0.31.0` 和 `drizzle-kit@0.22.0` 或更高版本。  
 </Prerequisites>
 
-This guide demonstrates how to implement full-text search in PostgreSQL with Drizzle ORM. Full-text search is a technique used to search for text within a document or a set of documents. A document is the unit of searching in a full text search system. PostgreSQL provides a set of functions to work with full-text search, such as `to_tsvector` and `to_tsquery`:
+本指南演示如何在 PostgreSQL 中使用 Drizzle ORM 实现全文搜索。全文搜索是一种用于在文档或一组文档中搜索文本的技术。文档是全文搜索系统中的搜索单位。PostgreSQL 提供了一组函数来处理全文搜索，例如 `to_tsvector` 和 `to_tsquery`：
 
-The `to_tsvector` function parses a textual document into tokens, reduces the tokens to lexemes, and returns a `tsvector` which lists the lexemes together with their positions in the document:
+`to_tsvector` 函数将文本文档解析为标记，将标记减少为词元，并返回一个 `tsvector`，该 `tsvector` 列出了词元及其在文档中的位置：
 
 <Section>
 ```ts copy {6}
@@ -41,7 +41,7 @@ await db.execute(
 ```
 </Section>
 
-The `to_tsquery` function converts a keyword to normalized tokens and returns a `tsquery` that matches the lexemes in a `tsvector`. The `@@` operator is used for direct matches:
+`to_tsquery` 函数将关键字转换为规范化的标记，并返回一个与 `tsvector` 中的词元匹配的 `tsquery`。`@@` 操作符用于直接匹配：
 
 <Section>
 ```ts copy {2, 3}
@@ -56,7 +56,7 @@ await db.execute(
 ```
 </Section>
 
-As for now, Drizzle doesn't support `tsvector` type natively, so you need to convert your data in the `text` column on the fly. To enhance the performance, you can create a `GIN` index on your column like this:
+目前，Drizzle 不支持 `tsvector` 类型，因此您需要动态地转换 `text` 列中的数据。为了提高性能，您可以像这样在您的列上创建一个 `GIN` 索引：
 
 <CodeTabs items={["schema.ts", "migration.sql", "db_data"]}>
   <CodeTab>
@@ -100,7 +100,7 @@ As for now, Drizzle doesn't support `tsvector` type natively, so you need to con
   ```
 </CodeTabs>
 
-To implement full-text search in PostgreSQL with Drizzle ORM, you can use the `to_tsvector` and `to_tsquery` functions with `sql` operator:
+要在 PostgreSQL 中使用 Drizzle ORM 实现全文搜索，您可以使用 `to_tsvector` 和 `to_tsquery` 函数与 `sql` 操作符：
 
 <Section>
 ```ts copy {9}
@@ -125,7 +125,7 @@ await db
 ```
 </Section>
 
-To match by any of the keywords, you can use the `|` operator:
+要通过任何关键字进行匹配，您可以使用 `|` 操作符：
 
 <Section>
 ```ts copy {6}
@@ -145,7 +145,7 @@ await db
 ```
 </Section>
 
-To match multiple keywords, you can use the `plainto_tsquery` function:
+要匹配多个关键字，您可以使用 `plainto_tsquery` 函数：
 
 <Section>
 ```ts copy {7}
@@ -168,11 +168,11 @@ select * from posts
 ```
 </Section>
 
-To match a phrase, you can use the `phraseto_tsquery` function:
+要匹配短语，您可以使用 `phraseto_tsquery` 函数：
 
 <Section>
 ```ts copy {8}
-// if you query by "trip family", it will not return any result
+// 如果按 "trip family" 查询，它将不会返回任何结果
 // 'family <-> trip'
 const title = 'family trip';
 
@@ -192,11 +192,11 @@ select * from posts
 ```
 </Section>
 
-You can also use `websearch_to_tsquery` function which is a simplified version of `to_tsquery` with an alternative syntax, similar to the one used by web search engines:
+您还可以使用 `websearch_to_tsquery` 函数，它是 `to_tsquery` 的简化版本，具有类似于网络搜索引擎使用的替代语法：
 
 <Section>
 ```ts copy {7}
-// 'family | first & trip & europ | asia'
+// 'family | first & trip & europe | asia'
 const title = 'family or first trip Europe or Asia';
 
 await db
@@ -220,7 +220,7 @@ select * from posts
 ```
 </Section>
 
-To implement full-text search on multiple columns, you can create index on multiple columns and concatenate the columns with `to_tsvector` function:
+要在多个列上实现全文搜索，您可以对多个列创建索引，并使用 `to_tsvector` 函数连接这些列：
 
 <CodeTabs items={["schema.ts", "migration.sql", "db_data"]}>
   <CodeTab>
@@ -308,9 +308,9 @@ To implement full-text search on multiple columns, you can create index on multi
   ```
 </CodeTabs>
 
-The `setweight` function is used to label the entries of a tsvector with a given weight, where a weight is one of the letters A, B, C, or D. This is typically used to mark entries coming from different parts of a document, such as title versus body.
+`setweight` 函数用于为 tsvector 的条目标记一个给定的权重，其中权重是字母 A、B、C 或 D 之一。这通常用于标记来自文档不同部分的条目，例如标题与正文。
 
-This is how you can query on multiple columns:
+这就是您如何在多个列上执行查询：
 
 <Section>
 ```ts copy {5-7}
@@ -346,7 +346,7 @@ await db.select().from(posts)
 ```
 </Section>
 
-To rank the search results, you can use the `ts_rank` or `ts_rank_cd` functions and `orderBy` method:
+要对搜索结果进行排名，您可以使用 `ts_rank` 或 `ts_rank_cd` 函数和 `orderBy` 方法：
 
 <Section>
 ```ts copy {6,7,12,13,18-20}
@@ -408,4 +408,4 @@ await db
 ```
 </Section>
 
-The `ts_rank` function focuses on the frequency of query terms throughout the document. The `ts_rank_cd` function focuses on the proximity of query terms within the document.
+`ts_rank` 函数侧重于查询术语在整个文档中的频率。而 `ts_rank_cd` 函数则侧重于查询术语在文档中的接近程度。

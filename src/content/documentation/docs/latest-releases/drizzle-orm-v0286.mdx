@@ -1,24 +1,24 @@
 ---
-title: DrizzleORM v0.28.6 release
+title: DrizzleORM v0.28.6 发布
 pubDate: 2023-09-06
-description: Changed datetime mapping for MySQL, added LibSQL batch API support, added JSON mode for text in SQLite, added '.toSQL()' to Relational Query API calls, added new PostgreSQL operators for Arrays, added more SQL operators for the 'where' function in Relational Queries, and fixed bugs.
+description: 修改了 MySQL 的 datetime 映射，添加了 LibSQL 批处理 API 支持，给 SQLite 的文本添加了 JSON 模式，给关系查询 API 调用添加了 '.toSQL()'，为数组添加了新的 PostgreSQL 操作符，为关系查询中的 'where' 函数添加了更多 SQL 操作符，并修复了错误。
 ---
 import Section from "@mdx/Section.astro";
 
-## Changes
+## 变更
 
-> **Note**:
-> MySQL `datetime` with `mode: 'date'` will now store dates in UTC strings and retrieve data in UTC as well to align with MySQL behavior for `datetime`. If you need a different behavior and want to handle `datetime` mapping in a different way, please use `mode: 'string'` or [Custom Types](/docs/custom-types) implementation
+> **注意**：
+> MySQL 的 `datetime` 现在在 `mode: 'date'` 下会以 UTC 字符串存储日期，并以 UTC 形式检索数据，以符合 MySQL 对 `datetime` 的行为。如果您需要不同的行为并希望以其他方式处理 `datetime` 映射，请使用 `mode: 'string'` 或 [自定义类型](/docs/custom-types) 实现。
 
-Check [Fix Datetime mapping for MySQL](https://github.com/drizzle-team/drizzle-orm/pull/1082) for implementation details
+查看 [修复 MySQL 的 Datetime 映射](https://github.com/drizzle-team/drizzle-orm/pull/1082) 以获取实现细节。
 
-## New Features
+## 新特性
 
-### 🎉 `LibSQL` batch api support
+### 🎉 `LibSQL` 批处理 API 支持
 
-Reference: https://docs.turso.tech/reference/client-access/javascript-typescript-sdk#execute-a-batch-of-statements
+参考： https://docs.turso.tech/reference/client-access/javascript-typescript-sdk#execute-a-batch-of-statements
 
-Batch API usage example:
+批处理 API 使用示例：
 
 <Section>
 ```ts copy {1}
@@ -61,7 +61,7 @@ type BatchResponse = [
 ```
 </Section>
 
-All possible builders that can be used inside `db.batch`:
+可以在 `db.batch` 内使用的所有构建器：
 
 ```ts
 `db.all()`,
@@ -76,11 +76,11 @@ All possible builders that can be used inside `db.batch`:
 `db.insert()...`,
 ```
 
-More usage examples here: [integration-tests/tests/libsql-batch.test.ts](https://github.com/drizzle-team/drizzle-orm/pull/1161/files#diff-17253895532e520545027dd48dcdbac2d69a5a49d594974e6d55d7502f89b838R248) and in [docs](/docs/batch-api)
+更多使用示例请见：[integration-tests/tests/libsql-batch.test.ts](https://github.com/drizzle-team/drizzle-orm/pull/1161/files#diff-17253895532e520545027dd48dcdbac2d69a5a49d594974e6d55d7502f89b838R248) 和 [docs](/docs/batch-api)。
 
-### 🎉 Add json mode for text in SQLite
+### 🎉 为 SQLite 中的文本添加 JSON 模式
 
-Read more in [docs](/docs/get-started-postgresql#http-proxy)
+在 [docs](/docs/get-started-postgresql#http-proxy) 中了解更多信息。
 
 ```ts copy {2}
 const test = sqliteTable('test', {
@@ -88,18 +88,18 @@ const test = sqliteTable('test', {
 });
 ```
 
-### 🎉 Add `.toSQL()` to Relational Query API calls
+### 🎉 在关系查询 API 调用中添加 `.toSQL()`
 
 ```ts copy {1}
 const query = db.query.usersTable.findFirst().toSQL();
 ```
 
-### 🎉 Added new PostgreSQL operators for Arrays
+### 🎉 为数组添加新的 PostgreSQL 操作符
 
-List of operators and usage examples
+操作符列表和使用示例
 `arrayContains`, `arrayContained`, `arrayOverlaps`
 
-Read more in [docs](/docs/get-started-postgresql#http-proxy)
+在 [docs](/docs/get-started-postgresql#http-proxy) 中了解更多信息。
 
 ```ts copy {2,5,8,11,12,13,14}
 const contains = await db.select({ id: posts.id }).from(posts)
@@ -118,13 +118,13 @@ const withSubQuery = await db.select({ id: posts.id }).from(posts)
 	));
 ```
 
-### 🎉 Add more SQL operators for where filter function in Relational Queries
+### 🎉 为关系查询中的 where 过滤函数添加更多 SQL 操作符
 
-You can find more examples in [docs](/docs/rqb#select-filters)
+您可以在 [docs](/docs/rqb#select-filters) 中找到更多示例。
 
 <Section>
 ```ts
-// Before
+// 之前
 import { inArray } from "drizzle-orm/pg-core";
 
 await db.users.findFirst({
@@ -133,17 +133,17 @@ await db.users.findFirst({
 ```
 
 ```ts copy {3}
-// After
+// 之后
 await db.users.findFirst({
   where: (table, { inArray }) => inArray(table.id, [ ... ])
 })
 ```
 </Section>
 
-## Fixes
+## 修复
 
-- Correct where in on conflict in sqlite ([#1076](https://github.com/drizzle-team/drizzle-orm/pull/1076))
-- Fix libsql/client type import ([#1122](https://github.com/drizzle-team/drizzle-orm/pull/1122))
-- Fix: raw sql query not being mapped properly on RDS ([#1071](https://github.com/drizzle-team/drizzle-orm/pull/1071))
-- Fix Datetime mapping for MySQL ([#1082](https://github.com/drizzle-team/drizzle-orm/pull/1082))
-- Fix smallserial generating as serial ([#1127](https://github.com/drizzle-team/drizzle-orm/pull/1127))
+- 修正了 SQLite 中冲突时的 where 子句 ([#1076](https://github.com/drizzle-team/drizzle-orm/pull/1076))
+- 修复了 libsql/client 类型导入 ([#1122](https://github.com/drizzle-team/drizzle-orm/pull/1122))
+- 修复：RDS 上原始 SQL 查询未正确映射 ([#1071](https://github.com/drizzle-team/drizzle-orm/pull/1071))
+- 修复 MySQL 的 Datetime 映射 ([#1082](https://github.com/drizzle-team/drizzle-orm/pull/1082))
+- 修复 smallserial 被生成为 serial ([#1127](https://github.com/drizzle-team/drizzle-orm/pull/1127))

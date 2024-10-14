@@ -31,20 +31,20 @@ import YoutubeCards from "@mdx/YoutubeCards.astro";
 
 ## Button
 
-<Button href={"/"} value={"Main page"} />
-<Button href={"/"} value={"Main page"} />
+<Button href={"/"} value={"主页"} />
+<Button href={"/"} value={"主页"} />
 
 ## Callout
 
-<Callout emoji={"😀"}>Callout example</Callout>
+<Callout emoji={"😀"}>调用示例</Callout>
 
-<Callout>Callout example</Callout>
+<Callout>调用示例</Callout>
 
-<Callout type={"info"}>Callout example</Callout>
+<Callout type={"info"}>调用示例</Callout>
 
-<Callout type={"warning"}>Callout example</Callout>
+<Callout type={"warning"}>调用示例</Callout>
 
-<Callout type={"error"}>Callout example</Callout>
+<Callout type={"error"}>调用示例</Callout>
 
 ## CodeTabs with CodeTab
 
@@ -70,12 +70,12 @@ import YoutubeCards from "@mdx/YoutubeCards.astro";
     	posts: [
     		{
     			id: 1,
-    			content: "SQL is awesome",
+    			content: "SQL 是很棒的",
     			authorId: 10,
     		},
     		{
     			id: 2,
-    			content: "But check relational queries",
+    			content: "但检查关系查询",
     			authorId: 10,
     		}
     	]
@@ -117,7 +117,7 @@ import YoutubeCards from "@mdx/YoutubeCards.astro";
 
 ## Section
 
-For codeblocks connection
+用于代码块连接
 
 <Section>
 ```typescript
@@ -200,7 +200,7 @@ CREATE TABLE `table` (
     ```
     ```sql
     CREATE TABLE `table` (
-      `int1` integer DEFAULT 42
+      `int1` integer DEFAULT 42,
       `int2` integer DEFAULT (abs(42))
     );
     ```
@@ -212,29 +212,29 @@ CREATE TABLE `table` (
 
 <SimpleLinkCards
   cards={{
-    "PostgreSQL column types": "/docs/column-types/pg",
-    "MySQL column types": "/docs/column-types/mysql",
-    "SQLite column types": "/docs/column-types/sqlite",
+    "PostgreSQL 列类型": "/docs/column-types/pg",
+    "MySQL 列类型": "/docs/column-types/mysql",
+    "SQLite 列类型": "/docs/column-types/sqlite",
   }}
 />
 
 ## Steps
 
-With h4 headers
+带有 h4 标题
 
 <Steps>
 
-#### Install babel plugin
+#### 安装 babel 插件
 
-It's necessary to bundle SQL migration files as string directly to your bundle.
+将 SQL 迁移文件作为字符串直接打包到您的包中是必要的。
 
 ```shell
 npm install babel-plugin-inline-import
 ```
 
-#### Update config files.
+#### 更新配置文件。
 
-You will need to update `babel.config.js`, `metro.config.js` and `drizzle.config.ts` files
+您需要更新 `babel.config.js`，`metro.config.js` 和 `drizzle.config.ts` 文件
 
 ```js filename='babel.config.js'
 module.exports = function (api) {
@@ -242,7 +242,7 @@ module.exports = function (api) {
 
   return {
     presets: ["babel-preset-expo"],
-    plugins: [["inline-import", { extensions: [".sql"] }]], // <-- add this
+    plugins: [["inline-import", { extensions: [".sql"] }]], // <-- 添加这个
   };
 };
 ```
@@ -253,26 +253,26 @@ module.exports = function (api) {
 <YoutubeCards cards={[
 	{
 		id: "4ZhtoOFKFP8",
-		title: "Easiest Database Setup in Next.js&nbsp;14 with Turso&nbsp;&&nbsp;Drizzle",
+		title: "在 Next.js 14 中使用 Turso 和 Drizzle 进行最简单的数据库设置",
 		description: "Sam Meech-Ward",
 		time: '38:08'
 	}, 
 	{
 		id: "NfVELsEZFsA",
-		title: "Next.js Project with Vercel, Neon, Drizzle, TailwindCSS, FlowBite and more!",
+		title: "使用 Vercel、Neon、Drizzle、TailwindCSS、FlowBite 等的 Next.js 项目！",
 		description: "CodingEntrepreneurs",
 		time: '5:46:28'
 	}, 
 	{
 		id: "_SLxGYzv6jo",
-		title: "I Have A New Favorite Database&nbsp;Tool",
+		title: "我有一个新的最喜欢的数据库工具",
 		description: "Theo - t3.gg",
 		time: '5:46'
 	}
 ]}/>
 
 
-## Collapsable code block
+## 可折叠代码块
 
 ```prisma  copy filename="prisma/schema.prisma" collapsable
 generator client {

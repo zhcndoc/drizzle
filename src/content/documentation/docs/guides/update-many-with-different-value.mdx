@@ -1,5 +1,5 @@
 ---
-title: 在每行使用不同值进行批量更新
+title: 使用不同值更新多个行
 slug: update-many-with-different-value
 ---
 
@@ -7,15 +7,15 @@ import Section from "@mdx/Section.astro";
 import Prerequisites from "@mdx/Prerequisites.astro";
 import IsSupportedChipGroup from "@mdx/IsSupportedChipGroup.astro";
 
-<IsSupportedChipGroup chips={{ PostgreSQL: true, MySQL: true, SQLite: true }}/>
+<IsSupportedChipGroup chips={{PostgreSQL: true, MySQL: true, SQLite: true}}/>
 
 <Prerequisites>
-- 开始使用 [PostgreSQL](/docs/get-started-postgresql)、[MySQL](/docs/get-started-mysql) 和 [SQLite](/docs/get-started-sqlite)
-- [Update 语句](/docs/update)
-- [过滤条件](/docs/operators) 和 [sql 运算符](/docs/sql)
+- 开始使用 [PostgreSQL](/docs/get-started-postgresql), [MySQL](/docs/get-started-mysql) 和 [SQLite](/docs/get-started-sqlite)
+- [更新语句](/docs/update)
+- [过滤器](/docs/operators) 和 [sql 操作符](/docs/sql)
 </Prerequisites>
 
-要实现在一个请求中使用不同值来更新每行的更新操作，你可以使用 `sql` 运算符配合 `case` 语句和 `.update().set()` 方法进行如下处理：
+要在一个请求中实现对多个行进行不同值的更新，可以使用 `sql` 操作符结合 `case` 语句和 `.update().set()` 方法，如下所示：
 
 <Section>
 ```ts {26, 29, 32, 36, 38, 40}
@@ -39,7 +39,7 @@ const inputs = [
   },
 ];
 
-// 你必须确保输入数组不为空
+// 确保 inputs 数组不为空
 if (inputs.length === 0) {
   return;
 }

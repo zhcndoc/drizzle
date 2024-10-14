@@ -1,17 +1,17 @@
 ---
 title: DrizzleORM v0.16.2 发布
 pubDate: 2023-01-21
-description: Drizzle ORM - 是一种语义化的 TypeScript ORM，可用作查询构建器和作为 SQL 模式的真实源和用于自动生成迁移的 CLI。
+description: Drizzle ORM - 是一个符合规范的 TypeScript ORM，可以作为查询构建器和 ORM，作为 SQL 模式和 CLI 的权威源，以自动生成迁移。
 ---
 import Section from "@mdx/Section.astro";
 
-Drizzle ORM - 是一种语义化的 TypeScript ORM，可用作查询构建器和作为 SQL 模式的真实源和用于自动生成迁移的 CLI。
+Drizzle ORM - 是一个符合规范的 TypeScript ORM，可以作为查询构建器和 ORM，作为 SQL 模式和 CLI 的权威源，以自动生成迁移。
 
-自上一次的主要更新以来，我们已经添加了许多被请求的功能 🚀
+自上次重要更新以来，我们增加了许多请求的功能 🚀
 
-### 🎉 PostgreSQL schemas
+### 🎉 PostgreSQL 模式
 
-您现在可以声明要在此架构中创建的 [PostgreSQL schemas](https://www.postgresql.org/docs/current/ddl-schemas.html) 和表
+您现在可以声明 [PostgreSQL 模式](https://www.postgresql.org/docs/current/ddl-schemas.html) 和在该模式下创建的表
 
 <Section>
 ```ts copy
@@ -43,9 +43,9 @@ CREATE TABLE IF NOT EXISTS "my_schema"."users" (
 drizzle-kit generate:pg --schema=src/schema.ts --out=migrations/ 
  ```
 
-### 🎉 MySQL databases/schemas
+### 🎉 MySQL 数据库/模式
 
-您现在可以声明要在此中创建的 [MySQL 数据库/模式](https://dev.mysql.com/doc/refman/8.0/en/create-database.html) 和表
+您现在可以声明 [MySQL 数据库/模式](https://dev.mysql.com/doc/refman/8.0/en/create-database.html) 和在其中创建的表
 
 ```ts copy
 // schema.ts
@@ -63,7 +63,7 @@ const users = mySchema("users", {
 [drizzle-kit](https://driz.link/kit) 将自动生成所有需要的 SQL 迁移 ```shell drizzle-kit
 generate:mysql --schema=src/schema.ts --out=migrations/ ```
 
-这将自动生成 SQL 迁移
+这将自动为您生成 SQL 迁移
 
 ```sql
 CREATE DATABASE `my_schema`;
@@ -75,12 +75,13 @@ CREATE TABLE `my_schema`.`users` (
 );
 ```
 
-### 🎉 PostgreSQL introspect
+### 🎉 PostgreSQL 反向工程
 
-您现在可以使用 [drizzle-kit](https://driz.link/kit) 在几秒钟内从现有的 PostgreSQL 数据库中提取数据库模式，无需切换任何现有的 ORM 或原始 SQL。它支持：
+您现在可以在几秒钟内通过 [drizzle-kit](https://driz.link/kit) 从现有的 PostgreSQL 数据库中提取数据库模式，这大大减少了您从任何现有 ORM 或普通 SQL 切换的摩擦。
+它支持：
 
 - 枚举
-- 具有所有本地和非本地列的表
+- 包含所有本地和非本地列的表
 - 索引
 - 外键、自引用和循环外键
 - 模式
@@ -182,7 +183,7 @@ export const example = pgTable(
 
 ### 🎉 Postgres.js 驱动支持
 
-我们完全支持了 [postgres.js](https://github.com/porsager/postgres)，它轻量且速度快 🚀
+我们已为 [postgres.js](https://github.com/porsager/postgres) 提供全面支持，它轻量且快速 🚀
 
 ```ts copy
 // schema.ts
@@ -204,11 +205,11 @@ const db: PostgresJsDatabase = drizzle(client);
 const allUsers = await db.select(users);
 ```
 
-完整的 PostgreSQL 文档请参见 [这里](https://github.com/drizzle-team/drizzle-orm/tree/main/drizzle-orm-pg)
+完整的 PostgreSQL 文档请见 [这里](https://github.com/drizzle-team/drizzle-orm/tree/main/drizzle-orm-pg)
 
 ### 🎉 PostgreSQL 和 MySQL 类型
 
-我们为您提供了一些有用的操作符，用于创建所需的非本地 PostgreSQL 或 MySQL 类型
+我们为您提供了有用的操作符，以创建任何需要的非原生 PostgreSQL 或 MySQL 类型
 
 ```ts copy
 // PostgreSQL

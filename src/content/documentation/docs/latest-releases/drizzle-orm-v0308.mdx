@@ -1,12 +1,12 @@
 ---
-title: DrizzleORM v0.30.8 release
+title: DrizzleORM v0.30.8 发布
 pubDate: 2024-04-11
-description: Added custom schema support to enums in Postgres, changed D1 'migrate()' function to use batch API, updated '.onConflictDoUpdate' method, fixed query generation for 'where' clause in Postgres '.onConflictDoNothing' method and fixed various bugs related to AWS Data API.
+description: 为 Postgres 的枚举添加了自定义架构支持，修改了 D1 的 'migrate()' 函数以使用批处理 API，更新了 '.onConflictDoUpdate' 方法，修复了 Postgres 中 '.onConflictDoNothing' 方法的 'where' 子句查询生成问题，并修复了与 AWS 数据 API 相关的多个错误。
 ---
 
-## New Features
+## 新功能
 
-- Added custom schema support to enums in Postgres (fixes [#669](https://github.com/drizzle-team/drizzle-orm/issues/669) via [#2048](https://github.com/drizzle-team/drizzle-orm/pull/2048)):
+- 为 Postgres 的枚举添加了自定义架构支持 (修复 [#669](https://github.com/drizzle-team/drizzle-orm/issues/669) 通过 [#2048](https://github.com/drizzle-team/drizzle-orm/pull/2048))：
 
 ```ts copy {3,4}
 import { pgSchema } from 'drizzle-orm/pg-core';
@@ -15,15 +15,15 @@ const mySchema = pgSchema('mySchema');
 const colors = mySchema.enum('colors', ['red', 'green', 'blue']);
 ```
 
-Learn more about Postgres [schemas](/docs/schemas) and [enums](/docs/column-types/pg#enum).
+了解有关 Postgres [架构](/docs/schemas) 和 [枚举](/docs/column-types/pg#enum) 的更多信息。
 
-## Fixes
+## 修复
 
-- Changed D1 `migrate()` function to use batch API ([#2137](https://github.com/drizzle-team/drizzle-orm/pull/2137))
+- 修改 D1 `migrate()` 函数以使用批处理 API ([#2137](https://github.com/drizzle-team/drizzle-orm/pull/2137))
 
-To get started with Drizzle and D1 follow the [documentation](/docs/get-started-sqlite#cloudflare-d1).
+要开始使用 Drizzle 和 D1，请查看 [文档](/docs/get-started-sqlite#cloudflare-d1)。
 
-- Split `where` clause in Postgres `.onConflictDoUpdate` method into `setWhere` and `targetWhere` clauses, to support both `where` cases in `on conflict ...` clause (fixes [#1628](https://github.com/drizzle-team/drizzle-orm/issues/1628), [#1302](https://github.com/drizzle-team/drizzle-orm/issues/1302) via [#2056](https://github.com/drizzle-team/drizzle-orm/pull/2056)). 
+- 在 Postgres 的 `.onConflictDoUpdate` 方法中将 `where` 子句拆分为 `setWhere` 和 `targetWhere` 子句，以支持 `on conflict ...` 子句中的两个 `where` 情况 (修复 [#1628](https://github.com/drizzle-team/drizzle-orm/issues/1628)， [#1302](https://github.com/drizzle-team/drizzle-orm/issues/1302) 通过 [#2056](https://github.com/drizzle-team/drizzle-orm/pull/2056))。
 
 ```ts copy
 await db.insert(employees)
@@ -43,12 +43,12 @@ await db.insert(employees)
   });
 ```
 
-Learn more about `.onConflictDoUpdate` method [here](/docs/insert#on-conflict-do-update).
-- Fixed query generation for `where` clause in Postgres `.onConflictDoNothing` method, as it was placed in a wrong spot (fixes [#1628](https://github.com/drizzle-team/drizzle-orm/issues/1628) via [#2056](https://github.com/drizzle-team/drizzle-orm/pull/2056)).
+了解更多有关 `.onConflictDoUpdate` 方法的信息 [这里](/docs/insert#on-conflict-do-update)。
+- 修复了 Postgres 的 `.onConflictDoNothing` 方法中的 `where` 子句查询生成问题，因为它放置在了错误的位置 (修复 [#1628](https://github.com/drizzle-team/drizzle-orm/issues/1628) 通过 [#2056](https://github.com/drizzle-team/drizzle-orm/pull/2056))。
 
-Learn more about `.onConflictDoNothing` method [here](/docs/insert#on-conflict-do-nothing).
+了解更多有关 `.onConflictDoNothing` 方法的信息 [这里](/docs/insert#on-conflict-do-nothing)。
 
-- Fixed multiple issues with AWS Data API driver (fixes [#1931](https://github.com/drizzle-team/drizzle-orm/pull/1931), [#1932](https://github.com/drizzle-team/drizzle-orm/issues/1932), [#1934](https://github.com/drizzle-team/drizzle-orm/issues/1934), [#1936](https://github.com/drizzle-team/drizzle-orm/issues/1936) via [#2119](https://github.com/drizzle-team/drizzle-orm/pull/2119))
-- Fix inserting and updating array values in AWS Data API (fixes [#1912](https://github.com/drizzle-team/drizzle-orm/issues/1912) via [#1911](https://github.com/drizzle-team/drizzle-orm/pull/1911))
+- 修复了与 AWS 数据 API 驱动程序相关的多个问题 (修复 [#1931](https://github.com/drizzle-team/drizzle-orm/pull/1931)， [#1932](https://github.com/drizzle-team/drizzle-orm/issues/1932)， [#1934](https://github.com/drizzle-team/drizzle-orm/issues/1934)， [#1936](https://github.com/drizzle-team/drizzle-orm/issues/1936) 通过 [#2119](https://github.com/drizzle-team/drizzle-orm/pull/2119))
+- 修复在 AWS 数据 API 中插入和更新数组值的问题 (修复 [#1912](https://github.com/drizzle-team/drizzle-orm/issues/1912) 通过 [#1911](https://github.com/drizzle-team/drizzle-orm/pull/1911))
 
-To get started with Drizzle and AWS Data API follow the [documentation](/docs/get-started-postgresql#aws-data-api).
+要开始使用 Drizzle 和 AWS 数据 API，请查看 [文档](/docs/get-started-postgresql#aws-data-api)。

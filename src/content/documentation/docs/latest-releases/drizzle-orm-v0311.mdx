@@ -6,12 +6,12 @@ description: React 实时查询 🎉
 
 # 新特性
 
-## Live Queries 🎉
+## 实时查询 🎉
 
-> ### 对于 Drizzle + Expo 的全面解释，欢迎访问 [讨论版](https://github.com/drizzle-team/drizzle-orm/discussions/2447)
+> ### 关于 Drizzle + Expo 的详细说明欢迎访问 [讨论区](https://github.com/drizzle-team/drizzle-orm/discussions/2447)
 
-截至 `v0.31.1`，Drizzle ORM 现在支持 Expo SQLite Live Queries 原生支持！
-我们已经实现了一个原生的 `useLiveQuery` React Hook，它观察必要的数据库更改并自动重新运行数据库查询。它与 SQL-like 和 Drizzle Queries 都兼容：
+从 `v0.31.1` 开始，Drizzle ORM 现在原生支持 Expo SQLite 实时查询！
+我们实现了一个原生的 `useLiveQuery` React Hook，该 Hook 观察必要的数据库更改并自动重新运行数据库查询。它支持 SQL 类似查询和 Drizzle 查询：
 
 ```tsx
 import { useLiveQuery, drizzle } from 'drizzle-orm/expo-sqlite';
@@ -23,7 +23,7 @@ const expo = openDatabaseSync('db.db', { enableChangeListener: true }); // <-- �
 const db = drizzle(expo);
 
 const App = () => {
-  // 数据更改时自动重新渲染
+  // 当数据更改时自动重新渲染
   const { data } = useLiveQuery(db.select().from(users));
 
   // const { data, error, updatedAt } = useLiveQuery(db.query.users.findFirst());
@@ -36,6 +36,6 @@ const App = () => {
 export default App;
 ```
 
-我们有意没有改变 ORM 的 API 以保持与传统 React Hook API 的兼容性，因此我们有 `useLiveQuery(databaseQuery)`，而不是 `db.select().from(users).useLive()` 或 `db.query.users.useFindMany()`
+我们故意没有改变 ORM 自身的 API，以保持与常规 React Hook API 一致，因此我们有 `useLiveQuery(databaseQuery)`，而不是 `db.select().from(users).useLive()` 或 `db.query.users.useFindMany()`
 
-我们还决定提供 `data`、`error` 和 `updatedAt` 字段作为钩子的结果，以便遵循 `React Query` 和 `Electric SQL` 的实践进行简洁明了的错误处理。
+我们还决定提供 `data`、`error` 和 `updatedAt` 字段作为 Hook 的结果，以便简洁明确地处理错误，遵循 `React Query` 和 `Electric SQL` 的实践。

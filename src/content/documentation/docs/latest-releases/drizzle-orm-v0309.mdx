@@ -1,12 +1,12 @@
 ---
 title: DrizzleORM v0.30.9 发布
 pubDate: 2024-04-22
-description: 在 SQLite 的 '.onConflictDoUpdate()' 配置中添加 'setWhere' 和 'targetWhere' 字段，通过 'db._.fullSchema'在Drizzle 实例中添加模式信息，并修复了 AWS 数据 API 中的迁移工具问题。
+description: 在 SQLite 的 `.onConflictDoUpdate()` 配置中添加了 'setWhere' 和 'targetWhere' 字段，通过 'db._.fullSchema' 为 Drizzle 实例添加了模式信息，并修复了 AWS 数据 API 中的迁移器。
 ---
 
-## 新功能
+## 新特性
 
-- 在 SQLite 的 `.onConflictDoUpdate()` 配置中添加了 `setWhere` 和 `targetWhere` 字段，替代了原先的 `where` 字段：
+- 在 SQLite 的 `.onConflictDoUpdate()` 配置中添加了 `setWhere` 和 `targetWhere` 字段，取代单一的 `where` 字段：
 
 ```ts copy
 await db.insert(employees)
@@ -26,12 +26,12 @@ await db.insert(employees)
   });
 ```
 
-了解更多关于 `.onConflictDoUpdate()` 方法的信息请点击[这里](/docs/insert#on-conflict-do-update)。
+有关 `.onConflictDoUpdate()` 方法的更多信息，请[点击这里](/docs/insert#on-conflict-do-update)。
 
-- 🛠️ 通过 `db._.fullSchema` 在 Drizzle 实例中添加模式信息
+- 🛠️ 通过 `db._.fullSchema` 为 Drizzle 实例添加了模式信息
 
 ## 修复
 
-- 修复了 AWS 数据 API 中的迁移工具问题
+- 修复了 AWS 数据 API 中的迁移器
 
 要开始使用 Drizzle 和 AWS 数据 API，请参考[文档](/docs/get-started-postgresql#aws-data-api)。

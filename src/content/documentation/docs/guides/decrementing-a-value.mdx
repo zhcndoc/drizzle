@@ -1,6 +1,6 @@
 ---
-title: SQL 减少数值
-slug: decrementing-a-value
+title: SQL 减少值
+slug: 减少值
 ---
 import Section from "@mdx/Section.astro";
 import IsSupportedChipGroup from "@mdx/IsSupportedChipGroup.astro";
@@ -9,12 +9,12 @@ import Prerequisites from "@mdx/Prerequisites.astro";
 <IsSupportedChipGroup chips={{PostgreSQL: true, MySQL: true, SQLite: true}}/>
 
 <Prerequisites>
-- 开始使用 [PostgreSQL](/docs/get-started-postgresql)、[MySQL](/docs/get-started-mysql) 和 [SQLite](/docs/get-started-sqlite)
+- 开始使用 [PostgreSQL](/docs/get-started-postgresql)，[MySQL](/docs/get-started-mysql) 和 [SQLite](/docs/get-started-sqlite)
 - [更新语句](/docs/update)
-- [过滤器](/docs/operators) 和 [SQL 运算符](/docs/sql)
+- [过滤器](/docs/operators) 和 [SQL 操作符](/docs/sql)
 </Prerequisites>
 
-要减少列的值，你可以像下面这样使用 `update().set()` 方法：
+要减少列的值，可以使用 `update().set()` 方法，如下所示：
 
 <Section>
 ```ts copy {8}
@@ -35,7 +35,7 @@ update "table" set "counter" = "counter" - 1 where "id" = 1;
 ```
 </Section>
 
-Drizzle 提供了简单且灵活的 API，可以轻松创建自定义解决方案。以下是如何创建自定义减少函数的示例：
+Drizzle 具有简单灵活的 API，可以让你轻松创建自定义解决方案。以下是如何实现自定义减少函数的方法：
 
 ```ts copy {4,10,11}
 import { AnyColumn } from 'drizzle-orm';

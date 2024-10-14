@@ -1,20 +1,21 @@
 ---
 title: DrizzleORM v0.30.6 发布
 pubDate: 2024-03-28
-description: 增加对 PGlite 驱动的支持。
+description: 添加了对 PGlite 驱动程序的支持。
 ---
 
-## 新增功能
+## 新特性
 
-### PGlite 驱动支持
+### PGlite 驱动程序支持
 
-[PGlite](https://github.com/electric-sql/pglite) 是将 WASM Postgres 构建打包成 TypeScript 客户端库的工具，它使您能够在浏览器、Node.js 和 Bun 中运行 Postgres，无需安装其他依赖项。它的压缩后大小仅为 2.6MB。
+[PGlite](https://github.com/electric-sql/pglite) 是一个将 Postgres 构建成 WASM 的程序，打包成 TypeScript 客户端库，使您可以在浏览器、Node.js 和 Bun 中运行 Postgres，无需安装任何其他依赖项。它的压缩包只有 2.6mb。
 
-它可以用作临时内存数据库，也可以与文件系统（Node/Bun）或 indexedDB（浏览器）持久化的结构。
+它可以用作短期的内存数据库，或持久存储到文件系统（Node/Bun）或 IndexedDB（浏览器）。
 
-与之前的“在浏览器中运行 Postgres”项目不同，PGlite 不使用 Linux 虚拟机，它只是简单地将 Postgres 嵌入 WASM。
+与之前的“浏览器中的 Postgres”项目不同，PGlite 不使用 Linux 虚拟机——它只是 WASM 中的 Postgres。
 
-阅读有关 Drizzle 和 PGlite 的入门指南[此处](/docs/get-started-postgresql#pglite)。
+
+请在 [这里](/docs/get-started-postgresql#pglite) 阅读开始使用 Drizzle 和 PGlite 的指南。
 
 使用示例
 ```ts copy {1,6}
@@ -29,8 +30,8 @@ const db = drizzle(client);
 await db.select().from(users);
 ```
 ---
-目前存在 2 个限制，这些限制应该在 Pglite 方面得到修复：
+目前有 2 个限制，需要在 PGlite 方面修复：
 
-- [试图刷新材料化视图时会抛出错误](https://github.com/electric-sql/pglite/issues/63)
+- [尝试刷新一个物化视图时抛出错误](https://github.com/electric-sql/pglite/issues/63)
 
-- [试图设置时区时会抛出错误](https://github.com/electric-sql/pglite/issues/62)
+- [尝试设置时区时抛出错误](https://github.com/electric-sql/pglite/issues/62)

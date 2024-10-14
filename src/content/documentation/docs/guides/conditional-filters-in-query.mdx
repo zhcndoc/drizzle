@@ -6,12 +6,12 @@ import Section from "@mdx/Section.astro";
 import IsSupportedChipGroup from "@mdx/IsSupportedChipGroup.astro";
 import Prerequisites from "@mdx/Prerequisites.astro";
 
-<IsSupportedChipGroup chips={{ PostgreSQL: true, MySQL: true, SQLite: true }}/>
+<IsSupportedChipGroup chips={{PostgreSQL: true, MySQL: true, SQLite: true}}/>
 
 <Prerequisites>
-- 开始学习 [PostgreSQL](/docs/get-started-postgresql)，[MySQL](/docs/get-started-mysql) 和 [SQLite](/docs/get-started-sqlite);
+- 开始使用 [PostgreSQL](/docs/get-started-postgresql), [MySQL](/docs/get-started-mysql) 和 [SQLite](/docs/get-started-sqlite);
 - [选择语句](/docs/select);
-- [过滤器](/docs/select#filtering) 和 [过滤器操作符](/docs/operators);
+- [过滤](/docs/select#filtering) 和 [过滤操作符](/docs/operators);
 </Prerequisites>
 
 要在查询中传递条件过滤器，可以使用 `.where()` 方法和逻辑运算符，如下所示：
@@ -74,7 +74,7 @@ select * from posts
 ```
 </Section>
 
-如果您需要在项目的不同部分组合条件过滤器，可以创建一个变量，将过滤器推入变量中，然后在 `.where()` 方法中使用 `and()` 或 `or()` 运算符，如下所示：
+如果你需要在项目的不同地方组合条件过滤器，可以创建一个变量，推入过滤器，然后在 `.where()` 方法中使用 `and()` 或 `or()` 运算符，如下所示：
 
 ```ts copy {7,10}
 import { SQL, ... } from 'drizzle-orm';
@@ -94,7 +94,7 @@ filters.push(gt(posts.views, 200));
 await searchPosts(filters);
 ```
 
-Drizzle 提供了有用且灵活的 API，让您可以创建自定义解决方案。以下是如何创建自定义过滤器操作符的示例：
+Drizzle 具有有用且灵活的 API，可以让你创建自定义解决方案。以下是你可以创建自定义过滤器操作符的方法：
 
 <Section>
 
@@ -128,10 +128,10 @@ select * from posts where (length(title) < 8 and views > 200);
 ```
 </Section>
 
-Drizzle 的过滤器操作符本质上是 SQL 表达式。以下是 Drizzle 中 `lt` 操作符的实现示例：
+Drizzle 的过滤器操作符在底层只是 SQL 表达式。这是 `lt` 操作符在 Drizzle 中实现的示例：
 
 ```js
 const lt = (left, right) => {
-  return sql`${left} < ${bindIfParam(right, left)}`; // bindIfParam 是内部的魔法函数
+  return sql`${left} < ${bindIfParam(right, left)}`; // bindIfParam 是内部魔法函数
 };
 ```

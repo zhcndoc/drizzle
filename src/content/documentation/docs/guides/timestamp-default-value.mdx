@@ -9,14 +9,14 @@ import CodeTabs from '@components/markdown/CodeTabs.astro';
 import CodeTab from '@components/markdown/CodeTab.astro';
 
 <Prerequisites>
-- 获取 [PostgreSQL](/docs/get-started-postgresql), [MySQL](/docs/get-started-mysql) 和 [SQLite](/docs/get-started-sqlite) 的起步信息
-- 了解 [PostgreSQL](/docs/column-types/pg), [MySQL](/docs/column-types/mysql) 和 [SQLite](/docs/column-types/sqlite) 的列数据类型
+- 开始使用 [PostgreSQL](/docs/get-started-postgresql)、[MySQL](/docs/get-started-mysql) 和 [SQLite](/docs/get-started-sqlite)
+- 了解 [PostgreSQL](/docs/column-types/pg)、[MySQL](/docs/column-types/mysql) 和 [SQLite](/docs/column-types/sqlite) 的列数据类型
 - [sql 操作符](/docs/sql)
 </Prerequisites>
 
 ### PostgreSQL
 
-在 PostgreSQL 中，要将当前时间戳设置为默认值，可以使用 `defaultNow()` 方法或带有 `now()` 函数的 `sql` 操作符，该函数返回带有时区的当前日期和时间：
+要在 PostgreSQL 中将当前时间戳设置为默认值，可以使用 `defaultNow()` 方法或带有 `now()` 函数的 `sql` 操作符，该函数返回当前日期和时间（带有时区）：
 
 <Section>
 ```ts copy {6,9}
@@ -41,11 +41,11 @@ CREATE TABLE IF NOT EXISTS "users" (
 ```
 </Section>
 
-`mode` 选项定义了在应用程序中处理值的方式。带有 `string` 模式的值在应用程序中被视为 `string`，但在数据库中存储为时间戳。
+`mode` 选项定义了应用程序中如何处理值。使用 `string` 模式的值在应用程序中被视为 `string`，但在数据库中存储为时间戳。
 
 <Section>
 ```plaintext
-// 数据存储在数据库中
+// 存储在数据库中的数据
 +----+----------------------------+----------------------------+
 | id |         timestamp1         |         timestamp2         |
 +----+----------------------------+----------------------------+
@@ -58,14 +58,14 @@ CREATE TABLE IF NOT EXISTS "users" (
 [
   {
     id: 1,
-    timestamp1: 2024-04-11T14:14:28.038Z, // Date 对象
+    timestamp1: 2024-04-11T14:14:28.038Z, // 日期对象
     timestamp2: '2024-04-11 14:14:28.038697' // 字符串
   }
 ]
 ```
 </Section>
 
-在 PostgreSQL 中，要将 Unix 时间戳设置为默认值，可以使用 `sql` 操作符和 `extract(epoch from now())` 函数，该函数返回自 "1970-01-01 00:00:00 UTC" 以来的秒数：
+要在 PostgreSQL 中将 Unix 时间戳设置为默认值，可以使用 `sql` 操作符和 `extract(epoch from now())` 函数，该函数返回自 `1970-01-01 00:00:00 UTC` 以来的秒数：
 
 <Section>
 ```ts copy {8}
@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS "users" (
 ```
 
 ```plaintext
-// 数据存储在数据库中
+// 存储在数据库中的数据
 +----+------------+
 | id | timestamp  |
 +----+------------+
@@ -110,7 +110,7 @@ CREATE TABLE IF NOT EXISTS "users" (
 
 ### MySQL
 
-在 MySQL 中，要将当前时间戳设置为默认值，可以使用 `defaultNow()` 方法或带有 `now()` 函数的 `sql` 操作符，该函数返回当前日期和时间 `(YYYY-MM-DD HH-MM-SS)`：
+要在 MySQL 中将当前时间戳设置为默认值，可以使用 `defaultNow()` 方法或带有 `now()` 函数的 `sql` 操作符，该函数返回当前日期和时间 `(YYYY-MM-DD HH-MM-SS)`：
 
 <Section>
 ```ts copy {6,9,12}
@@ -140,12 +140,12 @@ CREATE TABLE `users` (
 ```
 </Section>
 
-`fsp` 选项定义了时间戳中包含的小数秒数。默认值为 `0`。
-`mode` 选项定义了在应用程序中处理值的方式。带有 `string` 模式的值在应用程序中被视为 `string`，但在数据库中存储为时间戳。
+`fsp` 选项定义在时间戳中包含的小数秒数。默认值为 `0`。  
+`mode` 选项定义了应用程序中如何处理值。使用 `string` 模式的值在应用程序中被视为 `string`，但在数据库中存储为时间戳。
 
 <Section>
 ```plaintext
-// 数据存储在数据库中
+// 存储在数据库中的数据
 +----+---------------------+---------------------+-------------------------+
 | id | timestamp1          | timestamp2          | timestamp3              |
 +----+---------------------+---------------------+-------------------------+
@@ -158,15 +158,15 @@ CREATE TABLE `users` (
 [
   {
     id: 1,
-    timestamp1: 2024-04-11T15:24:53.000Z, // Date 对象
+    timestamp1: 2024-04-11T15:24:53.000Z, // 日期对象
     timestamp2: '2024-04-11 15:24:53', // 字符串
-    timestamp3: 2024-04-11T15:24:53.236Z // Date 对象
+    timestamp3: 2024-04-11T15:24:53.236Z // 日期对象
   }
 ]
 ```
 </Section>
 
-在 MySQL 中，要将 Unix 时间戳设置为默认值，可以使用 `sql` 操作符和 `unix_timestamp()` 函数，该函数返回自 "1970-01-01 00:00:00 UTC" 以来的秒数：
+要在 MySQL 中将 Unix 时间戳设置为默认值，可以使用 `sql` 操作符和 `unix_timestamp()` 函数，该函数返回自 `1970-01-01 00:00:00 UTC` 以来的秒数：
 
 <Section>
 ```ts copy {8}
@@ -190,7 +190,7 @@ CREATE TABLE `users` (
 ```
 
 ```plaintext
-// 数据存储在数据库中
+// 存储在数据库中的数据
 +----+------------+
 | id | timestamp  |
 +----+------------+
@@ -211,7 +211,7 @@ CREATE TABLE `users` (
 
 ### SQLite
 
-在 SQLite 中，要将当前时间戳设置为默认值，可以使用带有 `current_timestamp` 常量的 `sql` 操作符，该常量返回当前 UTC 日期和时间的文本表示 `(YYYY-MM-DD HH:MM:SS)`：
+要在 SQLite 中将当前时间戳设置为默认值，可以使用带有 `current_timestamp` 常量的 `sql` 操作符，该常量返回当前 UTC 日期和时间的文本表示 `(YYYY-MM-DD HH:MM:SS)`：
 
 <Section>
 ```ts copy {8}
@@ -234,7 +234,7 @@ CREATE TABLE `users` (
 ```
 
 ```plaintext
-// 数据存储在数据库中
+// 存储在数据库中的数据
 +----+---------------------+
 | id | timestamp           |
 +----+---------------------+
@@ -253,7 +253,7 @@ CREATE TABLE `users` (
 ```
 </Section>
 
-在 SQLite 中，要将 Unix 时间戳设置为默认值，可以使用 `sql` 操作符和 `unixepoch()` 函数，该函数返回自 "1970-01-01 00:00:00 UTC" 以来的秒数：
+要在 SQLite 中将 Unix 时间戳设置为默认值，可以使用 `sql` 操作符和 `unixepoch()` 函数，该函数返回自 `1970-01-01 00:00:00 UTC` 以来的秒数：
 
 <Section>
 ```ts copy {8,11,14}
@@ -284,12 +284,12 @@ CREATE TABLE `users` (
 ```
 </Section>
 
-`mode` 选项定义了在应用程序中处理值的方式。在应用程序中，带有 `timestamp` 和 `timestamp_ms` 模式的值被视为 `Date` 对象，但在数据库中存储为整数。
-区别在于 `timestamp` 处理秒数，而 `timestamp_ms` 处理毫秒数。
+`mode` 选项定义了应用程序中如何处理值。在应用程序中，使用 `timestamp` 和 `timestamp_ms` 模式的值被视为 `Date` 对象，但在数据库中存储为整数。  
+它们之间的区别在于，`timestamp` 处理秒，而 `timestamp_ms` 处理毫秒。
 
 <Section>
 ```plaintext
-// 数据存储在数据库中
+// 存储在数据库中的数据
 +------------+------------+---------------+------------+
 | id         | timestamp1 | timestamp2    | timestamp3 |
 +------------+------------+---------------+------------+
@@ -302,8 +302,8 @@ CREATE TABLE `users` (
 [
   {
     id: 1,
-    timestamp1: 2024-04-11T11:40:40.000Z, // Date 对象
-    timestamp2: 2024-04-11T11:40:40.000Z, // Date 对象
+    timestamp1: 2024-04-11T11:40:40.000Z, // 日期对象
+    timestamp2: 2024-04-11T11:40:40.000Z, // 日期对象
     timestamp3: 1712835640 // 数字
   }
 ]

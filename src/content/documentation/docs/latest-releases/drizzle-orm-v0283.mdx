@@ -1,24 +1,24 @@
 ---
-title: DrizzleORM v0.28.3 release
+title: DrizzleORM v0.28.3 发布
 pubDate: 2023-08-22
-description: Added SQLite simplified query API, added methods to column builders and to table model type inference. Fixed sqlite-proxy and SQL.js response from '.get()' when the result is empty.
+description: 添加了 SQLite 简化查询 API，添加了列构建器和表模型类型推断的方法。修复了当结果为空时 sqlite-proxy 和 SQL.js 的 `.get()` 响应问题。
 ---
 
-## Fixes
+## 修复
 
-- Fixed sqlite-proxy and SQL.js response from `.get()` when the result is empty
+- 修复了当结果为空时 sqlite-proxy 和 SQL.js 的 `.get()` 响应
 
-## New Features
+## 新特性
 
-### 🎉 Added SQLite simplified query API
+### 🎉 添加了 SQLite 简化查询 API
 
-### 🎉 Added `.$defaultFn()` / `.$default()` methods to column builders
+### 🎉 为列构建器添加了 `.$defaultFn()` / `.$default()` 方法
 
-For more information check docs for [PostgreSQL](/docs/column-types/pg#default-value), [MySQL](/docs/column-types/mysql#default-value) and [SQLite](/docs/column-types/sqlite#default-value).
+有关更多信息，请查看 [PostgreSQL](/docs/column-types/pg#default-value)、[MySQL](/docs/column-types/mysql#default-value) 和 [SQLite](/docs/column-types/sqlite#default-value) 的文档。
 
-You can specify any logic and any implementation for a function like `cuid()` for runtime defaults. Drizzle won't limit you in the number of implementations you can add.
+您可以为运行时默认值指定任意逻辑和实现，例如 `cuid()`。Drizzle 不会限制您可以添加的实现数量。
 
-> Note: This value does not affect the `drizzle-kit` behavior, it is only used at runtime in `drizzle-orm`
+> 注意：该值不会影响 `drizzle-kit` 的行为，仅在 `drizzle-orm` 的运行时使用。
 
 ```ts copy {5}
 import { varchar, mysqlTable } from "drizzle-orm/mysql-core";
@@ -29,9 +29,9 @@ const table = mysqlTable('table', {
 });
 ```
 
-### 🎉 Added `table.$inferSelect` / `table._.inferSelect` and `table.$inferInsert` / `table._.inferInsert` for more convenient table model type inference
+### 🎉 添加了 `table.$inferSelect` / `table._.inferSelect` 和 `table.$inferInsert` / `table._.inferInsert` 以便更方便的表模型类型推断
 
-- 🛠 Deprecated `InferModel` type in favor of more explicit `InferSelectModel` and `InferInsertModel`
+- 🛠 废弃 `InferModel` 类型，采用更明确的 `InferSelectModel` 和 `InferInsertModel`
 
 ```ts copy {11,12,14,15}
 import { InferSelectModel, InferInsertModel } from 'drizzle-orm'
@@ -51,4 +51,4 @@ type SelectUser2 = InferSelectModel<typeof usersTable>;
 type InsertUser2 = InferInsertModel<typeof usersTable>;
 ```
 
-- 🛠 Disabled `.d.ts` files bundling
+- 🛠 禁用了 `.d.ts` 文件的打包

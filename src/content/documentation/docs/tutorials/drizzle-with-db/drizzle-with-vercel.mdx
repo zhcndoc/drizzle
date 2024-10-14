@@ -1,5 +1,5 @@
 ---
-title: "Drizzle with Vercel Postgres"
+title: "使用 Vercel Postgres 的 Drizzle"
 date: "2024-06-09"
 svgs: ['<svg width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="9.63139" height="40.8516" rx="4.8157" transform="matrix(0.873028 0.48767 -0.497212 0.867629 43.4805 67.3037)" fill="currentColor"></rect><rect width="9.63139" height="40.8516" rx="4.8157" transform="matrix(0.873028 0.48767 -0.497212 0.867629 76.9395 46.5342)" fill="currentColor"></rect><rect width="9.63139" height="40.8516" rx="4.8157" transform="matrix(0.873028 0.48767 -0.497212 0.867629 128.424 46.5352)" fill="currentColor"></rect><rect width="9.63139" height="40.8516" rx="4.8157" transform="matrix(0.873028 0.48767 -0.497212 0.867629 94.957 67.3037)" fill="currentColor"></rect></svg>', <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 5L4 19H20L12 5Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>]
 ---
@@ -10,65 +10,65 @@ import Steps from '@mdx/Steps.astro';
 import Section from "@mdx/Section.astro";
 import Callout from '@mdx/Callout.astro';
 
-This tutorial demonstrates how to use Drizzle ORM with [Vercel Postgres](https://vercel.com/docs/storage/vercel-postgres). Vercel Postgres is a serverless SQL database designed to integrate with Vercel Functions and your frontend framework.
+本教程演示如何使用 Drizzle ORM 结合 [Vercel Postgres](https://vercel.com/docs/storage/vercel-postgres)。Vercel Postgres 是一个无服务器 SQL 数据库，旨在与 Vercel Functions 和您的前端框架集成。
 
 <Prerequisites>
-- You should have installed Drizzle ORM and [Drizzle kit](/docs/kit-overview). You can do this by running the following command:
+- 您应该已安装 Drizzle ORM 和 [Drizzle kit](/docs/kit-overview)。您可以通过运行以下命令来做到这一点：
 <Npm>
 drizzle-orm
 -D drizzle-kit
 </Npm>
 
-- You should have installed `dotenv` package for managing environment variables. Read more about this package [here](https://www.npmjs.com/package/dotenv)
+- 您应该已安装 `dotenv` 包以管理环境变量。有关此包的更多信息，请阅读 [这里](https://www.npmjs.com/package/dotenv)
 <Npm>
   dotenv
 </Npm>
 
-- You should have installed `@vercel/postgres` package. Read more about this package [here](https://www.npmjs.com/package/@vercel/postgres)
+- 您应该已安装 `@vercel/postgres` 包。有关此包的更多信息，请阅读 [这里](https://www.npmjs.com/package/@vercel/postgres)
 <Npm>
   @vercel/postgres
 </Npm>  
 </Prerequisites>
 
-Check [Vercel documentation](https://vercel.com/docs/storage/vercel-postgres/using-an-orm#drizzle) to learn how to connect to the database with Drizzle ORM.
+查看 [Vercel 文档](https://vercel.com/docs/storage/vercel-postgres/using-an-orm#drizzle)，了解如何使用 Drizzle ORM 连接到数据库。
 
-## Setup Vercel Postgres and Drizzle ORM
+## 设置 Vercel Postgres 和 Drizzle ORM
 
 <Steps>
-#### Create a new Vercel Postgres database
+#### 创建新的 Vercel Postgres 数据库
 
-You can create new Vercel Postgres database in the [dashboard](https://vercel.com/dashboard).
+您可以在 [控制面板](https://vercel.com/dashboard) 中创建新的 Vercel Postgres 数据库。
 
-Read Vercel Postgres [documentation](https://vercel.com/docs/storage/vercel-postgres/quickstart) to learn how to create a new database.
+请查阅 Vercel Postgres [文档](https://vercel.com/docs/storage/vercel-postgres/quickstart) 以了解如何创建新的数据库。
 
-#### Setup connection string variable
+#### 设置连接字符串变量
 
-Navigate to your Vercel Postgres database and copy `POSTGRES_URL` from `.env.local` section.
+导航至您的 Vercel Postgres 数据库并从 `.env.local` 部分复制 `POSTGRES_URL`。
 
-Add `POSTGRES_URL` to your `.env.local` or `.env` file.
+将 `POSTGRES_URL` 添加到您的 `.env.local` 或 `.env` 文件中。
 
 ```plaintext copy
 POSTGRES_URL=<YOUR_DATABASE_URL>
 ```
 
-#### Connect Drizzle ORM to your database
+#### 将 Drizzle ORM 连接到您的数据库
 
-Create a `index.ts` file in the `src/db` directory and set up your database configuration:
+在 `src/db` 目录中创建一个 `index.ts` 文件，并设置您的数据库配置：
 
 ```typescript copy filename="src/db/index.ts"
 import { sql } from '@vercel/postgres';
 import { drizzle } from 'drizzle-orm/vercel-postgres';
 import { config } from 'dotenv';
 
-config({ path: '.env.local' }); // or .env
+config({ path: '.env.local' }); // 或 .env
 
 export const db = drizzle(sql);
 
 ```
 
-#### Create tables
+#### 创建表
 
-Create a `schema.ts` file in the `src/db` directory and declare your tables:
+在 `src/db` 目录中创建一个 `schema.ts` 文件，并声明您的表：
 
 ```typescript copy filename="src/db/schema.ts"
 import { integer, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
@@ -100,11 +100,11 @@ export type InsertPost = typeof postsTable.$inferInsert;
 export type SelectPost = typeof postsTable.$inferSelect;
 ```
 
-#### Setup Drizzle config file
+#### 设置 Drizzle 配置文件
 
-**Drizzle config** - a configuration file that is used by [Drizzle Kit](/docs/kit-overview) and contains all the information about your database connection, migration folder and schema files.
+**Drizzle 配置** - 这是由 [Drizzle Kit](/docs/kit-overview) 使用的配置文件，包含有关您的数据库连接、迁移文件夹和模式文件的所有信息。
 
-Create a `drizzle.config.ts` file in the root of your project and add the following content:
+在项目根目录中创建一个 `drizzle.config.ts` 文件，并添加以下内容：
 
 ```typescript copy filename="drizzle.config.ts"
 import { config } from 'dotenv';
@@ -122,19 +122,19 @@ export default defineConfig({
 });
 ```
 
-#### Applying changes to the database
+#### 将更改应用于数据库
 
-You can generate migrations using `drizzle-kit generate` command and then run them using the `drizzle-kit migrate` command.
+您可以使用 `drizzle-kit generate` 命令生成迁移，然后使用 `drizzle-kit migrate` 命令运行它们。
 
-Generate migrations:
+生成迁移：
 
 ```bash copy
 npx drizzle-kit generate
 ```
 
-These migrations are stored in the `drizzle/migrations`  directory, as specified in your `drizzle.config.ts`. This directory will contain the SQL files necessary to update your database schema and a `meta` folder for storing snapshots of the schema at different migration stages.
+这些迁移存储在 `drizzle/migrations` 目录中，如您在 `drizzle.config.ts` 中指定的那样。该目录将包含更新您的数据库架构所需的 SQL 文件以及一个 `meta` 文件夹，用于存储不同迁移阶段的架构快照。
 
-Example of a generated migration:
+生成迁移的示例：
 
 ```sql
 CREATE TABLE IF NOT EXISTS "posts_table" (
@@ -161,25 +161,25 @@ EXCEPTION
 END $$;
 ```
 
-Run migrations:
+运行迁移：
 
 ```bash copy
 npx drizzle-kit migrate
 ```
 
-Alternatively, you can push changes directly to the database using [Drizzle kit push command](/docs/kit-overview#prototyping-with-db-push):
+或者，您可以使用 [Drizzle kit push 命令](/docs/kit-overview#prototyping-with-db-push) 直接将更改推送到数据库：
 
 ```bash copy
 npx drizzle-kit push
 ```
 
-<Callout type="warning">Push command is good for situations where you need to quickly test new schema designs or changes in a local development environment, allowing for fast iterations without the overhead of managing migration files.</Callout>
+<Callout type="warning">Push 命令适用于需要快速测试新架构设计或在本地开发环境中进行更改的情况，允许快速迭代，而无需管理迁移文件的开销。</Callout>
 
 </Steps>
 
-## Basic file structure
+## 基本文件结构
 
-This is the basic file structure of the project. In the `src/db` directory, we have database-related files including connection in `index.ts` and schema definitions in `schema.ts`.
+这是项目的基本文件结构。在 `src/db` 目录中，我们有与数据库相关的文件，包括在 `index.ts` 中的连接和在 `schema.ts` 中的模式定义。
 
 ```plaintext
 📦 <project root>
@@ -198,13 +198,13 @@ This is the basic file structure of the project. In the `src/db` directory, we h
  └ 📜 tsconfig.json
 ```
 
-## Query examples
+## 查询示例
 
-For instance, we create `src/db/queries` folder and separate files for each operation: insert, select, update, delete.
+例如，我们创建 `src/db/queries` 文件夹，并为每个操作分开文件：插入、选择、更新、删除。
 
-#### Insert data
+#### 插入数据
 
-Read more about insert query in the [documentation](/docs/insert).
+有关插入查询的更多信息，请参阅 [文档](/docs/insert)。
 
 ```typescript copy filename="src/db/queries/insert.ts" {4, 8}
 import { db } from '../index';
@@ -219,9 +219,9 @@ export async function createPost(data: InsertPost) {
 }
 ```
 
-#### Select data
+#### 选择数据
 
-Read more about select query in the [documentation](/docs/select).
+有关选择查询的更多信息，请参阅 [文档](/docs/select)。
 
 ```typescript copy filename="src/db/queries/select.ts" {5, 16, 41}
 import { asc, between, count, eq, getTableColumns, sql } from 'drizzle-orm';
@@ -286,11 +286,11 @@ export async function getPostsForLast24Hours(
 }
 ```
 
-Alternatively, you can use [relational query syntax](/docs/rqb).
+或者，您可以使用 [关系查询语法](/docs/rqb)。
 
-#### Update data
+#### 更新数据
 
-Read more about update query in the [documentation](/docs/update).
+有关更新查询的更多信息，请参阅 [文档](/docs/update)。
 
 ```typescript copy filename="src/db/queries/update.ts" {5}
 import { eq } from 'drizzle-orm';
@@ -302,9 +302,9 @@ export async function updatePost(id: SelectPost['id'], data: Partial<Omit<Select
 }
 ```
 
-#### Delete data
+#### 删除数据
 
-Read more about delete query in the [documentation](/docs/delete).
+有关删除查询的更多信息，请参阅 [文档](/docs/delete)。
 
 ```typescript copy filename="src/db/queries/delete.ts" {5}
 import { eq } from 'drizzle-orm';

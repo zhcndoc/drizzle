@@ -1,18 +1,18 @@
 ---
-title: DrizzleORM v0.29.5 release
+title: DrizzleORM v0.29.5 发布
 pubDate: 2024-03-06
-description: Added with update, with delete, with insert, possibility to specify custom schema and custom name for migrations table, sqlite proxy batch and relational queries support.
+description: 增加了与更新、与删除、与插入，能够指定自定义模式和迁移表的自定义名称，sqlite 代理批量和关系查询支持。
 ---
 
 import Section from "@mdx/Section.astro";
 
-## New Features
+## 新特性
 
-### 🎉 WITH UPDATE, WITH DELETE, WITH INSERT
+### 🎉 WITH 更新、WITH 删除、WITH 插入
 
-You can now use `WITH` statements with [INSERT](/docs/insert#with-insert-clause), [UPDATE](/docs/update#with-update-clause) and [DELETE](/docs/delete#with-delete-clause) statements
+现在您可以在 [INSERT](/docs/insert#with-insert-clause)、[UPDATE](/docs/update#with-update-clause) 和 [DELETE](/docs/delete#with-delete-clause) 语句中使用 `WITH` 语句。
 
-Usage examples
+使用示例
 
 <Section>
 ```ts copy {6,7}
@@ -37,22 +37,22 @@ returning "id";
 ```
 </Section>
 
-For more examples for all statements, check docs:
+有关所有语句的更多示例，请查看文档：
 
-- [with insert docs](/docs/insert#with-insert-clause)
-- [with update docs](/docs/update#with-update-clause)
-- [with delete docs](/docs/delete#with-delete-clause)
+- [with insert 文档](/docs/insert#with-insert-clause)
+- [with update 文档](/docs/update#with-update-clause)
+- [with delete 文档](/docs/delete#with-delete-clause)
 
-### 🎉 Possibility to specify custom schema and custom name for migrations table
+### 🎉 能够指定自定义模式和迁移表的自定义名称
 
-- **Custom table for migrations**
+- **自定义迁移表**
 
-By default, all information about executed migrations will be stored in the database inside the `__drizzle_migrations` table,
-and for PostgreSQL, inside the `drizzle` schema. However, you can configure where to store those records.
+默认情况下，所有有关已执行迁移的信息将存储在数据库的 `__drizzle_migrations` 表中，
+PostgreSQL 中则在 `drizzle` 模式下。然而，您可以配置存储这些记录的位置。
 
-To add a custom table name for migrations stored inside your database, you should use the `migrationsTable` option
+要为存储在数据库中的迁移添加自定义表名，您应使用 `migrationsTable` 选项。
 
-Usage example
+使用示例
 
 ```ts copy {3}
 await migrate(db, {
@@ -61,13 +61,13 @@ await migrate(db, {
 });
 ```
 
-- **Custom schema for migrations**
+- **自定义迁移模式**
 
-> Works only with PostgreSQL databases
+> 仅适用于 PostgreSQL 数据库
 
-To add a custom schema name for migrations stored inside your database, you should use the `migrationsSchema` option
+要为存储在数据库中的迁移添加自定义模式名称，您应使用 `migrationsSchema` 选项。
 
-Usage example
+使用示例
 
 ```ts copy {3}
 await migrate(db, {
@@ -76,15 +76,15 @@ await migrate(db, {
 });
 ```
 
-### 🎉 SQLite Proxy bacth and Relational Queries support
+### 🎉 SQLite 代理批量和关系查询支持
 
-You can find more information about SQLite proxy in [docs](/docs/get-started-sqlite#http-proxy).
+您可以在 [文档](/docs/get-started-sqlite#http-proxy) 中找到有关 SQLite 代理的更多信息。
 
-- You can now use `.query.findFirst` and `.query.findMany` syntax with sqlite proxy driver
+- 您现在可以使用 `.query.findFirst` 和 `.query.findMany` 语法与 sqlite 代理驱动程序。
 
-- SQLite Proxy supports batch requests, the same as it's done for all other drivers. Check full [docs](/docs/batch-api)
+- SQLite 代理支持批量请求，就像其他所有驱动程序一样。请查看完整的 [文档](/docs/batch-api)。
 
-  You will need to specify a specific callback for batch queries and handle requests to proxy server:
+您需要为批量查询指定特定回调并处理对代理服务器的请求：
 
 ```ts
 import { drizzle } from 'drizzle-orm/sqlite-proxy';
@@ -93,9 +93,9 @@ type ResponseType = { rows: any[][] | any[] }[];
 
 const db = drizzle(
 	async (sql, params, method) => {
-		// single query logic
+		// 单个查询逻辑
 	},
-	// new batch callback
+	// 新的批量回调
 	async (
 		queries: {
 			sql: string;
@@ -111,13 +111,13 @@ const db = drizzle(
 
 			return result;
 		} catch (e: any) {
-			console.error('Error from sqlite proxy server:', e);
+			console.error('来自 sqlite 代理服务器的错误:', e);
 			throw e;
 		}
 	},
 );
 ```
 
-And then you can use `db.batch([])` method, that will proxy all queries
+然后您可以使用 `db.batch([])` 方法，该方法将代理所有查询。
 
-> Response from the batch should be an array of raw values (an array within an array), in the same order as they were sent to the proxy server
+> 批量响应应为原始值的数组（数组中的数组），顺序与发送到代理服务器时相同。

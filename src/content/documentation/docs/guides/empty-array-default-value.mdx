@@ -7,14 +7,14 @@ import Section from "@mdx/Section.astro";
 import Prerequisites from "@mdx/Prerequisites.astro";
 
 <Prerequisites>
-- 开始使用 [PostgreSQL](/docs/get-started-postgresql), [MySQL](/docs/get-started-mysql) 和 [SQLite](/docs/get-started-sqlite)
-- 了解 [PostgreSQL](/docs/column-types/pg), [MySQL](/docs/column-types/mysql) 和 [SQLite](/docs/column-types/sqlite) 的列数据类型
-- [SQL 运算符](/docs/sql)
+- 开始使用 [PostgreSQL](/docs/get-started-postgresql)、[MySQL](/docs/get-started-mysql) 和 [SQLite](/docs/get-started-sqlite)
+- 了解 [PostgreSQL](/docs/column-types/pg)、[MySQL](/docs/column-types/mysql) 和 [SQLite](/docs/column-types/sqlite) 的列数据类型
+- [sql 操作符](/docs/sql)
 </Prerequisites>
 
 ### PostgreSQL
 
-要在 PostgreSQL 中将空数组设置为默认值，可以使用 `sql` 运算符配合 `'{}'` 或 `ARRAY[]` 语法：
+要在 PostgreSQL 中将空数组设置为默认值，可以使用 `sql` 操作符和 `'{}'` 或 `ARRAY[]` 语法：
 
 <Section>
 ```ts copy {10,14}
@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS "users" (
 
 ### MySQL
 
-MySQL 没有数组数据类型，但可以使用 `json` 数据类型实现相同的目的。要在 MySQL 中将空数组设置为默认值，可以使用 `JSON_ARRAY()` 函数或 `sql` 运算符配合 `('[]')` 语法：
+MySQL 没有数组数据类型，但可以使用 `json` 数据类型来达到相同的目的。要在 MySQL 中将空数组设置为默认值，可以使用 `JSON_ARRAY()` 函数或 `sql` 操作符和 `('[]')` 语法：
 
 <Section>
 ```ts copy {7,11,15}
@@ -82,13 +82,13 @@ CREATE TABLE `users` (
 ```
 </Section>
 
-`mode` 选项定义了在应用程序中如何处理值。在 `json` 模式下，值会被当作 JSON 对象字面量处理。
+`mode` 选项定义了应用中如何处理值。在 `json` 模式下，值被视为 JSON 对象字面量。
 
-你可以为 json 对象推断指定 `.$type<..>()`，它不会检查运行时的值。它为默认值、插入和选择模式提供了编译时的保护。
+您可以为 JSON 对象推断指定 `.$type<..>()`，它不会检查运行时值。它为默认值、插入和选择模式提供了编译时保护。
 
 ### SQLite
 
-SQLite 没有数组数据类型，但可以使用 `text` 数据类型实现相同的目的。要在 SQLite 中将空数组设置为默认值，可以使用 `json_array()` 函数或 `sql` 运算符配合 `'[]'` 语法：
+SQLite 没有数组数据类型，但可以使用 `text` 数据类型来达到相同目的。要在 SQLite 中将空数组设置为默认值，可以使用 `json_array()` 函数或 `sql` 操作符和 `'[]'` 语法：
 
 <Section>
 ```ts copy {9,13}
@@ -117,6 +117,6 @@ CREATE TABLE `users` (
 ```
 </Section>
 
-`mode` 选项定义了在应用程序中如何处理值。在 `json` 模式下，值会被当作 JSON 对象字面量处理。
+`mode` 选项定义了应用中如何处理值。在 `json` 模式下，值被视为 JSON 对象字面量。
 
-你可以为 json 对象推断指定 `.$type<..>()`，它不会检查运行时的值。它为默认值、插入和选择模式提供了编译时的保护。
+您可以为 JSON 对象推断指定 `.$type<..>()`，它不会检查运行时值。它为默认值、插入和选择模式提供了编译时保护。

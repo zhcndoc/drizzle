@@ -1,5 +1,5 @@
 ---
-title: Point datatype in PostgreSQL
+title: PostgreSQL 中的点数据类型
 slug: point-datatype-psql
 ---
 
@@ -9,14 +9,14 @@ import CodeTabs from '@components/markdown/CodeTabs.astro';
 import CodeTab from '@components/markdown/CodeTab.astro';
 
 <Prerequisites>
-- Get started with [PostgreSQL](/docs/get-started-postgresql)
-- [Point datatype](/docs/column-types/pg#point)
-- [Filtering in select statement](/docs/select#filtering)
-- [sql operator](/docs/sql)
+- 开始使用 [PostgreSQL](/docs/get-started-postgresql)
+- [点数据类型](/docs/column-types/pg#point)
+- [选择语句中的过滤](/docs/select#filtering)
+- [sql 操作符](/docs/sql)
 </Prerequisites>
 
-PostgreSQL has a special datatype to store geometric data called `point`. It is used to represent a point in a two-dimensional space. The point datatype is represented as a pair of `(x, y)` coordinates.
-The point expects to receive longitude first, followed by latitude.
+PostgreSQL 具有一种特殊的数据类型用于存储几何数据，称为 `point`。它用于表示二维空间中的一个点。点数据类型以一对 `(x, y)` 坐标表示。
+点数据类型期待先接收经度，然后是纬度。
 
 <Section>
 ```ts copy {6}
@@ -38,7 +38,7 @@ await db.execute(
 ```
 </Section>
 
-This is how you can create table with `point` datatype in Drizzle:
+以下是如何在 Drizzle 中创建一个具有 `point` 数据类型的表：
 
 ```ts {6}
 import { pgTable, point, serial, text } from 'drizzle-orm/pg-core';
@@ -50,7 +50,7 @@ export const stores = pgTable('stores', {
 });
 ```
 
-This is how you can insert point data into the table in Drizzle:
+以下是如何在 Drizzle 中插入点数据到表中：
 
 ```ts {4, 10, 16}
 // mode: 'xy'
@@ -65,14 +65,14 @@ await db.insert(stores).values({
   location: [-90.9, 18.7],
 });
 
-// sql raw
+// sql 原生
 await db.insert(stores).values({
   name: 'Test',
   location: sql`point(-90.9, 18.7)`,
 });
 ```
 
-To compute the distance between the objects you can use `<->` operator. This is how you can query for the nearest location by coordinates in Drizzle:
+要计算对象之间的距离，可以使用 `<->` 操作符。以下是如何在 Drizzle 中根据坐标查询最近位置：
 
 <Section>
 ```ts {9, 14, 17}
@@ -103,7 +103,7 @@ limit 1;
 ```
 </Section>
 
-To filter rows to include only those where a `point` type `location` falls within a specified rectangular boundary defined by two diagonal points you can user `<@` operator. It checks if the first object is contained in or on the second object:
+要过滤行以仅包括 `point` 类型的 `location` 在由两个对角点定义的指定矩形边界内的行，可以使用 `<@` 操作符。该操作符检查第一个对象是否被包含在第二个对象内或在其上：
 
 <Section>
 ```ts {12}

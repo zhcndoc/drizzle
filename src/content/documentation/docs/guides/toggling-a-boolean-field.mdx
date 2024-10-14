@@ -6,16 +6,16 @@ import Section from "@mdx/Section.astro";
 import IsSupportedChipGroup from "@mdx/IsSupportedChipGroup.astro";
 import Prerequisites from "@mdx/Prerequisites.astro";
 
-<IsSupportedChipGroup chips={{ PostgreSQL: true, MySQL: true, SQLite: true }} />
+<IsSupportedChipGroup chips={{PostgreSQL: true, MySQL: true, SQLite: true}}/>
 
 <Prerequisites>
-- 开始使用[PostgreSQL](/docs/get-started-postgresql)、[MySQL](/docs/get-started-mysql)和[SQLite](/docs/get-started-sqlite)
+- 开始使用 [PostgreSQL](/docs/get-started-postgresql), [MySQL](/docs/get-started-mysql) 和 [SQLite](/docs/get-started-sqlite)
 - [更新语句](/docs/update)
-- [筛选条件](/docs/operators)和[not 操作符](/docs/operators#not)
-- [MySQL 的布尔数据类型](/docs/column-types/mysql#boolean)和[SQLite 的布尔数据类型](/docs/column-types/sqlite#boolean)
+- [过滤器](/docs/operators) 和 [非操作符](/docs/operators#not)
+- [MySQL](/docs/column-types/mysql#boolean) 和 [SQLite](/docs/column-types/sqlite#boolean) 中的布尔数据类型
 </Prerequisites>
 
-要切换列的值，您可以使用 `update().set()` 方法，如下所示：
+要切换列值，可以使用 `update().set()` 方法，如下所示：
 
 <Section>
 ```tsx copy {8}
@@ -38,4 +38,4 @@ update "table" set "is_active" = not "is_active" where "id" = 1;
 
 请注意，MySQL 和 SQLite 中没有布尔类型。
 MySQL 使用 tinyint(1)。
-SQLite 使用整数 0（假）和 1（真）。
+SQLite 使用整数 0（false）和 1（true）。 

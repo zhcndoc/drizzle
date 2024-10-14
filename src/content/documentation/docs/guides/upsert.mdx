@@ -1,5 +1,5 @@
 ---
-title: Upsert Query
+title: Upsert 查询
 slug: upsert
 ---
 
@@ -12,15 +12,15 @@ import CodeTab from '@components/markdown/CodeTab.astro';
 <IsSupportedChipGroup chips={{PostgreSQL: true, MySQL: true, SQLite: true}}/>
 
 <Prerequisites>
-- Get started with [PostgreSQL](/docs/get-started-postgresql), [MySQL](/docs/get-started-mysql) and [SQLite](/docs/get-started-sqlite)
-- [Insert statement](/docs/insert), [onConflictDoUpdate method](/docs/insert#on-conflict-do-update) and [onDuplicateKeyUpdate method](/docs/insert#on-duplicate-key-update)
-- [Composite primary key](/docs/indexes-constraints#composite-primary-key)
-- [sql operator](/docs/sql)
+- 开始使用 [PostgreSQL](/docs/get-started-postgresql), [MySQL](/docs/get-started-mysql) 和 [SQLite](/docs/get-started-sqlite)
+- [插入语句](/docs/insert), [onConflictDoUpdate 方法](/docs/insert#on-conflict-do-update) 和 [onDuplicateKeyUpdate 方法](/docs/insert#on-duplicate-key-update)
+- [复合主键](/docs/indexes-constraints#composite-primary-key)
+- [sql 操作符](/docs/sql)
 </Prerequisites>
 
-### PostgreSQL and SQLite
+### PostgreSQL 和 SQLite
 
-To implement an upsert query in PostgreSQL and SQLite (skip to [MySQL](/docs/guides/upsert#mysql)) with Drizzle you can use `.onConflictDoUpdate()` method:
+要在 PostgreSQL 和 SQLite 中实现上插入查询（跳到 [MySQL](/docs/guides/upsert#mysql)），可以使用 `.onConflictDoUpdate()` 方法：
 
 <Section>
 ```ts copy {8,9,10,11}
@@ -43,9 +43,9 @@ insert into users ("id", "name") values (1, 'John')
 ```
 </Section>
 
-To upsert multiple rows in one query in PostgreSQL and SQLite you can use `sql operator` and `excluded` keyword. `excluded` is a special reference that refer to the row that was proposed for insertion, but wasn't inserted because of the conflict.
+要在 PostgreSQL 和 SQLite 中一次查询上插入多行，您可以使用 `sql 操作符` 和 `excluded` 关键词。`excluded` 是一个特殊引用，指的是因冲突而未插入的提议行。
 
-This is how you can do it:
+您可以这样做：
 
 <CodeTabs items={["index.ts", "schema.ts"]}>
   <CodeTab>
@@ -96,7 +96,7 @@ This is how you can do it:
   ```
 </CodeTabs>
 
-Drizzle has simple and flexible API, which lets you easily create custom solutions. This is how you do custom function for updating specific columns in multiple rows due to the conflict in PostgreSQL and SQLite:
+Drizzle 提供了简单而灵活的 API，可以让您轻松创建自定义解决方案。这是如何针对 PostgreSQL 和 SQLite 中由于冲突而更新特定列的自定义函数：
 
 <CodeTabs items={["index.ts", "schema.ts"]}>
   <CodeTab>
@@ -170,7 +170,7 @@ Drizzle has simple and flexible API, which lets you easily create custom solutio
   ```
 </CodeTabs>
 
-This is how you can implement an upsert query with multiple targets in PostgreSQL and SQLite:
+这是如何在 PostgreSQL 和 SQLite 中使用多个目标实现上插入查询：
 
 <Section>
 ```ts copy {8}
@@ -181,8 +181,8 @@ await db
   .insert(inventory)
   .values({ warehouseId: 1, productId: 1, quantity: 100 })
   .onConflictDoUpdate({
-    target: [inventory.warehouseId, inventory.productId], // composite primary key
-    set: { quantity: sql`${inventory.quantity} + 100` }, // add 100 to the existing quantity
+    target: [inventory.warehouseId, inventory.productId], // 复合主键
+    set: { quantity: sql`${inventory.quantity} + 100` }, // 将现有数量增加 100
   });
 ```
 
@@ -192,7 +192,7 @@ insert into inventory ("warehouse_id", "product_id", "quantity") values (1, 1, 1
 ```
 </Section>
 
-If you want to implement upsert query with `where` clause for `update` statement, you can use `setWhere` property in `onConflictDoUpdate` method:
+如果您想在 `update` 语句中实现带有 `where` 条件的上插入查询，可以使用 `setWhere` 属性在 `onConflictDoUpdate` 方法中：
 
 <CodeTabs items={["index.ts", "schema.ts"]}>
   <CodeTab>
@@ -251,7 +251,7 @@ If you want to implement upsert query with `where` clause for `update` statement
 </CodeTabs>
 
 
-If you want to update all columns except of specific one, you can leave the previous value like this:
+如果您想更新所有列，除了特定的一列，您可以像这样保留先前的值：
 
 <Section>
 ```ts copy {16}
@@ -270,7 +270,7 @@ await db
   .values(data)
   .onConflictDoUpdate({
     target: users.id,
-    set: { ...data, email: sql`${users.email}` }, // leave email as it was
+    set: { ...data, email: sql`${users.email}` }, // 保持 email 不变
 });
 ```
 
@@ -282,9 +282,9 @@ insert into users ("id", "name", "email", "age") values (1, 'John', 'john@email.
 
 ### MySQL
 
-To implement an upsert query in MySQL with Drizzle you can use `.onDuplicateKeyUpdate()` method. MySQL will automatically determine the conflict target based on the primary key and unique indexes, and will update the row if any unique index conflicts.
+要在 MySQL 中实现上插入查询，可以使用 `.onDuplicateKeyUpdate()` 方法。MySQL 会根据主键和唯一索引自动确定冲突目标，如果有任何唯一索引冲突，将会更新该行。
 
-This is how you can do it:
+您可以这样做：
 
 <Section>
 ```ts copy {4}
@@ -300,7 +300,7 @@ insert into users (`id`, `first_name`) values (1, 'John')
 ```
 </Section>
 
-To upsert multiple rows in one query in MySQL you can use `sql operator` and `values()` function. `values()` function refers to the value of column that would be inserted if duplicate-key conflict hadn't occurred.  
+要在 MySQL 中一次查询上插入多行，您可以使用 `sql 操作符` 和 `values()` 函数。`values()` 函数指的是如果没有发生重复键冲突，则将插入的列的值。  
 
 <CodeTabs items={["index.ts", "schema.ts"]}>
   <CodeTab>
@@ -352,7 +352,7 @@ To upsert multiple rows in one query in MySQL you can use `sql operator` and `va
   ```
 </CodeTabs>
 
-Drizzle has simple and flexible API, which lets you easily create custom solutions. This is how you do custom function for updating specific columns in multiple rows due to the conflict in MySQL:
+Drizzle 提供了简单而灵活的 API，可以让您轻松创建自定义解决方案。这是如何针对 MySQL 中由于冲突而更新特定列的自定义函数：
 
 <CodeTabs items={["index.ts", "schema.ts"]}>
   <CodeTab>
@@ -418,7 +418,7 @@ Drizzle has simple and flexible API, which lets you easily create custom solutio
   ```
 </CodeTabs>
 
-If you want to update all columns except of specific one, you can leave the previous value like this:
+如果您想更新所有列，除了特定的一列，您可以像这样保留先前的值：
 
 <Section>
 ```ts copy {15}
@@ -436,7 +436,7 @@ await db
   .insert(users)
   .values(data)
   .onDuplicateKeyUpdate({
-    set: { ...data, email: sql`${users.email}` }, // leave email as it was
+    set: { ...data, email: sql`${users.email}` }, // 保持 email 不变
 });
 ```
 

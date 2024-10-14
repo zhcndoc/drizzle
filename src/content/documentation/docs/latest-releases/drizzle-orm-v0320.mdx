@@ -1,18 +1,18 @@
 ---
-title: DrizzleORM v0.32.0 发布
+title: DrizzleORM v0.32.0 发布说明
 pubDate: 2024-07-10
-description: 生成列、唯一标识列、序列等新功能
+description: 生成列、标识列、序列等更多功能
 ---
 
 # `drizzle-orm@0.32.0` 和 `drizzle-kit@0.23.0` 的发布说明
 
-> 升级两个包不是强制性的，但如果您想在查询和迁移中使用新功能，您需要升级两个包。
+> 升级这两个包并不是强制的，但如果您希望在查询和迁移中使用新功能，则需要同时升级这两个包。
 
-## 新特性
+## 新功能
 
-### 🎉 MySQL 的 `$returningId()` 函数
+### 🎉 MySQL `$returningId()` 函数
 
-MySQL 本身不支持 `INSERT` 之后原生的 `RETURNING`。对于具有 `autoincrement`（或 `serial`）类型的 `primary keys`，只有一种方法可以做到这一点，你可以访问 `insertId` 和 `affectedRows` 字段。我们已经为 Drizzle 准备了一个自动处理此类情况的方式，并且会自动为你返回所有插入的 ID 作为独立对象。
+MySQL 本身在使用 `INSERT` 后并不支持 `RETURNING`。对于 `自增`（或 `序列`）类型的 `主键`，只有一种方法可以做到，即访问 `insertId` 和 `affectedRows` 字段。我们为您准备了一种自动处理此类情况的方法，使用 Drizzle 并自动接收所有插入的 ID 作为单独对象。
 
 ```ts
 import { boolean, int, text, mysqlTable } from 'drizzle-orm/mysql-core';
@@ -28,7 +28,7 @@ const result = await db.insert(usersTable).values([{ name: 'John' }, { name: 'Jo
 //    ^? { id: number }[]
 ```
 
-也通过 Drizzle，你可以指定一个 `primary key` 使用 `$default` 函数在运行时生成自定义主键。我们也会在 `$returningId()` 调用中为你返回这些生成的键。
+使用 Drizzle，您还可以通过 `$default` 函数指定 `主键`，该函数将在运行时生成自定义主键。我们也会在 `$returningId()` 调用中返回这些生成的键。
 
 ```ts
 import { varchar, text, mysqlTable } from 'drizzle-orm/mysql-core';
@@ -44,18 +44,18 @@ const result = await db.insert(usersTableDefFn).values([{ name: 'John' }, { name
 //  ^? { customId: string }[]
 ```
 
-> 如果没有主键 -> 类型将会是 `{}[]` 对于此类查询。
+> 如果没有主键 -> 此类查询的类型将是 `{}[]`。
 
 ### 🎉 PostgreSQL 序列
 
-您现在可以在 Postgres 中指定任何您需要的模式下的序列，并定义所有可用的属性。
+现在您可以在 Postgres 中指定任何需要的模式中的序列，并定义所有可用属性。
 
 ##### **示例**
 
 ```ts
 import { pgSchema, pgSequence } from "drizzle-orm/pg-core";
 
-// 未指定任何参数
+// 未指定参数
 export const customSequence = pgSequence("name");
 
 // 带参数的序列
@@ -74,9 +74,9 @@ export const customSchema = pgSchema('custom_schema');
 export const customSequence = customSchema.sequence("name");
 ```
 
-### 🎉 PostgreSQL 唯一标识列
+### 🎉 PostgreSQL 标识列
 
-[源](https://wiki.postgresql.org/wiki/Don%27t_Do_This#Don.27t_use_serial): 如前所述，Postgres 中的 `serial` 类型已经过时，应该被弃用。理想情况下，您不应该使用它。推荐的方式是使用唯一标识列在您的模式中指定序列，这就是为什么我们正在引入唯一标识列功能。
+[来源](https://wiki.postgresql.org/wiki/Don%27t_Do_This#Don.27t_use_serial)：如前文所述，Postgres 中的 `serial` 类型已过时，应该被弃用。理想情况下，您不应该使用它。`标识列` 是在您的模式中指定序列的推荐方式，这也是我们引入 `标识列` 特性的原因。
 
 ##### **示例**
 
@@ -90,15 +90,15 @@ export const ingredients = pgTable("ingredients", {
 });
 ```
 
-您可以在 `.generatedAlwaysAsIdentity()` 函数中指定所有序列可用的属性。此外，您还可以为这些序列指定自定义名称。
+您可以在 `.generatedAlwaysAsIdentity()` 函数中指定序列可用的所有属性。此外，您可以为这些序列指定自定义名称。
 
 PostgreSQL 文档 [参考](https://www.postgresql.org/docs/current/sql-createtable.html#SQL-CREATETABLE-PARMS-GENERATED-IDENTITY)。
 
 ### 🎉 PostgreSQL 生成列
 
-您现在可以在 Postgres 中指定任何 PostgreSQL 支持的列上使用生成列。
+现在您可以在任何支持 PostgreSQL 的列上指定生成列，以便使用生成列。
 
-##### **示例** 使用 `tsvector` 生成列
+##### **示例** 生成列用于 `tsvector`
 
 > 注意：在最新发布之前，我们将添加 `tsVector` 列类型。
 
@@ -129,7 +129,7 @@ export const test = pgTable(
 );
 ```
 
-在您不需要引用表中任何列的情况下，您可以在 `.generatedAlwaysAs()` 中使用 `sql` 模板或 `string`。
+如果您不需要引用任何表中的列，您可以仅使用 `sql` 模板或字符串。
 
 ```ts
 export const users = pgTable("users", {
@@ -137,20 +137,20 @@ export const users = pgTable("users", {
   name: text("name"),
   generatedName: text("gen_name").generatedAlwaysAs(sql`hello world!`),
   generatedName1: text("gen_name1").generatedAlwaysAs("hello world!"),
-})
+}),
 ```
 
 ### 🎉 MySQL 生成列
 
-您现在可以在 MySQL 中指定任何支持的列上使用生成列。
+您现在可以在任何支持 MySQL 的列上指定生成列。
 
-您可以指定 `stored` 和 `virtual` 选项，更多信息您可以查看 [MySQL 文档](https://dev.mysql.com/doc/refman/8.4/en/create-table-generated-columns.html)。
+您可以指定 `stored` 和 `virtual` 选项，更多信息请查看 [MySQL 文档](https://dev.mysql.com/doc/refman/8.4/en/create-table-generated-columns.html)。
 
-同样，MySQL 对于这类列的使用有几个限制，这些限制在 [这里](https://dev.mysql.com/doc/refman/8.4/en/alter-table-generated-columns.html) 描述。
+此外，MySQL 对于这些列的使用有一些限制，如 [这里所述](https://dev.mysql.com/doc/refman/8.4/en/alter-table-generated-columns.html)。
 
-Drizzle Kit 对于 `push` 命令也会有一些限制：
+Drizzle Kit 也会对 `push` 命令有一些限制：
 
-1. 您不能使用 `push` 更改生成约束表达式和类型。Drizzle-kit 将忽略这个更改。为了使它工作，您需要 `drop the column`，`push`，然后 `添加一个带新表达式的列`。这是因为从数据库侧映射的复杂性，在数据库侧，模式表达式将被修改，在我们进行内省时，我们将获得一个不同的字符串。我们不能确定你是否更改了这个表达式，或者是数据库更改和格式化了它。只要这些是生成列，并且 `push` 主要用于在本地数据库上进行原型设计，那么快速地 `drop` 和 `create` 生成列应该是可以的。由于这些列是 `generated`，所有数据都将被恢复。
+1. 您不能通过 `push` 更改生成的约束表达式和类型。Drizzle-kit 将忽略此更改。要使其生效，您需要 `删除列`、`push`，然后 `添加一个带有新表达式的列`。这是由于数据库端复杂的映射，模式表达式将在数据库端被修改，而在内省时我们将得到不同的字符串。我们无法确定您是更改了该表达式，还是数据库进行了更改并重新格式化。由于这些是生成的列，且 `push` 主要用于本地数据库的原型设计，因此删除和创建生成列应该很快。由于这些列是 `生成的`，所有数据将被恢复。
 
 2. `generate` 应该没有限制。
 
@@ -169,50 +169,50 @@ export const users = mysqlTable("users", {
     (): SQL => sql`${schema2.users.name} || 'hello'`,
     { mode: "virtual" }
   ),
-})
+}),
 ```
 
-在您不需要引用表中任何列的情况下，您可以在 `.generatedAlwaysAs()` 中使用 `sql` 模板或 `string`。
+如果您不需要引用任何表中的列，您可以在 `.generatedAlwaysAs()` 中仅使用 `sql` 模板或字符串。
 
 ### 🎉 SQLite 生成列
 
-您现在可以在 SQLite 中指定任何支持的列上使用生成列。
+您现在可以在任何支持 SQLite 的列上指定生成列。
 
-您可以指定 `stored` 和 `virtual` 选项，更多信息您可以查看 [SQLite 文档](https://www.sqlite.org/gencol.html)。
+您可以指定 `stored` 和 `virtual` 选项，更多信息请查看 [SQLite 文档](https://www.sqlite.org/gencol.html)。
 
-同样，SQLite 对于这类列的使用有几个限制，这些限制在 [这里](https://www.sqlite.org/gencol.html) 描述。
+此外，SQLite 对这些列的使用也有一些限制，如 [这里所述](https://www.sqlite.org/gencol.html)。
 
-Drizzle Kit 对于 `push` 和 `generate` 命令也会有以下限制：
+Drizzle Kit 也会对 `push` 和 `generate` 命令有一些限制：
 
-1. 您不能更改现有表中 `stored` 类型生成约束的表达式。您需要删除这个表并重新创建它。这是由于 SQLite 对于此类动作的限制。我们将在未来的版本中处理这种情况（它将涉及创建一个带有数据迁移的新表）。
+1. 您不能在现有表中更改存储类型的生成约束表达式。您需要删除此表并重新创建它。这是由于 SQLite 在此类操作中的限制。我们将在未来的发布中处理此情况（这将涉及创建新表和数据迁移）。
 
-2. 您不能在现有列中添加 `stored` 类型的生成表达式。但是您可以添加 `virtual` 表达式到现有列。
+2. 您不能为同一列添加存储的生成表达式，原因与上述相同。然而，您可以向现有列添加虚拟表达式。
 
-3. 您不能更改现有列中的 `stored` 生成表达式。但是您可以更改 `virtual` 表达式。
+3. 您不能更改现有列的存储生成表达式，原因与上述相同。然而，您可以更改虚拟表达式。
 
-4. 您不能将 `stored` 类型的生成表达式从 `virtual` 更改为 `stored`。但是您可以更改从 `stored` 到 `virtual`。
+4. 您不能将生成约束类型从虚拟更改为存储，原因与上述相同。然而，您可以将存储更改为虚拟。
 
-## 新 Drizzle Kit 功能
+## 新的 Drizzle Kit 特性
 
-### 🎉 支持所有或m 新功能
+### 🎉 对所有新 ORM 功能的迁移支持
 
-PostgreSQL 的序列、唯一标识列和所有方言的生成列。
+PostgreSQL 序列、标识列和所有方言的生成列。
 
-### 🎉 New flag `--force` for `drizzle-kit push`
+### 🎉 `drizzle-kit push` 的新标志 `--force`
 
-您可以使用 `push` 命令自动接受所有可能导致数据丢失的语句。这仅在 CLI 参数中可用。确保您总是使用它，如果您对在数据库上运行可能导致数据丢失的语句感到满意。
+您可以在使用 push 命令时自动接受所有数据丢失语句。它仅在 CLI 参数中可用。如果您愿意在数据库上运行数据丢失语句，请务必使用此选项。
 
-### 🎉 New `migrations` flag `prefix`
+### 🎉 新的 `migrations` 标志 `prefix`
 
-您现在可以自定义迁移文件前缀，以使格式适合您的迁移工具：
+您现在可以自定义迁移文件的前缀，以便使格式适合您的迁移工具：
 
-- `index` 是默认类型，将导致 `0001_name.sql` 文件名；
-- `supabase` 和 `timestamp` 是等价的，将导致 `20240627123900_name.sql` 文件名；
-- `unix` 将导致 Unix 秒前缀 `1719481298_name.sql` 文件名；
-- `none` 将完全省略前缀。
+- `index` 是默认类型，将生成 `0001_name.sql` 文件名；
+- `supabase` 和 `timestamp` 相同，将生成 `20240627123900_name.sql` 文件名；
+- `unix` 将生成 unix 秒前缀 `1719481298_name.sql` 文件名；
+- `none` 将完全省略前缀；
 
 
-##### **示例**: Supabase 迁移格式
+##### **示例**：Supabase 迁移格式
 ```ts
 import { defineConfig } from "drizzle-kit";
 

@@ -1,28 +1,28 @@
 ---
-title: "Migrate from Prisma to Drizzle"
+title: "从 Prisma 迁移到 Drizzle"
 ---
 import Steps from "@mdx/Steps.astro";
 import Npm from "@mdx/Npm.astro";
 
-## Getting Started
+## 入门
 
-This guide provides a straightforward approach to migrating a basic **Prisma** project to **Drizzle ORM**. Although the example focuses on `PostgreSQL`, the process is similar for other supported databases.
+本指南提供了将基本 **Prisma** 项目迁移到 **Drizzle ORM** 的简明方法。尽管示例侧重于 `PostgreSQL`，但其他支持的数据库的过程也类似。
 
-### Overview of the migration process
+### 迁移过程概述
 
-Regardless of your application type or API layer, the steps to transition from **Prisma** to **Drizzle ORM** remain consistent:
+无论您的应用类型或 API 层如何，从 **Prisma** 迁移到 **Drizzle ORM** 的步骤都是一致的：
 
-1. Install **Drizzle ORM** & **Drizzle Kit**
-2. Setup **Drizzle config** file
-3. Introspect your database
-4. Connect **Drizzle ORM** to your database
-5. Transition your **Prisma** queries to **Drizzle ORM** queries
+1. 安装 **Drizzle ORM** 和 **Drizzle Kit**
+2. 设置 **Drizzle 配置** 文件
+3. 反向工程您的数据库
+4. 将 **Drizzle ORM** 连接到您的数据库
+5. 将 **Prisma** 查询转换为 **Drizzle ORM** 查询
 
-These steps are applicable whether you're developing a REST API (for example, with Express, Koa, or NestJS) or any other type of application that utilizes **Prisma** for database interactions.
+这些步骤适用于无论是开发 REST API（例如，使用 Express、Koa 或 NestJS）还是任何其他类型使用 **Prisma** 进行数据库交互的应用。
 
-## Overview of the Prisma project
+## Prisma 项目概述
 
-For this guide, we'll use a REST API built with `Express` as a sample project to migrate to **Drizzle ORM**. It has four entities:
+在本指南中，我们将使用基于 `Express` 构建的 REST API 作为示例项目，迁移到 **Drizzle ORM**。它有四个实体：
 
 ```prisma  copy filename="prisma/schema.prisma" collapsable
 generator client {
@@ -85,14 +85,14 @@ model Order {
 }
 ```
 
-The models have the following relations:
+模型之间的关系如下：
 
-1. `one-to-many` between `Supplier` and `Product`
-2. `many-to-many` between `Order` and `Product`
+1. `一对多` 关系，`Supplier` 和 `Product`
+2. `多对多` 关系，`Order` 和 `Product`
 
-For `many-to-many` relation we will create a join table `order_details`, so `Order` and `Product` entities will have `one-to-many` relations with `OrderDetail` entity.
+对于 `多对多` 关系，我们将创建一个连接表 `order_details`，因此 `Order` 和 `Product` 实体将与 `OrderDetail` 实体有 `一对多` 关系。
 
-The corresponding tables have been created using a generated Prisma migration.
+相应的表已使用生成的 Prisma 迁移创建。
 
 
 ```sql copy filename="prisma/migrations/20240101200233_init/migration.sql" collapsable
@@ -148,10 +148,10 @@ ALTER TABLE "order_details" ADD CONSTRAINT "order_details_orderId_fkey" FOREIGN 
 ALTER TABLE "order_details" ADD CONSTRAINT "order_details_productId_fkey" FOREIGN KEY ("productId") REFERENCES "products"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 ```
 
-This guide uses the following file structure:
+本指南使用以下文件结构：
 
 ```plaintext
-📦 <project root>
+📦 <项目根目录>
  ├ 📂 prisma
  │  ├ 📂 migrations
  │  │  ├ 📂 20240101200233_init
@@ -177,23 +177,23 @@ This guide uses the following file structure:
 
 <Steps>
 
-#### Install Drizzle ORM & Drizzle Kit
+#### 安装 Drizzle ORM 和 Drizzle Kit
 
-The first step is to install **Drizzle ORM** and `pg` package which we will use as a driver. The second step is to install **Drizzle Kit** and types for `pg`. [Drizzle Kit](/docs/kit-overview) - CLI companion for automatic SQL migrations generation and rapid prototyping. 
+第一步是安装 **Drizzle ORM** 和 `pg` 包，我们将使用它作为驱动程序。第二步是安装 **Drizzle Kit** 和 `pg` 的类型。[Drizzle Kit](/docs/kit-overview) - 用于自动生成 SQL 迁移和快速原型的 CLI 伙伴。
 
 <Npm>
 drizzle-orm pg
 -D drizzle-kit @types/pg
 </Npm>
 
-#### Setup Drizzle config file
+#### 设置 Drizzle 配置文件
 
-**Drizzle config** - a configuration file that is used by **Drizzle Kit** and contains all the information about your database connection, migration folder and schema files.
+**Drizzle 配置** - 由 **Drizzle Kit** 使用的配置文件，包含有关您的数据库连接、迁移文件夹和模式文件的所有信息。
 
-Create a `drizzle.config.ts` file in the root of your project and add the following content:
+在您的项目根目录中创建 `drizzle.config.ts` 文件，并添加以下内容：
 
 ```typescript copy filename="drizzle.config.ts"
-import 'dotenv/config'; // make sure to install dotenv package
+import 'dotenv/config'; // 确保安装 dotenv 包
 import { defineConfig } from 'drizzle-kit';
 
 export default defineConfig({
@@ -207,22 +207,22 @@ export default defineConfig({
     password: process.env.DB_PASSWORD!,
     database: process.env.DB_NAME!,
   },
-  // Print all statements
+  // 打印所有语句
   verbose: true,
-  // Always ask for confirmation
+  // 始终要求确认
   strict: true,
 });
 ```
 
-#### Introspect your database
+#### 反向工程您的数据库
 
-**Drizzle Kit** provides a CLI command to introspect your database and generate a schema file. The schema file contains all the information about your database tables, columns, relations, and indices.
+**Drizzle Kit** 提供 CLI 命令来反向工程您的数据库并生成模式文件。模式文件包含有关您的数据库表、列、关系和索引的所有信息。
 
 ```bash
 npx drizzle-kit introspect
 ```
 
-This command will generate a schema.ts file, along with snapshots and migrations in the src/drizzle folder.
+此命令将生成一个 `schema.ts` 文件，并在 `src/drizzle` 文件夹中生成快照和迁移。
 
 ```typescript collapsable copy filename="src/drizzle/schema.ts"
 import {
@@ -357,13 +357,13 @@ EXCEPTION
 END $$;
 ```
 
-Also, if you want to use relational queries, you have to update your schema file with relational tables:
+另外，如果您想使用关系查询，必须通过关系表更新您的模式文件：
 
 ```typescript copy filename="src/drizzle/schema.ts"
-// ...other imports
+// ...其他导入
 import { relations } from 'drizzle-orm';
 
-// ...other tables
+// ...其他表
 export const suppliersRelations = relations(suppliers, ({ many }) => ({
   products: many(products),
 }));
@@ -383,10 +383,10 @@ export const orderDetailsRelations = relations(orderDetails, ({ one }) => ({
 }));
 ```
 
-Now we have the following file structure:
+现在我们得到了以下文件结构：
 
 ```plaintext
-📦 <project root>
+📦 <项目根目录>
  ├ 📂 src
  │  ├ 📂 drizzle
  │  │  ├ 📂 meta
@@ -409,9 +409,9 @@ Now we have the following file structure:
  └ 📜 tsconfig.json
 ```
 
-#### Connect Drizzle ORM to your database
+#### 将 Drizzle ORM 连接到您的数据库
 
-Create a `db.ts` file in the `src/drizzle` folder and set up your database configuration:
+在 `src/drizzle` 文件夹中创建一个 `db.ts` 文件并设置您的数据库配置：
 
 ```typescript copy filename="src/drizzle/db.ts"
 import { drizzle } from 'drizzle-orm/node-postgres';
@@ -426,7 +426,7 @@ export const client = new Client({
   database: process.env.DB_NAME!,
 });
 
-// { schema } is used for relational queries
+// { schema } 用于关系查询
 export const db = drizzle(client, { schema });
 ```
 
@@ -440,20 +440,20 @@ import { migrate } from 'drizzle-orm/node-postgres/migrator';
 (async () => {
   await client.connect();
 
-  // This command run all migrations from the migrations folder and apply changes to the database
+  // 此命令运行迁移文件夹中的所有迁移并将更改应用于数据库
   await migrate(db, { migrationsFolder: resolve(__dirname, './drizzle') });
 
-  // ... start your application
+  // ... 启动您的应用
 })();
 ```
 
-#### Transition your Prisma queries to Drizzle ORM queries
+#### 将您的 Prisma 查询转换为 Drizzle ORM 查询
 
-In this section, we will show you how to replace several queries from **Prisma** with **Drizzle ORM**.
+在本节中，我们将向您展示如何将多个 **Prisma** 查询替换为 **Drizzle ORM** 查询。
 
-##### Replace insert queries
+##### 替换插入查询
 
-We will show how to insert new rows into `suppliers` and `products` tables.
+我们将展示如何将新行插入 `suppliers` 和 `products` 表中。
 
 1. `POST /suppliers`
 ```typescript copy filename="src/controllers/supplier.controller.ts"
@@ -467,7 +467,7 @@ await prisma.supplier.createMany({
 });
 ```
 
-With **Drizzle ORM**, the query is implemented as follows:
+使用 **Drizzle ORM**，查询如下实现：
 
 ```typescript copy filename="src/controllers/supplier.controller.ts"
 import { db } from '../drizzle/db';
@@ -522,9 +522,9 @@ await prisma.product.createMany({
 });
 ```
 
-With **Drizzle ORM**, the query is implemented as follows:
+使用 **Drizzle ORM**，查询如下实现：
 
-Be careful with the `unitPrice` field. In **Prisma** it's a `number` type, but in **Drizzle ORM** it's a `string` type, which can handle more than 16383 digits after the decimal point, unlike the `number` type.
+请注意 `unitPrice` 字段。在 **Prisma** 中它是 `number` 类型，但在 **Drizzle ORM** 中它是 `string` 类型，可以处理超过 16383 位小数的数字，与 `number` 类型不同。
 
 ```typescript copy filename="src/controllers/product.controller.ts"
 await db.insert(products).values([
@@ -555,9 +555,9 @@ await db.insert(products).values([
 ]);
 ```
 
-##### Replace select queries
+##### 替换选择查询
 
-In this section we will show how to select one row, multiple rows, count rows, filter rows, join tables and paginate results.
+在本节中，我们将展示如何选择一行、多行、计数行、过滤行、连接表和分页结果。
 
 1. `GET /products/:id`
 
@@ -574,7 +574,7 @@ const response = await prisma.product.findUnique({
 });
 ```
 
-In **Drizzle ORM**, the query is implemented as follows:
+在 **Drizzle ORM** 中，查询如下实现：
 
 ```typescript copy filename="src/controllers/product.controller.ts"
 import { eq } from 'drizzle-orm';
@@ -592,7 +592,7 @@ const response = await db
   .where(eq(products.id, id))
   .leftJoin(suppliers, eq(suppliers.id, products.supplierId));
 
-// or you can use relational queries
+// 或者可以使用关系查询
 const response = await db.query.products.findFirst({
   where: (products, { eq }) => eq(products.id, id),
   with: {
@@ -601,10 +601,10 @@ const response = await db.query.products.findFirst({
 });
 ```
 
-Response will be type-safe with both ORMs.
+响应将是对两个 ORM 的类型安全。
 
 ```typescript
-// response type for Drizzle ORM
+// Drizzle ORM 的响应类型
 const response: {
   product: {
     name: string;
@@ -648,7 +648,7 @@ const [response, count] = await Promise.all([
 ]);
 ```
 
-In **Drizzle ORM**, the query is implemented as follows:
+在 **Drizzle ORM** 中，查询如下实现：
 
 ```typescript collapsable copy filename="src/controllers/product.controller.ts"
 import { ilike, sql } from 'drizzle-orm';
@@ -675,7 +675,7 @@ const [response, count] = await Promise.all([
     .where(whereOptions),
 ]);
 
-// or you can use relational queries
+// 或者可以使用关系查询
 const whereOptions = ilike(products.name, `%test%`);
 
 const [response, count] = await Promise.all([
@@ -697,10 +697,10 @@ const [response, count] = await Promise.all([
 ]);
 ```
 
-Response will be type-safe with both ORMs.
+响应将是对两个 ORM 的类型安全。
 
 ```typescript
-// response type for Drizzle ORM
+// Drizzle ORM 的响应类型
 const response: {
   id: number;
   name: string;
@@ -711,9 +711,9 @@ const response: {
 
 3. `GET /orders/:id`
 
-In **Prisma**, aggregate functions require using the `aggregate` method. For complex queries, the `$queryRaw` method is used, which is not type-safe.
+在 **Prisma** 中，聚合函数需要使用 `aggregate` 方法。对于复杂的查询，使用 `$queryRaw` 方法，它不是类型安全的。
 
-We want to select `id`, `orderDate` and `shipCountry` fields from `orders` table and by using `aggregation functions` sum `totalPrice` of order, `totalQuantity` of products in the order and count `totalProducts` in the order.
+我们希望从 `orders` 表中选择 `id`、`orderDate` 和 `shipCountry` 字段，并使用 `聚合函数` 求和 `订单总价`、`订单中产品总量` 和 `订单中的产品总数`。
 
 ```typescript copy filename="src/controllers/order.controller.ts"
 import { prisma } from '../db/db';
@@ -756,7 +756,7 @@ const response = {
 };
 ```
 
-In **Drizzle ORM**, the query is implemented as follows:
+在 **Drizzle ORM** 中，查询如下实现：
 
 ```typescript copy filename="src/controllers/order.controller.ts"
 import { eq, sql } from 'drizzle-orm';
@@ -781,10 +781,10 @@ const response = await db
       .leftJoin(products, eq(products.id, orderDetails.productId));
 ```
 
-In **Drizzle ORM**, the result will be type-safe with aggregations too.
+在 **Drizzle ORM** 中，结果也会是类型安全的包含聚合的查询。
 
 ```typescript
-// response type
+// 响应类型
 const response: {
   id: number;
   shipCountry: string;
@@ -795,11 +795,11 @@ const response: {
 }[]
 ```
 
-**Note:** as of now aggregations are not supported in relational queries, so you have to use `core queries`.
+**注意:** 目前聚合不支持在关系查询中使用，因此必须使用 `核心查询`。
 
-##### Replace update queries
+##### 替换更新查询
 
-In this section, we will show you how to update multiple rows.
+在本节中，我们将展示如何更新多行。
 
 1. `PATCH /suppliers/:id`
   
@@ -814,7 +814,7 @@ const supplier = await prisma.supplier.update({
 });
 ```
 
-In **Drizzle ORM**, the query is implemented as follows:
+在 **Drizzle ORM** 中，查询如下实现：
 
 ```typescript copy filename="src/controllers/supplier.controller.ts"
 import { eq } from 'drizzle-orm';
@@ -832,9 +832,9 @@ await db
     .where(eq(suppliers.id, id));
 ```
 
-##### Replace delete queries
+##### 替换删除查询
 
-In this section, we will show you how to delete a single row and multiple rows using transactions.
+在本节中，我们将展示如何使用事务删除单个行和多个行。
 
 1. `DELETE /orders/:id`
 
@@ -854,7 +854,7 @@ const orderQuery = prisma.order.deleteMany({
 await prisma.$transaction([orderDetailQuery, orderQuery]);
 ```
 
-In **Drizzle ORM**, the query is implemented as follows:
+在 **Drizzle ORM** 中，查询如下实现：
 
 ```typescript copy filename="src/controllers/order.controller.ts"
 import { eq } from 'drizzle-orm';

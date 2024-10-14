@@ -1,27 +1,27 @@
 ---
 pubDate: 2023-11-29
-title: DrizzleORM v0.29.1 release
-description: Fixed issues include forwarding arguments correctly when using the withReplica feature, resolving the selectDistinctOn not working with multiple columns problem, and providing detailed JSDoc for all query builders in all dialects. Additionally, introduced new helpers for aggregate functions in SQL and a new ESLint Drizzle Plugin package.
+title: DrizzleORM v0.29.1 发布
+description: 修复的问题包括在使用 withReplica 特性时正确转发参数，解决了 selectDistinctOn 在多个列上无法工作的问题，并为所有方言中的所有查询构建器提供了详细的 JSDoc。此外，还为 SQL 中的聚合函数引入了新的助手以及一个新的 ESLint Drizzle 插件包。
 ---
 import Npm from "@mdx/Npm.astro";
 
-## Fixes
+## 修复
 
-- Forward args correctly when using withReplica feature ([#1536](https://github.com/drizzle-team/drizzle-orm/pull/1536))
-- Fix selectDistinctOn not working with multiple columns ([#1466](https://github.com/drizzle-team/drizzle-orm/pull/1466))
+- 在使用 withReplica 特性时正确转发参数 ([#1536](https://github.com/drizzle-team/drizzle-orm/pull/1536))
+- 修复了 selectDistinctOn 在多个列上无法工作的问题 ([#1466](https://github.com/drizzle-team/drizzle-orm/pull/1466))
 
-## New Features/Helpers
+## 新特性/助手
 
-### Detailed JSDoc for all query builders in all dialects
+### 所有方言中所有查询构建器的详细 JSDoc
 
-You can now access more information, hints, documentation links, etc. while developing and using JSDoc right in your IDE. Previously, we had them only for filter expressions, but now you can see them for all parts of the Drizzle query builder
+现在，您可以在开发和使用 JSDoc 时，在 IDE 中访问更多信息、提示、文档链接等。以前，我们仅为过滤表达式提供了这些，但现在您可以在 Drizzle 查询构建器的所有部分中看到它们。
 
-### New helpers for aggregate functions in SQL
+### SQL 中的聚合函数的新助手
 
-> Remember, aggregation functions are often used with the GROUP BY clause of the SELECT statement. So if you are selecting using aggregating functions and other columns in one query,
-be sure to use the `.groupBy` clause
+> 请记住，聚合函数通常与 SELECT 语句的 GROUP BY 子句一起使用。
+因此，如果您在一个查询中使用聚合函数和其他列进行选择，请务必使用 `.groupBy` 子句。
 
-Here is a list of functions and equivalent using `sql` template:
+以下是使用 `sql` 模板的函数及其等效项的列表：
 
 count
 
@@ -29,9 +29,9 @@ count
 await db.select({ value: count() }).from(users);
 await db.select({ value: count(users.id) }).from(users);
 
-// It's equivalent to writing
+// 等效于书写
 await db.select({ 
-  value: sql`count('*'))`.mapWith(Number) 
+  value: sql`count('*')`.mapWith(Number) 
 }).from(users);
 await db.select({ 
   value: sql`count(${users.id})`.mapWith(Number) 
@@ -43,7 +43,7 @@ countDistinct
 ```ts copy {1,5}
 await db.select({ value: countDistinct(users.id) }).from(users);
 
-// It's equivalent to writing
+// 等效于书写
 await db.select({ 
   value: sql`count(${users.id})`.mapWith(Number) 
 }).from(users);
@@ -54,7 +54,7 @@ avg
 ```ts copy {1,5}
 await db.select({ value: avg(users.id) }).from(users);
 
-// It's equivalent to writing
+// 等效于书写
 await db.select({ 
   value: sql`avg(${users.id})`.mapWith(String) 
 }).from(users);
@@ -65,7 +65,7 @@ avgDistinct
 ```ts copy {1,5}
 await db.select({ value: avgDistinct(users.id) }).from(users);
 
-// It's equivalent to writing
+// 等效于书写
 await db.select({ 
   value: sql`avg(distinct ${users.id})`.mapWith(String) 
 }).from(users);
@@ -76,7 +76,7 @@ sum
 ```ts copy {1,5}
 await db.select({ value: sum(users.id) }).from(users);
 
-// It's equivalent to writing
+// 等效于书写
 await db.select({ 
   value: sql`sum(${users.id})`.mapWith(String) 
 }).from(users);
@@ -87,7 +87,7 @@ sumDistinct
 ```ts copy {1,5}
 await db.select({ value: sumDistinct(users.id) }).from(users);
 
-// It's equivalent to writing
+// 等效于书写
 await db.select({ 
   value: sql`sum(distinct ${users.id})`.mapWith(String) 
 }).from(users);
@@ -98,7 +98,7 @@ max
 ```ts copy {1,5}
 await db.select({ value: max(users.id) }).from(users);
 
-// It's equivalent to writing
+// 等效于书写
 await db.select({ 
   value: sql`max(${expression})`.mapWith(users.id) 
 }).from(users);
@@ -109,35 +109,35 @@ min
 ```ts copy {1,5}
 await db.select({ value: min(users.id) }).from(users);
 
-// It's equivalent to writing
+// 等效于书写
 await db.select({ 
   value: sql`min(${users.id})`.mapWith(users.id) 
 }).from(users);
 ```
 
-To find more information check docs: [aggregation helpers](/docs/select#aggregations-helpers)
+要获取更多信息，请查看文档：[聚合助手](/docs/select#aggregations-helpers)
 
-## New Packages
+## 新包
 
-### Drizzle ESLint Plugin
+### Drizzle ESLint 插件
 
-For cases where it's impossible to perform type checks for specific scenarios, or where it's possible but error messages would be challenging to understand, we've decided to create an ESLint package with recommended rules. This package aims to assist developers in handling crucial scenarios during development. For more information you can check [docs](/docs/eslint-plugin).
+对于那些无法针对特定场景进行类型检查的情况，或者虽然可以但错误信息难以理解的情况，我们决定创建一个 ESLint 包，带有推荐的规则。该包旨在帮助开发人员在开发过程中处理关键场景。有关更多信息，您可以查看 [docs](/docs/eslint-plugin)。
 
-### Install
+### 安装
 
 <Npm>
 eslint eslint-plugin-drizzle
 </Npm>
 
-You can install those packages for typescript support in your IDE
+您可以为 IDE 安装这些包以支持 TypeScript
 
 <Npm>
 @typescript-eslint/eslint-plugin @typescript-eslint/parser
 </Npm>
 
-### Usage
+### 使用
 
-Create a `.eslintrc.yml` file, add `drizzle` to the `plugins`, and specify the rules you want to use. You can find a list of all existing rules below
+创建一个 `.eslintrc.yml` 文件，将 `drizzle` 添加到 `plugins` 中，并指定您要使用的规则。您可以在下面找到所有现有规则的列表：
 
 ```yaml copy {6,8,9}
 root: true
@@ -151,9 +151,9 @@ rules:
   'drizzle/enforce-update-with-where': "error"
 ```
 
-#### All config
+#### 所有配置
 
-This plugin exports an all config that makes use of all rules (except for deprecated ones).
+此插件导出了一个包含所有规则的完整配置（不包括已弃用的规则）。
 
 ```yaml copy
 root: true
@@ -166,7 +166,7 @@ plugins:
   - drizzle
 ```
 
-At the moment, `all` is equivalent to `recommended`
+目前，`all` 等效于 `recommended`
 
 ```yaml copy
 root: true
@@ -179,19 +179,19 @@ plugins:
   - drizzle
 ```
 
-### Rules
+### 规则
 
-**enforce-delete-with-where**: Enforce using `delete` with `the.where()` clause in the `.delete()` statement. Most of the time, you don't need to delete all rows in the table and require some kind of `WHERE` statements.
+**enforce-delete-with-where**: 强制在 `.delete()` 语句中与 `the.where()` 子句一起使用 `delete`。大多数情况下，您不需要删除表中的所有行，而需要某种类型的 `WHERE` 语句。
 
-Error Message:
+错误信息：
 
 ```plaintext
-Without `.where(...)` you will delete all the rows in a table. If you didn't want to do it, please use `db.delete(...).where(...)` instead. Otherwise you can ignore this rule here
+没有 `.where(...)` 您将删除表中的所有行。如果您不想这样做，请使用 `db.delete(...).where(...)`。否则，您可以在此处忽略此规则。
 ```
 
-Optionally, you can define a `drizzleObjectName` in the plugin options that accept a `string` or `string[]`. This is useful when you have objects or classes with a delete method that's not from Drizzle. Such a `delete` method will trigger the ESLint rule. To avoid that, you can define the name of the Drizzle object that you use in your codebase (like db) so that the rule would only trigger if the delete method comes from this object:
+您可以选择在插件选项中定义一个 `drizzleObjectName`，该选项接受 `string` 或 `string[]`。这在您有对象或类的删除方法不是来自 Drizzle 的情况下是有用的。这种 `delete` 方法将触发 ESLint 规则。为此，您可以定义在代码库中使用的 Drizzle 对象的名称（例如 db），这样规则仅在 delete 方法来自该对象时触发：
 
-Example, config 1:
+示例，配置 1：
 
 ```json copy
 "rules": {
@@ -208,15 +208,15 @@ class MyClass {
 
 const myClassObj = new MyClass();
 
-// ---> Will be triggered by ESLint Rule
+// ---> 将触发 ESLint 规则
 myClassObj.delete()
 
 const db = drizzle(...)
-// ---> Will be triggered by ESLint Rule
+// ---> 将触发 ESLint 规则
 db.delete()
 ```
 
-Example, config 2:
+示例，配置 2：
 
 ```json copy
 "rules": {
@@ -233,25 +233,25 @@ class MyClass {
 
 const myClassObj = new MyClass();
 
-// ---> Will NOT be triggered by ESLint Rule
+// ---> 不会触发 ESLint 规则
 myClassObj.delete()
 
 const db = drizzle(...)
-// ---> Will be triggered by ESLint Rule
+// ---> 将触发 ESLint 规则
 db.delete()
 ```
 
-**enforce-update-with-where**: Enforce using `update` with `the.where()` clause in the `.update()` statement. Most of the time, you don't need to update all rows in the table and require some kind of `WHERE` statements.
+**enforce-update-with-where**: 强制在 `.update()` 语句中与 `the.where()` 子句一起使用 `update`。大多数情况下，您不需要更新表中的所有行，而需要某种类型的 `WHERE` 语句。
 
-Error Message:
+错误信息：
 
 ```plaintext
-Without `.where(...)` you will update all the rows in a table. If you didn't want to do it, please use `db.update(...).set(...).where(...)` instead. Otherwise you can ignore this rule here
+没有 `.where(...)` 您将更新表中的所有行。如果您不想这样做，请使用 `db.update(...).set(...).where(...)`。否则，您可以在此处忽略此规则。
 ```
 
-Optionally, you can define a `drizzleObjectName` in the plugin options that accept a `string` or `string[]`. This is useful when you have objects or classes with a delete method that's not from Drizzle. Such as `update` method will trigger the ESLint rule. To avoid that, you can define the name of the Drizzle object that you use in your codebase (like db) so that the rule would only trigger if the delete method comes from this object:
+您可以选择在插件选项中定义一个 `drizzleObjectName`，该选项接受 `string` 或 `string[]`。这在您有对象或类的更新方法不是来自 Drizzle 的情况下是有用的。这种 `update` 方法将触发 ESLint 规则。为此，您可以定义在代码库中使用的 Drizzle 对象的名称（例如 db），这样规则仅在 update 方法来自该对象时触发：
 
-Example, config 1:
+示例，配置 1：
 
 ```json copy
 "rules": {
@@ -268,15 +268,15 @@ class MyClass {
 
 const myClassObj = new MyClass();
 
-// ---> Will be triggered by ESLint Rule
+// ---> 将触发 ESLint 规则
 myClassObj.update()
 
 const db = drizzle(...)
-// ---> Will be triggered by ESLint Rule
+// ---> 将触发 ESLint 规则
 db.update()
 ```
 
-Example, config 2:
+示例，配置 2：
 
 ```json copy
 "rules": {
@@ -293,10 +293,10 @@ class MyClass {
 
 const myClassObj = new MyClass();
 
-// ---> Will NOT be triggered by ESLint Rule
+// ---> 不会触发 ESLint 规则
 myClassObj.update()
 
 const db = drizzle(...)
-// ---> Will be triggered by ESLint Rule
+// ---> 将触发 ESLint 规则
 db.update()
 ```

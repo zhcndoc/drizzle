@@ -1,18 +1,18 @@
 ---
 title: DrizzleORM v0.30.5 发布
 pubDate: 2024-03-27
-description: 为 PostgreSQL、MySQL 和 SQLite 添加了 '$onUpdate' 功能，并修复了在具有 smallserial 数据类型的列上的插入问题。
+description: 为 PostgreSQL、MySQL 和 SQLite 添加了 `$onUpdate` 功能，并修复了对 smallserial 数据类型列的插入问题。
 ---
 
 ## 新功能
 
 ### PostgreSQL、MySQL 和 SQLite 的 `$onUpdate` 功能
 
-为列添加了动态更新值。
-在更新行时将调用该函数，并且如果未提供列值，则将使用返回的值作为列值。
-如果未提供 `default`（或 `$defaultFn`）值，则插入行时也将调用该函数，并且将使用返回的值作为列值。
+为列添加动态更新值。
+当行被更新时，该函数将被调用，如果没有提供值，则返回的值将被用作列值。
+如果没有提供 `default`（或 `$defaultFn`）值，该函数还将在行被插入时被调用，返回的值将被用作列值。
 
-> 注意：此值不会影响 `drizzle-kit` 的行为，仅在运行时在 `drizzle-orm` 中使用。
+> 注意：该值不影响 `drizzle-kit` 的行为，仅在 `drizzle-orm` 的运行时使用。
 
 ```ts copy {4,5,6}
 const usersOnUpdate = pgTable('users_on_update', {
@@ -26,4 +26,4 @@ const usersOnUpdate = pgTable('users_on_update', {
 
 ## 修复
 
-- 修复了在具有 smallserial 数据类型的列上的插入问题 - [#1848](https://github.com/drizzle-team/drizzle-orm/issues/1848)
+- 对 smallserial 数据类型列的插入不是可选的 - [#1848](https://github.com/drizzle-team/drizzle-orm/issues/1848)

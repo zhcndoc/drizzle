@@ -1,13 +1,13 @@
 ---
 pubDate: 2022-07-20
 title: DrizzleORM v0.11.0 发布
-description: DrizzleORM - 是一个开源的 TypeScript ORM，支持 PostgreSQL，并计划在几周内提供 MySQL 和 SQLite 的支持。我们决定是时候与公众分享了。
+description: DrizzleORM - 是一个开源的 TypeScript ORM，支持 PostgreSQL，并且在几周内将支持 MySQL 和 SQLite。我们决定是时候向公众分享它了。
 ---
 import Section from "@mdx/Section.astro";
 
-DrizzleORM - 是一个开源的 TypeScript ORM，支持 PostgreSQL，并计划在几周内提供 MySQL 和 SQLite 的支持。我们决定是时候与公众分享了。
+DrizzleORM - 是一个开源的 TypeScript ORM，支持 PostgreSQL，并且在几周内将支持 MySQL 和 SQLite。我们决定是时候向公众分享它了。
 
-通过 drizzle，您可以在代码中拥有完全类型化的 SQL 模式，这将以多种不同的主要方式使您受益。稍后我将详细介绍。
+使用 drizzle，您在代码中拥有一个完全类型化的 SQL schema，这在多个主要方面为您带来了好处，我稍后将详细介绍。
 
 ```ts
 // 在数据库中声明枚举
@@ -39,7 +39,7 @@ export class CitiesTable extends PgTable<CitiesTable> {
 }
 ```
 
-这是一个快速入门示例，介绍了如何连接到数据库并进行第一次查询并获得类型化的结果。
+这是一个快速入门示例，演示如何连接到数据库并执行您的第一个类型化查询。
 
 ```ts
 import { drizzle, PgTable } from 'drizzle-orm'
@@ -61,14 +61,14 @@ const usersTable = new UsersTable(db);
 const users: User[] = await usersTable.select().execute();
 ```
 
-以下是如何使用 `WHERE` 条件语句和过滤器，在查询中使用部分选择，使用 `limit/offset` 和 `orderBy`
+这是如何使用 `WHERE` 语句进行过滤、运行部分选择查询、使用 `limit/offset` 和 `orderBy` 的示例。
 
 ```ts
 await table.select().where(
   eq(table.id, 42)
 ).execute();
 
-// 您可以使用 eq(...) 或 or(...) 将过滤器组合起来
+// 您可以使用 eq(...) 或 or(...) 组合过滤条件
 await table.select().where(
   and([eq(table.id, 42), eq(table.name, "Dan")])
 ).execute();
@@ -84,13 +84,13 @@ const result = await table.select({
 }).execute();
 const { mapped1, mapped2 } = result[0];
 
-// limit offset & order by
+// 限制偏移量和排序
 await table.select().limit(10).offset(10).execute()
 await table.select().orderBy((table) => table.name, Order.ASC)
 await table.select().orderBy((table) => table.name, Order.DESC)
 ```
 
-以下是如何运行 `插入`、`更新` 和 `删除` 操作
+这是如何运行 `插入`、`更新` 和 `删除` 的示例。
 
 ```ts
 const result = await usersTable.insert({
@@ -116,7 +116,7 @@ await usersTable.delete()
   .execute();
 ```
 
-我们 ORM 中最强大的功能之一是完全类型化的连接操作，编译器将不会让您犯任何错误。
+我们 ORM 中最强大的功能之一是完全类型化的连接，编译器不会让您出错。
 
 ```ts
 const usersTable = new UsersTable(db);
@@ -130,12 +130,12 @@ const result = await citiesTable.select()
 const citiesWithUsers: { city: City, user: User }[] = result.map((city, user) => ({ city, user }));
 ```
 
-下面是 `多对多` 关系的示例
+这是一个 `多对多` 关系的示例。
 
 ```ts
 export class UsersTable extends PgTable<UsersTable> {
   id = this.serial("id").primaryKey();
-    name = this.varchar("name");
+  name = this.varchar("name");
 }
 
 export class ChatGroupsTable extends PgTable<ChatGroupsTable> {
@@ -152,7 +152,7 @@ const usersTable = new UsersTable(db);
 const chatGroupsTable = new ChatGroupsTable(db);
 const manyToManyTable = new ManyToManyTable(db);
 
-// 查询 ID 为 1 的用户组以及所有参与者（用户）
+// 查询用户组 ID 为 1 的用户及所有参与者
 const usersWithUserGroups = await manyToManyTable.select()
   .leftJoin(usersTable, (manyToMany, users) => eq(manyToManyTable.userId, users.id))
   .leftJoin(chatGroupsTable, (manyToMany, _users, chatGroups) => eq(manyToManyTable.groupId, chatGroups.id))
@@ -160,9 +160,9 @@ const usersWithUserGroups = await manyToManyTable.select()
   .execute();
 ```
 
-最后，我们来谈谈迁移。我们为自动生成迁移的 CLI 工具进行了实现，该工具可以处理重命名和删除操作，并提示您进行解决。
+最后但并非最不重要的是迁移。我们实现了一种 CLI 工具，用于自动生成迁移，这会处理重命名和删除，并提示您解决。
 
-对于下方的 TypeScript 模式
+针对以下 TypeScript schema，示例代码如下：
 
 <Section>
 ```ts

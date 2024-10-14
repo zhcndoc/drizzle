@@ -1,15 +1,15 @@
 ---
 title: DrizzleORM v0.28.0 发布
 pubDate: 2023-08-06
-description: 删除了对嵌套关系的过滤支持，为 mysql2 驱动添加了关系查询模式 config，改进了大型模式的 IntelliSense 性能，改进了关系查询性能和读取使用情况。增加了在所有列中插入默认值的功能。
+description: 移除了对嵌套关系过滤的支持，为 mysql2 驱动添加了关系查询模式配置，提高了大型模式的 IntelliSense 性能，改善了关系查询性能和读操作使用。增加了以默认值插入所有列行的可能性。
 ---
 import Section from "@mdx/Section.astro";
 
-## Breaking changes（重大变更）
+## 重大更改
 
-### 删除了对嵌套关系的过滤支持
+### 移除了对嵌套关系过滤的支持
 
-在 `0.28.0` 版本中，以下示例将无法使用：
+当前示例在 `0.28.0` 中将无法工作：
 
 ```ts
 const usersWithPosts = await db.query.users.findMany({
@@ -20,21 +20,21 @@ const usersWithPosts = await db.query.users.findMany({
 });
 ```
 
-`where` 回调中的 `table` 对象不会包含来自 `with` 和 `extras` 的字段。我们删除了这些字段，以便能够构建更高效的关系查询，从而改进了行读取和性能。
+在 `where` 回调中的 `table` 对象将不再包含 `with` 和 `extras` 中的字段。我们移除了这些字段，以便构建更高效的关系查询，从而提高行读取和性能。
 
-如果在之前的 `where` 回调中使用了这些字段，有几种解决方法：
+如果您之前在 `where` 回调中使用了这些字段，有几种解决方法：
 
-1. 在代码级别手动应用这些过滤器到获取到的行后；
+1. 在行获取后手动在代码层面应用这些过滤条件；
 2. 使用核心 API。
 
-### 为 mysql2 驱动添加了关系查询模式 config
+### 为 `mysql2` 驱动添加了关系查询 `mode` 配置
 
-Drizzle 关系查询始终生成一条要在数据库上运行的 SQL 语句，其中有一些限制。为了最好地支持每个数据库，我们引入了模式。
+Drizzle 关系查询始终生成恰好一条 SQL 语句以便在数据库上运行，这存在某些注意事项。为了在市面上的每种数据库中提供最佳支持，我们引入了模式。
 
-Drizzle 关系查询在内部使用子查询的 Lateral Join，并且目前 PlanetScale 不支持它们。
+Drizzle 关系查询在内部使用子查询的侧连接，目前 PlanetScale 不支持它们。
 
-当使用普通 MySQL 数据库的 `mysql2` 驱动时 - 您应该指定 mode: "default"。
-当使用 PlanetScale 的 `mysql2` 驱动时 - 您需要指定 mode: "planetscale"。
+在使用常规 MySQL 数据库的 `mysql2` 驱动时，您应指定模式： "default"。
+在使用 PlanetScale 的 `mysql2` 驱动时，您需要指定模式："planetscale"。
 
 ```ts copy {9}
 import { drizzle } from 'drizzle-orm/mysql2';
@@ -50,23 +50,23 @@ const db = drizzle(connection, { schema, mode: 'planetscale' });
 
 ## 改进了大型模式的 IntelliSense 性能
 
-我们对一个包含 85 个表、666 个列、26 个枚举、172 个索引和 133 个外键的数据库模式运行了诊断。我们优化了内部类型，导致 IntelliSense 的速度提高了 **430%**。
+我们对一个包含 85 个表、666 列、26 个枚举、172 个索引和 133 个外键的数据库模式进行了诊断。我们优化了内部类型，从而实现了 **430%** 的 IntelliSense 性能提升。
 
-## 改进了关系查询性能和读取使用情况
+## 改进的关系查询性能和读取使用
 
-在这个版本中，我们完全改变了关系查询 API 生成查询的方式。
+在本次发布中，我们完全更改了关系查询 API 的查询生成方式。
 
-总结一下，我们在查询生成策略中进行了以下改变：
+总的来说，我们对查询生成策略进行了一系列更改：
 
-1. Lateral Join：在新版本中，我们使用由 "LEFT JOIN LATERAL" 子句表示的 Lateral Join，高效地从相关表中检索特定数据。对于在 PlanetScale 和 SQLite 中使用的 MySQL，我们使用简单的子查询选择，从而改进了查询计划和整体性能。
+1. 侧连接：在新版本中，我们利用侧连接，通过 "LEFT JOIN LATERAL" 子句高效地从相关表中检索特定数据。对于 PlanetScale 和 SQLite 的 MySQL，我们使用了简单的子查询选择，从而改善了查询计划和整体性能。
 
-2. 选择性数据检索：在新版本中，我们只检索表中必要的数据。这种有针对性的数据检索减少了获取不必要信息的数量，从而减少了要处理的数据集大小，并加快了执行速度。
+2. 选择性数据检索：在新版本中，我们只从表中检索必要的数据。这种有针对性的数据检索减少了获取的不必要信息，从而产生了更小的数据集以进行处理，执行速度更快。
 
-3. 减少聚合：在新版本中，我们减少了聚合函数的数量（例如 COUNT，json_agg）。通过直接在 Lateral Join 中使用 json_build_array，Drizzle 以更流畅的方式聚合数据，从而改进了查询性能。
+3. 减少聚合：在新版本中，我们减少了聚合函数的数量（例如，COUNT, json_agg）。通过在侧连接中直接使用 json_build_array，drizzle 以更简化的方式聚合数据，提升了查询性能。
 
-4. 简化分组：在新版本中，删除了 GROUP BY 子句，因为 Lateral Join 和子查询已经更有效地处理了数据聚合。
+4. 简化分组：在新版本中，GROUP BY 子句被移除，因为侧连接和子查询已经更加高效地处理数据聚合。
 
-针对这个 Drizzle 查询
+对于这个 drizzle 查询
 
 <Section>
 ```ts copy
@@ -119,7 +119,7 @@ limit 1
 ```
 
 ```sql
--- 以前生成的查询
+-- 之前生成的查询
 SELECT "id",
        "user_id",
        "post_id",
@@ -168,16 +168,16 @@ LIMIT 1
 ```
 </Section>
 
-了解更多关于[关系查询](/docs/rqb)的信息，请参阅文档。
+更多信息请查看文档中的 [关系查询](/docs/rqb)。
 
-## 可以插入包含所有列默认值的行
+## 以默认值插入所有列行的可能性
 
-现在，您可以提供一个空对象或一个包含空对象的数组，Drizzle 将会将所有默认值插入到数据库中。
+现在您可以提供一个空对象或空对象数组，Drizzle 会将所有默认值插入数据库。
 
 ```ts copy {2,5}
-// 插入一行，包含所有默认值
+// 插入 1 行所有默认值
 await db.insert(usersTable).values({});
 
-// 插入两行，包含所有默认值
+// 插入 2 行所有默认值
 await db.insert(usersTable).values([{}, {}]);
 ```

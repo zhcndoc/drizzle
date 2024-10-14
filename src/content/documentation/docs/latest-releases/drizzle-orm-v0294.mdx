@@ -1,15 +1,15 @@
 ---
-title: DrizzleORM v0.29.4 release
+title: DrizzleORM v0.29.4 发布
 pubDate: 2024-02-22
-description: Added Neon HTTP Batch support and updated the default behavior and instances of database-js.
+description: 添加了 Neon HTTP 批量支持，并更新了 database-js 的默认行为和实例。
 ---
 import Section from "@mdx/Section.astro";
 
-## New Features
+## 新特性
 
-### 🎉 Neon HTTP Batch
+### 🎉 Neon HTTP 批量
 
-For more info you can check [Neon docs](https://neon.tech/docs/serverless/serverless-driver#issue-multiple-queries-with-the-transaction-function) and [Get started with Neon and Drizzle](/docs/get-started-postgresql#neon).
+欲了解更多信息，请查看 [Neon 文档](https://neon.tech/docs/serverless/serverless-driver#issue-multiple-queries-with-the-transaction-function) 和 [与 Neon 和 Drizzle 开始](https://neon.tech/docs/get-started-postgresql#neon)。
 
 <Section>
 ```ts copy {8}
@@ -52,17 +52,17 @@ type BatchType = [
 ```
 </Section>
 
-## Improvements
+## 改进
 
-Thanks to the `database-js` and `PlanetScale` teams, we have updated the default behavior and instances of `database-js`.
+感谢 `database-js` 和 `PlanetScale` 团队，我们更新了 `database-js` 的默认行为和实例。
 
-As suggested by the `database-js` core team, you should use the `Client` instance instead of `connect()`:
+根据 `database-js` 核心团队的建议，您应该使用 `Client` 实例而不是 `connect()`：
 
 ```ts copy {1,5}
 import { Client } from '@planetscale/database';
 import { drizzle } from 'drizzle-orm/planetscale-serverless';
 
-// create the connection
+// 创建连接
 const client = new Client({
 	host: process.env['DATABASE_HOST'],
 	username: process.env['DATABASE_USERNAME'],
@@ -72,16 +72,16 @@ const client = new Client({
 const db = drizzle(client);
 ```
 
-> Warning: In this version, there are no breaking changes, but starting from version `0.30.0`, you will encounter an error if you attempt to use anything other than a `Client` instance.
+> 警告：在此版本中，没有重大更改，但从版本 `0.30.0` 开始，如果您尝试使用任何非 `Client` 实例，将会遇到错误。
 >
-> We suggest starting to change connections to PlanetScale now to prevent any runtime errors in the future.
+> 我们建议您现在开始更改连接到 PlanetScale，以防将来出现任何运行时错误。
 
-Previously our docs stated to use `connect()` and only this function was can be passed to drizzle. In this realase we are adding support for `new Client()` and deprecating `connect()`, by suggesting from `database-js` team. In this release you will see a `warning` when trying to pass `connect()` function result:
+之前我们的文档建议使用 `connect()`，并且只有这个函数可以传递给 drizzle。在这个版本中，我们添加了对 `new Client()` 的支持，并根据 `database-js` 团队的建议弃用了 `connect()`。在此版本中，您将看到尝试传递 `connect()` 函数结果时的 `警告`：
 
-**Warning text**
+**警告文本**
 
 ```mdx
-Warning: You need to pass an instance of Client:
+警告：您需要传递一个 Client 实例：
 
 import { Client } from "@planetscale/database";
 
@@ -93,7 +93,7 @@ const client = new Client({
 
 const db = drizzle(client);
 
-Starting from version 0.30.0, you will encounter an error if you attempt to use anything other than a Client instance.
+从版本 0.30.0 开始，如果您尝试使用任何非 Client 实例，将会遇到错误。
 
-Please make the necessary changes now to prevent any runtime errors in the future
+请现在进行必要的更改，以防将来出现任何运行时错误。
 ```

@@ -1,16 +1,15 @@
 ---
 title: DrizzleORM v0.28.5 发布
 pubDate: 2023-08-24 12:00:00
-description: 修复了错误的 OpenTelemetry 类型导入导致运行时错误。
-
+description: 修复了错误的 OpenTelemetry 类型导入导致的运行时错误。
 ---
 
 ## 修复
 
-- 修复了错误的 OpenTelemetry 类型导入导致运行时错误
+- 修复了错误的 OpenTelemetry 类型导入导致的运行时错误
 
-ORM 中目前存在的 OpenTelemetry 逻辑不适用于 Drizzle，并且 Drizzle 从未使用 drizzle-orm 收集过任何统计数据。OpenTelemetry 只是一个协议。如果你查看 drizzle-orm 中实际使用 OpenTelemetry 的代码，你会发现它只是使用追踪器来收集查询统计数据，并没有将其发送到任何地方。它的设计初衷是让 ORM 用户能够将这些统计数据发送给他们自己的遥测消费者。
+当前 ORM 中存在的 OpenTelemetry 逻辑并不打算被 Drizzle 使用，并且 Drizzle 从未通过 drizzle-orm 收集过任何统计信息。OpenTelemetry 只是一个协议。如果你查看 drizzle-orm 中实际使用它的代码，它只是使用追踪器来收集查询统计信息，并没有将其发送到任何地方。它的设计目的是让 ORM 用户能够将这些统计信息发送到他们自己的遥测消费者。
 
-重要的是 - 当前版本已禁用了 OpenTelemetry 逻辑。它实际上什么都不做。我们在过去的某个时刻进行了一些实验，但在发布之前就禁用了它。
+重要的是 - 当前版本中的 OpenTelemetry 逻辑已被禁用。它实际上什么也不做。我们曾在过去的某个时候进行了实验，但在发布之前将其禁用。
 
-至于上一个版本中出现问题的原因：是因为在 [这一行](https://github.com/drizzle-team/drizzle-orm/blob/594e96538e588fee5748e372884dbaf32c331524/drizzle-orm/src/tracing.ts#L1) 上出现了错误的类型导入。我们使用了 `import { type ... }` 的语法，而不是 `import type { ... }`，导致 `import '@opentelemetry/api'` 这一行泄漏到了运行时。
+至于上个版本中的问题原因：这是因为在 [这一行](https://github.com/drizzle-team/drizzle-orm/blob/594e96538e588fee5748e372884dbaf32c331524/drizzle-orm/src/tracing.ts#L1) 的错误类型导入造成的。我们使用了 `import { type ... }` 语法，而不是 `import type { ... }`，这导致 `import '@opentelemetry/api'` 行泄漏到了运行时。

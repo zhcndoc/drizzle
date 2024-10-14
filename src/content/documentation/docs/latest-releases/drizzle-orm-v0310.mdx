@@ -1,62 +1,62 @@
 ---
 title: DrizzleORM v0.31.0 发布
 pubDate: 2024-05-31
-description: PostgreSQL 索引 API 变更
+description: PostgreSQL 索引 API 更改
 ---
 
 ## 重大变更
 
-> 注意：`drizzle-orm@0.31.0` 可以与 `drizzle-kit@0.22.0` 或更高版本一起使用。Drizzle Kit 也是如此。如果您运行 Drizzle Kit 命令，它会检查并提示您进行升级（如果需要）。您可以检查是否有 Drizzle Kit 更新。[下面](#drizzle-kit-updates-drizzle-kit0220)
+> 注意：`drizzle-orm@0.31.0` 可以与 `drizzle-kit@0.22.0` 或更高版本一起使用。Drizzle Kit 同样适用。如果您运行 Drizzle Kit 命令，它将检查并提示您是否需要升级。您可以在 [下面](#drizzle-kit-updates-drizzle-kit0220) 检查 Drizzle Kit 更新。
 
 ### PostgreSQL 索引 API 已更改
 
-Drizzle + PostgreSQL 的旧索引 API 是错误的，并且与 PostgreSQL 文档不匹配。好消息是它没有被用于查询，并且 Drizzle Kit 不支持索引的所有属性。这意味着我们现在可以将 API 更改为正确的版本，并且在 Drizzle Kit 中提供完全支持
+之前的 Drizzle+PostgreSQL 索引 API 不正确，并且与 PostgreSQL 文档不一致。好消息是它在查询中未被使用，且 drizzle-kit 不支持所有索引的属性。这意味着我们现在可以将 API 更改为正确的形式，并在 drizzle-kit 中提供全面支持。
 
-旧 API
+之前的 API
 
-- 没有在 `.on` 中定义 SQL 表达式的方法。
-- `.using` 和 `.on` 在我们的情况下是同一件事，所以这里的 API 是错误的。
-- `.asc()`, `.desc()`, `.nullsFirst()`, 和 `.nullsLast()` 应该为每个列或表达式指定索引，而不是索引本身。
+- 在 `.on` 中定义 SQL 表达式的方式。
+- 在我们的情况下，`.using` 和 `.on` 是相同的，因此 API 在这里不正确。
+- `.asc()`、`.desc()`、`.nullsFirst()` 和 `.nullsLast()` 应针对索引上的每一列或表达式指定，而不是针对索引本身。
 
 ```ts
-// Index declaration reference
+// 索引声明参考
 index('name')
-  .on(table.column1, table.column2, ...) or .onOnly(table.column1, table.column2, ...)
+  .on(table.column1, table.column2, ...) 或 .onOnly(table.column1, table.column2, ...)
   .concurrently()
-  .using(sql``) // sql expression
-  .asc() or .desc()
-  .nullsFirst() or .nullsLast()
-  .where(sql``) // sql expression
+  .using(sql``) // sql 表达式
+  .asc() 或 .desc()
+  .nullsFirst() 或 .nullsLast()
+  .where(sql``) // sql 表达式
 ```
 
 当前 API
 
 ```ts
-// First example, with `.on()`
+// 第一个示例，使用 `.on()`
 index('name')
-  .on(table.column1.asc(), table.column2.nullsFirst(), ...) or .onOnly(table.column1.desc().nullsLast(), table.column2, ...)
+  .on(table.column1.asc(), table.column2.nullsFirst(), ...) 或 .onOnly(table.column1.desc().nullsLast(), table.column2, ...)
   .concurrently()
   .where(sql``)
   .with({ fillfactor: '70' })
 
-// Second Example, with `.using()`
+// 第二个示例，使用 `.using()`
 index('name')
   .using('btree', table.column1.asc(), sql`lower(${table.column2})`, table.column1.op('text_ops'))
-  .where(sql``) // sql expression
+  .where(sql``) // sql 表达式
   .with({ fillfactor: '70' })
 ```
 
 ## 新特性
 
-### 🎉 "pg_vector" 扩展支持
+### 🎉 支持 "pg_vector" 扩展
 
-> Drizzle schema 中没有特定的代码来创建扩展。我们假设如果你在使用 vector 类型、索引和查询，那么你的 PostgreSQL 数据库有安装了 `pg_vector` 扩展。
+> 在 Drizzle 架构中没有创建扩展的具体代码。我们假设如果您使用向量类型、索引和查询，您已经安装了带有 `pg_vector` 扩展的 PostgreSQL 数据库。
 
-你现在可以指定 `pg_vector` 的索引，并在 Drizzle 中使用 `pg_vector` 函数进行查询、排序等。
+现在您可以为 `pg_vector` 指定索引，并利用 `pg_vector` 函数进行查询、排序等操作。
 
-让我们从 `pg_vector` 文档中取几个索引的例子，并将它们翻译成 Drizzle
+让我们从 `pg_vector` 文档中获取几个 `pg_vector` 索引的示例并将其转化为 Drizzle 格式。
 
-#### L2 距离，Inner product 和 Cosine 距离
+#### L2 距离、内积和余弦距离
 
 ```ts
 // CREATE INDEX ON items USING hnsw (embedding vector_l2_ops);
@@ -64,15 +64,15 @@ index('name')
 // CREATE INDEX ON items USING hnsw (embedding vector_cosine_ops);
 
 const table = pgTable('items', {
-  embedding: vector('embedding', { dimensions: 3 })
+    embedding: vector('embedding', { dimensions: 3 })
 }, (table) => ({
-  l2: index('l2_index').using('hnsw', table.embedding.op('vector_l2_ops'))
-  ip: index('ip_index').using('hnsw', table.embedding.op('vector_ip_ops'))
-  cosine: index('cosine_index').using('hnsw', table.embedding.op('vector_cosine_ops'))
+    l2: index('l2_index').using('hnsw', table.embedding.op('vector_l2_ops')),
+    ip: index('ip_index').using('hnsw', table.embedding.op('vector_ip_ops')),
+    cosine: index('cosine_index').using('hnsw', table.embedding.op('vector_cosine_ops'))
 }))
 ```
 
-#### L1 距离，Hamming 距离和 Jaccard 距离 - 在 pg_vector 0.7.0 版本中添加
+#### L1 距离、汉明距离和 Jaccard 距离 - 在 pg_vector 0.7.0 版本中新增
 
 ```ts
 // CREATE INDEX ON items USING hnsw (embedding vector_l1_ops);
@@ -80,20 +80,20 @@ const table = pgTable('items', {
 // CREATE INDEX ON items USING hnsw (embedding bit_jaccard_ops);
 
 const table = pgTable('table', {
-  embedding: vector('embedding', { dimensions: 3 })
+    embedding: vector('embedding', { dimensions: 3 })
 }, (table) => ({
-  l1: index('l1_index').using('hnsw', table.embedding.op('vector_l1_ops'))
-  hamming: index('hamming_index').using('hnsw', table.embedding.op('bit_hamming_ops'))
-  bit: index('bit_jaccard_index').using('hnsw', table.embedding.op('bit_jaccard_ops'))
+    l1: index('l1_index').using('hnsw', table.embedding.op('vector_l1_ops')),
+    hamming: index('hamming_index').using('hnsw', table.embedding.op('bit_hamming_ops')),
+    bit: index('bit_jaccard_index').using('hnsw', table.embedding.op('bit_jaccard_ops'))
 }))
 ```
 
-对于查询，你可以使用预定义的函数来处理向量，或者使用 SQL 模板操作符创建自定义函数。
+对于查询，您可以使用预定义的向量函数或使用 SQL 模板操作符创建自定义函数。
 
-你也可以使用以下帮助器：
+您还可以使用以下助手函数：
 
 ```ts
-import { l2Distance, l1Distance, innerProduct,
+import { l2Distance, l1Distance, innerProduct, 
           cosineDistance, hammingDistance, jaccardDistance } from 'drizzle-orm'
 
 l2Distance(table.column, [3, 1, 2]) // table.column <-> '[3, 1, 2]'
@@ -106,7 +106,7 @@ hammingDistance(table.column, '101') // table.column <~> '101'
 jaccardDistance(table.column, '101') // table.column <%> '101'
 ```
 
-如果你想要使用 `pg_vector` 的某些其他函数，你可以复制和更改现有函数的实现。这是如何做到的：
+如果 `pg_vector` 还有其他函数可以使用，您可以从我们已有的实现中复制。以下是如何实现的示例：
 
 ```ts
 export function l2Distance(
@@ -120,11 +120,11 @@ export function l2Distance(
 }
 ```
 
-你可以给它命名，并且更改操作符。这个例子允许一个数字数组、字符串数组、字符串，甚至是选择查询。你也可以创建任何其他类型，甚至可以贡献并提交一个 PR
+根据您的需要命名并更改操作符。这个示例允许使用数字数组、字符串数组、字符串，甚至是选择查询。随意创建您想要的任何类型，或贡献并提交 PR。
 
-#### 例子
+#### 示例
 
-让我们从 `pg_vector` 文档中取几个查询的例子，并将它们翻译成 Drizzle
+让我们从 `pg_vector` 文档中获取几个 `pg_vector` 查询的示例并将其转化为 Drizzle 格式。
 
 ```ts
 import { l2Distance } from 'drizzle-orm';
@@ -142,18 +142,18 @@ db.select().from(items).orderBy(l2Distance(items.embedding, subquery)).limit(5)
 // SELECT (embedding <#> '[3,1,2]') * -1 AS inner_product FROM items;
 db.select({ innerProduct: sql`(${maxInnerProduct(items.embedding, [3,1,2])}) * -1` }).from(items)
 
-// and more!
+// 以及更多！
 ```
 
-## 🎉 新 PostgreSQL 类型：`point`, `line`
+## 🎉 新的 PostgreSQL 类型：`point`, `line`
 
-你现在可以使用 `point` 和 `line` 来自 [PostgreSQL Geometric Types](https://www.postgresql.org/docs/current/datatype-geometric.html)
+现在您可以使用 [PostgreSQL 几何类型](https://www.postgresql.org/docs/current/datatype-geometric.html) 中的 `point` 和 `line`。
 
-`point` 类型有2种映射数据库的方式：`tuple` 和 `xy`。
+类型 `point` 有 2 种模式用于数据库的映射：`tuple` 和 `xy`。
 
-- `tuple` 将接受插入并映射选择到元组。所以，数据库中的 Point(1,2) 将作为 [1,2] 在 Drizzle 中类型化。
+- `tuple` 将被接受用于插入并在选择时映射为元组。因此，数据库的 Point(1,2) 将在 Drizzle 中被类型化为 [1,2]。
 
-- `xy` 将接受插入并映射选择到具有 x、y 坐标的对象。所以，数据库中的 Point(1,2) 将作为 `{ x: 1, y: 2 }` 在 Drizzle 中类型化
+- `xy` 将被接受用于插入并在选择时映射为带有 x, y 坐标的对象。因此，数据库的 Point(1,2) 将在 Drizzle 中被类型化为 `{ x: 1, y: 2 }`。
 
 ```ts
 const items = pgTable('items', {
@@ -162,11 +162,11 @@ const items = pgTable('items', {
 });
 ```
 
-`line` 类型有2种映射数据库的方式：`tuple` 和 `abc`。
+类型 `line` 有 2 种模式用于数据库的映射：`tuple` 和 `abc`。
 
-- `tuple` 将接受插入并映射选择到元组。所以，数据库中的 Line{1,2,3} 将作为 [1,2,3] 在 Drizzle 中类型化。
+- `tuple` 将被接受用于插入并在选择时映射为元组。因此，数据库的 Line{1,2,3} 将在 Drizzle 中被类型化为 [1,2,3]。
 
-- `abc` 将接受插入并映射选择到对象，包含 `Ax + By + C = 0` 方程的 a、b 和 c 常数。所以，数据库中的 Line{1,2,3} 将作为 `{ a: 1, b: 2, c: 3 }` 在 Drizzle 中类型化。
+- `abc` 将被接受用于插入并在选择时映射为带有 a, b 和 c 常数的对象，来自方程 `Ax + By + C = 0`。因此，数据库的 Line{1,2,3} 将在 Drizzle 中被类型化为 `{ a: 1, b: 2, c: 3 }`。
 
 ```ts
 const items = pgTable('items', {
@@ -175,11 +175,11 @@ const items = pgTable('items', {
 });
 ```
 
-## 🎉 基础 “postgis” 扩展支持
+## 🎉 基本的 "postgis" 扩展支持
 
-> Drizzle schema 中没有特定的代码来创建扩展。我们假设如果你在使用 postgis 类型、索引和查询，那么你的 PostgreSQL 数据库有安装了 `postgis` 扩展。
+> 在 Drizzle 架构中没有创建扩展的具体代码。我们假设如果您使用 postgis 类型、索引和查询，您已经安装了带有 `postgis` 扩展的 PostgreSQL 数据库。
 
-`geometry` 类型来自 PostgreSQL 的 `PostGIS` 扩展：
+来自 postgis 扩展的 `geometry` 类型：
 
 ```ts
 const items = pgTable('items', {
@@ -189,19 +189,19 @@ const items = pgTable('items', {
 });
 ```
 
-**mode**
-`geometry` 类型有 2 种映射数据库的方式：`tuple` 和 `xy`。
+**模式**
+类型 `geometry` 具有 2 种模式用于数据库的映射：`tuple` 和 `xy`。
 
-- `tuple` 将接受插入并映射选择到元组。所以，数据库中的 geometry 将作为 [1,2] 在 Drizzle 中类型化。
-- `xy` 将接受插入并映射选择到对象，包含 x、y 坐标。所以，数据库中的 geometry 将作为 `{ x: 1, y: 2 }` 在 Drizzle 中类型化
+- `tuple` 将被接受用于插入并在选择时映射为元组。因此，数据库 geometry 将在 Drizzle 中被类型化为 [1,2]。
+- `xy` 将被接受用于插入并在选择时映射为带有 x, y 坐标的对象。因此，数据库 geometry 将在 Drizzle 中被类型化为 `{ x: 1, y: 2 }`。
 
-**type**
+**类型**
 
-当前版本有预定义类型：`point`，这是 PostgreSQL PostGIS 扩展中的 `geometry(Point)` 类型。你可以在那里指定任何字符串，如果你想要使用其他类型
+本次发布具有预定义类型：`point`，这是 PostgreSQL PostGIS 扩展中的 `geometry(Point)` 类型。如果您想使用其他类型，可以在此指定任何字符串。
 
 # Drizzle Kit 更新：`drizzle-kit@0.22.0`
 
-> 发布笔记在这里部分复制自 [drizzle-kit@0.22.0](https://github.com/drizzle-team/drizzle-kit-mirror/releases/tag/v0.22.0)
+> 此处的发行说明部分复制自 [drizzle-kit@0.22.0](https://github.com/drizzle-team/drizzle-kit-mirror/releases/tag/v0.22.0)
 
 ## 新特性
 
@@ -209,19 +209,19 @@ const items = pgTable('items', {
 
 Drizzle Kit 现在可以处理：
 
-- `point` 和 `line` 来自 PostgreSQL
-- `vector` 来自 PostgreSQL 的 `pg_vector` 扩展
-- `geometry` 来自 PostgreSQL 的 `PostGIS` 扩展
+- PostgreSQL 的 `point` 和 `line`
+- PostgreSQL `pg_vector` 扩展中的 `vector`
+- PostgreSQL `PostGIS` 扩展中的 `geometry`
 
-### 🎉 新参数在 drizzle.config - `extensionsFilters`
+### 🎉 drizzle.config 新参数 - `extensionsFilters`
 
-PostGIS 扩展在 `public` 模式中创建了一些内部表。这意味着如果你有一个安装了 PostGIS 扩展的 PostgreSQL 数据库，并且使用 `push` 或 `introspect`，那么所有这些表都会包含在 `diff` 操作中。在这种情况下，你需要指定 `tablesFilter`，找到所有由扩展创建的表，并将它们列在这个参数中。
+PostGIS 扩展在 `public` 架构中创建了几个内部表。这意味着如果您有一个带有 PostGIS 扩展的数据库并使用 `push` 或 `introspect`，所有这些表都会包含在 `diff` 操作中。在这种情况下，您需要指定 `tablesFilter`，查找扩展创建的所有表，并将其列在该参数中。
 
-我们已经解决了这个问题，这样你就不需要采取所有这些步骤。只需指定 `extensionsFilters` 扩展名称，Drizzle 就会跳过所有必要的表。
+我们已经解决了这个问题，因此您无需采取所有这些步骤。只需指定 `extensionsFilters` 以及所使用扩展的名称，Drizzle 将跳过所有必要的表。
 
-目前我们只支持 `postgis` 选项，但我们计划添加更多扩展，如果它们在 `public` 模式中创建表。
+当前，我们仅支持 `postgis` 选项，但我们计划添加更多扩展，如果它们在 `public` 架构中创建表。
 
-`postgis` 选项会跳过 `geography_columns`、`geometry_columns` 和 `spatial_ref_sys` 表
+`postgis` 选项将跳过 `geography_columns`、`geometry_columns` 和 `spatial_ref_sys` 表。
 ```ts
 import { defineConfig } from 'drizzle-kit'
 
@@ -233,9 +233,9 @@ export default defaultConfig({
 
 ## 改进
 
-### 更新 zod 数据库凭证 schema 和所有正/负案例的测试
+### 更新 zod 架构以支持数据库凭据并为所有正/负案例编写测试
 
-- 支持完整的 SSL 参数集到 kit 配置，提供来自 node:tls 连接的类型
+- 支持套件配置中的完整 SSL 参数集，提供来自 node:tls 连接的类型。
 
 ```ts
 import { defineConfig } from 'drizzle-kit'
@@ -259,13 +259,13 @@ export default defaultConfig({
 })
 ```
 
-### 规范化SQLite urls for `libsql` and `better-sqlite3` drivers
+### 规范化 SQLite 的 libsql 和 better-sqlite3 驱动程序的 URL
 
-这些驱动程序有不同的文件路径模式，Drizzle Kit 将接受两者并创建适当的文件路径格式
+这些驱动程序具有不同的文件路径模式，Drizzle Kit 将接受两者并为每一个创建适当的文件路径格式。
 
-### 更新 MySQL 和 SQLite 的索引表达式行为
+### 更新 MySQL 和 SQLite 的 index-as-expression 行为
 
-在这个版本中，MySQL 和 SQLite 将正确地将表达式映射到 SQL 查询中。表达式不会在字符串中被转义，但列会被
+在本次发布中，MySQL 和 SQLite 将正确映射表达式到 SQL 查询。表达式不会以字符串形式转义，但列会转义。
 
 ```ts
 export const users = sqliteTable(
@@ -281,50 +281,50 @@ export const users = sqliteTable(
 
 ```
 ```sql
--- 以前
+-- 之前
 CREATE UNIQUE INDEX `emailUniqueIndex` ON `users` (`lower("users"."email")`);
 
 -- 现在
 CREATE UNIQUE INDEX `emailUniqueIndex` ON `users` (lower("email"));
 ```
 
-## Bug 修复
+## 错误修复
 
-- [BUG]: 多个约束没有添加（只有第一个被生成） - [#2341](https://github.com/drizzle-team/drizzle-orm/issues/2341)
-- Drizzle Studio: 错误: 连接意外终止 - [#435](https://github.com/drizzle-team/drizzle-kit-mirror/issues/435)
-- 无法运行 SQLite 迁移 - [#432](https://github.com/drizzle-team/drizzle-kit-mirror/issues/432)
-- 错误: unknown option '--config' - [#423](https://github.com/drizzle-team/drizzle-kit-mirror/issues/423)
+- [BUG]：未添加多个约束（仅生成第一个） - [#2341](https://github.com/drizzle-team/drizzle-orm/issues/2341) 
+- Drizzle Studio：错误：连接意外终止 - [#435](https://github.com/drizzle-team/drizzle-kit-mirror/issues/435)
+- 无法本地运行 sqlite 迁移 - [#432](https://github.com/drizzle-team/drizzle-kit-mirror/issues/432)
+- 错误：未知选项 '--config' - [#423](https://github.com/drizzle-team/drizzle-kit-mirror/issues/423)
 
 
-## `push` 和 `generate` 如何为索引工作
+## `push` 和 `generate` 如何处理索引
 
 ### 限制
 
-#### 如果你至少在一个表达式上有一个索引，你应该手动指定索引的名称
+#### 如果您的索引上至少有一个表达式，您应该手动指定索引的名称
 
-例子
+示例
 
 ```ts
-index().on(table.id, table.email) // 会正常工作并且自动生成名称
-index('my_name').on(table.id, table.email) // 会正常工作
+index().on(table.id, table.email) // 将正常工作，名称将自动生成
+index('my_name').on(table.id, table.email) // 将正常工作
 
 // 但是
 
 index().on(sql`lower(${table.email})`) // 错误
-index('my_name').on(sql`lower(${table.email})`) // 会正常工作
+index('my_name').on(sql`lower(${table.email})`) // 将正常工作
 ```
 
-#### `push` 不会为以下字段变更的索引生成语句：
+#### 如果以下字段（列表如下）在现有索引中更改，`push` 将不会生成语句：
 
 - `.on()` 和 `.using()` 中的表达式
 - `.where()` 语句
-- `.op()` 列上的操作符类
+- 列上的操作符类 `.op()`
 
-如果你在使用 `push` 工作流，并且想要更改索引中的这些字段，你需要：
+如果您使用 `push` 工作流并希望更改这些字段中的索引，您需要：
 
-- 注释索引
+- 注释掉索引
 - 推送
 - 取消注释索引并更改这些字段
 - 再次推送
 
-对于 `generate` 命令，Drizzle Kit 将由索引中的任何更改触发，对于 Drizzle 的新索引 API 中的任何属性，所以这里没有限制。
+对于 `generate` 命令，任何在新 drizzle 索引 API 中对索引的属性的更改都会触发 `drizzle-kit`，因此在这里没有限制。

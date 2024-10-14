@@ -9,33 +9,33 @@ import CodeTabs from '@components/markdown/CodeTabs.astro';
 import CodeTab from '@components/markdown/CodeTab.astro';
 import Section from "@mdx/Section.astro";
 
-<IsSupportedChipGroup chips={{ PostgreSQL: true, MySQL: true, SQLite: true }}/>
+<IsSupportedChipGroup chips={{PostgreSQL: true, MySQL: true, SQLite: true}}/>
 
 <Prerequisites>
-- 开始使用[PostgreSQL](/docs/get-started-postgresql)、[MySQL](/docs/get-started-mysql)和[SQLite](/docs/get-started-sqlite)
-- [Select语句](/docs/select)和[select from子查询](/docs/select#select-from-subquery)
-- [内连接](/docs/joins#inner-join)
-- [过滤运算符](/docs/operators)和[exists函数](/docs/operators#exists)
+- 开始使用 [PostgreSQL](/docs/get-started-postgresql), [MySQL](/docs/get-started-mysql) 和 [SQLite](/docs/get-started-sqlite)
+- [选择语句](/docs/select) 和 [从子查询选择](/docs/select#select-from-subquery)
+- [内部连接](/docs/joins#inner-join)
+- [过滤运算符](/docs/operators) 和 [exists函数](/docs/operators#exists)
 </Prerequisites>
 
-该指南演示了如何选择至少有一个相关子行的父行。下面是模式定义和相应的数据库数据示例：
+本指南演示如何选择父行，条件是至少有一个相关的子行。下面是模式定义和相应的数据库数据示例：
 
-  ```ts copy
-  import { integer, pgTable, serial, text } from 'drizzle-orm/pg-core';
+```ts copy
+import { integer, pgTable, serial, text } from 'drizzle-orm/pg-core';
 
-  export const users = pgTable('users', {
-    id: serial('id').primaryKey(),
-    name: text('name').notNull(),
-    email: text('email').notNull(),
-  });
+export const users = pgTable('users', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  email: text('email').notNull(),
+});
 
-  export const posts = pgTable('posts', {
-    id: serial('id').primaryKey(),
-    title: text('title').notNull(),
-    content: text('content').notNull(),
-    userId: integer('user_id').notNull().references(() => users.id),
-  });
-  ```
+export const posts = pgTable('posts', {
+  id: serial('id').primaryKey(),
+  title: text('title').notNull(),
+  content: text('content').notNull(),
+  userId: integer('user_id').notNull().references(() => users.id),
+});
+```
 
 <CodeTabs items={["users.db", "posts.db"]}>
   <CodeTab>
@@ -67,7 +67,7 @@ import Section from "@mdx/Section.astro";
   </CodeTab>
 </CodeTabs>
 
-要选择至少有一个相关子行的父行并检索子数据，可以使用`.innerJoin()`方法：
+要选择至少有一个相关子行的父行并检索子数据，可以使用 `.innerJoin()` 方法：
 
 <Section>
   ```ts copy {12}
@@ -93,7 +93,7 @@ import Section from "@mdx/Section.astro";
   ```
 
   ```ts
-  // 结果数据，因为用户2没有发表帖子，所以没有用户2
+  // 结果数据，ID为2的用户没有，因为他没有帖子
   [
     {
       user: { id: 1, name: 'John Doe', email: 'john_doe@email.com' },
@@ -126,7 +126,7 @@ import Section from "@mdx/Section.astro";
   ```
 </Section>
 
-要仅选择至少有一个相关子行的父行，可以使用具有`exists()`函数的子查询，如下所示：
+要仅选择至少有一个相关子行的父行，可以使用带有 `exists()` 函数的子查询，如下所示：
 
 <Section>
 ```ts copy {8}
@@ -145,7 +145,7 @@ select * from users where exists (select 1 from posts where posts.user_id = user
 ```
 
 ```ts
-// 结果数据，因为用户2没有发表帖子，所以没有用户2
+// 结果数据，ID为2的用户没有，因为他没有帖子
 [
   { id: 1, name: 'John Doe', email: 'john_doe@email.com' },
   { id: 3, name: 'Nick Smith', email: 'nick_smith@email.com' }

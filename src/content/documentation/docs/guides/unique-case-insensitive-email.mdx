@@ -1,5 +1,5 @@
 ---
-title: 唯一且不区分大小写的邮箱处理
+title: 唯一且不区分大小写的电子邮件处理
 slug: unique-case-insensitive-email
 ---
 
@@ -10,18 +10,18 @@ import CodeTab from '@components/markdown/CodeTab.astro';
 import Callout from '@components/markdown/Callout.astro';
 
 <Prerequisites>
-- 开始使用 [PostgreSQL](/docs/get-started-postgresql)，[MySQL](/docs/get-started-mysql) 和 [SQLite](/docs/get-started-sqlite)
+- 开始使用 [PostgreSQL](/docs/get-started-postgresql)、[MySQL](/docs/get-started-mysql) 和 [SQLite](/docs/get-started-sqlite)
 - [索引](/docs/indexes-constraints#indexes)
-- [插入语句](/docs/insert) 和 [选择方法](/docs/select)
-- [sql 操作符](/docs/sql)
-- 你应该使用 `drizzle-orm@0.31.0` 或更高版本和 `drizzle-kit@0.22.0` 或更高版本。
+- [插入语句](/docs/insert) 和 [查询方法](/docs/select)
+- [SQL 操作符](/docs/sql)
+- 你应该有 `drizzle-orm@0.31.0` 和 `drizzle-kit@0.22.0` 或更高版本。
 </Prerequisites>
 
 ### PostgreSQL
 
-要在 PostgreSQL 中使用 Drizzle 实现对 `email` 的独一无二且不区分大小写的处理，可以在转换为小写的 `email` 列上创建一个唯一索引。这样，可以确保无论大小写如何，`email` 都是唯一的。
+要在 PostgreSQL 中使用 Drizzle 实现唯一且不区分大小写的 `email` 处理，你可以在小写的 `email` 列上创建一个唯一索引。这样可以确保 `email` 在不考虑大小写的情况下是唯一的。
 
-Drizzle 有一个简单而灵活的 API，可以使用类似 SQL 语法轻松创建此类索引：
+Drizzle 提供了简单灵活的 API，让你可以轻松使用 SQL 类似的语法创建这样的索引：
 <CodeTabs items={["schema.ts", "migration.sql"]}>
   <CodeTab>
   ```ts copy {12,13}
@@ -41,7 +41,7 @@ Drizzle 有一个简单而灵活的 API，可以使用类似 SQL 语法轻松创
     }),
   );
 
-  // 自定义 lower 函数
+  // 自定义小写函数
   export function lower(email: AnyPgColumn): SQL {
     return sql`lower(${email})`;
   }
@@ -58,7 +58,7 @@ Drizzle 有一个简单而灵活的 API，可以使用类似 SQL 语法轻松创
   ```
 </CodeTabs>
 
-以下是如何使用 `lower` 函数根据 `email` 选择用户的示例：
+这就是你如何使用 `lower` 函数按 `email` 选择用户：
 
 <Section>
 ```ts copy {10}
@@ -82,9 +82,9 @@ select * from "users" where lower(email) = 'john@email.com';
 
 ### MySQL
 
-在 MySQL 中，字符串比较的默认排序规则是不区分大小写的，这意味着在 SQL 查询中执行搜索或比较字符串时，字符的大小写不会影响结果。然而，由于排序规则可以有所不同，可能配置为区分大小写，因此我们将通过在转换为小写的 `email` 列上创建一个唯一索引来明确确保 `email` 是独一无二的。
+在 MySQL 中，字符串比较的默认排序规则是大小写不敏感的，这意味着在进行像搜索或比较字符串的 SQL 查询时，字符的大小写不会影响结果。然而，由于排序规则设置可能会有所不同并且可能配置为大小写敏感，因此我们将明确确保 `email` 在不考虑大小写的情况下是唯一的，方法是对小写的 `email` 列创建唯一路径。
 
-Drizzle 有一个简单而灵活的 API，可以使用类似 SQL 语法轻松创建此类索引：
+Drizzle 提供了简单灵活的 API，让你可以轻松使用 SQL 类似的语法创建这样的索引：
 <CodeTabs items={["schema.ts", "migration.sql"]}>
   <CodeTab>
   ```ts copy {12,13}
@@ -104,7 +104,7 @@ Drizzle 有一个简单而灵活的 API，可以使用类似 SQL 语法轻松创
     }),
   );
 
-  // 自定义 lower 函数
+  // 自定义小写函数
   export function lower(email: AnyMySqlColumn): SQL {
     return sql`(lower(${email}))`;
   }
@@ -122,10 +122,10 @@ Drizzle 有一个简单而灵活的 API，可以使用类似 SQL 语法轻松创
 </CodeTabs>
 
 <Callout type="warning">
-MySQL 从版本 `8.0.13` 开始支持函数索引。为了正确的语法，表达式应该用括号括起来，例如 `(lower(column))`。
+函数索引在 MySQL 8.0.13 版本开始得到支持。对于正确的语法，表达式应被括号括起来，例如，`(lower(column))`。
 </Callout>
 
-以下是如何使用 `lower` 函数根据 `email` 选择用户的示例：
+这就是你如何使用 `lower` 函数按 `email` 选择用户：
 
 <Section>
 ```ts copy {10}
@@ -149,9 +149,9 @@ select * from `users` where lower(email) = 'john@email.com';
 
 ### SQLite
 
-要在 SQLite 中使用 Drizzle 实现对 `email` 的独一无二且不区分大小写的处理，可以在转换为小写的 `email` 列上创建一个唯一索引。这样，可以确保无论大小写如何，`email` 都是唯一的。
+要在 SQLite 中使用 Drizzle 实现唯一且不区分大小写的 `email` 处理，你可以在小写的 `email` 列上创建一个唯一索引。这样可以确保 `email` 在不考虑大小写的情况下是唯一的。
 
-Drizzle 有一个简单而灵活的 API，可以使用类似 SQL 语法轻松创建此类索引：
+Drizzle 提供了简单灵活的 API，让你可以轻松创建这样的索引，使用 SQL 类似的语法：
 
 <CodeTabs items={["schema.ts", "migration.sql"]}>
   <CodeTab>
@@ -172,7 +172,7 @@ Drizzle 有一个简单而灵活的 API，可以使用类似 SQL 语法轻松创
     }),
   );
 
-  // 自定义 lower 函数
+  // 自定义小写函数
   export function lower(email: AnySQLiteColumn): SQL {
     return sql`lower(${email})`;
   }
@@ -189,7 +189,7 @@ Drizzle 有一个简单而灵活的 API，可以使用类似 SQL 语法轻松创
   ```
 </CodeTabs>
 
-以下是如何使用 `lower` 函数根据 `email` 选择用户的示例：
+这就是你如何使用 `lower` 函数按 `email` 选择用户：
 
 <Section>
 ```ts copy {10}
