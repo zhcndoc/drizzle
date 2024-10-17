@@ -39,15 +39,14 @@ drizzle-orm @vercel/postgres
 #### 步骤 3 - 初始化驱动并进行查询
 
 ```typescript copy
-import { drizzle } from 'drizzle-orm/connect';
+import { drizzle } from 'drizzle-orm/vercel-postgres';
 
-const db = await drizzle("vercel-postgres");
+const db = drizzle();
 
 const result = await db.execute('select 1');
 ```
 
-如果您需要同步连接，您可以使用我们的附加连接 API，
-在这里您指定一个驱动连接并将其传递给 Drizzle 实例。
+如果您需要提供现有的驱动程序：
 
 ```typescript copy
 import { sql } from '@vercel/postgres';

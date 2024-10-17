@@ -53,38 +53,28 @@ TURSO_AUTH_TOKEN=
 
 ```typescript copy
 import 'dotenv/config';
-import { drizzle } from 'drizzle-orm/connect';
+import { drizzle } from 'drizzle-orm/libsql';
 
-async function main() {
-  // 你可以指定 libsql 连接选项中的任何属性
-  const db = await drizzle("turso", { 
-    connection: { 
-        url: process.env.TURSO_DATABASE_URL!, 
-        authToken: process.env.TURSO_AUTH_TOKEN!
-    }
-  });
-}
-
-main();
+// 你可以指定 libsql 连接选项中的任何属性
+const db = drizzle({ 
+  connection: { 
+    url: process.env.TURSO_DATABASE_URL!, 
+    authToken: process.env.TURSO_AUTH_TOKEN!
+  }
+});
 ```
 
-如果你需要同步连接，可以使用我们的附加连接 API， 
-在其中指定一个驱动程序连接并将其传递给 Drizzle 实例。
-
+如果您需要提供您现有的驱动程序：
 ```typescript copy
 import 'dotenv/config';
 import { drizzle } from 'drizzle-orm/libsql';
 import { createClient } from '@libsql/client';
 
-async function main() {
-  const client = createClient({ 
-        url: process.env.TURSO_DATABASE_URL!, 
-        authToken: process.env.TURSO_AUTH_TOKEN!
-   });
-  const db = drizzle(client);
-}
-
-main();
+const client = createClient({ 
+  url: process.env.TURSO_DATABASE_URL!, 
+  authToken: process.env.TURSO_AUTH_TOKEN!
+});
+const db = drizzle(client);
 ```
 
 #### 步骤 4 - 创建一个表

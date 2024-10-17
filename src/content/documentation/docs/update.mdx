@@ -20,6 +20,42 @@ await db.update(users)
   .where(eq(users.name, 'Dan'));
 ```
 
+### 限制
+
+<IsSupportedChipGroup chips={{ 'PostgreSQL': false, 'MySQL': true, 'SQLite': true }} />
+
+使用 `.limit()` 将 `limit` 子句添加到查询中 - 例如：
+<Section>
+```typescript
+await db.update(usersTable).set({ verified: true }).limit(2);
+```
+```sql
+update "users" set "verified" = $1 limit $2;
+```
+</Section>
+
+### 排序
+使用 `.orderBy()` 向查询添加 `order by` 子句，按指定字段对结果进行排序：
+<Section>
+```typescript
+import { asc, desc } from 'drizzle-orm';
+
+await db.update(usersTable).set({ verified: true }).orderBy(usersTable.name);
+await db.update(usersTable).set({ verified: true }).orderBy(desc(usersTable.name));
+
+// order by multiple fields
+await db.update(usersTable).set({ verified: true }).orderBy(usersTable.name, usersTable.name2);
+await db.update(usersTable).set({ verified: true }).orderBy(asc(usersTable.name), desc(usersTable.name2));
+```
+```sql
+update "users" set "verified" = $1 order by "name";
+update "users" set "verified" = $1 order by "name" desc;
+
+update "users" set "verified" = $1 order by "name", "name2";
+update "users" set "verified" = $1 order by "name" asc, "name2" desc;
+```
+</Section>
+
 ### 带返回值的更新
 <IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'SQLite': true, 'MySQL': false }} />
 您可以在 PostgreSQL 和 SQLite 中更新行并返回它：

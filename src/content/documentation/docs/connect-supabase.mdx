@@ -28,21 +28,20 @@ drizzle-orm postgres
 #### 第二步 - 初始化驱动并进行查询
 
 ```typescript copy filename="index.ts"
-import { drizzle } from 'drizzle-orm'
+import { drizzle } from 'drizzle-orm/postgres-js'
 
-const db = drizzle('postgres-js', process.env.DATABASE_URL);
+const db = drizzle(process.env.DATABASE_URL);
 
 const allUsers = await db.select().from(...);
 ```
-如果您需要同步连接，可以使用我们的额外连接 API，
-在其中指定一个驱动连接并将其传递给 Drizzle 实例。
 
+如果您需要提供现有的驱动程序：
 ```typescript copy filename="index.ts"
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
 
 const client = postgres(process.env.DATABASE_URL)
-const db = drizzle(client);
+const db = drizzle({ client });
 
 const allUsers = await db.select().from(...);
 ```
@@ -55,7 +54,7 @@ import postgres from 'postgres'
 
 // 禁用预取，因为在“事务”池模式下不支持 
 const client = postgres(process.env.DATABASE_URL, { prepare: false })
-const db = drizzle(client);
+const db = drizzle({ client });
 
 const allUsers = await db.select().from(...);
 ```

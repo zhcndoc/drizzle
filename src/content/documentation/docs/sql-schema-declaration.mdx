@@ -161,7 +161,6 @@ export const users = sqliteTable('users', {
 <Section>
 ```ts
 // schema.ts
-import { drizzle } from "drizzle-orm/connect";
 import { integer, pgTable, varchar } from "drizzle-orm/pg-core";
 
 export const users = pgTable('users', {
@@ -183,7 +182,6 @@ SELECT "id", "first_name" from users;
 <Section>
 ```ts
 // schema.ts
-import { drizzle } from "drizzle-orm/connect";
 import { integer, pgTable, varchar } from "drizzle-orm/pg-core";
 
 export const users = pgTable('users', {
@@ -212,7 +210,7 @@ Drizzle 提供了一种方法来自动将 TypeScript 中的 `camelCase` 映射�
 <Section>
 ```ts
 // schema.ts
-import { drizzle } from "drizzle-orm/connect";
+import { drizzle } from "drizzle-orm/node-postgres";
 import { integer, pgTable, varchar } from "drizzle-orm/pg-core";
 
 export const users = pgTable('users', {
@@ -222,7 +220,7 @@ export const users = pgTable('users', {
 ```
 ```ts
 // db.ts
-const db = await drizzle('node-postgres', { connection: process.env.DATABASE_URL, casing: 'snake_case' })
+const db = drizzle({ connection: process.env.DATABASE_URL, casing: 'snake_case' })
 ```
 ```ts
 // query.ts

@@ -1,15 +1,17 @@
 import Tab from '@components/markdown/Tab.astro';
 import Tabs from '@components/markdown/Tabs.astro';
+import CodeTabs from '@mdx/CodeTabs.astro';
 import Callout from '@components/markdown/Callout.astro';
 import Section from '@components/markdown/Section.astro';
 import IsSupportedChipGroup from '@mdx/IsSupportedChipGroup.astro';
+import $count from '@mdx/$count.mdx';
 
 # SQL 选择
-Drizzle 为您提供了最 SQL 化的方式来从数据库中获取数据，同时保持类型安全和可组合性。
-它原生支持几乎每种方言的所有查询功能和能力，
-而对于尚未支持的功能，用户可以通过强大的 [`sql`](/docs/sql) 操作符添加。
+Drizzle 为您提供了从数据库中获取数据的最 SQL 风格的方法，同时保持类型安全和可组合性。
+它原生支持几乎每种方言的所有查询特性和能力，
+而其尚不支持的功能，可以通过强大的 [`sql`](/docs/sql) 操作符由用户添加。
 
-在以下示例中，假设您有一个如下所定义的 `users` 表：
+假设您有一个如下面定义的 `users` 表：
 <Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
 <Tab>
 ```typescript
@@ -46,10 +48,8 @@ export const users = sqliteTable('users', {
 </Tab>
 </Tabs>
 
-## 基本和部分选择
-
-### 选择所有列
-选择表中的所有行，包括所有列：
+### 基本选择
+从一个表中选择所有行，包括所有列：
 
 <Section>
 ```typescript
@@ -67,16 +67,16 @@ select "id", "name", "age" from "users";
 ```
 </Section>
 
-注意，结果类型是根据表定义自动推断的，包括列的可空性。
+注意结果类型是根据表的定义自动推断的，包括列的可空性。
 
 <Callout type="info">
-Drizzle 总是明确列出 `select` 子句中的列，而不是使用 `select *`。<br />
-这是为了确保查询结果中的字段顺序，通常也被认为是一种良好实践。
+Drizzle 始终在 `select` 子句中明确列出列，而不是使用 `select *`。<br />
+这是内部要求的，以保证查询结果中的字段顺序，也是通常认为的良好实践。
 </Callout>
 
 ### 部分选择
-在某些情况下，您可能只想从表中选择一部分列。
-您可以通过将选择对象提供给 `.select()` 方法来实现：
+在某些情况下，您可能只想选择表中的一部分列。
+您可以通过向 `.select()` 方法提供选择对象来实现：
 <Section>
 ```typescript copy
 const result = await db.select({
@@ -106,32 +106,16 @@ select "id", lower("name") from "users";
 </Section>
 
 <Callout type="warning">
-通过指定 `sql<string>`，您告诉 Drizzle 字段的 **预期** 类型是 `string`。<br />
-如果您错误地指定（例如对本将返回为字符串的字段使用 `sql<number>`），运行时值将与预期类型不匹配。
-Drizzle 无法根据提供的类型泛型进行任何类型转换，因为该信息在运行时不可用。
+通过指定 `sql<string>`，您告诉 Drizzle 该字段的 **预期** 类型为 `string`。<br />
+如果您错误地指定（例如，对将作为字符串返回的字段使用 `sql<number>`），运行时值将与预期类型不匹配。
+Drizzle 不能根据提供的类型泛型执行任何类型转换，因为该信息在运行时不可用。
 
-如果您需要对返回值应用运行时转换，可以使用 [`.mapWith()`](/docs/sql#sqlmapwith) 方法。
+如果您需要对返回值应用运行时转换，您可以使用 [`.mapWith()`](/docs/sql#sqlmapwith) 方法。
 </Callout>
-
-如果您有一个经常使用的表达式，可以将其提取到一个函数中：
-
-```typescript
-import type { Column } from 'drizzle-orm';
-import { sql } from 'drizzle-orm';
-
-function lower(col: Column) {
-  return sql<string>`lower(${col})`;
-}
-
-const result = await db.select({
-  id: users.id,
-  lowerName: lower(users.name),
-}).from(users);
-```
 
 ### 条件选择
 
-您可以基于某些条件动态生成选择对象：
+您可以基于某个条件拥有动态选择对象：
 
 ```typescript
 async function selectUsers(withName: boolean) {
@@ -146,9 +130,79 @@ async function selectUsers(withName: boolean) {
 const users = await selectUsers(true);
 ```
 
-## 过滤
+### 不重复选择
 
-您可以使用 [`filter operators`](/docs/operators) 在 `.where()` 方法中过滤查询结果：
+您可以使用 `.selectDistinct()` 代替 `.select()` 以仅从数据集中检索唯一行：
+<Section>
+```ts
+await db.selectDistinct().from(users).orderBy(usersTable.id, usersTable.name);
+
+await db.selectDistinct({ id: users.id }).from(users).orderBy(usersTable.id);
+```
+```sql
+select distinct "id", "name" from "users" order by "id", "name";
+
+select distinct "id" from "users" order by "id";
+```
+</Section>
+
+在 PostgreSQL 中，您还可以使用 `distinct on` 子句指定唯一行的确定方式：
+<Callout type='warning'>
+`distinct on` 子句仅在 PostgreSQL 中受支持。
+</Callout>
+<Section>
+```ts
+await db.selectDistinctOn([users.id]).from(users).orderBy(users.id);
+await db.selectDistinctOn([users.name], { name: users.name }).from(users).orderBy(users.name);
+```
+```sql
+select distinct on ("id") "id", "name" from "users" order by "id";
+select distinct on ("name") "name" from "users" order by "name";
+```
+</Section>
+
+
+
+### 高级选择
+借助 TypeScript，Drizzle API 让您以各种灵活的方式构建选择查询。
+
+高级部分选择的预览，更多详细的高级用法示例请参阅我们[专门的指南](/docs/guides/include-or-exclude-columns)。
+<CodeTabs items={["示例 1", "示例 2", "示例 3", "示例 4"]}>
+```ts
+import { getTableColumns, sql } from 'drizzle-orm';
+
+await db.select({
+    ...getTableColumns(posts),
+    titleLength: sql<number>`length(${posts.title})`,
+  }).from(posts);
+```
+```ts
+import { getTableColumns } from 'drizzle-orm';
+
+const { content, ...rest } = getTableColumns(posts); // 排除 "content" 列
+await db.select({ ...rest }).from(posts); // 选择所有其他列
+```
+```ts
+await db.query.posts.findMany({
+  columns: {
+    title: true,
+  },
+});
+```
+```ts
+await db.query.posts.findMany({
+  columns: {
+    content: false,
+  },
+});
+```
+</CodeTabs>
+
+## ---
+
+### 过滤器
+
+您可以使用 [过滤操作符](/docs/operators) 在 `.where()` 方法中过滤查询结果：
 
 <Section>
 ```typescript copy
@@ -168,9 +222,9 @@ select "id", "name", "age" from "users" where "id" <> 42;
 ```
 </Section>
 
-所有过滤操作符都是使用 [`sql`](/docs/sql) 函数实现的。
-您可以自行使用它来编写任意 SQL 过滤器，或构建自己的操作符。
-为了获取灵感，您可以查看 Drizzle 提供的操作符是如何被 [实现的](https://github.com/drizzle-team/drizzle-orm/blob/main/drizzle-orm/src/sql/expressions/conditions.ts)。
+所有过滤操作符都使用 [`sql`](/docs/sql) 函数实现。
+您可以自行使用它编写任意 SQL 过滤器，或构建自己的操作符。
+有关灵感，您可以查看 Drizzle 提供的操作符是如何[实现](https://github.com/drizzle-team/drizzle-orm/blob/main/drizzle-orm/src/sql/expressions/conditions.ts)的。
 <Section>
 ```typescript copy
 import { sql } from 'drizzle-orm';
@@ -198,11 +252,11 @@ select "id", "name", "age" from "users" where lower("name") = 'aaron';
 
 <Callout type='info'>
 所有提供给过滤操作符和 `sql` 函数的值都会自动参数化。
-例如，此查询：
+例如，这个查询：
 ```ts
 await db.select().from(users).where(eq(users.id, 42));
 ```
-将被转换为：
+将被翻译为：
 ```sql
 select "id", "name", "age" from "users" where "id" = $1; -- params: [42]
 ```
@@ -223,13 +277,13 @@ select "id", "name", "age" from "users" where not ("id" = 42);
 </Section>
 
 <Callout type="info">
-您可以安全地更改模式，重命名表和列，
-它将自动反映在您的查询中，
-因为模板插值与在编写原始 SQL 时硬编码列或表名相对。
+您可以安全地更改模式，重命名表和列
+并且由于模板插值，它将在您的查询中自动反映出来，
+而不是在编写原始 SQL 时硬编码列或表名。
 </Callout>
 
-## 组合过滤
-您可以使用 `and()` 和 `or()` 操作符逻辑组合过滤操作符：
+### 组合过滤器
+您可以逻辑上结合过滤操作符与 `and()` 和 `or()` 操作符：
 <Section>
 ```typescript copy
 import { eq, and, sql } from 'drizzle-orm';
@@ -266,42 +320,40 @@ select "id", "name", "age" from "users" where "id" = 42 or "name" = 'Dan';
 ```
 </Section>
 
-## 唯一
+### 高级过滤器
+结合 TypeScript，Drizzle API 为您提供强大而灵活的方式来组合查询中的过滤器。
 
-您可以使用 `.selectDistinct()` 来替代 `.select()` 只检索数据集中唯一的行：
-<Section>
+条件过滤的预览，更多详细的高级用法示例请参阅我们[专门的指南](/docs/guides/conditional-filters-in-query)。
+<CodeTabs items={["示例 1", "示例 2"]}>
 ```ts
-await db.selectDistinct().from(users).orderBy(usersTable.id, usersTable.name);
-
-await db.selectDistinct({ id: users.id }).from(users).orderBy(usersTable.id);
+const searchPosts = async (term?: string) => {
+  await db
+    .select()
+    .from(posts)
+    .where(term ? ilike(posts.title, term) : undefined);
+};
+await searchPosts();
+await searchPosts('AI');
 ```
-```sql
-select distinct "id", "name" from "users" order by "id", "name";
-
-select distinct "id" from "users" order by "id";
-```
-</Section>
-
-在 PostgreSQL 中，您还可以使用 `distinct on` 子句来指定如何确定唯一行：
-
-<Section>
 ```ts
-await db.selectDistinctOn([users.id]).from(users).orderBy(users.id);
-await db.selectDistinctOn([users.name], { name: users.name }).from(users).orderBy(users.name);
+const searchPosts = async (filters: SQL[]) => {
+  await db
+    .select()
+    .from(posts)
+    .where(and(...filters));
+};
+const filters: SQL[] = [];
+filters.push(ilike(posts.title, 'AI'));
+filters.push(inArray(posts.category, ['Tech', 'Art', 'Science']));
+filters.push(gt(posts.views, 200));
+await searchPosts(filters);
 ```
-```sql
-select distinct on ("id") "id", "name" from "users" order by "id";
-select distinct on ("name") "name" from "users" order by "name";
-```
-</Section>
+</CodeTabs>
 
-<Callout>
-`distinct on` 子句仅在 PostgreSQL 中支持。
-</Callout>
+## ---
 
-
-## 限制和偏移
-使用 `.limit()` 和 `.offset()` 为查询添加 `limit` 和 `offset` 子句——例如，实现分页：
+### 限制与偏移
+使用 `.limit()` 和 `.offset()` 向查询添加 `limit` 和 `offset` 子句 - 例如，实现分页：
 <Section>
 ```typescript
 await db.select().from(users).limit(10);
@@ -313,8 +365,8 @@ select "id", "name", "age" from "users" limit 10 offset 10;
 ```
 </Section>
 
-## 排序
-使用 `.orderBy()` 为查询添加 `order by` 子句，以指定字段排序结果：
+### 排序
+使用 `.orderBy()` 向查询添加 `order by` 子句，按指定字段对结果进行排序：
 <Section>
 ```typescript
 import { asc, desc } from 'drizzle-orm';
@@ -335,13 +387,67 @@ select "id", "name", "age" from "users" order by "name" asc, "name2" desc;
 ```
 </Section>
 
-## WITH 子句
+### 高级分页
+由 TypeScript 驱动，Drizzle APIs 允许您实现所有可能的 SQL 分页和排序方法。
+
+高级分页的预览，更多详细的高级使用示例 - 
+请参见我们专门的 [限制偏移分页](/docs/guides/limit-offset-pagination) 和
+[游标分页](/docs/guides/cursor-based-pagination) 指南。
+
+<CodeTabs items={["示例 1", "示例 2", "示例 3", "示例 4"]}>
+```ts
+await db
+  .select()
+  .from(users)
+  .orderBy(asc(users.id)) // order by 是必须的
+  .limit(4) // 返回的行数
+  .offset(4); // 跳过的行数
+```
+```ts
+const getUsers = async (page = 1, pageSize = 3) => {
+  await db.query.users.findMany({
+    orderBy: (users, { asc }) => asc(users.id),
+    limit: pageSize,
+    offset: (page - 1) * pageSize,
+  });
+};
+await getUsers();
+```
+```ts
+const getUsers = async (page = 1, pageSize = 10) => {
+   const sq = db
+    .select({ id: users.id })
+    .from(users)
+    .orderBy(users.id)
+    .limit(pageSize)
+    .offset((page - 1) * pageSize)
+    .as('subquery');
+   await db.select().from(users).innerJoin(sq, eq(users.id, sq.id)).orderBy(users.id);
+};
+```
+```ts
+const nextUserPage = async (cursor?: number, pageSize = 3) => {
+  await db
+    .select()
+    .from(users)
+    .where(cursor ? gt(users.id, cursor) : undefined) // 如果提供了游标，则获取该游标之后的行
+    .limit(pageSize) // 返回的行数
+    .orderBy(asc(users.id)); // 排序
+};
+// 传递前一页最后一行的游标 (id)
+await nextUserPage(3);
+```
+</CodeTabs>
+
+## ---
+
+### WITH 子句
 
 <Callout>
-  查看如何使用 WITH 语句与 [insert](/docs/insert#with-insert-clause)，[update](/docs/update#with-update-clause)，[delete](/docs/delete#with-delete-clause)
+  查看如何与 [插入](/docs/insert#with-insert-clause), [更新](/docs/update#with-update-clause), [删除](/docs/delete#with-delete-clause) 一起使用 WITH 语句
 </Callout>
 
-使用 `with` 子句可以帮助您通过将复杂查询拆分为更小的子查询（称为公共表表达式 CTE）来简化查询：
+使用 `with` 子句可以通过将复杂查询拆分成较小的子查询（称为公共表表达式（CTEs））来简化查询：
 <Section>
 ```typescript copy
 const sq = db.$with('sq').as(db.select().from(users).where(eq(users.id, 42)));
@@ -354,7 +460,7 @@ select "id", "name", "age" from sq;
 ```
 </Section>
 
-要在 CTE 中选择任意 SQL 值作为字段并在其他 CTE 或主查询中引用它们，
+若要选择 CTE 中的任意 SQL 值作为字段并在其他 CTE 或主查询中引用它们，
 您需要为它们添加别名：
 ```typescript copy
 
@@ -365,12 +471,12 @@ const sq = db.$with('sq').as(db.select({
 
 const result = await db.with(sq).select({ name: sq.name }).from(sq);
 ```
-如果不提供别名，字段类型将变为 `DrizzleTypeError`，您将无法在其他查询中引用它。
-如果您忽略类型错误并仍然尝试使用该字段，
-将会出现运行时错误，因为没有办法在没有别名的情况下引用该字段。
+如果您不提供别名，字段类型将变为 `DrizzleTypeError`，您将无法在其他查询中引用它。
+如果忽略类型错误并仍然尝试使用该字段，
+您将得到运行时错误，因为没有方法可以在没有别名的情况下引用该字段。
 
-## 从子查询中选择
-就像在 SQL 中一样，您可以通过使用子查询 API 将查询嵌入到其他查询中：
+### 从子查询中选择
+就像在 SQL 中一样，您可以通过使用子查询 API 将查询嵌套到其他查询中：
 <Section>
 ```typescript copy
 const sq = db.select().from(users).where(eq(users.id, 42)).as('sq');
@@ -381,7 +487,7 @@ select "id", "name", "age" from (select "id", "name", "age" from "users" where "
 ```
 </Section>
 
-子查询可以在任何可以使用表的地方使用，例如在连接中：
+子查询可以在任何可以使用表的位置使用，例如在联接中：
 <Section>
 ```typescript copy
 const sq = db.select().from(users).where(eq(users.id, 42)).as('sq');
@@ -394,34 +500,11 @@ select "users"."id", "users"."name", "users"."age", "sq"."id", "sq"."name", "sq"
 ```
 </Section>
 
-## 迭代器
+## ---
 
-<IsSupportedChipGroup chips={{ 'MySQL': true, 'PostgreSQL[WIP]': false, 'SQLite[WIP]': false,  }} />
-
-如果您需要从查询中返回大量行，并且不想将它们全部加载到内存中，可以使用 `.iterator()` 将查询转换为异步迭代器：
-
-```ts copy
-const iterator = await db.select().from(users).iterator();
-
-for await (const row of iterator) {
-  console.log(row);
-}
-```
-
-它也适用于准备语句：
-
-```ts copy
-const query = await db.select().from(users).prepare();
-const iterator = await query.iterator();
-
-for await (const row of iterator) {
-  console.log(row);
-}
-```
-
-## 聚合
+### 聚合
 使用 Drizzle，您可以通过使用 `sum`、`count`、`avg` 等函数进行聚合，
-并分别通过 `.groupBy()` 和 `.having()` 进行分组和过滤，操作方式与原始 SQL 一样：
+通过 `.groupBy()` 和 `.having()` 分别进行分组和过滤，就像在原始 SQL 中一样：
 
 <Section>
 ```typescript
@@ -455,25 +538,27 @@ select "age", cast(count("id") as int)
 </Section>
 
 <Callout type="info">
-`cast(... as int)` 是必要的，因为 `count()` 在 PostgreSQL 中返回 `bigint`，在 MySQL 中返回 `decimal`，这会被视为字符串值而不是数字。
-作为替代方案，您可以使用 [`.mapWith(Number)`](/docs/sql#sqlmapwith) 在运行时将值转换为数字。
+`cast(... as int)` 是必要的，因为 `count()` 在 PostgreSQL 中返回 `bigint`，在 MySQL 中返回 `decimal`，这些被视为字符串值而不是数字。
+或者，您可以使用 [`.mapWith(Number)`](/docs/sql#sqlmapwith) 在运行时将值转换为数字。
+
+如果您需要计数聚合 - 建议使用我们的 [`$count`](/docs/select#count) API
 </Callout>
 
-## 聚合助手
+### 聚合助手
 
-Drizzle 具有一组封装的 `sql` 函数，
-因此您不需要为应用程序中的常见情况编写 `sql` 模板。
+Drizzle 具有一系列封装的 `sql` 函数，因此您无需为应用中的常见情况编写
+`sql` 模板。
 
 <Callout type="info">
  请记住，聚合函数通常与 SELECT 语句的 GROUP BY 子句一起使用。
- 因此，如果您在一个查询中使用聚合函数和其他列，
+ 因此，如果您在一个查询中选择使用聚合函数和其他列， 
  请确保使用 `.groupBy` 子句。
 </Callout>
 
 
 **count**
 
-返回 `expression` 中值的数量。
+返回 `expression` 中的值的数量。
 <Section>
 ```ts
 import { count } from 'drizzle-orm'
@@ -559,7 +644,7 @@ await db.select({
 
 **sum**
 
-返回 `expression` 中所有非空值的总和。
+返回 `expression` 中所有非空值的和。
 <Section>
 ```ts
 import { sum } from 'drizzle-orm'
@@ -579,7 +664,7 @@ await db.select({
 
 **sumDistinct**
 
-返回 `expression` 中所有非空且非重复值的总和。
+返回 `expression` 中所有非空和非重复值的和。
 <Section>
 ```ts
 import { sumDistinct } from 'drizzle-orm'
@@ -681,4 +766,34 @@ db
   .groupBy(orders.id)
   .orderBy(asc(orders.id))
   .all();
+```
+
+### $count
+<$count />
+
+## ---
+
+### 迭代器
+
+<IsSupportedChipGroup chips={{ 'MySQL': true, 'PostgreSQL[WIP]': false, 'SQLite[WIP]': false,  }} />
+
+如果您需要从查询中返回大量行而不希望将它们全部加载到内存中，可以使用 `.iterator()` 将查询转换为异步迭代器：
+
+```ts copy
+const iterator = await db.select().from(users).iterator();
+
+for await (const row of iterator) {
+  console.log(row);
+}
+```
+
+它也适用于准备好的语句：
+
+```ts copy
+const query = await db.select().from(users).prepare();
+const iterator = await query.iterator();
+
+for await (const row of iterator) {
+  console.log(row);
+}
 ```

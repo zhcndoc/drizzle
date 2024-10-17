@@ -4,14 +4,9 @@ import IsSupportedChipGroup from '@components/markdown/IsSupportedChipGroup.astr
 import Callout from '@components/markdown/Callout.astro';
 import Section from '@components/markdown/Section.astro';
 
-# 视图 (WIP)
-<Callout type="warning" emoji="⚠️">
-  目前视图仅在 `drizzle-orm` 中实现，`drizzle-kit` 仍不支持视图。
-  你可以查询数据库中已存在的视图，但它们不会被添加到 `drizzle-kit` 迁移或 `db push` 中。
-</Callout>
-
+# 视图
 ## 视图声明
-你可以通过多种方式在 Drizzle ORM 中声明视图。
+您可以通过多种方式在 Drizzle ORM 中声明视图。
 
 你可以声明需要创建的视图，或者声明已存在于数据库中的视图。
 
@@ -28,11 +23,11 @@ import Section from '@components/markdown/Section.astro';
       import { pgTable, pgView, serial, text, timestamp } from "drizzle-orm/pg-core";
 
       export const user = pgTable("user", {
-        id: serial("id"),
-        name: text("name"),
-        email: text("email"),
-        password: text("password"),
-        role: text("role").$type<"admin" | "customer">(),
+        id: serial(),
+        name: text(),
+        email: text(),
+        password: text(),
+        role: text().$type<"admin" | "customer">(),
         createdAt: timestamp("created_at"),
         updatedAt: timestamp("updated_at"),
       });
@@ -52,11 +47,11 @@ import Section from '@components/markdown/Section.astro';
       import { text, mysqlTable, mysqlView, int, timestamp } from "drizzle-orm/mysql-core";
 
       export const user = mysqlTable("user", {
-        id: int("id").primaryKey().autoincrement(),
-        name: text("name"),
-        email: text("email"),
-        password: text("password"),
-        role: text("role").$type<"admin" | "customer">(),
+        id: int().primaryKey().autoincrement(),
+        name: text(),
+        email: text(),
+        password: text(),
+        role: text().$type<"admin" | "customer">(),
         createdAt: timestamp("created_at"),
         updatedAt: timestamp("updated_at"),
       });
@@ -76,11 +71,11 @@ import Section from '@components/markdown/Section.astro';
       import { integer, text, sqliteView, sqliteTable } from "drizzle-orm/sqlite-core";
 
       export const user = sqliteTable("user", {
-        id: integer("id").primaryKey({ autoIncrement: true }),
-        name: text("name"),
-        email: text("email"),
-        password: text("password"),
-        role: text("role").$type<"admin" | "customer">(),
+        id: integer().primaryKey({ autoIncrement: true }),
+        name: text(),
+        email: text(),
+        password: text(),
+        role: text().$type<"admin" | "customer">(),
         createdAt: integer("created_at"),
         updatedAt: integer("updated_at"),
       });
@@ -124,11 +119,11 @@ import Section from '@components/markdown/Section.astro';
       const qb = new QueryBuilder();
 
       export const user = pgTable("user", {
-        id: serial("id"),
-        name: text("name"),
-        email: text("email"),
-        password: text("password"),
-        role: text("role").$type<"admin" | "customer">(),
+        id: serial(),
+        name: text(),
+        email: text(),
+        password: text(),
+        role: text().$type<"admin" | "customer">(),
         createdAt: timestamp("created_at"),
         updatedAt: timestamp("updated_at"),
       });
@@ -150,11 +145,11 @@ import Section from '@components/markdown/Section.astro';
       const qb = new QueryBuilder();
 
       export const user = mysqlTable("user", {
-        id: int("id").primaryKey().autoincrement(),
-        name: text("name"),
-        email: text("email"),
-        password: text("password"),
-        role: text("role").$type<"admin" | "customer">(),
+        id: int().primaryKey().autoincrement(),
+        name: text(),
+        email: text(),
+        password: text(),
+        role: text().$type<"admin" | "customer">(),
         createdAt: timestamp("created_at"),
         updatedAt: timestamp("updated_at"),
       });
@@ -176,11 +171,11 @@ import Section from '@components/markdown/Section.astro';
       const qb = new QueryBuilder();
 
       export const user = sqliteTable("user", {
-        id: integer("id").primaryKey({ autoIncrement: true }),
-        name: text("name"),
-        email: text("email"),
-        password: text("password"),
-        role: text("role").$type<"admin" | "customer">(),
+        id: integer().primaryKey({ autoIncrement: true }),
+        name: text(),
+        email: text(),
+        password: text(),
+        role: text().$type<"admin" | "customer">(),
         createdAt: integer("created_at"),
         updatedAt: integer("updated_at"),
       });
@@ -221,11 +216,11 @@ const newYorkers = pgMaterializedView('new_yorkers', {
 `drizzle-kit` 将忽略并不会在生成的迁移中生成 `create view` 语句。
 ```ts
 export const user = pgTable("user", {
-  id: serial("id"),
-  name: text("name"),
-  email: text("email"),
-  password: text("password"),
-  role: text("role").$type<"admin" | "customer">(),
+  id: serial(),
+  name: text(),
+  email: text(),
+  password: text(),
+  role: text().$type<"admin" | "customer">(),
   createdAt: timestamp("created_at"),
   updatedAt: timestamp("updated_at"),
 });

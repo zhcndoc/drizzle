@@ -33,9 +33,9 @@ drizzle-orm @planetscale/database
 
 #### 步骤 2 - 初始化驱动并进行查询
 ```typescript copy"
-import { drizzle } from "drizzle-orm/connect";
+import { drizzle } from "drizzle-orm/planetscale-serverless";
 
-const db = await drizzle('planetscale', { connection: {
+const db = drizzle({ connection: {
   host: process.env["DATABASE_HOST"],
   username: process.env["DATABASE_USERNAME"],
   password: process.env["DATABASE_PASSWORD"],
@@ -44,8 +44,7 @@ const db = await drizzle('planetscale', { connection: {
 const response = await db.select().from(...)
 ```
 
-如果您需要同步连接，可以使用我们的附加连接 API， 
-在其中指定驱动连接并将其传递给 Drizzle 实例。
+如果您需要提供现有的驱动程序：
 
 ```typescript copy"
 import { drizzle } from "drizzle-orm/planetscale-serverless";
@@ -57,7 +56,7 @@ const client = new Client({
   password: process.env["DATABASE_PASSWORD"],
 });
 
-const db = drizzle(client);
+const db = drizzle({ client });
 ```
 
 确保查看 PlanetScale 官方的 **[MySQL 课程](https://planetscale.com/courses/mysql-for-developers/introduction/course-introduction)**， 

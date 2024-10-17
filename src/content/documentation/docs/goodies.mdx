@@ -6,7 +6,6 @@ import Section from '@mdx/Section.astro';
 import CodeTabs from '@components/markdown/CodeTabs.astro';
 
 ## 类型 API
-
 要从你的表架构中检索 `select` 和 `insert` 查询的类型，可以使用我们的类型辅助工具。
 
 <Tabs items={["PostgreSQL","MySQL","SQLite"]}>
@@ -397,4 +396,22 @@ import { Column, is } from 'drizzle-orm';
 if (is(value, Column)) {
   // value 的类型被缩小为 Column
 }
+```
+
+### 模拟驱动程序
+该 API 是一个继承于未定义的 `drizzle({} as any)` API 的后续版本，我们在 Drizzle 测试中内部使用过，并很少推荐给外部开发者。
+
+我们决定构建并公开一个适当的 API，现在每个 `drizzle` 驱动程序都有 `drizzle.mock()`：
+```ts
+import { drizzle } from "drizzle-orm/node-postgres";
+
+const db = drizzle.mock();
+```
+
+如果需要，您可以提供类型的架构。
+```ts
+import { drizzle } from "drizzle-orm/node-postgres";
+import * as schema from "./schema"
+
+const db = drizzle.mock({ schema });
 ```

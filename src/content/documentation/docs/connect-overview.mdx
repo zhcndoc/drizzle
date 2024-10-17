@@ -17,10 +17,10 @@ Drizzle ORM 通过 **数据库驱动** 在您的数据库上运行 SQL 查询。
 
 <CodeTab>
 ```ts
-import { drizzle } from "drizzle-orm/connect"
+import { drizzle } from "drizzle-orm/node-postgres"
 import { users } from "./schema"
 
-const db = await drizzle("node-postgres", process.env.DATABASE_URL);
+const db = drizzle(process.env.DATABASE_URL);
 const usersCount = await db.$count(users);
 ```
 ```  
@@ -57,9 +57,9 @@ export const users = pgTable("users", {
 在后台，Drizzle 会创建一个 **node-postgres** 驱动实例，如果需要，您可以通过 `db.$client` 访问它。
 <Section>
 ```ts
-import { drizzle } from "drizzle-orm/connect"
+import { drizzle } from "drizzle-orm/node-postgres"
 
-const db = await drizzle("node-postgres", process.env.DATABASE_URL);
+const db = drizzle(process.env.DATABASE_URL);
 const pool = db.$client;
 ```
 ```ts
@@ -74,42 +74,43 @@ const db = drizzle(pool); // <--- 同步
 ```
 </Section>
 
-后者 API 是我们原始的 API，当您需要 drizzle 初始化为同步时可以使用。  
-大多数驱动程序支持通过 **连接 URL** 或一组 **连接参数** 进行初始化。  
-```ts
-import { drizzle } from "drizzle-orm/connect"
-
-const db = await drizzle("node-postgres", "postgresql://users:password@127.0.0.1:5432/dbname");
-
-// 以上代码等价于
-const db = await drizzle("node-postgres", {
-  connection: {
-    user: "user",
-    password: "password",
-    host: "127.0.0.1",
-    port: 5432,
-    database: "dbname",
-  },
-})
-```
-
 Drizzle 的设计使其与每一种 **边缘** 或 **无服务器** 运行时本地兼容，无论何时您需要访问无服务器数据库 - 我们都会为您提供支持。
-```ts
-import { drizzle } from "drizzle-orm/connect";
 
-const db = await drizzle("neon-http", process.env.DATABASE_URL);
-const db = await drizzle("neon-websocket", process.env.DATABASE_URL);
-const db = await drizzle("vercel-postgres");
-const db = await drizzle("planetscale", process.env.DATABASE_URL);
-const db = await drizzle("d1", { connection: env.DB });
+<CodeTabs items={["Neon HTTP", "Neon with websockets", "Vercel Postgres", "PlanetScale HTTP", "Cloudflare d1"]}>
+```ts
+import { drizzle } from "drizzle-orm/neon-http";
+
+const db = drizzle(process.env.DATABASE_URL);
 ```
+```ts
+import { drizzle } from "drizzle-orm/neon-serverless";
+
+const db = drizzle(process.env.DATABASE_URL);
+```
+```ts
+import { drizzle } from "drizzle-orm/vercel-postgres";
+
+const db = drizzle();
+```
+```ts
+import { drizzle  } from "drizzle-orm/planetscale";
+
+const db = drizzle(process.env.DATABASE_URL);
+```
+```ts
+import { drizzle  } from "drizzle-orm/d1";
+
+const db = drizzle({ connection: env.DB });
+```
+</CodeTabs>
+
 确实，我们支持特定于运行时的驱动程序，如 [Bun SQLite](/docs/connect-bun-sqlite) 或 [Expo SQLite](/docs/connect-expo-sqlite)：
 <Section>
 ```ts
-import { drizzle } from "drizzle-orm/connect"
+import { drizzle } from "drizzle-orm/bun:sqlite"
 
-const db = await drizzle("bun:sqlite"); // <--- 将创建内存数据库
-const db = await drizzle("bun:sqlite", "./sqlite.db");
+const db = drizzle(); // <--- 将创建内存数据库
+const db = drizzle("./sqlite.db");
 ```
 ```ts
 import { drizzle } from "drizzle-orm/expo-sqlite";

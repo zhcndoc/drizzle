@@ -32,31 +32,30 @@ drizzle-orm @electric-sql/pglite
 #### 第 2 步 - 初始化驱动并进行查询
 <CodeTabs items={["内存中", "目录中", "使用额外配置选项"]}>
 ```typescript copy"
-import { drizzle } from 'drizzle-orm/connect';
+import { drizzle } from 'drizzle-orm/pglite';
 
-const db = drizzle('pglite');
-
-await db.select().from(...);
-```
-```typescript copy"
-import { drizzle } from 'drizzle-orm/connect';
-
-const db = drizzle('pglite', 'path-to-dir');
+const db = drizzle();
 
 await db.select().from(...);
 ```
 ```typescript copy"
-import { drizzle } from 'drizzle-orm/connect';
+import { drizzle } from 'drizzle-orm/pglite';
+
+const db = drizzle('path-to-dir');
+
+await db.select().from(...);
+```
+```typescript copy"
+import { drizzle } from 'drizzle-orm/pglite';
 
 // connection 是一个本地 PGLite 配置
-const db = drizzle('pglite', { connection: { dataDir: 'path-to-dir' }});
+const db = drizzle({ connection: { dataDir: 'path-to-dir' }});
 
 await db.select().from(...);
 ```
 </CodeTabs>
 
-如果您需要一个同步连接，可以使用我们的额外连接 API，
-在其中指定一个驱动程序连接并将其传递给 Drizzle 实例。
+如果您需要提供现有的驱动程序：
 
 ```typescript copy"
 import { PGlite } from '@electric-sql/pglite';
@@ -64,7 +63,7 @@ import { drizzle } from 'drizzle-orm/pglite';
 
 // 内存中的 Postgres
 const client = new PGlite();
-const db = drizzle(client);
+const db = drizzle({ client });
 
 await db.select().from(users);
 ```

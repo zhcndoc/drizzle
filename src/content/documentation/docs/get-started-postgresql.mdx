@@ -35,18 +35,18 @@ drizzle-orm pg
 <CodeTabs items={["node-postgres", "node-postgres with config"]}>
 ```typescript copy
 // 确保安装 'pg' 包 
-import { drizzle } from 'drizzle-orm/connect';
+import { drizzle } from 'drizzle-orm/node-postgres';
 
-const db = await drizzle("node-postgres", process.env.DATABASE_URL);
+const db = drizzle(process.env.DATABASE_URL);
  
 const result = await db.execute('select 1');
 ```
 ```typescript copy
 // 确保安装 'pg' 包 
-import { drizzle } from 'drizzle-orm/connect';
+import { drizzle } from 'drizzle-orm/node-postgres';
 
 // 您可以指定 node-postgres 连接选项中的任何属性
-const db = await drizzle("node-postgres", { 
+const db = drizzle({ 
   connection: { 
     connectionString: process.env.DATABASE_URL,
     ssl: true
@@ -57,8 +57,7 @@ const result = await db.execute('select 1');
 ```
 </CodeTabs>
 
-如果您需要同步连接，可以使用我们的附加连接 API，
-在此处指定驱动程序连接并将其传递给 Drizzle 实例。
+如果您需要提供现有的驱动程序：
 
 ```typescript copy
 // 确保安装 'pg' 包 
@@ -69,7 +68,7 @@ import { Pool } from "pg";
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
-const db = drizzle(pool);
+const db = drizzle({ client: pool });
  
 const result = await db.execute('select 1');
 ```
@@ -84,17 +83,17 @@ drizzle-orm postgres
 #### 第二步 - 初始化驱动程序并进行查询
 <CodeTabs items={["postgres.js", "postgres.js with config"]}>
 ```typescript copy
-import { drizzle } from 'drizzle-orm/connect';
+import { drizzle } from 'drizzle-orm/postgres-js';
 
-const db = await drizzle("postgres-js", process.env.DATABASE_URL);
+const db = drizzle(process.env.DATABASE_URL);
 
 const result = await db.execute('select 1');
 ```
 ```typescript copy
-import { drizzle } from 'drizzle-orm/connect';
+import { drizzle } from 'drizzle-orm/postgres-js';
 
 // 您可以指定 postgres-js 连接选项中的任何属性
-const db = await drizzle("postgres-js", { 
+const db = drizzle({ 
   connection: { 
     url: process.env.DATABASE_URL, 
     ssl: true 
@@ -105,8 +104,7 @@ const result = await db.execute('select 1');
 ```
 </CodeTabs>
 
-如果您需要同步连接，可以使用我们的附加连接 API，
-在此处指定驱动程序连接并将其传递给 Drizzle 实例。
+如果您需要提供现有的驱动程序：
 
 ```typescript copy
 // 确保安装 'postgres' 包
@@ -114,7 +112,7 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 
 const queryClient = postgres(process.env.DATABASE_URL);
-const db = drizzle(queryClient);
+const db = drizzle({ client: queryClient });
 
 const result = await db.execute('select 1');
 ```

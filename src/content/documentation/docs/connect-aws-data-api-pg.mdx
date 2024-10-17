@@ -22,11 +22,11 @@ drizzle-orm @aws-sdk/client-rds-data
 
 #### 第二步 - 初始化驱动程序并进行查询
 ```typescript copy
-import { drizzle } from 'drizzle-orm/connect';
+import { drizzle } from 'drizzle-orm/aws-data-api-pg';
 
 // 这三个属性是必需的。您也可以在连接对象中指定
 // RDSDataClient 类型的任何属性。
-const db = drizzle('aws-data-api-pg', { connection: {
+const db = drizzle({ connection: {
   database: process.env['DATABASE']!,
   secretArn: process.env['SECRET_ARN']!,
   resourceArn: process.env['RESOURCE_ARN']!,
@@ -35,8 +35,7 @@ const db = drizzle('aws-data-api-pg', { connection: {
 await db.select().from(...);
 ```
 
-如果您需要同步连接，可以使用我们的附加连接 API， 
-在其中指定驱动程序连接并将其传递给 Drizzle 实例。
+如果您需要提供您现有的驱动程序：
 
 ```typescript copy
 import { drizzle } from 'drizzle-orm/aws-data-api/pg';

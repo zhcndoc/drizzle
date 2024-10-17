@@ -67,6 +67,7 @@
   ["update", "更新"],
   ["delete", "删除"],
   ["operators", "过滤器"],
+  ["query-utils", "工具类"],
   ["joins", "连接"],
   ["sql", "魔法 sql`` 操作符"],
   "性能",

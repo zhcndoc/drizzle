@@ -317,9 +317,95 @@ SQL 约束是强加于表列的规则。它们用于防止无效数据被输入�
 
 如果您在表上定义了 `CHECK` 约束，则可以根据行中其他列的值限制某些列中的值。
 
-<Callout type="error" emoji="🛑">
-  在 DRIZZLE ORM 中尚未实现
-</Callout>
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
+  <Tab>
+    <Section>
+      ```typescript copy
+      import { sql } from "drizzle-orm";
+      import { check, integer, pgTable, text, uuid } from "drizzle-orm/pg-core";
+
+      export const users = pgTable(
+        "users",
+        {
+          id: uuid().defaultRandom().primaryKey(),
+          username: text().notNull(),
+          age: integer(),
+        },
+        (table) => ({
+          checkConstraint: check("age_check1", sql`${table.age} > 21`),
+        })
+      );
+      ```
+      ```sql
+      CREATE TABLE IF NOT EXISTS "users" (
+	      "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	      "username" text NOT NULL,
+	      "age" integer,
+	      CONSTRAINT "age_check1" CHECK ("users"."age" > 21)
+      );
+      ```
+    </Section>
+
+  </Tab> 
+  <Tab>
+    <Section>
+      ```typescript copy
+      import { sql } from "drizzle-orm";
+      import { check, int, mysqlTable, text } from "drizzle-orm/mysql-core";
+
+      export const users = mysqlTable(
+        "users",
+        {
+          id: int().primaryKey(),
+          username: text().notNull(),
+          age: int(),
+        },
+        (table) => ({
+          checkConstraint: check("age_check1", sql`${table.age} > 21`),
+        })
+      );
+      ```
+      ```sql
+      CREATE TABLE `users` (
+	      `id` int NOT NULL,
+	      `username` text NOT NULL,
+	      `age` int,
+	      CONSTRAINT `users_id` PRIMARY KEY(`id`),
+	      CONSTRAINT `age_check1` CHECK(`users`.`age` > 21)
+      );
+      ```
+    </Section>
+  </Tab>
+  <Tab>
+   <Section>
+      ```typescript copy
+      import { sql } from "drizzle-orm";
+      import { check, int, sqliteTable, text } from "drizzle-orm/sqlite-core";
+
+      export const users = sqliteTable(
+        "users",
+        {
+          id: int().primaryKey(),
+          username: text().notNull(),
+          age: int(),
+        },
+        (table) => ({
+          checkConstraint: check("age_check1", sql`${table.age} > 21`),
+        })
+      );
+      ```
+      ```sql
+      CREATE TABLE `users` (
+	      `id` integer PRIMARY KEY NOT NULL,
+	      `username` text NOT NULL,
+	      `age` integer,
+	      CONSTRAINT "age_check1" CHECK("users"."age" > 21)
+      );
+      ```
+    </Section>
+
+  </Tab>
+</Tabs>
 
 ### 主键
 
