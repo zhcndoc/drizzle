@@ -139,7 +139,7 @@ const connectionString = Deno.env.get("SUPABASE_DB_URL")!;
 
 // 禁用预取，因为它不支持“事务”池模式
 const client = postgres(connectionString, { prepare: false });
-export const db = drizzle(client);
+export const db = drizzle({ client });
 ```
 
 `SUPABASE_DB_URL` 是用于直接数据库连接的默认环境变量。有关管理 Supabase Edge Functions 中环境变量的更多信息，请查阅 [文档](https://supabase.com/docs/guides/functions/secrets)。

@@ -77,7 +77,7 @@ type InsertUser = InferInsertModel<typeof users>;
 ```typescript copy
 import { drizzle } from 'drizzle-orm/...'; // 驱动特定的
 
-const db = drizzle(pool, { logger: true });
+const db = drizzle({ logger: true });
 ```
 
 你可以通过创建一个 `DefaultLogger` 实例并提供自定义的 `writer` 来更改日志的目的地：
@@ -92,7 +92,7 @@ class MyLogWriter implements LogWriter {
 }
 
 const logger = new DefaultLogger({ writer: new MyLogWriter() });
-const db = drizzle(pool, { logger });
+const db = drizzle({ logger });
 ```
 
 你还可以创建一个自定义的日志记录器：
@@ -106,7 +106,7 @@ class MyLogger implements Logger {
   }
 }
 
-const db = drizzle(pool, { logger: new MyLogger() });
+const db = drizzle({ logger: new MyLogger() });
 ```
 
 

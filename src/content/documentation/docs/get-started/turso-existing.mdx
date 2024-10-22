@@ -19,6 +19,8 @@ import ConnectLibsql from '@mdx/get-started/sqlite/ConnectLibsql.mdx';
 import UpdateSchema from '@mdx/get-started/sqlite/UpdateSchema.mdx';
 import QueryTurso from '@mdx/get-started/sqlite/QueryTurso.mdx';
 import QueryTursoUpdated from '@mdx/get-started/sqlite/QueryTursoUpdated.mdx';
+import LibsqlTable from '@mdx/LibsqlTable.mdx';
+import LibsqlTabs from '@mdx/LibsqlTabs.mdx';
 
 <Breadcrumbs/>
 
@@ -81,6 +83,11 @@ export default defineConfig({
 <TransferCode/>
 
 #### 第六步 - 连接 Drizzle ORM 到数据库
+Drizzle 原生支持所有 @libsql/client 驱动程序变体：
+
+<LibsqlTable />
+<br/>
+<LibsqlTabs />
 
 在 `src` 目录创建一个 `index.ts` 文件并初始化连接：
 

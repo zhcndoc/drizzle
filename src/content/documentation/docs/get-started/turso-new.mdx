@@ -16,6 +16,8 @@ import ApplyChanges from '@mdx/get-started/ApplyChanges.mdx';
 import SetupEnv from '@mdx/get-started/SetupEnv.mdx';
 import CreateTable from '@mdx/get-started/sqlite/CreateTable.mdx';
 import ConnectLibsql from '@mdx/get-started/sqlite/ConnectLibsql.mdx';
+import LibsqlTable from '@mdx/LibsqlTable.mdx';
+import LibsqlTabs from '@mdx/LibsqlTabs.mdx';
 
 <Breadcrumbs/>
 
@@ -48,6 +50,11 @@ TURSO_AUTH_TOKEN=
 </Callout>
 
 #### 步骤 3 - 将 Drizzle ORM 连接到数据库
+Drizzle 原生支持所有 @libsql/client 驱动程序变体：
+
+<LibsqlTable />
+<br/>
+<LibsqlTabs />
 
 在 `src` 目录创建一个 `index.ts` 文件并初始化连接：
 
@@ -74,7 +81,7 @@ const client = createClient({
   url: process.env.TURSO_DATABASE_URL!, 
   authToken: process.env.TURSO_AUTH_TOKEN!
 });
-const db = drizzle(client);
+const db = drizzle({ client });
 ```
 
 #### 步骤 4 - 创建一个表

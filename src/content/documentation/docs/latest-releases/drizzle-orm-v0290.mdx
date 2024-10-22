@@ -91,9 +91,9 @@ const table = pgTable('table', {
 现在您可以使用 Drizzle 的 `withReplica` 函数为读取副本和进行写操作的主实例指定不同的数据库连接。默认情况下，`withReplicas` 将在读取操作中使用随机的读取副本，在所有其他数据修改操作中使用主实例。您还可以指定自定义逻辑以选择使用哪个读取副本连接。您可以自由做出任何加权的自定义决策。以下是一些用法示例：
 
 ```ts copy {5}
-const primaryDb = drizzle(client);
-const read1 = drizzle(client);
-const read2 = drizzle(client);
+const primaryDb = drizzle({ client });
+const read1 = drizzle({ client });
+const read2 = drizzle({ client });
 
 const db = withReplicas(primaryDb, [read1, read2]);
 

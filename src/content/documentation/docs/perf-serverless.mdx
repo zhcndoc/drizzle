@@ -8,7 +8,7 @@
 要重用您的数据库连接和预编译语句，您只需在处理程序作用域之外声明它们：
 ```ts
 const databaseConnection = ...;
-const db = drizzle(databaseConnection);
+const db = drizzle({ client: databaseConnection });
 const prepared = db.select().from(...).prepare();
 
 // AWS 处理程序

@@ -150,9 +150,8 @@ npx drizzle-kit push
 import { Pool } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 
-const pool = new Pool({ connectionString: process.env.POSTGRES_URL! });
 
-export const db = drizzle(pool)
+export const db = drizzle(process.env.POSTGRES_URL!)
 ```
 
 #### 创建 API 路由
@@ -309,10 +308,9 @@ npx drizzle-kit push
 在 `src/db` 目录中创建一个 `index.ts` 文件并设置您的数据库配置：
 
 ```typescript copy filename="src/db/index.ts"
-import { sql } from '@vercel/postgres';
 import { drizzle } from 'drizzle-orm/vercel-postgres';
 
-export const db = drizzle(sql)
+export const db = drizzle()
 ```
 
 #### 创建 API 路由
@@ -472,13 +470,8 @@ npx drizzle-kit push
 
 ```typescript copy filename="src/db/index.ts"
 import { drizzle } from "drizzle-orm/planetscale-serverless";
-import { Client } from "@planetscale/database";
 
-const client = new Client({
-  url: process.env.MYSQL_URL!,
-})
-
-export const db = drizzle(client)
+export const db = drizzle(process.env.MYSQL_URL!)
 ```
 
 #### 创建 API 路由
@@ -640,14 +633,11 @@ npx drizzle-kit push
 
 ```typescript copy filename="src/db/index.ts"
 import { drizzle } from 'drizzle-orm/libsql';
-import { createClient } from '@libsql/client';
 
-const client = createClient({
+export const db = drizzle({ connection: {
   url: process.env.TURSO_CONNECTION_URL!,
   authToken: process.env.TURSO_AUTH_TOKEN!,
-});
-
-export const db = drizzle(client)
+}})
 ```
 
 #### 创建 API 路由

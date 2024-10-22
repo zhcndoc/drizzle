@@ -56,13 +56,12 @@ POSTGRES_URL=<YOUR_DATABASE_URL>
 在 `src/db` 目录中创建一个 `index.ts` 文件，并设置您的数据库配置：
 
 ```typescript copy filename="src/db/index.ts"
-import { sql } from '@vercel/postgres';
 import { drizzle } from 'drizzle-orm/vercel-postgres';
 import { config } from 'dotenv';
 
 config({ path: '.env.local' }); // 或 .env
 
-export const db = drizzle(sql);
+export const db = drizzle();
 
 ```
 

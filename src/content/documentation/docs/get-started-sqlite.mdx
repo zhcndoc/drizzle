@@ -5,6 +5,8 @@ import Steps from '@components/markdown/Steps.astro';
 import Prerequisites from "@mdx/Prerequisites.astro";
 import CodeTabs from "@mdx/CodeTabs.astro";
 import WhatsNextPostgres from "@mdx/WhatsNextPostgres.astro";
+import LibsqlTable from '@mdx/LibsqlTable.mdx';
+import LibsqlTabs from '@mdx/LibsqlTabs.mdx';
 
 # Drizzle \<\> SQLite
 
@@ -26,6 +28,13 @@ drizzle-orm @libsql/client
 </Npm>
 
 #### 第二步 - 初始化驱动程序并执行查询
+Drizzle 原生支持所有 @libsql/client 驱动程序变体：
+
+<LibsqlTable />
+<br/>
+<LibsqlTabs />
+
+#### Step 3 - make a query
 <CodeTabs items={["libsql", "libsql with config"]}>
 ```typescript copy
 import { drizzle } from 'drizzle-orm/libsql';
@@ -69,7 +78,7 @@ drizzle-orm better-sqlite3
 ```typescript copy
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 
-const db = drizzle( process.env.DATABASE_URL);
+const db = drizzle(process.env.DATABASE_URL);
 
 const result = await db.execute('select 1');
 ```

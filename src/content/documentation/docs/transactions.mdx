@@ -67,7 +67,7 @@ const newBalance: number = await db.transaction(async (tx) => {
 您可以使用事务与 **[关系查询](/docs/rqb)**：
 
 ```ts
-const db = drizzle(..., { schema })
+const db = drizzle({ schema })
 
 await db.transaction(async (tx) => {
   await tx.query.users.findMany({
