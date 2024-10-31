@@ -7,13 +7,64 @@ import Section from '@components/markdown/Section.astro';
 import CodeTab from '@mdx/CodeTab.astro';
 import CodeTabs from '@mdx/CodeTabs.astro';
 
-# Drizzle soft relations
+# Drizzle 软关系
+Drizzle 关系的唯一目的是让您以最简单和简洁的方式查询您的关系数据：
+
+<CodeTabs items={["关系查询", "带连接的选择"]}>
+<Section>
+```ts
+import * as schema from './schema';
+import { drizzle } from 'drizzle-orm/…';
+
+const db = drizzle(client, { schema });
+
+const result = db.query.users.findMany({
+  with: {
+    posts: true,
+  },
+});
+```
+```ts
+[{
+  id: 10,
+  name: "Dan",
+  posts: [
+    {
+      id: 1,
+      content: "SQL 很棒",
+      authorId: 10,
+    },
+    {
+      id: 2,
+      content: "但请检查关系查询",
+      authorId: 10,
+    }
+  ]
+}]
+```
+</Section>
+<Section>
+```ts
+import { drizzle } from 'drizzle-orm/…';
+import { eq } from 'drizzle-orm';
+import { posts, users } from './schema';
+
+const db = drizzle(client);
+
+const res = await db.select()
+                    .from(users)
+                    .leftJoin(posts, eq(posts.authorId, users.id))
+                    .orderBy(users.id)
+const mappedResult =  
+```
+</Section>
+</CodeTabs>
 
 
-### One-to-one
-Drizzle ORM provides you an API to define `one-to-one` relations between tables with the `relations` operator.
+### 一对一
+Drizzle ORM 为您提供 API，通过 `relations` 操作符定义表之间的 `一对一` 关系。
 
-An example of a `one-to-one` relation between users and users, where a user can invite another (this example uses a self reference):
+一个用户可以邀请另一个用户的 `一对一` 关系示例（此示例使用自引用）：
 
 ```typescript copy {10-15}
 import { pgTable, serial, text, integer, boolean } from 'drizzle-orm/pg-core';
@@ -33,7 +84,7 @@ export const usersRelations = relations(users, ({ one }) => ({
 }));
 ```
 
-Another example would be a user having a profile information stored in separate table. In this case, because the foreign key is stored in the "profile_info" table, the user relation have neither fields or references. This tells Typescript that `user.profileInfo` is nullable:
+另一个示例是用户在单独的表中存储的个人信息。在这种情况下，因为外键存储在“profile_info”表中，用户关系既没有字段也没有引用。这告诉 TypeScript `user.profileInfo` 是可选的：
 
 ```typescript copy {9-17}
 import { pgTable, serial, text, integer, jsonb } from 'drizzle-orm/pg-core';
@@ -62,10 +113,10 @@ const user = await queryUserWithProfileInfo();
 //____^? type { id: number, profileInfo: { ... } | null  }
 ```
 
-### One-to-many
-Drizzle ORM provides you an API to define `one-to-many` relations between tables with `relations` operator. 
+### 一对多
+Drizzle ORM 为您提供 API，通过 `relations` 操作符定义表之间的 `一对多` 关系。
 
-Example of `one-to-many` relation between users and posts they've written:
+用户与他们撰写的文章之间的 `一对多` 关系示例：
 
 ```typescript copy {9-11, 19-24}
 import { pgTable, serial, text, integer } from 'drizzle-orm/pg-core';
@@ -94,7 +145,7 @@ export const postsRelations = relations(posts, ({ one }) => ({
 }));
 ```
 
-Now lets add comments to the posts:
+现在让我们为文章添加评论：
 ```typescript copy {14,17-22,24-29}
 ...
 
@@ -128,11 +179,11 @@ export const commentsRelations = relations(comments, ({ one }) => ({
 ```
 
 
-### Many-to-many
-Drizzle ORM provides you an API to define `many-to-many` relations between tables through so called `junction` or `join` tables,
-they have to be explicitly defined and store associations between related tables.  
-  
-Example of `many-to-many` relation between users and groups:
+### 多对多
+Drizzle ORM 为您提供 API，通过所谓的 `junction` 或 `join` 表定义表之间的 `多对多` 关系，
+它们必须显式定义并存储相关表之间的关联。
+
+用户与组之间的 `多对多` 关系示例：
 ```typescript copy {9-11, 18-20, 37-46}
 import { relations } from 'drizzle-orm';
 import { integer, pgTable, primaryKey, serial, text } from 'drizzle-orm/pg-core';
@@ -182,20 +233,20 @@ export const usersToGroupsRelations = relations(usersToGroups, ({ one }) => ({
 }));
 ```
 
-### Foreign keys
+### 外键
 
-You might've noticed that `relations` look similar to foreign keys — they even have a `references` property. So what's the difference?
+您可能已经注意到，`relations` 看起来与外键相似——它们甚至有一个 `references` 属性。那么区别是什么呢？
 
-While foreign keys serve a similar purpose, defining relations between tables, they work on a different level compared to `relations`.
+虽然外键也服务于相似的目的，定义表之间的关系，但它们与 `relations` 在不同级别上工作。
 
-Foreign keys are a database level constraint, they are checked on every `insert`/`update`/`delete` operation and throw an error if a constraint is violated.
-On the other hand, `relations` are a higher level abstraction, they are used to define relations between tables on the application level only.
-They do not affect the database schema in any way and do not create foreign keys implicitly.
+外键是一个数据库级别的约束，它们在每个 `insert`/`update`/`delete` 操作时都会被检查，如果违反约束则会抛出错误。
+另一方面，`relations` 是一个更高层次的抽象，仅用于在应用程序级别定义表之间的关系。
+它们不会以任何方式影响数据库模式，并且不会隐式创建外键。
 
-What this means is `relations` and foreign keys can be used together, but they are not dependent on each other.
-You can define `relations` without using foreign keys (and vice versa), which allows them to be used with databases that do not support foreign keys.
+这意味着 `relations` 和外键可以一起使用，但它们彼此之间并不依赖。
+您可以定义 `relations` 而不使用外键（反之亦然），这使得它们与不支持外键的数据库一起使用成为可能。
 
-The following two examples will work exactly the same in terms of querying the data using Drizzle relational queries.
+以下两个示例在使用 Drizzle 关系查询时，查询数据的方式完全相同。
 <CodeTabs items={["schema1.ts", "schema2.ts"]}>
 <CodeTab>
 ```ts {15}
@@ -241,40 +292,40 @@ export const profileInfo = pgTable('profile_info', {
 </CodeTab>
 </CodeTabs>
 
-### Foreign key actions
+### 外键操作
 
-for more information check [postgres foreign keys docs](https://www.postgresql.org/docs/current/ddl-constraints.html#DDL-CONSTRAINTS-FK)
+有关更多信息，请查看 [Postgres 外键文档](https://www.postgresql.org/docs/current/ddl-constraints.html#DDL-CONSTRAINTS-FK)
 
-You can specify actions that should occur when the referenced data in the parent table is modified. These actions are known as "foreign key actions." PostgreSQL provides several options for these actions.
+您可以指定在父表中引用的数据被修改时应发生的操作。这些操作称为“外键操作”。PostgreSQL 提供了几种选项用于这些操作。
 
-On Delete/ Update Actions
+删除/更新操作
 
-- `CASCADE`: When a row in the parent table is deleted, all corresponding rows in the child table will also be deleted. This ensures that no orphaned rows exist in the child table.
+- `CASCADE`：删除父表中的行时，子表中的所有相应行也将被删除。这确保了子表中不存在孤立行。
 
-- `NO ACTION`: This is the default action. It prevents the deletion of a row in the parent table if there are related rows in the child table. The DELETE operation in the parent table will fail.
+- `NO ACTION`：这是默认操作。如果子表中有相关行，它会阻止删除父表中的行。父表中的 DELETE 操作将失败。
 
-- `RESTRICT`: Similar to NO ACTION, it prevents the deletion of a parent row if there are dependent rows in the child table. It is essentially the same as NO ACTION and included for compatibility reasons.
+- `RESTRICT`：与 NO ACTION 类似，如果子表中有依赖行，它会阻止删除父行。它基本上与 NO ACTION 相同，并由于兼容性原因被包含在内。
 
-- `SET DEFAULT`: If a row in the parent table is deleted, the foreign key column in the child table will be set to its default value if it has one. If it doesn't have a default value, the DELETE operation will fail.
+- `SET DEFAULT`：如果父表中的行被删除，子表中的外键列将被设置为其默认值（如果有）。如果没有默认值，DELETE 操作将失败。
 
-- `SET NULL`: When a row in the parent table is deleted, the foreign key column in the child table will be set to NULL. This action assumes that the foreign key column in the child table allows NULL values.
+- `SET NULL`：当父表中的行被删除时，子表中的外键列将被设置为 NULL。此操作假设子表中的外键列允许 NULL 值。
 
-> Analogous to ON DELETE there is also ON UPDATE which is invoked when a referenced column is changed (updated). The possible actions are the same, except that column lists cannot be specified for SET NULL and SET DEFAULT. In this case, CASCADE means that the updated values of the referenced column(s) should be copied into the referencing row(s).
-in drizzle you can add foreign key action using `references()` second argument.
+> 与 ON DELETE 类似，当引用的列被更改（更新）时，还存在 ON UPDATE。可能的操作是相同的，只是 SET NULL 和 SET DEFAULT 不能指定列列表。在这种情况下，CASCADE 意味着引用列的更新值应复制到引用行。
+在 drizzle 中，您可以使用 `references()` 的第二个参数添加外键操作。
 
-type of the actions
+操作类型
 
 ```typescript
 export type UpdateDeleteAction = 'cascade' | 'restrict' | 'no action' | 'set null' | 'set default';
 
-// second argument of references interface
+// references 接口的第二个参数
 actions?: {
 		onUpdate?: UpdateDeleteAction;
 		onDelete?: UpdateDeleteAction;
 	} | undefined
 ```
 
-In the following example, adding `onDelete: 'cascade'` to the author field on the `posts` schema means that deleting the `user` will also delete all related Post records.
+在以下示例中，将 `onDelete: 'cascade'` 添加到 `posts` 模式中的作者字段意味着删除 `user` 也将删除所有相关的 Post 记录。
 
 
 ```typescript {11}
@@ -292,7 +343,7 @@ export const posts = pgTable('posts', {
 });
 ```
 
-For constraints specified with the `foreignKey` operator, foreign key actions are defined with the syntax:
+对于使用 `foreignKey` 操作符指定的约束，外键操作的定义语法为：
 
 ```typescript {18-19}
 import { foreignKey, pgTable, serial, text, integer } from 'drizzle-orm/pg-core';
@@ -318,12 +369,12 @@ export const posts = pgTable('posts', {
 );
 ```
 
-### Disambiguating relations
+### 消歧义关系
 
-Drizzle also provides the `relationName` option as a way to disambiguate
-relations when you define multiple of them between the same two tables. For
-example, if you define a `posts` table that has the `author` and `reviewer`
-relations.
+Drizzle 还提供 `relationName` 
+选项作为在您定义相同两张表之间的多个关系时消歧义的方式。
+例如，如果您定义一张包含 `author` 和 `reviewer` 
+关系的 `posts` 表。
 
 ```ts {9-12, 21-32}
 import { pgTable, serial, text, integer } from 'drizzle-orm/pg-core';

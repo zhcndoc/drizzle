@@ -85,6 +85,14 @@ export default defineConfig({
     schema: "public",
   },
 
+  entities: {
+    roles: {
+      provider: '',
+      exclude: [],
+      include: []
+    }
+  }
+
   breakpoints: true,
   strict: true,
   verbose: true,
@@ -529,6 +537,131 @@ export default defineConfig({
   extensionsFilters: ["postgis"],
 });
 ```
+
+## ---
+
+### `entities`
+
+此配置用于设置数据库中特定 `实体` 的管理设置。
+
+目前，它仅包括 `角色`，但最终所有数据库实体将迁移到这里，例如 `表`、`模式`、`扩展`、`函数`、`触发器` 等。
+
+#### `roles`
+
+<rem025/>
+
+如果您使用 Drizzle Kit 来管理您的架构，特别是定义的角色，可能会出现一些角色未在 Drizzle 架构中定义的情况。
+在这种情况下，您可能希望 Drizzle Kit 跳过那些 `roles`，而无需在您的 Drizzle 架构中逐一写出每个角色并用 `.existing()` 标记。
+
+`roles` 选项让您可以：
+
+- 启用或禁用与 Drizzle Kit 的角色管理。
+- 排除特定角色不被 Drizzle Kit 管理。
+- 包含特定角色以供 Drizzle Kit 管理。
+- 为像 `Neon` 和 `Supabase` 这样的提供者启用模式，这些提供者不管理其特定角色。
+- 组合上述所有选项。
+
+|               |                       |
+| :------------ | :-----------------    |
+| type          | `boolean \| { provider: "neon" \| "supabase", include: string[], exclude: string[]}`|
+| default       | `false`                  |
+| commands      | `push` `pull` `generate` |
+
+<rem025/>
+
+默认情况下，`drizzle-kit` 不会为您管理角色，因此您需要在 `drizzle.config.ts` 中启用该功能。
+```ts
+export default defineConfig({
+  dialect: "postgresql",
+  extensionsFilters: entities: {
+    roles: true
+  }
+});
+```
+
+**您有一个角色 `admin`，并希望将其排除在可管理角色列表之外**
+
+```ts
+// drizzle.config.ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  ...
+  entities: {
+    roles: {
+      exclude: ['admin']
+    }
+  }
+});
+```
+
+**您拥有一个角色 `admin`，并希望将其包含在可管理角色的列表中**
+
+```ts
+// drizzle.config.ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  ...
+  entities: {
+    roles: {
+      include: ['admin']
+    }
+  }
+});
+```
+
+如果您正在使用 `Neon` 并希望排除由 `Neon` 定义的角色，您可以使用提供者选项。
+
+```ts
+// drizzle.config.ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  ...
+  entities: {
+    roles: {
+      provider: 'neon'
+    }
+  }
+});
+```
+
+**如果您正在使用 `Supabase` 并希望排除由 `Supabase` 定义的角色，可以使用提供者选项**
+
+```ts
+// drizzle.config.ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  ...
+  entities: {
+    roles: {
+      provider: 'supabase'
+    }
+  }
+});
+```
+
+<Callout title='important'>
+您可能会遇到 Drizzle 相对于数据库提供者指定的新角色略显过时的情况，
+因此您可能需要同时使用 `provider` 选项和 `exclude` 附加角色。您可以轻松地使用 Drizzle 来做到这一点：
+
+```ts
+// drizzle.config.ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  ...
+  entities: {
+    roles: {
+      provider: 'supabase',
+      exclude: ['new_supabase_role']
+    }
+  }
+});
+```
+</Callout>
 
 ## ---
 

@@ -1,0 +1,504 @@
+import Callout from '@components/markdown/Callout.astro';
+
+# 行级安全性 (RLS)
+
+使用 Drizzle，您可以为任何 Postgres 表启用行级安全性 (RLS)，创建具有各种选项的策略，并定义和管理这些策略所应用的角色。
+
+Drizzle 支持 Postgres 策略和角色的原始表示，您可以以任何方式使用它们。 这与流行的 Postgres 数据库提供者如 `Neon` 和 `Supabase` 一起工作。
+
+在 Drizzle 中，我们为两个数据库提供者提供了特定的预定义 RLS 角色和函数，但您也可以定义自己的逻辑。
+
+## 启用 RLS
+
+如果您只想在表上启用 RLS 而不添加策略，可以使用 `.enableRLS()`
+
+正如 PostgreSQL 文档中所提到的：
+
+> 如果表中不存在策略，则使用默认拒绝策略，这意味着没有行可以被查看或修改。
+适用于整个表的操作，如 TRUNCATE 和 REFERENCES，不受行安全性的限制。
+
+```ts
+import { integer, pgTable } from 'drizzle-orm/pg-core';
+
+export const users = pgTable('users', {
+	id: integer(),
+}).enableRLS();
+```
+
+<Callout title='重要'>
+如果您向表添加策略，RLS 将自动启用。因此，在向表添加策略时无需显式启用 RLS。
+</Callout>
+
+## 角色
+
+目前，Drizzle 支持通过几种不同的选项定义角色，如下所示。将来版本将添加对更多选项的支持。
+
+```ts
+import { pgRole } from 'drizzle-orm/pg-core';
+
+export const admin = pgRole('admin', { createRole: true, createDb: true, inherit: true });
+```
+
+如果数据库中已经存在角色，并且您不想让 drizzle-kit “看到”它或包含它在迁移中，可以将角色标记为现有。
+
+```ts
+import { pgRole } from 'drizzle-orm/pg-core';
+
+export const admin = pgRole('admin').existing();
+```
+
+## 策略
+
+要充分利用 RLS，您可以在 Drizzle 表中定义策略。
+
+<Callout title='信息'>
+在 PostgreSQL 中，策略应该与现有表关联。由于策略总是与特定表相关联，我们决定将策略定义作为 `pgTable` 的参数进行定义。
+</Callout>
+
+**pgPolicy 的示例，包含所有可用属性**
+```ts
+import { sql } from 'drizzle-orm';
+import { integer, pgPolicy, pgRole, pgTable } from 'drizzle-orm/pg-core';
+
+export const admin = pgRole('admin');
+
+export const users = pgTable('users', {
+	id: integer(),
+}, (t) => [
+	pgPolicy('policy', {
+		as: 'permissive',
+		to: admin,
+		for: 'delete',
+		using: sql``,
+		withCheck: sql``,
+	}),
+]);
+```
+
+**策略选项**
+|                          |                                                                                                                                           |
+| :----------------------- | :---------------------------------------------------------------------------------------------------------------------------------------- |
+| `as`                     | 可能的值为 `permissive` 或 `restrictive`                                                                                                 |
+| `to`                     | 指定策略适用的角色。可能的值包括 `public`、`current_role`、`current_user`、`session_user`，或任何其他角色名作为字符串。您也可以引用一个 `pgRole` 对象。 |
+| `for`                    | 定义此策略将应用的命令。可能的值为 `all`、`select`、`insert`、`update`、`delete`。                                                       |
+| `using`                  | 将应用于策略创建语句的 `USING` 部分的 SQL 语句。                                                                                             |
+| `withCheck`              | 将应用于策略创建语句的 `WITH CHECK` 部分的 SQL 语句。                                                                                        |
+
+
+**将策略链接到现有表**
+
+在某些情况下，您需要将策略链接到数据库中的现有表。 
+最常见的用例是与 `Neon` 或 `Supabase` 等数据库提供者一起使用，您需要向其现有表中添加策略。
+在这种情况下，您可以使用 `.link()` API。
+
+```ts
+import { sql } from "drizzle-orm";
+import { pgPolicy } from "drizzle-orm/pg-core";
+import { authenticatedRole, realtimeMessages } from "drizzle-orm/supabase";
+
+export const policy = pgPolicy("authenticated role insert policy", {
+  for: "insert",
+  to: authenticatedRole,
+  using: sql``,
+}).link(realtimeMessages);
+```
+
+{/* <Callout title='重要'>
+<Callout> */}
+
+## 迁移
+
+如果您使用 drizzle-kit 来管理您的架构和角色，可能会出现您想引用未在 Drizzle 架构中定义的角色的情况。在这种情况下，您可能希望 drizzle-kit 跳过管理这些角色，而不必在您的 drizzle 架构中定义每个角色，并标记为 `.existing()`。
+
+在这些情况下，您可以在 `drizzle.config.ts` 中使用 `entities.roles`。有关完整的参考，请参阅 [`drizzle.config.ts`](docs/drizzle-config-file) 文档。
+
+默认情况下，`drizzle-kit` 不会为您管理角色，因此您需要在 `drizzle.config.ts` 中启用此功能。
+
+```ts {12-14}
+// drizzle.config.ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: 'postgresql',
+  schema: "./drizzle/schema.ts",
+  dbCredentials: {
+    url: process.env.DATABASE_URL!
+  },
+  verbose: true,
+  strict: true,
+  entities: {
+    roles: true
+  }
+});
+```
+
+如果您需要其他配置选项，我们可以看一些更多的示例。
+
+**您有一个 `admin` 角色，并希望将其排除在可管理角色列表之外**
+
+```ts
+// drizzle.config.ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  ...
+  entities: {
+    roles: {
+      exclude: ['admin']
+    }
+  }
+});
+```
+
+**您有一个 `admin` 角色，并希望将其包括在可管理角色列表中**
+
+```ts
+// drizzle.config.ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  ...
+  entities: {
+    roles: {
+      include: ['admin']
+    }
+  }
+});
+```
+
+**如果您使用 `Neon`，并希望排除 Neon 定义的角色，则可以使用提供者选项**
+
+```ts
+// drizzle.config.ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  ...
+  entities: {
+    roles: {
+      provider: 'neon'
+    }
+  }
+});
+```
+
+**如果您使用 `Supabase`，并希望排除 Supabase 定义的角色，则可以使用提供者选项**
+
+```ts
+// drizzle.config.ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  ...
+  entities: {
+    roles: {
+      provider: 'supabase'
+    }
+  }
+});
+```
+
+<Callout title='重要'>
+您可能会遇到 Drizzle 与数据库提供者指定的新角色相比略显过时的情况。 
+在这种情况下，您可以使用 `provider` 选项和 `exclude` 除其他角色：
+
+```ts
+// drizzle.config.ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  ...
+  entities: {
+    roles: {
+      provider: 'supabase',
+      exclude: ['new_supabase_role']
+    }
+  }
+});
+```
+</Callout>
+
+## RLS 在视图上
+
+使用 Drizzle，您还可以在视图上指定 RLS 策略。为此，您需要在视图的 WITH 选项中使用 `security_invoker`。这是一个小示例：
+
+```ts {5}
+...
+
+export const roomsUsersProfiles = pgView("rooms_users_profiles")
+  .with({
+    securityInvoker: true,
+  })
+  .as((qb) =>
+    qb
+      .select({
+        ...getTableColumns(roomsUsers),
+        email: profiles.email,
+      })
+      .from(roomsUsers)
+      .innerJoin(profiles, eq(roomsUsers.userId, profiles.id))
+  );
+```
+
+## 与 Neon 一起使用
+
+Neon 团队帮助我们实现了他们对我们原始策略 API 的包装器的愿景。我们定义了一个特定的 
+`/neon` 导入，其中包含 `crudPolicy` 函数，其中包含预定义函数和 Neon 的默认角色。
+
+这是如何使用 `crudPolicy` 函数的示例：
+
+```ts
+import { crudPolicy } from 'drizzle-orm/neon';
+import { integer, pgRole, pgTable } from 'drizzle-orm/pg-core';
+
+export const admin = pgRole('admin');
+
+export const users = pgTable('users', {
+	id: integer(),
+}, (t) => [
+	crudPolicy({ role: admin, read: true, modify: false }),
+]);
+```
+
+此策略等效于：
+
+```ts
+import { sql } from 'drizzle-orm';
+import { integer, pgPolicy, pgRole, pgTable } from 'drizzle-orm/pg-core';
+
+export const admin = pgRole('admin');
+
+export const users = pgTable('users', {
+	id: integer(),
+}, (t) => [
+	pgPolicy(`crud-${admin.name}-policy-insert`, {
+		for: 'insert',
+		to: admin,
+		withCheck: sql`false`,
+	}),
+	pgPolicy(`crud-${admin.name}-policy-update`, {
+		for: 'update',
+		to: admin,
+		using: sql`false`,
+		withCheck: sql`false`,
+	}),
+	pgPolicy(`crud-${admin.name}-policy-delete`, {
+		for: 'delete',
+		to: admin,
+		using: sql`false`,
+	}),
+	pgPolicy(`crud-${admin.name}-policy-select`, {
+		for: 'select',
+		to: admin,
+		using: sql`true`,
+	}),
+]);
+```
+
+`Neon` 公开了预定义的 `authenticated` 和 `anonymous` 角色及相关函数。如果您使用 `Neon` 进行 RLS，可以在您的 RLS 查询中使用这些标记为现有的角色以及相关函数。
+
+```ts
+// drizzle-orm/neon
+export const authenticatedRole = pgRole('authenticated').existing();
+export const anonymousRole = pgRole('anonymous').existing();
+
+export const authUid = (userIdColumn: AnyPgColumn) => sql`(select auth.user_id() = ${userIdColumn})`;
+```
+
+例如，您可以像这样使用 `Neon` 预定义的角色和函数：
+
+
+```ts
+import { sql } from 'drizzle-orm';
+import { authenticatedRole } from 'drizzle-orm/neon';
+import { integer, pgPolicy, pgRole, pgTable } from 'drizzle-orm/pg-core';
+
+export const admin = pgRole('admin');
+
+export const users = pgTable('users', {
+	id: integer(),
+}, (t) => [
+	pgPolicy(`policy-insert`, {
+		for: 'insert',
+		to: authenticatedRole,
+		withCheck: sql`false`,
+	}),
+]);
+```
+
+## 与 Supabase 一起使用
+
+我们还有一个 `/supabase` 导入，带有一组标记为现有的预定义角色，您可以在架构中使用它。 
+这个导入将在未来的发布中扩展，提供更多功能和帮助器，使 RLS 和 `Supabase` 的使用更加简单。
+
+```ts
+// drizzle-orm/supabase
+export const anonRole = pgRole('anon').existing();
+export const authenticatedRole = pgRole('authenticated').existing();
+export const serviceRole = pgRole('service_role').existing();
+export const postgresRole = pgRole('postgres_role').existing();
+export const supabaseAuthAdminRole = pgRole('supabase_auth_admin').existing();
+```
+
+例如，您可以像这样使用 `Supabase` 预定义的角色：
+
+```ts
+import { sql } from 'drizzle-orm';
+import { serviceRole } from 'drizzle-orm/supabase';
+import { integer, pgPolicy, pgRole, pgTable } from 'drizzle-orm/pg-core';
+
+export const admin = pgRole('admin');
+
+export const users = pgTable('users', {
+	id: integer(),
+}, (t) => [
+	pgPolicy(`policy-insert`, {
+		for: 'insert',
+		to: serviceRole,
+		withCheck: sql`false`,
+	}),
+]);
+```
+
+`/supabase` 导入还包括您可以在应用程序中使用的预定义表和函数。
+
+```ts
+// drizzle-orm/supabase
+
+const auth = pgSchema('auth');
+export const authUsers = auth.table('users', {
+	id: uuid().primaryKey().notNull(),
+});
+
+const realtime = pgSchema('realtime');
+export const realtimeMessages = realtime.table(
+	'messages',
+	{
+		id: bigserial({ mode: 'bigint' }).primaryKey(),
+		topic: text().notNull(),
+		extension: text({
+			enum: ['presence', 'broadcast', 'postgres_changes'],
+		}).notNull(),
+	},
+);
+
+export const authUid = sql`(select auth.uid())`;
+export const realtimeTopic = sql`realtime.topic()`;
+```
+
+这使您可以在代码中使用它，而 Drizzle Kit 将其视为现有数据库，
+仅将其作为连接到其他实体的信息使用。
+
+```ts
+import { foreignKey, pgPolicy, pgTable, text, uuid } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm/sql";
+import { authenticatedRole, authUsers } from "drizzle-orm/supabase";
+
+export const profiles = pgTable(
+  "profiles",
+  {
+    id: uuid().primaryKey().notNull(),
+    email: text().notNull(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.id],
+	  // 从 Supabase 的 auth 表的引用
+      foreignColumns: [authUsers.id],
+      name: "profiles_id_fk",
+    }).onDelete("cascade"),
+    pgPolicy("authenticated can view all profiles", {
+      for: "select",
+	  // 使用来自 Supabase 的预定义角色
+      to: authenticatedRole,
+      using: sql`true`,
+    }),
+  ]
+);
+```
+
+让我们检查一个向存在于 `Supabase` 的表添加策略的示例。
+
+```ts
+import { sql } from "drizzle-orm";
+import { pgPolicy } from "drizzle-orm/pg-core";
+import { authenticatedRole, realtimeMessages } from "drizzle-orm/supabase";
+
+export const policy = pgPolicy("authenticated role insert policy", {
+  for: "insert",
+  to: authenticatedRole,
+  using: sql``,
+}).link(realtimeMessages);
+```
+
+我们还有一个很好的示例，展示了如何将 Drizzle RLS 与 Supabase 一起使用以及如何进行实际查询。 
+它还包含一个很好的包装器 `createDrizzle`，可以处理与 Supabase 的所有事务工作。 
+在即将发布的版本中，它将被转移到 drizzle-orm/supabase，允许您本地使用它。
+
+请检查 [Drizzle SupaSecureSlack repo](https://github.com/rphlmr/drizzle-supabase-rls)
+
+这是来自该库的一个实现示例：
+```ts
+type SupabaseToken = {
+  iss?: string;
+  sub?: string;
+  aud?: string[] | string;
+  exp?: number;
+  nbf?: number;
+  iat?: number;
+  jti?: string;
+  role?: string;
+};
+
+export function createDrizzle(token: SupabaseToken, { admin, client }: { admin: PgDatabase<any>; client: PgDatabase<any> }) {
+  return {
+    admin,
+    rls: (async (transaction, ...rest) => {
+      return await client.transaction(async (tx) => {
+        // Supabase 暴露了 auth.uid() 和 auth.jwt()
+        // https://supabase.com/docs/guides/database/postgres/row-level-security#helper-functions
+        try {
+          await tx.execute(sql`
+          -- auth.jwt()
+          select set_config('request.jwt.claims', '${sql.raw(
+            JSON.stringify(token)
+          )}', TRUE);
+          -- auth.uid()
+          select set_config('request.jwt.claim.sub', '${sql.raw(
+            token.sub ?? ""
+          )}', TRUE);												
+          -- 设置本地角色
+          set local role ${sql.raw(token.role ?? "anon")};
+          `);
+          return await transaction(tx);
+        } finally {
+          await tx.execute(sql`
+            -- 重置
+            select set_config('request.jwt.claims', NULL, TRUE);
+            select set_config('request.jwt.claim.sub', NULL, TRUE);
+            reset role;
+            `);
+        }
+      }, ...rest);
+    }) as typeof client.transaction,
+  };
+}
+```
+
+并且可以这样使用：
+
+```ts
+// https://github.com/orgs/supabase/discussions/23224
+// 应该是安全的，因为我们使用签名的访问令牌，而不是直接从存储中读取的数据
+export async function createDrizzleSupabaseClient() {
+  const {
+    data: { session },
+  } = await createClient().auth.getSession();
+  return createDrizzle(decode(session?.access_token ?? ""), { admin, client });
+}
+
+async function getRooms() {
+  const db = await createDrizzleSupabaseClient();
+  return db.rls((tx) => tx.select().from(rooms));
+}
+```
