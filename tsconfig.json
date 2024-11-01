@@ -18,5 +18,5 @@
     "jsxImportSource": "react",
     "types": ["vite/client"]
   },
-  "include": ["./src/", "./src/types/declarations.d.ts", "./**/*.ts"]
+  "include": ["./src/", "./src/types/declarations.d.ts"]
 }
