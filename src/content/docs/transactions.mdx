@@ -1,0 +1,153 @@
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
+
+# 事务
+
+SQL 事务是一个或多个与数据库交互的 SQL 语句的组合。
+一个事务可以作为一个单一的逻辑单元提交到数据库，
+或者作为一个单一的逻辑单元回滚（撤销）。
+
+Drizzle ORM 提供了在事务中运行 SQL 语句的 API：
+
+```ts copy
+const db = drizzle(...)
+
+await db.transaction(async (tx) => {
+  await tx.update(accounts).set({ balance: sql`${accounts.balance} - 100.00` }).where(eq(users.name, 'Dan'));
+  await tx.update(accounts).set({ balance: sql`${accounts.balance} + 100.00` }).where(eq(users.name, 'Andrew'));
+});
+```
+
+Drizzle ORM 支持 `savepoints` 以及嵌套事务 API：
+
+```ts copy {7-9}
+const db = drizzle(...)
+
+await db.transaction(async (tx) => {
+  await tx.update(accounts).set({ balance: sql`${accounts.balance} - 100.00` }).where(eq(users.name, 'Dan'));
+  await tx.update(accounts).set({ balance: sql`${accounts.balance} + 100.00` }).where(eq(users.name, 'Andrew'));
+
+  await tx.transaction(async (tx2) => {
+    await tx2.update(users).set({ name: "Mr. Dan" }).where(eq(users.name, "Dan"));
+  });
+});
+```
+
+您可以将业务逻辑嵌入到事务中，并在需要时回滚：
+
+```ts copy {7}
+const db = drizzle(...)
+
+await db.transaction(async (tx) => {
+  const [account] = await tx.select({ balance: accounts.balance }).from(accounts).where(eq(users.name, 'Dan'));
+  if (account.balance < 100) {
+    // 这将抛出一个异常，从而回滚事务。
+    tx.rollback()
+  }
+
+  await tx.update(accounts).set({ balance: sql`${accounts.balance} - 100.00` }).where(eq(users.name, 'Dan'));
+  await tx.update(accounts).set({ balance: sql`${accounts.balance} + 100.00` }).where(eq(users.name, 'Andrew'));
+});
+```
+
+您可以从事务中返回值：
+
+```ts copy {8}
+const db = drizzle(...)
+
+const newBalance: number = await db.transaction(async (tx) => {
+  await tx.update(accounts).set({ balance: sql`${accounts.balance} - 100.00` }).where(eq(users.name, 'Dan'));
+  await tx.update(accounts).set({ balance: sql`${accounts.balance} + 100.00` }).where(eq(users.name, 'Andrew'));
+
+  const [account] = await tx.select({ balance: accounts.balance }).from(accounts).where(eq(users.name, 'Dan'));
+  return account.balance;
+});
+```
+
+您可以使用事务与 **[关系查询](/docs/rqb)**：
+
+```ts
+const db = drizzle({ schema })
+
+await db.transaction(async (tx) => {
+  await tx.query.users.findMany({
+    with: {
+      accounts: true
+    }
+  });
+});
+```
+
+
+
+
+
+我们提供特定于方言的事务配置 API：
+
+<Tabs items={["PostgreSQL", "MySQL", "SQLite"]}>
+<Tab>
+```ts copy {6-8}
+await db.transaction(
+  async (tx) => {
+    await tx.update(accounts).set({ balance: sql`${accounts.balance} - 100.00` }).where(eq(users.name, "Dan"));
+    await tx.update(accounts).set({ balance: sql`${accounts.balance} + 100.00` }).where(eq(users.name, "Andrew"));
+  }, {
+    isolationLevel: "read committed",
+    accessMode: "read write",
+    deferrable: true,
+  }
+);
+
+interface PgTransactionConfig {
+  isolationLevel?:
+    | "read uncommitted"
+    | "read committed"
+    | "repeatable read"
+    | "serializable";
+  accessMode?: "read only" | "read write";
+  deferrable?: boolean;
+}
+```
+</Tab>
+<Tab>
+```ts {6-8}
+await db.transaction(
+  async (tx) => {
+    await tx.update(accounts).set({ balance: sql`${accounts.balance} - 100.00` }).where(eq(users.name, "Dan"));
+    await tx.update(accounts).set({ balance: sql`${accounts.balance} + 100.00` }).where(eq(users.name, "Andrew"));
+  }, {
+    isolationLevel: "read committed",
+    accessMode: "read write",
+    withConsistentSnapshot: true,
+  }
+);
+
+interface MySqlTransactionConfig {
+  isolationLevel?:
+    | "read uncommitted"
+    | "read committed"
+    | "repeatable read"
+    | "serializable";
+  accessMode?: "read only" | "read write";
+  withConsistentSnapshot?: boolean;
+}
+```
+</Tab>
+<Tab>
+```ts {6}
+await db.transaction(
+  async (tx) => {
+    await tx.update(accounts).set({ balance: sql`${accounts.balance} - 100.00` }).where(eq(users.name, "Dan"));
+    await tx.update(accounts).set({ balance: sql`${accounts.balance} + 100.00` }).where(eq(users.name, "Andrew"));
+  }, {
+    behavior: "deferred",
+  }
+);
+
+interface SQLiteTransactionConfig {
+    behavior?: 'deferred' | 'immediate' | 'exclusive';
+}
+```
+</Tab>
+</Tabs>
+

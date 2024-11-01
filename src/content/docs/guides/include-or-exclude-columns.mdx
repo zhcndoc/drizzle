@@ -1,0 +1,412 @@
+---
+title: 在查询中包含或排除列
+slug: include-or-exclude-columns
+---
+
+import Section from "@mdx/Section.astro";
+import IsSupportedChipGroup from "@mdx/IsSupportedChipGroup.astro";
+import Prerequisites from "@mdx/Prerequisites.astro";
+import CodeTabs from '@mdx/CodeTabs.astro';
+import CodeTab from '@mdx/CodeTab.astro';
+
+<IsSupportedChipGroup chips={{PostgreSQL: true, MySQL: true, SQLite: true}}/>
+
+<Prerequisites>
+- 开始使用 [PostgreSQL](/docs/get-started-postgresql), [MySQL](/docs/get-started-mysql) 和 [SQLite](/docs/get-started-sqlite)
+- [选择语句](/docs/select)
+- [获取类型化表列](/docs/goodies#get-typed-table-columns)
+- [连接](/docs/joins)
+- [关系查询](/docs/rqb)
+- [使用关系查询的部分选择](/docs/rqb#partial-fields-select)
+</Prerequisites>
+
+Drizzle 提供了灵活的 API 用于在查询中包含或排除列。要包含所有列，可以使用 `.select()` 方法，如下所示：
+
+<CodeTabs items={["index.ts", "schema.ts"]}>
+	<CodeTab>
+    ```ts copy {5}
+    import { posts } from './schema';
+
+    const db = drizzle(...);
+
+    await db.select().from(posts);
+    ```
+
+    ```ts
+    // 结果类型
+    type Result = {
+      id: number;
+      title: string;
+      content: string;
+      views: number;
+    }[];
+    ```
+  </CodeTab>
+
+  ```ts copy
+  import { integer, pgTable, serial, text } from 'drizzle-orm/pg-core';
+
+  export const posts = pgTable('posts', {
+    id: serial('id').primaryKey(),
+    title: text('title').notNull(),
+    content: text('content').notNull(),
+    views: integer('views').notNull().default(0),
+  });
+	```
+</CodeTabs>
+
+要包含特定列，可以使用 `.select()` 方法，如下所示：
+
+<Section>
+  ```ts copy {1}
+  await db.select({ title: posts.title }).from(posts);
+  ```
+
+  ```ts
+  // 结果类型
+  type Result = {
+    title: string;
+  }[];
+  ```
+</Section>
+
+要包含所有列并添加额外列，可以使用 `getTableColumns()` 工具函数，如下所示：
+
+<Section>
+  ```ts copy {5,6}
+  import { getTableColumns, sql } from 'drizzle-orm';
+
+  await db
+    .select({
+      ...getTableColumns(posts),
+      titleLength: sql<number>`length(${posts.title})`,
+    })
+    .from(posts);
+  ```
+
+  ```ts
+  // 结果类型
+  type Result = {
+    id: number;
+    title: string;
+    content: string;
+    views: number;
+    titleLength: number;
+  }[];
+  ```
+</Section>
+
+要排除列，可以使用 `getTableColumns()` 工具函数，如下所示：
+
+<Section>
+  ```ts copy {3,5}
+  import { getTableColumns } from 'drizzle-orm';
+
+  const { content, ...rest } = getTableColumns(posts); // 排除 "content" 列
+
+  await db.select({ ...rest }).from(posts); // 选择所有其他列
+  ```
+
+  ```ts
+  // 结果类型
+  type Result = {
+    id: number;
+    title: string;
+    views: number;
+  }[];
+  ```
+</Section>
+
+这就是如何在连接中包含或排除列：
+
+<CodeTabs items={["index.ts", "schema.ts"]}>
+  <CodeTab>
+    ```ts copy {5,9,10,11}
+    import { eq, getTableColumns } from 'drizzle-orm';
+    import { comments, posts, users } from './db/schema';
+
+    // 从 "comments" 中排除 "userId" 和 "postId" 列
+    const { userId, postId, ...rest } = getTableColumns(comments);
+
+    await db
+      .select({
+        postId: posts.id, // 包含 "posts" 中的 "id" 列
+        comment: { ...rest }, // 包含所有其他列
+        user: users, // 等同于 getTableColumns(users)
+      })
+      .from(posts)
+      .leftJoin(comments, eq(posts.id, comments.postId))
+      .leftJoin(users, eq(users.id, posts.userId));
+    ```
+
+    ```ts
+    // 结果类型
+    type Result = {
+      postId: number;
+      comment: {
+        id: number;
+        content: string;
+        createdAt: Date;
+      } | null;
+      user: {
+        id: number;
+        name: string;
+        email: string;
+      } | null;
+    }[];
+    ```
+  </CodeTab>
+
+  ```ts copy
+  import { integer, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
+
+  export const users = pgTable('users', {
+    id: serial('id').primaryKey(),
+    name: text('name').notNull(),
+    email: text('email').notNull(),
+  });
+
+  export const posts = pgTable('posts', {
+    id: serial('id').primaryKey(),
+    title: text('title').notNull(),
+    content: text('content').notNull(),
+    views: integer('views').notNull().default(0),
+    userId: integer('user_id').notNull().references(() => users.id),
+  });
+
+  export const comments = pgTable('comments', {
+    id: serial('id').primaryKey(),
+    postId: integer('post_id').notNull().references(() => posts.id),
+    userId: integer('user_id').notNull().references(() => users.id),
+    content: text('content').notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  });
+  ```
+</CodeTabs>
+
+Drizzle 提供了有用的关系查询 API，使您可以轻松包含或排除查询中的列。这就是如何包含所有列：
+
+<CodeTabs items={["index.ts", "schema.ts"]}>
+  <CodeTab>
+    ```ts copy {5,7,8,9,12,13,14,17,18,19,20,21,22}
+    import * as schema from './schema';
+
+    const db = drizzle(..., { schema });
+
+    await db.query.posts.findMany();
+    ```
+
+    ```ts
+    // 结果类型
+    type Result = {
+      id: number;
+      title: string;
+      content: string;
+      views: number;
+    }[]
+    ```
+  </CodeTab>
+
+  ```ts copy
+  import { integer, pgTable, serial, text } from 'drizzle-orm/pg-core';
+
+  export const posts = pgTable('posts', {
+    id: serial('id').primaryKey(),
+    title: text('title').notNull(),
+    content: text('content').notNull(),
+    views: integer('views').notNull().default(0),
+  });
+	```
+</CodeTabs>
+
+这就是如何使用关系查询包含特定列：
+
+<Section>
+  ```ts copy {2,3,4}
+  await db.query.posts.findMany({
+    columns: {
+      title: true,
+    },
+  });
+  ```
+
+  ```ts
+  // 结果类型
+  type Result = {
+    title: string;
+  }[]
+  ```
+</Section>
+
+这就是如何使用关系查询包含所有列并添加额外列：
+
+<Section>
+  ```ts copy {4,5,6}
+  import { sql } from 'drizzle-orm';
+
+  await db.query.posts.findMany({
+    extras: {
+      titleLength: sql<number>`length(${posts.title})`.as('title_length'),
+    },
+  });
+  ```
+
+  ```ts
+  // 结果类型
+  type Result = {
+    id: number;
+    title: string;
+    content: string;
+    views: number;
+    titleLength: number;
+  }[];
+  ```
+</Section>
+
+这就是如何使用关系查询排除列：
+
+<Section>
+  ```ts copy {2,3,4}
+  await db.query.posts.findMany({
+    columns: {
+      content: false,
+    },
+  });
+  ```
+
+  ```ts
+  // 结果类型
+  type Result = {
+    id: number;
+    title: string;
+    views: number;
+  }[]
+  ```
+</Section>
+
+这就是如何使用关系查询包含或排除与关系相关的列：
+
+<CodeTabs items={["index.ts", "schema.ts"]}>
+  <CodeTab>
+  ```ts copy {7,12,13,16}
+  import * as schema from './schema';
+
+  const db = drizzle(..., { schema });
+
+  await db.query.posts.findMany({
+    columns: {
+      id: true, // 包含 "id" 列
+    },
+    with: {
+      comments: {
+        columns: {
+          userId: false, // 排除 "userId" 列
+          postId: false, // 排除 "postId" 列
+        },
+      },
+      user: true, // 包含 "users" 表中的所有列
+    },
+  });
+  ```
+
+  ```ts
+  // 结果类型
+  type Result = {
+    id: number;
+    user: {
+      id: number;
+      name: string;
+      email: string;
+    };
+    comments: {
+      id: number;
+      content: string;
+      createdAt: Date;
+    }[];
+  }[]
+  ```
+  </CodeTab>
+
+  ```ts copy
+  import { relations } from 'drizzle-orm';
+  import { integer, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
+
+  export const users = pgTable('users', {
+    id: serial('id').primaryKey(),
+    name: text('name').notNull(),
+    email: text('email').notNull(),
+  });
+
+  export const posts = pgTable('posts', {
+    id: serial('id').primaryKey(),
+    title: text('title').notNull(),
+    content: text('content').notNull(),
+    views: integer('views').notNull().default(0),
+    userId: integer('user_id').notNull().references(() => users.id),
+  });
+
+  export const comments = pgTable('comments', {
+    id: serial('id').primaryKey(),
+    postId: integer('post_id').notNull().references(() => posts.id),
+    userId: integer('user_id').notNull().references(() => users.id),
+    content: text('content').notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  });
+
+  export const usersRelations = relations(users, ({ many }) => ({
+    posts: many(posts),
+    comments: many(comments),
+  }));
+
+  export const postsRelations = relations(posts, ({ many, one }) => ({
+    comments: many(comments),
+    user: one(users, { fields: [posts.userId], references: [users.id] }),
+  }));
+
+  export const commentsRelations = relations(comments, ({ one }) => ({
+    post: one(posts, { fields: [comments.postId], references: [posts.id] }),
+    user: one(users, { fields: [comments.userId], references: [users.id] }),
+  }));
+  ```
+</CodeTabs>
+
+这就是如何创建自定义条件选择解决方案：
+
+<CodeTabs items={["index.ts", "schema.ts"]}>
+  <CodeTab>
+    ```ts copy {7}
+    import { posts } from './schema';
+
+    const searchPosts = async (withTitle = false) => {
+      await db
+        .select({
+          id: posts.id,
+          ...(withTitle && { title: posts.title }),
+        })
+        .from(posts);
+    };
+
+    await searchPosts();
+    await searchPosts(true);
+    ```
+
+    ```ts
+    // 结果类型
+    type Result = {
+      id: number;
+      title?: string | undefined;
+    }[];
+    ```
+  </CodeTab>
+
+  ```ts copy
+  import { integer, pgTable, serial, text } from 'drizzle-orm/pg-core';
+
+  export const posts = pgTable('posts', {
+    id: serial('id').primaryKey(),
+    title: text('title').notNull(),
+    content: text('content').notNull(),
+    views: integer('views').notNull().default(0),
+  });
+	```
+</CodeTabs>

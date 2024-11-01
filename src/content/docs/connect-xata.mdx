@@ -1,0 +1,71 @@
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
+import Npm from "@mdx/Npm.astro";
+import Callout from '@mdx/Callout.astro';
+import Steps from '@mdx/Steps.astro';
+import AnchorCards from '@mdx/AnchorCards.astro';
+import Prerequisites from "@mdx/Prerequisites.astro";
+import WhatsNextPostgres from "@mdx/WhatsNextPostgres.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+
+# Drizzle \<\> Xata
+
+<Prerequisites>
+- 数据库 [连接基础](/docs/connect-overview) 与 Drizzle
+- Xata 数据库 - [网站](https://xata.io/docs)
+- Xata 驱动 - [文档](https://xata.io/docs/sdk/typescript/overview) & [GitHub](https://github.com/xataio/client-ts)
+- Drizzle PostgreSQL 驱动 - [文档](/docs/get-started-postgresql)
+</Prerequisites>
+
+根据他们的 **[官方网站](https://xata.io)**，Xata 是一个专注于可靠性、可扩展性和开发者体验的 Postgres 数据平台。Xata Postgres 服务目前处于测试阶段，请查看 [Xata 文档](https://xata.io/docs/postgres) 了解如何在您的帐户中启用它。
+
+Drizzle ORM 本质上支持 `drizzle-orm/xata` 包的 `xata` 驱动和 **[`postgres`](#postgresjs)** 或 **[`pg`](#node-postgres)** 驱动，用于访问 Xata Postgres 数据库。
+
+#### 第一步 - 安装包
+
+<Npm>
+drizzle-orm @xata.io/client
+-D drizzle-kit
+</Npm>
+
+您可以通过 HTTP 客户端或 TCP 客户端将 Drizzle 与 Xata 一起使用。HTTP 客户端不会建立到 Xata 服务器的持久连接，而 TCP 客户端会，并可以用于更高请求数的更好性能。HTTP 客户端通常建议来自无服务器环境，例如 Cloudflare Workers 或 Vercel Edge Functions。TCP 客户端通常用于长时间运行的服务器，例如 Express.js 或 Fastify。
+
+以下示例使用 Xata 生成的客户端，您可以通过运行 [xata init](https://xata.io/docs/getting-started/installation) CLI 命令获得。
+
+<CodeTabs items={['HTTP', 'TCP', 'TCP (池)']}>
+```typescript copy"
+import { drizzle } from 'drizzle-orm/xata-http';
+import { getXataClient } from './xata'; // 生成的客户端
+
+const xata = getXataClient();
+const db = drizzle(xata);
+
+const result = await db.select().from(...);
+```
+```typescript copy"
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { getXataClient } from './xata'; // 生成的客户端
+import { Client } from 'pg';
+
+const xata = getXataClient();
+const client = new Client({ connectionString: xata.sql.connectionString });
+const db = drizzle(client);
+```
+```typescript copy"
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { getXataClient } from './xata'; // 生成的客户端
+import { Pool } from 'pg';
+
+const xata = getXataClient();
+const pool = new Pool({ connectionString: xata.sql.connectionString, max: 10 });
+const db = drizzle(pool);
+```
+</CodeTabs>
+
+如果您不想使用生成的 Xata 客户端，也可以使用 **[`postgres`](#postgresjs)** 或 **[`pg`](#node-postgres)** 驱动，这种情况下，您可以从 Xata 数据库的设置页面复制连接字符串。有关更多信息，请查看我们的 [PostgreSQL 连接部分](/docs/get-started-postgresql)。
+
+有关使用 Drizzle 与 Xata 的更多详细信息，请参阅官方 [Xata 文档](https://xata.io/docs/integrations/drizzle)。
+
+#### 下一步是什么？
+
+<WhatsNextPostgres/>

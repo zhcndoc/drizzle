@@ -1,0 +1,48 @@
+import Callout from '@mdx/Callout.astro';
+
+# 常见问题与故障排除
+
+## **我应该使用 `generate` 还是 `push`？**
+
+这两个命令在逻辑上是不同的。`generate` 用于创建一个 SQL 文件，
+并附带 `drizzle-kit` （或任何其他迁移工具）所需的额外信息。
+
+在生成这些迁移后，它们不会被应用到数据库。 你需要在下一步中执行此操作。
+你可以在 **[这里](/docs/migrations)** 了解更多信息。
+
+另一方面，`push` 不需要生成任何迁移。
+它会简单地将你的模式与数据库模式同步。
+使用时请小心；我们建议仅在本地开发和本地数据库中使用。要了解更多信息，请查看 **[`drizzle-kit push`](/docs/drizzle-kit-push)**。
+
+## `push` 和 `generate` 在 PostgreSQL 索引中的工作原理
+
+### 限制
+
+1. **如果在至少一个表达式上有索引，你应该手动指定索引名称**
+
+示例
+
+```ts
+index().on(table.id, table.email) // 将正常工作，名称将被自动生成
+index('my_name').on(table.id, table.email) // 将正常工作
+
+// 但是
+
+index().on(sql`lower(${table.email})`) // 错误
+index('my_name').on(sql`lower(${table.email})`) // 将正常工作
+```
+
+2. **如果以下字段在现有索引中发生了更改，Push 将不会生成语句：**
+
+- `.on()` 和 `.using()` 中的表达式
+- `.where()` 语句
+- 列上的操作符类 `.op()`
+
+如果你使用 `push` 工作流并想更改索引中的这些字段，你需要：
+
+1. 注释掉索引
+2. Push
+3. 取消注释索引并更改这些字段
+4. 再次 Push
+
+对于 `generate` 命令，任何在新 drizzle 索引 API 中对索引的任何属性的更改都会触发 `drizzle-kit`，因此在这里没有限制。

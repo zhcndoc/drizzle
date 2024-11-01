@@ -1,0 +1,155 @@
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
+import Npm from "@mdx/Npm.astro";
+import Callout from '@mdx/Callout.astro';
+import Steps from '@mdx/Steps.astro';
+import AnchorCards from '@mdx/AnchorCards.astro';
+import Prerequisites from "@mdx/Prerequisites.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Section from "@mdx/Section.astro";
+import WhatsNextPostgres from "@mdx/WhatsNextPostgres.astro";
+
+# Drizzle \<\> Neon Postgres
+<Prerequisites>
+- 数据库 [连接基础](/docs/connect-overview) 与 Drizzle
+- Neon 无服务器数据库 - [网站](https://neon.tech)
+- Neon 无服务器驱动 - [文档](https://neon.tech/docs/serverless/serverless-driver) & [GitHub](https://github.com/neondatabase/serverless)
+- Drizzle PostgreSQL 驱动 - [文档](/docs/get-started-postgresql)
+</Prerequisites>
+
+Drizzle 原生支持使用 `neon-http` 和 `neon-websockets` 驱动连接 Neon。这些驱动在底层使用 **neon-serverless** 驱动。  
+  
+使用 `neon-http` 和 `neon-websockets` 驱动，您可以通过 HTTP 或 WebSockets 从无服务器环境访问 Neon 数据库，而不是通过 TCP。  
+通过 HTTP 查询对于单个非交互事务来说速度更快。  
+  
+如果您需要会话或交互事务支持，或需要一个完全兼容的可替换 `pg` 驱动, 那您可以使用基于 WebSocket 的 `neon-serverless` 驱动。  
+您可以直接使用 [Postgres](/docs/get-started/postgresql-new) 连接到 Neon 数据库。
+  
+有关在 Cloudflare Worker 中使用 Drizzle ORM 和 Neon 无服务器驱动的示例，**[请见这里](http://driz.link/neon-cf-ex)**。  
+要从有服务器环境使用 Neon，您可以使用 PostgresJS 驱动，正如 Neon 的 **[官方 Node.js 文档](https://neon.tech/docs/guides/node)** 中所描述的 — 参见 **[文档](#postgresjs)**。
+
+#### 第一步 - 安装包
+<Npm>
+drizzle-orm @neondatabase/serverless
+-D drizzle-kit
+</Npm>
+
+#### 第二步 - 初始化驱动并进行查询
+<CodeTabs items={["Neon HTTP", "Neon Websockets", "node-postgres", "postgres.js"]}>
+```typescript
+import { drizzle } from 'drizzle-orm/neon-http';
+
+const db = drizzle(process.env.DATABASE_URL);
+
+const result = await db.execute('select 1');
+```
+<Section> 
+```typescript 
+import { drizzle } from 'drizzle-orm/neon-serverless';
+
+const db = drizzle(process.env.DATABASE_URL);
+
+const result = await db.execute('select 1');
+```
+```typescript
+// 对于 Node.js - 确保安装 'ws' 和 'bufferutil' 包
+import { drizzle } from 'drizzle-orm/neon-serverless';
+import ws from 'ws';
+
+const db = drizzle({
+  connection: process.env.DATABASE_URL,
+  ws: ws,
+});
+
+const result = await db.execute('select 1');
+```
+<Callout type="warning" emoji="⚙️"> 
+在 `WebSocket` 全局未定义的环境（例如 Node.js）中使用 WebSockets 需要额外的配置。 
+将 `ws` 和 `bufferutil` 包添加到项目的依赖中，并在 Drizzle 配置中设置 `ws`。 
+</Callout>
+</Section> 
+```typescript 
+// 确保安装 'pg' 包 
+import { drizzle } from 'drizzle-orm/node-postgres';
+
+const db = drizzle(process.env.DATABASE_URL);
+ 
+const result = await db.execute('select 1');
+```
+```typescript
+// 确保安装 'postgres' 包
+import { drizzle } from 'drizzle-orm/postgres-js';
+
+const db = drizzle(process.env.DATABASE_URL);
+
+const result = await db.execute('select 1');
+```
+</CodeTabs>
+
+如果您需要提供现有的驱动程序：
+
+<CodeTabs items={["Neon HTTP", "Neon Websockets", "node-postgres", "postgres.js"]}>
+```typescript
+import { neon } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-http';
+
+const sql = neon(process.env.DATABASE_URL!);
+const db = drizzle({ client: sql });
+
+const result = await db.execute('select 1');
+```
+<Section> 
+```typescript 
+import { Pool } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-serverless';
+
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const db = drizzle({ client: pool });
+
+const result = await db.execute('select 1');
+```
+```typescript
+// 对于 Node.js - 确保安装 'ws' 和 'bufferutil' 包
+import { Pool, neonConfig } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-serverless';
+
+neonConfig.webSocketConstructor = ws;
+
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const db = drizzle({ client: pool });
+
+const result = await db.execute('select 1');
+```
+<Callout type="warning" emoji="⚙️"> 
+在 `WebSocket` 全局未定义的环境（例如 Node.js）中使用 WebSockets 需要额外的配置。 
+将 `ws` 和 `bufferutil` 包添加到项目的依赖中，并在 Drizzle 配置中设置 `ws`。 
+</Callout>
+</Section> 
+```typescript 
+// 确保安装 'pg' 包 
+import { pgTable, serial, text, varchar } from "drizzle-orm/pg-core";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+const db = drizzle({ client: pool });
+ 
+const result = await db.execute('select 1');
+```
+```typescript
+// 确保安装 'postgres' 包
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
+
+const queryClient = postgres(process.env.DATABASE_URL);
+const db = drizzle({ client: queryClient });
+
+const result = await db.execute('select 1');
+```
+</CodeTabs>
+
+#### 接下来是什么？
+
+<WhatsNextPostgres/>

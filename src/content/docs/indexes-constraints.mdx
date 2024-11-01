@@ -1,0 +1,991 @@
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
+import Callout from '@mdx/Callout.astro';
+import Section from '@mdx/Section.astro';
+
+# 索引与约束
+
+## 约束
+
+SQL 约束是强加于表列的规则。它们用于防止无效数据被输入数据库。
+
+这确保了数据库中数据的准确性和可靠性。
+
+### 默认值
+
+`DEFAULT` 子句指定如果用户在进行 `INSERT` 时未提供值，则使用该列的默认值。
+如果列定义没有附加显式的 `DEFAULT` 子句，
+则该列的默认值为 `NULL`。
+
+显式的 `DEFAULT` 子句可以指定默认值为 `NULL`，
+字符串常量，BLOB 常量，带符号数字或任何用括号括起来的常量表达式。
+
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
+  <Tab>
+    <Section>
+    ```typescript
+    import { sql } from "drizzle-orm";
+    import { integer, uuid, pgTable } from "drizzle-orm/pg-core";
+
+    const table = pgTable('table', {
+      integer1: integer('integer1').default(42),
+      integer2: integer('integer2').default(sql`'42'::integer`),
+      uuid1: uuid('uuid1').defaultRandom(),
+      uuid2: uuid('uuid2').default(sql`gen_random_uuid()`),
+    });
+    ```
+
+    ```sql
+    CREATE TABLE IF NOT EXISTS "table" (
+      "integer1" integer DEFAULT 42,
+      "integer2" integer DEFAULT '42'::integer,
+      "uuid1" uuid DEFAULT gen_random_uuid(),
+      "uuid2" uuid DEFAULT gen_random_uuid()
+    );
+    ```
+    </Section>
+
+  </Tab> 
+  <Tab>
+    <Section>
+    ```typescript
+    import { sql } from "drizzle-orm";
+    import { int, time, mysqlTable } from "drizzle-orm/mysql-core";
+    
+    const table = mysqlTable("table", {
+      int: int("int").default(42),
+      time: time("time").default(sql`cast("14:06:10" AS TIME)`),
+    });
+    ```
+    ```sql
+    CREATE TABLE `table` (
+      `int` int DEFAULT 42,
+      `time` time DEFAULT cast("14:06:10" AS TIME)
+    );
+    ```
+    </Section>
+  </Tab>
+  <Tab>
+    <Section>
+    ```typescript
+    import { sql } from "drizzle-orm";
+    import { integer, sqliteTable } from "drizzle-orm/sqlite-core";
+
+    const table = sqliteTable('table', {
+      int1: integer('int1').default(42),
+      int2: integer('int2').default(sql`(abs(42))`)
+    });
+
+    ```
+    ```sql
+    CREATE TABLE `table` (
+      `int1` integer DEFAULT 42,
+      `int2` integer DEFAULT (abs(42))
+    );
+    ```
+    </Section>
+
+  </Tab>
+</Tabs>
+
+### 非空
+
+默认情况下，一个列可以包含 **NULL** 值。`NOT NULL` 约束强制一个列 **不** 接受 **NULL** 值。
+
+这强制字段始终包含一个值，这意味着您不能插入新记录，
+或在没有为该字段添加值的情况下更新记录。
+
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
+  <Tab>
+    <Section>
+      ```typescript copy
+      import { integer, pgTable } from "drizzle-orm/pg-core";
+
+      const table = pgTable('table', {
+        integer: integer('integer').notNull(),
+      });
+      ```
+
+      ```sql
+      CREATE TABLE IF NOT EXISTS "table" (
+        "integer" integer NOT NULL,
+      );
+      ```
+    </Section>
+
+  </Tab> 
+  <Tab>
+    <Section>
+      ```typescript
+      import { int, mysqlTable } from "drizzle-orm/mysql-core";
+
+      const table = mysqlTable('table', {
+        int: int('int').notNull(),
+      });
+      ```
+
+      ```sql
+      CREATE TABLE `table` (
+        `int` int NOT NULL,
+      );
+      ```
+    </Section>
+
+  </Tab>
+  <Tab>
+   <Section>
+      ```typescript copy
+      const table = sqliteTable('table', { 
+        numInt: integer('numInt').notNull() 
+      });
+      ```
+
+      ```sql
+      CREATE TABLE table (
+        `numInt` integer NOT NULL
+      );
+      ```
+    </Section>
+
+  </Tab>
+</Tabs>
+
+### 唯一
+
+`UNIQUE` 约束确保列中的所有值均不同。
+
+`UNIQUE` 和 `PRIMARY KEY` 约束为列或列集提供了唯一性保证。
+
+`PRIMARY KEY` 约束自动具有 `UNIQUE` 约束。
+
+<Callout type="info" emoji="ℹ️">
+  每个表可以有多个 `UNIQUE` 约束，但每个表只能有一个 `PRIMARY KEY` 约束。
+</Callout>
+
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
+  <Tab>
+    <Section>
+      ```typescript copy
+      import { integer, text, unique, pgTable } from "drizzle-orm/pg-core";
+
+      export const user = pgTable('user', {
+        id: integer('id').unique(),
+      });
+
+      export const table = pgTable('table', {
+        id: integer('id').unique('custom_name'),
+      });
+
+      export const composite = pgTable('composite_example', {
+        id: integer('id'),
+        name: text('name'),
+      }, (t) => ({
+        unq: unique().on(t.id, t.name),
+        unq2: unique('custom_name').on(t.id, t.name)
+      }));
+
+      // 在 Postgres 15.0 及以上版本中，NULLS NOT DISTINCT 可用
+      // 此示例演示了所有可用的用法
+      export const userNulls = pgTable('user_nulls_example', {
+        id: integer('id').unique("custom_name", { nulls: 'not distinct' }),
+      }, (t) => ({
+        unq: unique().on(t.id).nullsNotDistinct()
+      }));
+      ```
+
+      ```sql
+      CREATE TABLE IF NOT EXISTS "composite_example" (
+	      "id" integer,
+          "name" text,
+          CONSTRAINT "composite_example_id_name_unique" UNIQUE("id","name"),
+          CONSTRAINT "custom_name" UNIQUE("id","name")
+      );
+
+      CREATE TABLE IF NOT EXISTS "table" (
+      	"id" integer,
+      	CONSTRAINT "custom_name" UNIQUE("id")
+      );
+
+      CREATE TABLE IF NOT EXISTS "user" (
+      	"id" integer,
+      	CONSTRAINT "user_id_unique" UNIQUE("id")
+      );
+
+      CREATE TABLE IF NOT EXISTS "user_nulls_example" (
+	      "id" integer,
+	      CONSTRAINT "custom_name" UNIQUE NULLS NOT DISTINCT("id"),
+	      CONSTRAINT "user_nulls_example_id_unique" UNIQUE NULLS NOT DISTINCT("id")
+      );
+      ```
+    </Section>
+
+  </Tab> 
+  <Tab>
+    <Section>
+      ```typescript
+      import { int, varchar, unique, mysqlTable } from "drizzle-orm/mysql-core";
+
+      export const user = mysqlTable('user', {
+        id: int('id').unique(),
+      });
+
+      export const table = mysqlTable('table', {
+        id: int('id').unique('custom_name'),
+      });
+
+      export const composite = mysqlTable('composite_example', {
+        id: int('id'),
+        name: varchar('name', { length: 256 }),
+      }, (t) => ({
+        unq: unique().on(t.id, t.name),
+        unq2: unique('custom_name').on(t.id, t.name)
+      }));
+      ```
+
+      ```sql
+      CREATE TABLE `user` (
+      	`id` int,
+      	CONSTRAINT `user_id_unique` UNIQUE(`id`)
+      );
+
+      CREATE TABLE `table` (
+      	`id` int,
+      	CONSTRAINT `custom_name` UNIQUE(`id`)
+      );
+
+      CREATE TABLE `composite_example` (
+	      `id` int,
+	      `name` varchar(256),
+	      CONSTRAINT `composite_example_id_name_unique` UNIQUE(`id`,`name`),
+	      CONSTRAINT `custom_name` UNIQUE(`id`,`name`)
+      );
+      ```
+    </Section>
+
+  </Tab>
+  <Tab>
+   <Section>
+      ```typescript copy
+      import { int, text, unique, sqliteTable } from "drizzle-orm/sqlite-core";
+
+      export const user = sqliteTable('user', {
+        id: int('id').unique(),
+      });
+
+      export const table = sqliteTable('table', {
+        id: int('id').unique('custom_name'),
+      });
+
+      export const composite = sqliteTable('composite_example', {
+        id: int('id'),
+        name: text('name'),
+      }, (t) => ({
+        unq: unique().on(t.id, t.name),
+        unq2: unique('custom_name').on(t.id, t.name)
+      }));
+      ```
+
+      ```sql
+      CREATE TABLE `user` (
+	      `id` integer
+      );
+
+      CREATE TABLE `table` (
+      	`id` integer
+      );
+
+      CREATE TABLE `composite_example` (
+      	`id` integer,
+      	`name` text
+      );
+
+      CREATE UNIQUE INDEX `composite_example_id_name_unique` ON `composite_example` (`id`,`name`);
+      CREATE UNIQUE INDEX `custom_name` ON `composite_example` (`id`,`name`);
+      CREATE UNIQUE INDEX `custom_name` ON `table` (`id`);
+      CREATE UNIQUE INDEX `user_id_unique` ON `user` (`id`);
+      ```
+    </Section>
+
+  </Tab>
+</Tabs>
+
+### 检查
+
+`CHECK` 约束用于限制可以放入列的值范围。
+
+如果您在列上定义了 `CHECK` 约束，则仅允许此列的某些值。
+
+如果您在表上定义了 `CHECK` 约束，则可以根据行中其他列的值限制某些列中的值。
+
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
+  <Tab>
+    <Section>
+      ```typescript copy
+      import { sql } from "drizzle-orm";
+      import { check, integer, pgTable, text, uuid } from "drizzle-orm/pg-core";
+
+      export const users = pgTable(
+        "users",
+        {
+          id: uuid().defaultRandom().primaryKey(),
+          username: text().notNull(),
+          age: integer(),
+        },
+        (table) => ({
+          checkConstraint: check("age_check1", sql`${table.age} > 21`),
+        })
+      );
+      ```
+      ```sql
+      CREATE TABLE IF NOT EXISTS "users" (
+	      "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	      "username" text NOT NULL,
+	      "age" integer,
+	      CONSTRAINT "age_check1" CHECK ("users"."age" > 21)
+      );
+      ```
+    </Section>
+
+  </Tab> 
+  <Tab>
+    <Section>
+      ```typescript copy
+      import { sql } from "drizzle-orm";
+      import { check, int, mysqlTable, text } from "drizzle-orm/mysql-core";
+
+      export const users = mysqlTable(
+        "users",
+        {
+          id: int().primaryKey(),
+          username: text().notNull(),
+          age: int(),
+        },
+        (table) => ({
+          checkConstraint: check("age_check1", sql`${table.age} > 21`),
+        })
+      );
+      ```
+      ```sql
+      CREATE TABLE `users` (
+	      `id` int NOT NULL,
+	      `username` text NOT NULL,
+	      `age` int,
+	      CONSTRAINT `users_id` PRIMARY KEY(`id`),
+	      CONSTRAINT `age_check1` CHECK(`users`.`age` > 21)
+      );
+      ```
+    </Section>
+  </Tab>
+  <Tab>
+   <Section>
+      ```typescript copy
+      import { sql } from "drizzle-orm";
+      import { check, int, sqliteTable, text } from "drizzle-orm/sqlite-core";
+
+      export const users = sqliteTable(
+        "users",
+        {
+          id: int().primaryKey(),
+          username: text().notNull(),
+          age: int(),
+        },
+        (table) => ({
+          checkConstraint: check("age_check1", sql`${table.age} > 21`),
+        })
+      );
+      ```
+      ```sql
+      CREATE TABLE `users` (
+	      `id` integer PRIMARY KEY NOT NULL,
+	      `username` text NOT NULL,
+	      `age` integer,
+	      CONSTRAINT "age_check1" CHECK("users"."age" > 21)
+      );
+      ```
+    </Section>
+
+  </Tab>
+</Tabs>
+
+### 主键
+
+`PRIMARY KEY` 约束唯一标识表中的每条记录。
+主键必须包含 `UNIQUE` 值，并且不能包含 `NULL` 值。
+
+一个表只能有 **一个** 主键；在表中，该主键可以由单个列或多个列（字段）组成。
+
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
+  <Tab>
+    <Section>
+      ```typescript copy
+      import { serial, text, pgTable } from "drizzle-orm/pg-core";
+
+      const user = pgTable('user', {
+        id: serial('id').primaryKey(),
+      });
+
+      const table = pgTable('table', {
+        id: text('cuid').primaryKey(),
+      });
+      ```
+
+      ```sql
+      CREATE TABLE IF NOT EXISTS "user" (
+        "id" serial PRIMARY KEY,
+      );
+
+      CREATE TABLE IF NOT EXISTS "table" (
+        "cuid" text PRIMARY KEY,
+      );
+      ```
+    </Section>
+
+  </Tab> 
+  <Tab>
+    <Section>
+      ```typescript
+      import { int, text, mysqlTable } from "drizzle-orm/mysql-core";
+
+      export const user = mysqlTable("user", {
+        id: int("id").autoincrement().primaryKey(),
+      })
+
+      export const table = mysqlTable("table", {
+        cuid: text("cuid").primaryKey(),
+      })
+      ```
+
+      ```sql
+      CREATE TABLE `user` (
+        `id` int AUTO_INCREMENT PRIMARY KEY NOT NULL
+      );
+
+      CREATE TABLE `table` (
+        `cuid` text PRIMARY KEY NOT NULL
+      );
+      ```
+    </Section>
+
+  </Tab>
+  <Tab>
+   <Section>
+      ```typescript copy
+      import { integer, sqliteTable } from "drizzle-orm/sqlite-core";
+
+      export const user = sqliteTable("user", {
+        id: integer("id").primaryKey(),
+      })
+
+      export const pet = sqliteTable("pet", {
+        id: integer("id").primaryKey(),
+      })
+      ```
+
+      ```sql
+      CREATE TABLE `user` (
+          `id` integer PRIMARY KEY AUTOINCREMENT NOT NULL
+      );
+
+      CREATE TABLE `pet` (
+          `id` integer PRIMARY KEY AUTOINCREMENT
+      )
+      ```
+    </Section>
+
+  </Tab>
+</Tabs>
+
+### 复合主键
+
+与 `PRIMARY KEY` 相似，复合主键使用多个字段唯一标识表中的每条记录。
+
+Drizzle ORM 提供一个独立的 `primaryKey` 操作符来实现这一点：
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
+  <Tab>
+    <Section>
+      ```typescript copy {18, 19}
+      import { serial, text, integer, primaryKey, pgTable } from "drizzle-orm/pg-core";
+
+      export const user = pgTable("user", {
+        id: serial("id").primaryKey(),
+        name: text("name"),
+      });
+
+      export const book = pgTable("book", {
+        id: serial("id").primaryKey(),
+        name: text("name"),
+      });
+
+      export const booksToAuthors = pgTable("books_to_authors", {
+        authorId: integer("author_id"),
+        bookId: integer("book_id"),
+      }, (table) => {
+        return {
+          pk: primaryKey({ columns: [table.bookId, table.authorId] }),
+          pkWithCustomName: primaryKey({ name: 'custom_name', columns: [table.bookId, table.authorId] }),
+        };
+      });
+      ```
+
+      ```sql {6, 9}
+      ...
+
+      CREATE TABLE IF NOT EXISTS "books_to_authors" (
+        "author_id" integer,
+        "book_id" integer,
+        PRIMARY KEY("book_id","author_id"),
+      );
+
+      ALTER TABLE "books_to_authors" ADD CONSTRAINT "custom_name" PRIMARY KEY("book_id","author_id");
+      ```
+    </Section>
+
+  </Tab> 
+  <Tab>
+    <Section>
+      ```typescript {18, 19}
+      import { int, text, primaryKey, mysqlTable } from "drizzle-orm/mysql-core";
+
+      export const user = mysqlTable("user", {
+        id: int("id").autoincrement().primaryKey(),
+        name: text("name"),
+      });
+
+      export const book = mysqlTable("book", {
+        id: int("id").autoincrement().primaryKey(),
+        name: text("name"),
+      });
+
+      export const booksToAuthors = mysqlTable("books_to_authors", {
+        authorId: int("author_id"),
+        bookId: int("book_id"),
+      }, (table) => {
+        return {
+          pk: primaryKey({ columns: [table.bookId, table.authorId] }),
+          pkWithCustomName: primaryKey({ name: 'custom_name', columns: [table.bookId, table.authorId] }),
+        };
+      });
+      ```
+
+      ```sql {6}
+      ...
+
+      CREATE TABLE `books_to_authors` (
+        `author_id` int,
+        `book_id` int,
+        PRIMARY KEY(`book_id`,`author_id`)
+      );
+      ```
+    </Section>
+
+  </Tab>
+  <Tab>
+   <Section>
+      ```typescript copy {18, 19}
+      import { integer, text, primaryKey, sqliteTable} from "drizzle-orm/sqlite-core";
+
+      export const user = sqliteTable("user", {
+        id: integer("id").primaryKey({ autoIncrement: true }),
+        name: text("name"),
+      });
+
+      export const book = sqliteTable("book", {
+        id: integer("id").primaryKey({ autoIncrement: true }),
+        name: text("name"),
+      });
+
+      export const bookToAuthor = sqliteTable("book_to_author", {
+        authorId: integer("author_id"),
+        bookId: integer("book_id"),
+      }, (table) => {
+        return {
+          pk: primaryKey({ columns: [table.bookId, table.authorId] }),
+          pkWithCustomName: primaryKey({ name: 'custom_name', columns: [table.bookId, table.authorId] }),
+        };
+      });
+      ```
+      ```sql {6}
+      ...
+
+      CREATE TABLE `book_to_author` (
+        `author_id` integer,
+        `book_id` integer,
+        PRIMARY KEY(`book_id`, `author_id`)
+      );
+      ```
+    </Section>
+
+  </Tab>
+</Tabs>
+
+### 外键
+
+`FOREIGN KEY` 约束用于防止会破坏表之间链接的操作。
+`FOREIGN KEY` 是一个表中的字段（或字段集合），它引用了另一个表中的 `PRIMARY KEY`。
+带有外键的表称为子表，带有主键的表称为引用表或父表。
+
+Drizzle ORM 提供多种声明外键的方法。
+您可以在列声明语句中声明它们：
+
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
+  <Tab>
+    ```typescript copy {11}
+    import { serial, text, integer, pgTable } from "drizzle-orm/pg-core";
+
+    export const user = pgTable("user", {
+      id: serial("id"),
+      name: text("name"),
+    });
+
+    export const book = pgTable("book", {
+      id: serial("id"),
+      name: text("name"),
+      authorId: integer("author_id").references(() => user.id)
+    });
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript {11}
+    import { int, text, mysqlTable } from "drizzle-orm/mysql-core";
+
+    export const user = mysqlTable("user", {
+      id: int("id").primaryKey().autoincrement(),
+      name: text("name"),
+    });
+
+    export const book = mysqlTable("book", {
+      id: int("id").primaryKey().autoincrement(),
+      name: text("name"),
+      authorId: int("author_id").references(() => user.id)
+    });
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript {11}
+    import { integer, text, sqliteTable } from "drizzle-orm/sqlite-core";
+
+    export const user = sqliteTable("user", {
+      id: integer("id").primaryKey({ autoIncrement: true }),
+      name: text("name"),
+    });
+
+    export const book = sqliteTable("book", {
+      id: integer("id").primaryKey({ autoIncrement: true }),
+      name: text("name"),
+      authorId: integer("author_id").references(() => user.id)
+    });
+    ```
+
+  </Tab>
+</Tabs>
+
+如果您想进行自我引用，由于 TypeScript 的限制，
+您将必须显式设置引用回调的返回类型或使用独立的 `foreignKey` 操作符。
+
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
+  <Tab>
+    ```typescript copy {6,16-19}
+    import { serial, text, integer, foreignKey, pgTable, AnyPgColumn } from "drizzle-orm/pg-core";
+
+    export const user = pgTable("user", {
+      id: serial("id"),
+      name: text("name"),
+      parentId: integer("parent_id").references((): AnyPgColumn => user.id)
+    });
+
+    // 或
+    export const user = pgTable("user", {
+      id: serial("id"),
+      name: text("name"),
+      parentId: integer("parent_id"),
+    }, (table) => {
+      return {
+        parentReference: foreignKey({
+          columns: [table.parentId],
+          foreignColumns: [table.id],
+          name: "custom_fk"
+        }),
+      };
+    });
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript {6,16-19}
+    import { int, text, foreignKey, AnyMySqlColumn, mysqlTable } from "drizzle-orm/mysql-core";
+
+    export const user = mysqlTable("user", {
+      id: int("id").primaryKey().autoincrement(),
+      name: text("name"),
+      parentId: int("parent_id").references((): AnyMySqlColumn => user.id),
+    });
+
+    // 或
+    export const user = mysqlTable("user", {
+      id: int("id").primaryKey().autoincrement(),
+      name: text("name"),
+      parentId: int("parent_id")
+    }, (table) => {
+      return {
+        parentReference: foreignKey({
+          columns: [table.parentId],
+          foreignColumns: [table.id],
+          name: "custom_fk"
+        }),
+      };
+    });
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript {6,16-19}
+    import { integer, text, foreignKey, sqliteTable, AnySQLiteColumn } from "drizzle-orm/sqlite-core";
+
+    export const user = sqliteTable("user", {
+      id: integer("id").primaryKey({ autoIncrement: true }),
+      name: text("name"),
+      parentId: integer("parent_id").references((): AnySQLiteColumn => user.id)
+    });
+
+    // 或
+    export const user = sqliteTable("user", {
+      id: integer("id").primaryKey({ autoIncrement: true }),
+      name: text("name"),
+      parentId: integer("parent_id"),
+    }, (table) => {
+      return {
+        parentReference: foreignKey({
+          columns: [table.parentId],
+          foreignColumns: [table.id],
+          name: "custom_fk"
+        }),
+      };
+    });
+    ```
+
+  </Tab>
+</Tabs>
+要声明多列外键，可以使用专用的 `foreignKey` 操作符：
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
+  <Tab>
+    ```typescript copy {4-5,14-15,18-21}
+    import { serial, text, foreignKey, pgTable, AnyPgColumn } from "drizzle-orm/pg-core";
+
+    export const user = pgTable("user", {
+      firstName: text("firstName"),
+      lastName: text("lastName"),
+    }, (table) => {
+      return {
+        pk: primaryKey({ columns: [table.firstName, table.lastName] }),
+      };
+    });
+
+    export const profile = pgTable("profile", {
+      id: serial("id").primaryKey(),
+      userFirstName: text("user_first_name"),
+      userLastName: text("user_last_name"),
+    }, (table) => {
+      return {
+        userReference: foreignKey({
+          columns: [table.userFirstName, table.userLastName],
+          foreignColumns: [user.firstName, user.lastName],
+          name: "custom_fk"
+        })
+      }
+    })
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript copy {4-5,14-15,18-21}
+    import { int, text, primaryKey, foreignKey, mysqlTable, AnyMySqlColumn } from "drizzle-orm/mysql-core";
+
+    export const user = mysqlTable("user", {
+      firstName: text("firstName"),
+      lastName: text("lastName"),
+    }, (table) => {
+      return {
+        pk: primaryKey({ columns: [table.firstName, table.lastName] }),
+      };
+    });
+
+    export const profile = mysqlTable("profile", {
+      id: int("id").autoincrement().primaryKey(),
+      userFirstName: text("user_first_name"),
+      userLastName: text("user_last_name"),
+    }, (table) => {
+      return {
+        userReference: foreignKey({
+          columns: [table.userFirstName, table.userLastName],
+          foreignColumns: [user.firstName, user.lastName],
+          name: "custom_name"
+        })
+      }
+    });
+    ```
+
+  </Tab>
+  <Tab>
+    ```typescript {4-5,14-15,18-21}
+    import { integer, text, primaryKey, foreignKey, sqliteTable, AnySQLiteColumn } from "drizzle-orm/sqlite-core";
+
+    export const user = sqliteTable("user", {
+      firstName: text("firstName"),
+      lastName: text("lastName"),
+    }, (table) => {
+      return {
+        pk: primaryKey({ columns: [table.firstName, table.lastName] }),
+      };
+    });
+
+    export const profile = sqliteTable("profile", {
+      id: integer("id").primaryKey({ autoIncrement: true }),
+      userFirstName: text("user_first_name"),
+      userLastName: text("user_last_name"),
+    }, (table) => {
+      return {
+        userReference: foreignKey({
+          columns: [table.userFirstName, table.userLastName],
+          foreignColumns: [user.firstName, user.lastName],
+          name: "custom_name"
+        })
+      }
+    });
+    ```
+
+  </Tab>
+</Tabs>
+
+## 索引
+
+Drizzle ORM 提供 `index` 和 `unique index` 声明的 API：
+
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
+  <Tab>
+    <Section>
+    ```typescript copy {9-10}
+    import { serial, text, index, uniqueIndex, pgTable } from "drizzle-orm/pg-core";
+
+    export const user = pgTable("user", {
+      id: serial("id").primaryKey(),
+      name: text("name"),
+      email: text("email"),
+    }, (table) => {
+      return {
+        nameIdx: index("name_idx").on(table.name),
+        emailIdx: uniqueIndex("email_idx").on(table.email),
+      };
+    });
+    ```
+    ```sql {5-6}
+    CREATE TABLE "user" (
+      ...
+    );
+
+    CREATE INDEX "name_idx" ON "user" ("name");
+    CREATE UNIQUE INDEX "email_idx" ON "user" ("email");
+    ```
+    </Section>
+    <Callout type="warning" emoji="⚠️">
+      对于版本低于 `drizzle-kit@0.22.0` 和 `drizzle-orm@0.31.0` 的情况，`drizzle-kit` 只支持索引 `name` 和 `on()` 参数。
+
+      在 `drizzle-kit@0.22.0` 和 `drizzle-orm@0.31.0` 版本之后，所有字段均得到支持！
+    </Callout>
+
+
+    从 0.31.0 开始，Drizzle ORM 的新索引 API 提供了创建索引的所有参数集：
+
+```ts
+// 第一个示例，使用 `.on()`
+index('name')
+  .on(table.column1.asc(), table.column2.nullsFirst(), ...) 或 .onOnly(table.column1.desc().nullsLast(), table.column2, ...)
+  .concurrently()
+  .where(sql``)
+  .with({ fillfactor: '70' })
+
+// 第二个示例，使用 `.using()`
+index('name')
+  .using('btree', table.column1.asc(), sql`lower(${table.column2})`, table.column1.op('text_ops'))
+  .where(sql``) // sql 表达式
+  .with({ fillfactor: '70' })
+```
+
+  </Tab>
+  <Tab>
+    <Section>
+    ```typescript copy {9-10}
+    import { int, text, index, uniqueIndex, mysqlTable } from "drizzle-orm/mysql-core";
+
+    export const user = mysqlTable("user", {
+      id: int("id").primaryKey().autoincrement(),
+      name: text("name"),
+      email: text("email"),
+    }, (table) => {
+      return {
+        nameIdx: index("name_idx").on(table.name),
+        emailIdx: uniqueIndex("email_idx").on(table.email),
+      };
+    });
+    ```
+    ```sql {5-6}
+    CREATE TABLE `user` (
+      ...
+    );
+
+    CREATE INDEX `name_idx` ON `user` (`name`);
+    CREATE UNIQUE INDEX `email_idx` ON `user` (`email`);
+    ```
+    </Section>
+    <Callout type="warning" emoji="⚠️">
+      目前 `drizzle-kit` 仅支持索引 `name` 和 `on()` 参数。
+    </Callout>
+
+     Drizzle ORM 提供创建索引的所有参数集：
+
+    ```typescript
+    // 索引声明参考
+    index("name")
+      .on(table.name)
+      .algorithm("default") // "default" | "copy" | "inplace"
+      .using("btree") // "btree" | "hash"
+      .lock("default") // "none" | "default" | "exclusive" | "shared"
+    ```
+  </Tab>
+  <Tab>
+    <Section>
+    ```typescript {9-10}
+    import { integer, text, index, uniqueIndex, sqliteTable } from "drizzle-orm/sqlite-core";
+
+    export const user = sqliteTable("user", {
+      id: integer("id").primaryKey({ autoIncrement: true }),
+      name: text("name"),
+      email: text("email"),
+    }, (table) => {
+      return {
+        nameIdx: index("name_idx").on(table.name),
+        emailIdx: uniqueIndex("email_idx").on(table.email),
+      };
+    });
+    ```
+    ```sql {5-6}
+    CREATE TABLE `user` (
+      ...
+    );
+
+    CREATE INDEX `name_idx` ON `user` (`name`);
+    CREATE UNIQUE INDEX `email_idx` ON `user` (`email`);
+    ```
+    </Section>
+
+     Drizzle ORM 提供创建索引的所有参数集：
+     
+    ```typescript
+    // 索引声明参考
+    index("name")
+      .on(table.name)
+      .where(sql`...`)
+    ```
+  </Tab>
+</Tabs>

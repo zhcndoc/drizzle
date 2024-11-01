@@ -1,0 +1,76 @@
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
+import Npm from "@mdx/Npm.astro";
+import Callout from '@mdx/Callout.astro';
+import Steps from '@mdx/Steps.astro';
+import AnchorCards from '@mdx/AnchorCards.astro';
+import Breadcrumbs from '@mdx/Breadcrumbs.astro';
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Prerequisites from "@mdx/Prerequisites.astro";
+import IntrospectPostgreSQL from '@mdx/get-started/postgresql/IntrospectPostgreSQL.mdx';
+import FileStructure from '@mdx/get-started/FileStructure.mdx';
+import InstallPackages from '@mdx/get-started/InstallPackages.mdx';
+import SetupConfig from '@mdx/get-started/SetupConfig.mdx';
+import SetupEnv from '@mdx/get-started/SetupEnv.mdx';
+import TransferCode from '@mdx/get-started/TransferCode.mdx';
+import ApplyChanges from '@mdx/get-started/ApplyChanges.mdx';
+import RunFile from '@mdx/get-started/RunFile.mdx';
+import ConnectSupabase from '@mdx/get-started/postgresql/ConnectSupabase.mdx'
+import QueryDatabase from '@mdx/get-started/QueryDatabase.mdx';
+import QueryDatabaseUpdated from '@mdx/get-started/QueryDatabaseUpdated.mdx';
+import UpdateSchema from '@mdx/get-started/postgresql/UpdateSchema.mdx';
+
+<Breadcrumbs/>
+
+# 在现有项目中开始使用 Drizzle 和 Supabase
+
+<Prerequisites>
+  - **dotenv** - 用于管理环境变量的包 - [阅读这里](https://www.npmjs.com/package/dotenv)
+  - **tsx** - 用于运行 TypeScript 文件的包 - [阅读这里](https://tsx.is/)
+  - **Supabase** - 开源的 Firebase 替代方案 - [阅读这里](https://supabase.com/)
+</Prerequisites>
+
+<FileStructure/>
+
+#### 第 1 步 - 安装 **postgres** 包
+<InstallPackages lib='postgres'/>
+
+#### 第 2 步 - 设置连接变量
+
+<SetupEnv env_variable='DATABASE_URL' />
+
+#### 第 3 步 - 设置 Drizzle 配置文件
+
+<SetupConfig dialect='postgresql' env_variable='DATABASE_URL'/>
+
+#### 第 4 步 - 内省你的数据库
+
+<IntrospectPostgreSQL/>
+
+#### 第 5 步 - 将代码转移到你的实际架构文件
+
+<TransferCode/>
+
+#### 第 6 步 - 将 Drizzle ORM 连接到数据库
+
+<ConnectSupabase/>
+
+#### 第 7 步 - 查询数据库
+
+<QueryDatabase dialect='postgres-js' env_variable='DATABASE_URL'/>
+
+#### 第 8 步 - 运行 index.ts 文件
+
+<RunFile/>
+
+#### 第 9 步 - 更新你的表架构（可选）
+
+<UpdateSchema/>
+
+#### 第 10 步 - 将更改应用于数据库（可选）
+
+<ApplyChanges />
+
+#### 第 11 步 - 使用新字段查询数据库（可选）
+
+<QueryDatabaseUpdated dialect='postgres-js' env_variable='DATABASE_URL' />

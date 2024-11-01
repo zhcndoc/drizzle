@@ -1,0 +1,218 @@
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
+import Callout from '@mdx/Callout.astro';
+import CodeTab from '@mdx/CodeTab.astro';
+import CodeTabs from '@mdx/CodeTabs.astro';
+import Npm from '@mdx/Npm.astro';
+
+# drizzle-graphql
+
+通过一行代码从 Drizzle 模式创建 GraphQL 服务器，并轻松增强自定义查询和变更。
+
+## 快速开始
+
+确保你的 `drizzle-orm` 版本至少为 `0.30.9`，如有需要请更新：
+<Npm>drizzle-orm@latest</Npm>
+
+### Apollo 服务器
+
+<Npm>drizzle-graphql @apollo/server graphql</Npm>
+
+<CodeTabs items={['server.ts', 'schema.ts']}>
+<CodeTab>
+```ts copy {1, 10}
+import { buildSchema } from 'drizzle-graphql';
+import { drizzle } from 'drizzle-orm/...';
+import client from './db';
+import { ApolloServer } from '@apollo/server';
+import { startStandaloneServer } from '@apollo/server/standalone';
+
+import * as dbSchema from './schema';
+
+const db = drizzle({ client, schema: dbSchema });
+
+const { schema } = buildSchema(db);
+
+const server = new ApolloServer({ schema });
+const { url } = await startStandaloneServer(server);
+
+console.log(`🚀 服务器已准备好，地址为 ${url}`);
+```
+</CodeTab>
+<CodeTab>
+```typescript copy
+import { integer, serial, text, pgTable } from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
+
+export const users = pgTable('users', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+});
+
+export const usersRelations = relations(users, ({ many }) => ({
+  posts: many(posts),
+}));
+
+export const posts = pgTable('posts', {
+  id: serial('id').primaryKey(),
+  content: text('content').notNull(),
+  authorId: integer('author_id').notNull(),
+});
+
+export const postsRelations = relations(posts, ({ one }) => ({
+  author: one(users, { fields: [posts.authorId], references: [users.id] }),
+}));
+```
+</CodeTab>
+</CodeTabs>
+
+### GraphQL Yoga
+
+<Npm>drizzle-graphql graphql-yoga graphql</Npm>
+
+<CodeTabs items={['server.ts', 'schema.ts']}>
+<CodeTab>
+```ts copy {1, 10}
+import { buildSchema } from 'drizzle-graphql';
+import { drizzle } from 'drizzle-orm/...';
+import { createYoga } from 'graphql-yoga';
+import { createServer } from 'node:http';
+
+import * as dbSchema from './schema';
+
+const db = drizzle({ schema: dbSchema });
+
+const { schema } = buildSchema(db);
+
+const yoga = createYoga({ schema });
+const server = createServer(yoga);
+
+server.listen(4000, () => {
+  console.info('服务器正在运行在 http://localhost:4000/graphql');
+});
+```
+</CodeTab>
+<CodeTab>
+```typescript copy
+import { integer, serial, text, pgTable } from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
+
+export const users = pgTable('users', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+});
+
+export const usersRelations = relations(users, ({ many }) => ({
+  posts: many(posts),
+}));
+
+export const posts = pgTable('posts', {
+  id: serial('id').primaryKey(),
+  content: text('content').notNull(),
+  authorId: integer('author_id').notNull(),
+});
+
+export const postsRelations = relations(posts, ({ one }) => ({
+  author: one(users, { fields: [posts.authorId], references: [users.id] }),
+}));
+```
+</CodeTab>
+</CodeTabs>
+
+## 自定义模式
+
+<Callout type='info' emoji='ℹ️'>
+`buildSchema()` 使用标准的 `graphql` SDK 生成模式和类型，因此其输出与任何支持该输出的库兼容。
+</Callout>
+
+如果你想自定义你的模式，可以使用 `entities` 对象来构建你自己的新模式：
+
+<CodeTabs items={['server.ts', 'schema.ts']}>
+<CodeTab>
+```ts {1, 11}
+import { buildSchema } from 'drizzle-graphql';
+import { drizzle } from 'drizzle-orm/...';
+import { GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLSchema } from 'graphql';
+import { createYoga } from 'graphql-yoga';
+import { createServer } from 'node:http';
+
+import * as dbSchema from './schema';
+
+const db = drizzle({ schema: dbSchema });
+
+const { entities } = buildSchema(db);
+
+// 你可以自定义查询或变更的部分
+const schema = new GraphQLSchema({
+  query: new GraphQLObjectType({
+    name: 'Query',
+    fields: {
+      // 从所有生成的查询中选择所需的查询
+      users: entities.queries.users,
+      customer: entities.queries.customersSingle,
+
+      // 创建一个自定义查询
+      customUsers: {
+        // 你可以重新使用并自定义来自原始模式的类型
+        type: new GraphQLList(new GraphQLNonNull(entities.types.UsersItem)),
+        args: {
+          // 你也可以重新使用输入
+          where: {
+            type: entities.inputs.UsersFilters
+          },
+        },
+        resolve: async (source, args, context, info) => {
+          // 你的自定义逻辑在这里...
+          const result = await db.select(schema.users).where()...
+
+          return result;
+        },
+      },
+    },
+  }),
+  // 相同的规则适用于变更
+  mutation: new GraphQLObjectType({
+    name: 'Mutation',
+    fields: entities.mutations,
+  }),
+  // 如果你需要类型在你的模式内
+  types: [...Object.values(entities.types), ...Object.values(entities.inputs)],
+});
+
+const yoga = createYoga({
+  schema,
+});
+
+const server = createServer(yoga);
+
+server.listen(4000, () => {
+  console.info('服务器正在运行在 http://localhost:4000/graphql');
+})
+```
+</CodeTab>
+<CodeTab>
+```typescript copy
+import { integer, serial, text, pgTable } from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
+
+export const users = pgTable('users', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+});
+
+export const usersRelations = relations(users, ({ many }) => ({
+  posts: many(posts),
+}));
+
+export const posts = pgTable('posts', {
+  id: serial('id').primaryKey(),
+  content: text('content').notNull(),
+  authorId: integer('author_id').notNull(),
+});
+
+export const postsRelations = relations(posts, ({ one }) => ({
+  author: one(users, { fields: [posts.authorId], references: [users.id] }),
+}));
+```
+</CodeTab>
+</CodeTabs>

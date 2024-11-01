@@ -1,0 +1,411 @@
+---
+title: PostgreSQL 全文搜索
+slug: postgresql-full-text-search
+---
+
+import Section from "@mdx/Section.astro";
+import Prerequisites from "@mdx/Prerequisites.astro";
+import CodeTabs from '@mdx/CodeTabs.astro';
+import CodeTab from '@mdx/CodeTab.astro';
+
+<Prerequisites>
+- 开始使用 [PostgreSQL](/docs/get-started-postgresql)
+- [选择语句](/docs/select)
+- [索引](/docs/indexes-constraints#indexes)
+- [SQL 操作符](/docs/sql)
+- 需要使用 `drizzle-orm@0.31.0` 和 `drizzle-kit@0.22.0` 或更高版本。  
+</Prerequisites>
+
+本指南演示如何在 PostgreSQL 中使用 Drizzle ORM 实现全文搜索。全文搜索是一种用于在文档或一组文档中搜索文本的技术。文档是全文搜索系统中的搜索单位。PostgreSQL 提供了一组函数来处理全文搜索，例如 `to_tsvector` 和 `to_tsquery`：
+
+`to_tsvector` 函数将文本文档解析为标记，将标记减少为词元，并返回一个 `tsvector`，该 `tsvector` 列出了词元及其在文档中的位置：
+
+<Section>
+```ts copy {6}
+import { sql } from 'drizzle-orm';
+
+const db = drizzle(...);
+
+await db.execute(
+  sql`select to_tsvector('english', 'Guide to PostgreSQL full-text search with Drizzle ORM')`,
+);
+```
+
+```json
+[
+  {
+    to_tsvector: "'drizzl':9 'full':5 'full-text':4
+    'guid':1 'orm':10 'postgresql':3 'search':7 'text':6"
+  }
+]
+```
+</Section>
+
+`to_tsquery` 函数将关键字转换为规范化的标记，并返回一个与 `tsvector` 中的词元匹配的 `tsquery`。`@@` 操作符用于直接匹配：
+
+<Section>
+```ts copy {2, 3}
+await db.execute(
+  sql`select to_tsvector('english', 'Guide to PostgreSQL full-text search with Drizzle ORM')
+    @@ to_tsquery('english', 'Drizzle') as match`,
+);
+```
+
+```json
+[ { match: true } ]
+```
+</Section>
+
+目前，Drizzle 不支持 `tsvector` 类型，因此您需要动态地转换 `text` 列中的数据。为了提高性能，您可以像这样在您的列上创建一个 `GIN` 索引：
+
+<CodeTabs items={["schema.ts", "migration.sql", "db_data"]}>
+  <CodeTab>
+  ```ts copy {10, 11}
+  import { index, pgTable, serial, text } from 'drizzle-orm/pg-core';
+
+  export const posts = pgTable(
+    'posts',
+    {
+      id: serial('id').primaryKey(),
+      title: text('title').notNull(),
+    },
+    (table) => ({
+      titleSearchIndex: index('title_search_index')
+      .using('gin', sql`to_tsvector('english', ${table.title})`),
+    }),
+  );
+  ```
+  </CodeTab>
+  <CodeTab>
+  ```sql
+  CREATE TABLE IF NOT EXISTS "posts" (
+          "id" serial PRIMARY KEY NOT NULL,
+          "title" text NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS "title_search_index" ON "posts"
+    USING gin (to_tsvector('english', "title"));
+  ```
+  </CodeTab>
+  ```json
+  [
+    { id: 1, title: 'Planning Your First Trip to Europe' },
+    { id: 2, title: "Cultural Insights: Exploring Asia's Heritage" },
+    { id: 3, title: 'Top 5 Destinations for a Family Trip' },
+    { id: 4, title: 'Essential Hiking Gear for Mountain Enthusiasts' },
+    { id: 5, title: 'Trip Planning: Choosing Your Next Destination' },
+    { id: 6, title: 'Discovering Hidden Culinary Gems in Italy' },
+    { id: 7, title: 'The Ultimate Road Trip Guide for Explorers' },
+  ];
+  ```
+</CodeTabs>
+
+要在 PostgreSQL 中使用 Drizzle ORM 实现全文搜索，您可以使用 `to_tsvector` 和 `to_tsquery` 函数与 `sql` 操作符：
+
+<Section>
+```ts copy {9}
+import { sql } from 'drizzle-orm';
+import { posts } from './schema';
+
+const title = 'trip';
+
+await db
+  .select()
+  .from(posts)
+  .where(sql`to_tsvector('english', ${posts.title}) @@ to_tsquery('english', ${title})`);
+```
+
+```json
+[
+  { id: 1, title: 'Planning Your First Trip to Europe' },
+  { id: 3, title: 'Top 5 Destinations for a Family Trip' },
+  { id: 5, title: 'Trip Planning: Choosing Your Next Destination' },
+  { id: 7, title: 'The Ultimate Road Trip Guide for Explorers' }
+]
+```
+</Section>
+
+要通过任何关键字进行匹配，您可以使用 `|` 操作符：
+
+<Section>
+```ts copy {6}
+const title = 'Europe | Asia';
+
+await db
+  .select()
+  .from(posts)
+  .where(sql`to_tsvector('english', ${posts.title}) @@ to_tsquery('english', ${title})`);
+```
+
+```json
+[
+  { id: 1, title: 'Planning Your First Trip to Europe' },
+  { id: 2, title: "Cultural Insights: Exploring Asia's Heritage" }
+]
+```
+</Section>
+
+要匹配多个关键字，您可以使用 `plainto_tsquery` 函数：
+
+<Section>
+```ts copy {7}
+// 'discover & Italy'
+const title = 'discover Italy';
+
+await db
+  .select()
+  .from(posts)
+  .where(sql`to_tsvector('english', ${posts.title}) @@ plainto_tsquery('english', ${title})`);
+```
+
+```sql
+select * from posts
+  where to_tsvector('english', title) @@ plainto_tsquery('english', 'discover Italy');
+```
+
+```json
+[ { id: 6, title: 'Discovering Hidden Culinary Gems in Italy' } ]
+```
+</Section>
+
+要匹配短语，您可以使用 `phraseto_tsquery` 函数：
+
+<Section>
+```ts copy {8}
+// 如果按 "trip family" 查询，它将不会返回任何结果
+// 'family <-> trip'
+const title = 'family trip';
+
+await db
+  .select()
+  .from(posts)
+  .where(sql`to_tsvector('english', ${posts.title}) @@ phraseto_tsquery('english', ${title})`);
+```
+
+```sql
+select * from posts
+  where to_tsvector('english', title) @@ phraseto_tsquery('english', 'family trip');
+```
+
+```json
+[ { id: 3, title: 'Top 5 Destinations for a Family Trip' } ]
+```
+</Section>
+
+您还可以使用 `websearch_to_tsquery` 函数，它是 `to_tsquery` 的简化版本，具有类似于网络搜索引擎使用的替代语法：
+
+<Section>
+```ts copy {7}
+// 'family | first & trip & europe | asia'
+const title = 'family or first trip Europe or Asia';
+
+await db
+  .select()
+  .from(posts)
+  .where(sql`to_tsvector('english', ${posts.title}) @@ websearch_to_tsquery('english', ${title})`);
+```
+
+```sql
+select * from posts
+  where to_tsvector('english', title)
+  @@ websearch_to_tsquery('english', 'family or first trip Europe or Asia');
+```
+
+```json
+[
+  { id: 1, title: 'Planning Your First Trip to Europe' },
+  { id: 2, title: "Cultural Insights: Exploring Asia's Heritage" },
+  { id: 3, title: 'Top 5 Destinations for a Family Trip' }
+]
+```
+</Section>
+
+要在多个列上实现全文搜索，您可以对多个列创建索引，并使用 `to_tsvector` 函数连接这些列：
+
+<CodeTabs items={["schema.ts", "migration.sql", "db_data"]}>
+  <CodeTab>
+  ```ts copy {12-17}
+  import { sql } from 'drizzle-orm';
+  import { index, pgTable, serial, text } from 'drizzle-orm/pg-core';
+
+  export const posts = pgTable(
+    'posts',
+    {
+      id: serial('id').primaryKey(),
+      title: text('title').notNull(),
+      description: text('description').notNull(),
+    },
+    (table) => ({
+      searchIndex: index('search_index').using(
+        'gin',
+        sql`(
+            setweight(to_tsvector('english', ${table.title}), 'A') ||
+            setweight(to_tsvector('english', ${table.description}), 'B')
+        )`,
+      ),
+    }),
+  );
+  ```
+  </CodeTab>
+  <CodeTab>
+  ```sql
+  CREATE TABLE IF NOT EXISTS "posts" (
+        "id" serial PRIMARY KEY NOT NULL,
+        "title" text NOT NULL,
+        "description" text NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS "search_index" ON "posts"
+    USING gin ((setweight(to_tsvector('english', "title"), 'A') ||
+    setweight(to_tsvector('english', "description"), 'B')));
+  ```
+  </CodeTab>
+  ```json
+  [
+    {
+      id: 1,
+      title: 'Planning Your First Trip to Europe',
+      description:
+        'Get essential tips on budgeting, sightseeing, and cultural etiquette for your inaugural European adventure.',
+    },
+    {
+      id: 2,
+      title: "Cultural Insights: Exploring Asia's Heritage",
+      description:
+        'Dive deep into the rich history and traditions of Asia through immersive experiences and local interactions.',
+    },
+    {
+      id: 3,
+      title: 'Top 5 Destinations for a Family Trip',
+      description:
+        'Discover family-friendly destinations that offer fun, education, and relaxation for all ages.',
+    },
+    {
+      id: 4,
+      title: 'Essential Hiking Gear for Mountain Enthusiasts',
+      description:
+        'Equip yourself with the latest and most reliable gear for your next mountain hiking expedition.',
+    },
+    {
+      id: 5,
+      title: 'Trip Planning: Choosing Your Next Destination',
+      description:
+        'Learn how to select destinations that align with your travel goals, whether for leisure, adventure, or cultural exploration.',
+    },
+    {
+      id: 6,
+      title: 'Discovering Hidden Culinary Gems in Italy',
+      description:
+        "Unearth Italy's lesser-known eateries and food markets that offer authentic and traditional flavors.",
+    },
+    {
+      id: 7,
+      title: 'The Ultimate Road Trip Guide for Explorers',
+      description:
+        'Plan your next great road trip with tips on route planning, packing, and discovering off-the-beaten-path attractions.',
+    },
+  ];
+  ```
+</CodeTabs>
+
+`setweight` 函数用于为 tsvector 的条目标记一个给定的权重，其中权重是字母 A、B、C 或 D 之一。这通常用于标记来自文档不同部分的条目，例如标题与正文。
+
+这就是您如何在多个列上执行查询：
+
+<Section>
+```ts copy {5-7}
+const title = 'plan';
+
+await db.select().from(posts)
+  .where(sql`(
+      setweight(to_tsvector('english', ${posts.title}), 'A') ||
+      setweight(to_tsvector('english', ${posts.description}), 'B'))
+      @@ to_tsquery('english', ${title}
+    )`
+  );
+```
+
+```json
+[
+  {
+    id: 1,
+    title: 'Planning Your First Trip to Europe',
+    description: 'Get essential tips on budgeting, sightseeing, and cultural etiquette for your inaugural European adventure.'
+  },
+  {
+    id: 5,
+    title: 'Trip Planning: Choosing Your Next Destination',
+    description: 'Learn how to select destinations that align with your travel goals, whether for leisure, adventure, or cultural exploration.'
+  },
+  {
+    id: 7,
+    title: 'The Ultimate Road Trip Guide for Explorers',
+    description: 'Plan your next great road trip with tips on route planning, packing, and discovering off-the-beaten-path attractions.'
+  }
+]
+```
+</Section>
+
+要对搜索结果进行排名，您可以使用 `ts_rank` 或 `ts_rank_cd` 函数和 `orderBy` 方法：
+
+<Section>
+```ts copy {6,7,12,13,18-20}
+import { desc, getTableColumns, sql } from 'drizzle-orm';
+
+const search = 'culture | Europe | Italy | adventure';
+
+const matchQuery = sql`(
+  setweight(to_tsvector('english', ${posts.title}), 'A') ||
+  setweight(to_tsvector('english', ${posts.description}), 'B')), to_tsquery('english', ${search})`;
+
+await db
+  .select({
+    ...getTableColumns(posts),
+    rank: sql`ts_rank(${matchQuery})`,
+    rankCd: sql`ts_rank_cd(${matchQuery})`,
+  })
+  .from(posts)
+  .where(
+    sql`(
+      setweight(to_tsvector('english', ${posts.title}), 'A') ||
+      setweight(to_tsvector('english', ${posts.description}), 'B')
+      ) @@ to_tsquery('english', ${search})`,
+  )
+  .orderBy((t) => desc(t.rank));
+```
+
+```json
+[
+  {
+    id: 1,
+    title: 'Planning Your First Trip to Europe',
+    description: 'Get essential tips on budgeting, sightseeing, and cultural etiquette for your inaugural European adventure.',
+    rank: 0.2735672,
+    rankCd: 1.8
+  },
+  {
+    id: 6,
+    title: 'Discovering Hidden Culinary Gems in Italy',
+    description: "Unearth Italy's lesser-known eateries and food markets that offer authentic and traditional flavors.",
+    rank: 0.16717994,
+    rankCd: 1.4
+  },
+  {
+    id: 2,
+    title: "Cultural Insights: Exploring Asia's Heritage",
+    description: 'Dive deep into the rich history and traditions of Asia through immersive experiences and local interactions.',
+    rank: 0.15198177,
+    rankCd: 1
+  },
+  {
+    id: 5,
+    title: 'Trip Planning: Choosing Your Next Destination',
+    description: 'Learn how to select destinations that align with your travel goals, whether for leisure, adventure, or cultural exploration.',
+    rank: 0.12158542,
+    rankCd: 0.8
+  }
+]
+```
+</Section>
+
+`ts_rank` 函数侧重于查询术语在整个文档中的频率。而 `ts_rank_cd` 函数则侧重于查询术语在文档中的接近程度。

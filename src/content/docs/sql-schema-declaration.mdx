@@ -1,0 +1,518 @@
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
+import Callout from '@mdx/Callout.astro';
+import SimpleLinkCards from '@mdx/SimpleLinkCards.astro';
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Section from '@mdx/Section.astro';
+import Flex from "@mdx/Flex.astro"
+import LinksList from "@mdx/LinksList.astro"
+
+# Drizzle 模式
+
+Drizzle 允许您使用 TypeScript 定义模式，支持底层数据库的各种模型和属性。
+当您定义模式时，它将作为未来查询（使用 Drizzle-ORM）和迁移（使用 Drizzle-Kit）
+修改的真实性源。
+
+<Callout> 
+如果您使用 Drizzle-Kit 进行迁移过程，请确保从您模式文件中导出所有定义的模型，以便 Drizzle-Kit 可以导入它们并在迁移差异过程中使用。
+</Callout>
+
+## 组织您的模式文件
+您可以将 SQL 模式直接在 TypeScript 中声明，或者将所有内容放在一个 `schema.ts` 文件中，
+或者您可以分散它们——随您所愿，完全没有限制！
+
+#### 单文件中的模式
+使用 Drizzle 声明模式的最常见方法是将所有表放在一个 `schema.ts` 文件中。
+
+> 注意：您可以将模式文件命名为您喜欢的任何名称。例如，可以是 `models.ts` 或其他名称。
+
+如果您没有定义太多表模型，或者您认为将它们放在一个文件中没有问题，这种方法效果很好。
+
+示例：
+```plaintext
+📦 <项目根目录>
+ └ 📂 src
+    └ 📂 db
+       └ 📜 schema.ts
+```
+
+在 `drizzle.config.ts` 文件中，您需要指定模式文件的路径。
+通过此配置，Drizzle 将从 `schema.ts` 文件读取并在迁移生成过程中使用此信息。
+有关 `drizzle.config.ts` 文件和使用 Drizzle 进行迁移的更多信息，请查看：[链接](/docs/drizzle-config-file)
+```ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: 'postgresql', // 'mysql' | 'sqlite' | 'turso'
+  schema: './src/db/schema.ts'
+})
+```
+
+#### 多文件中的模式
+
+您可以将 Drizzle 模型（例如表、枚举、序列等）放置在一个文件中，也可以放在任何您想要的文件中。 
+您需要确保从这些文件中导出所有模型，
+以便 Drizzle kit 可以导入并在迁移中使用它们。
+
+一个常见的用例是将每个表分开到自己的文件中。
+```plaintext
+📦 <项目根目录>
+ └ 📂 src
+    └ 📂 db
+       └ 📂 schema
+          ├ 📜 users.ts
+          ├ 📜 countries.ts
+          ├ 📜 cities.ts
+          ├ 📜 products.ts
+          ├ 📜 clients.ts
+          └ 📜 etc.ts
+```
+
+在 `drizzle.config.ts` 文件中，您需要指定模式文件夹的路径。
+通过此配置，Drizzle 将从 `schema` 文件夹读取并递归查找所有文件，并从中获取所有 drizzle 表。
+有关 `drizzle.config.ts` 文件和使用 Drizzle 进行迁移的更多信息，请查看：[链接](/docs/drizzle-config-file)
+
+```ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: 'postgresql', // 'mysql' | 'sqlite' | 'turso'
+  schema: './src/db/schema'
+})
+```
+
+您还可以以任何您喜欢的方式对它们进行分组，例如为用户相关表、消息相关表、产品相关表等创建组。
+```plaintext
+📦 <项目根目录>
+ └ 📂 src
+    └ 📂 db
+       └ 📂 schema
+          ├ 📜 users.ts
+          ├ 📜 messaging.ts
+          └ 📜 products.ts
+```
+
+在 `drizzle.config.ts` 文件中，您需要指定模式文件路径。
+通过此配置，Drizzle 将从 `schema.ts` 文件读取并在迁移生成过程中使用此信息。
+有关 `drizzle.config.ts` 文件和使用 Drizzle 进行迁移的更多信息，请查看：[链接](/docs/drizzle-config-file)
+
+```ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: 'postgresql', // 'mysql' | 'sqlite' | 'turso'
+  schema: './src/db/schema'
+})
+```
+
+## 塑造您的数据模式
+
+Drizzle 模式由您正在使用的数据库中的几种模型类型构成。使用 Drizzle，您可以指定：
+- 含有列、约束等的表。
+- 模式（仅适用于 PostgreSQL）
+- 枚举
+- 序列（仅适用于 PostgreSQL）
+- 视图
+- 材料化视图
+- 等等。
+
+让我们逐个检查模式如何使用 Drizzle 定义。
+
+#### **表和列声明**
+
+在 Drizzle 中，表应至少定义 1 列，正如在数据库中应做的那样。有一件重要的事需要知道，
+Drizzle 中没有通用的表对象。您需要选择使用的方言：PostgreSQL、MySQL 或 SQLite。
+
+![](@/assets/images/table-structure.svg)
+
+<CodeTabs items={["PostgreSQL 表", "MySQL 表", "SQLite 表"]}>
+```ts copy
+import { pgTable, integer } from "drizzle-orm/pg-core"
+
+export const users = pgTable('users', {
+  id: integer()
+});
+```
+```ts copy
+import { mysqlTable, int } from "drizzle-orm/mysql-core"
+
+export const users = mysqlTable('users', {
+  id: int()
+});
+```
+```ts copy
+import { sqliteTable, integer } from "drizzle-orm/sqlite-core"
+
+export const users = sqliteTable('users', {
+  id: integer()
+});
+```
+</CodeTabs>
+
+默认情况下，Drizzle 将在数据库查询中使用 TypeScript 键名作为列名。
+因此，来自示例的模式和查询将生成如下 SQL 查询。
+
+<Callout>
+此示例使用一个 db 对象，但其初始化未在本部分文档中覆盖。要了解如何连接到数据库，请参阅 [连接文档](/docs/get-started-postgresql)
+</Callout>
+
+\
+**TypeScript 键 = 数据库键**
+<Section>
+```ts
+// schema.ts
+import { integer, pgTable, varchar } from "drizzle-orm/pg-core";
+
+export const users = pgTable('users', {
+  id: integer(),
+  first_name: varchar()
+})
+```
+```ts
+// query.ts
+await db.select().from(users);
+```
+```sql
+SELECT "id", "first_name" from users;
+```
+</Section>
+
+如果您想在 TypeScript 代码中和数据库中使用不同的名称，您可以使用列别名。
+
+<Section>
+```ts
+// schema.ts
+import { integer, pgTable, varchar } from "drizzle-orm/pg-core";
+
+export const users = pgTable('users', {
+  id: integer(),
+  firstName: varchar('first_name')
+})
+```
+```ts
+// query.ts
+await db.select().from(users);
+```
+```sql
+SELECT "id", "first_name" from users;
+```
+</Section>
+
+### 驼峰和蛇形命名
+
+数据库模型名称通常使用 `snake_case` 约定，而在 TypeScript 中，常用 `camelCase` 进行命名。
+这可能会导致模式中有很多别名定义。为了解决这个问题，
+Drizzle 提供了一种方法来自动将 TypeScript 中的 `camelCase` 映射到数据库中的 `snake_case`，通过在 Drizzle 数据库初始化时包含一个可选参数。
+
+对于这种映射，您可以在 Drizzle DB 声明中使用 `casing` 选项。
+此参数将帮助您指定数据库模型命名约定，并将尝试相应地映射所有 JavaScript 键。
+
+<Section>
+```ts
+// schema.ts
+import { drizzle } from "drizzle-orm/node-postgres";
+import { integer, pgTable, varchar } from "drizzle-orm/pg-core";
+
+export const users = pgTable('users', {
+  id: integer(),
+  firstName: varchar()
+})
+```
+```ts
+// db.ts
+const db = drizzle({ connection: process.env.DATABASE_URL, casing: 'snake_case' })
+```
+```ts
+// query.ts
+await db.select().from(users);
+```
+```sql
+SELECT "id", "first_name" from users;
+```
+</Section>
+
+### 高级
+
+使用 Drizzle ORM 您可以使用一些技巧。只要 Drizzle 完全在 TypeScript 文件中，
+您就可以像在简单的 TypeScript 项目中一样进行任何编码。
+
+一个常见的特性是将列分离到不同的位置，然后重复使用它们。
+例如，考虑字段 `updated_at`、`created_at` 和 `deleted_at`。
+许多表/模型可能需要这三个字段来跟踪和分析系统中实体的创建、删除和更新。
+
+我们可以在一个单独的文件中定义这些列，然后在所有表对象中导入并展开它们。
+
+<Section>
+```ts
+// columns.helpers.ts
+const timestamps = {
+  updated_at: timestamp(),
+  created_at: timestamp().defaultNow().notNull(),
+  deleted_at: timestamp(),
+}
+```
+```ts
+// users.sql.ts
+export const users = pgTable('users', {
+  id: integer(),
+  ...timestamps
+})
+```
+```ts
+// posts.sql.ts
+export const posts = pgTable('posts', {
+  id: integer(),
+  ...timestamps
+})
+```
+</Section>
+
+#### **模式**
+
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
+<Tab>
+\
+在 PostgreSQL 中，有一个实体称为 `schema`（我们认为应该称为 `folders`）。这在 PostgreSQL 中创建了一个结构：
+
+![](@/assets/images/postgresql-db-structure.png)
+
+您可以使用 `pgSchema` 管理 PostgreSQL 模式，并将任何其他模型放入其中。
+
+使用 Drizzle 定义您想要管理的模式
+```ts
+import { pgSchema } from "drizzle-orm/pg-core"
+
+export const customSchema = pgSchema('custom');
+```
+
+然后将表放入模式对象中
+```ts {5-7}
+import { integer, pgSchema } from "drizzle-orm/pg-core";
+
+export const customSchema = pgSchema('custom');
+
+export const users = customSchema.table('users', {
+  id: integer()
+})
+```
+</Tab>
+<Tab>
+\
+在 MySQL 中，有一个实体称为 `Schema`，但在 MySQL 术语中，相当于 `Database`。
+
+您可以使用 `drizzle-orm` 定义它们并在查询中使用，但它们不会被 `drizzle-kit` 检测到或包含在迁移流中。
+
+![](@/assets/images/mysql-db-structure.png)
+
+使用 Drizzle 定义您想要管理的模式
+```ts
+import { mysqlSchema } from "drizzle-orm/mysql-core"
+
+export const customSchema = mysqlSchema('custom');
+```
+
+然后将表放入模式对象中
+```ts {5-7}
+import { int, mysqlSchema } from "drizzle-orm/mysql-core";
+
+export const customSchema = mysqlSchema('custom');
+
+export const users = customSchema.table('users', {
+  id: int()
+})
+```
+</Tab>
+<Tab>
+\
+在 SQLite 中，没有模式的概念，因此您只能在单个 SQLite 文件上下文中定义表。
+
+![](@/assets/images/sqlite-db-structure.png)
+</Tab>
+</Tabs>
+
+### 示例
+
+一旦您掌握了基础知识，让我们为一个实际项目定义一个模式示例，以获得更好的视图和理解。
+
+> 所有示例将使用 `generateUniqueString`。其实现将在所有模式示例之后提供。
+
+<CodeTabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
+```ts copy
+import { AnyPgColumn } from "drizzle-orm/pg-core";
+import { pgEnum, pgTable as table } from "drizzle-orm/pg-core";
+import * as t from "drizzle-orm/pg-core";
+
+export const rolesEnum = pgEnum("roles", ["guest", "user", "admin"]);
+
+export const users = table(
+  "users",
+  {
+    id: t.integer().primaryKey().generatedAlwaysAsIdentity(),
+    firstName: t.varchar("first_name", { length: 256 }),
+    lastName: t.varchar("last_name", { length: 256 }),
+    email: t.varchar().notNull(),
+    invitee: t.integer().references((): AnyPgColumn => users.id),
+    role: rolesEnum().default("guest"),
+  },
+  (table) => {
+    return {
+      emailIndex: t.uniqueIndex("email_idx").on(table.email),
+    };
+  }
+);
+
+export const posts = table(
+  "posts",
+  {
+    id: t.integer().primaryKey().generatedAlwaysAsIdentity(),
+    slug: t.varchar().$default(() => generateUniqueString(16)),
+    title: t.varchar({ length: 256 }),
+    ownerId: t.integer("owner_id").references(() => users.id),
+  },
+  (table) => {
+    return {
+      slugIndex: t.uniqueIndex("slug_idx").on(table.slug),
+      titleIndex: t.index("title_idx").on(table.title),
+    };
+  }
+);
+
+export const comments = table("comments", {
+  id: t.integer().primaryKey().generatedAlwaysAsIdentity(),
+  text: t.varchar({ length: 256 }),
+  postId: t.integer("post_id").references(() => posts.id),
+  ownerId: t.integer("owner_id").references(() => users.id),
+});
+```
+```ts copy
+import { mysqlTable as table } from "drizzle-orm/mysql-core";
+import * as t from "drizzle-orm/mysql-core";
+import { AnyMySqlColumn } from "drizzle-orm/mysql-core";
+
+export const users = table(
+  "users",
+  {
+    id: t.int().primaryKey().autoincrement(),
+    firstName: t.varchar("first_name", { length: 256 }),
+    lastName: t.varchar("last_name", { length: 256 }),
+    email: t.varchar({ length: 256 }).notNull(),
+    invitee: t.int().references((): AnyMySqlColumn => users.id),
+    role: t.mysqlEnum(["guest", "user", "admin"]).default("guest"),
+  },
+  (table) => {
+    return {
+      emailIndex: t.uniqueIndex("email_idx").on(table.email),
+    };
+  }
+);
+
+export const posts = table(
+  "posts",
+  {
+    id: t.int().primaryKey().autoincrement(),
+    slug: t.varchar({ length: 256 }).$default(() => generateUniqueString(16)),
+    title: t.varchar({ length: 256 }),
+    ownerId: t.int("owner_id").references(() => users.id),
+  },
+  (table) => {
+    return {
+      slugIndex: t.uniqueIndex("slug_idx").on(table.slug),
+      titleIndex: t.index("title_idx").on(table.title),
+    };
+  }
+);
+
+export const comments = table("comments", {
+  id: t.int().primaryKey().autoincrement(),
+  text: t.varchar({ length: 256 }),
+  postId: t.int("post_id").references(() => posts.id),
+  ownerId: t.int("owner_id").references(() => users.id),
+});
+```
+```ts copy
+import { sqliteTable as table } from "drizzle-orm/sqlite-core";
+import * as t from "drizzle-orm/sqlite-core";
+import { AnySQLiteColumn } from "drizzle-orm/sqlite-core";
+
+export const users = table(
+  "users",
+  {
+    id: t.int().primaryKey({ autoIncrement: true }),
+    firstName: t.text("first_name"),
+    lastName: t.text("last_name"),
+    email: t.text().notNull(),
+    invitee: t.int().references((): AnySQLiteColumn => users.id),
+    role: t.text().$type<"guest" | "user" | "admin">().default("guest"),
+  },
+  (table) => {
+    return {
+      emailIndex: t.uniqueIndex("email_idx").on(table.email),
+    };
+  }
+);
+
+export const posts = table(
+  "posts",
+  {
+    id: t.int().primaryKey({ autoIncrement: true }),
+    slug: t.text().$default(() => generateUniqueString(16)),
+    title: t.text(),
+    ownerId: t.int("owner_id").references(() => users.id),
+  },
+  (table) => {
+    return {
+      slugIndex: t.uniqueIndex("slug_idx").on(table.slug),
+      titleIndex: t.index("title_idx").on(table.title),
+    };
+  }
+);
+
+export const comments = table("comments", {
+  id: t.int().primaryKey({ autoIncrement: true }),
+  text: t.text({ length: 256 }),
+  postId: t.int("post_id").references(() => posts.id),
+  ownerId: t.int("owner_id").references(() => users.id),
+});
+```
+</CodeTabs>
+
+**`generateUniqueString` 实现：**
+```ts
+function generateUniqueString(length: number = 12): string {
+  const characters =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let uniqueString = "";
+
+  for (let i = 0; i < length; i++) {
+    const randomIndex = Math.floor(Math.random() * characters.length);
+    uniqueString += characters[randomIndex];
+  }
+
+  return uniqueString;
+}
+```
+
+
+#### 接下来做什么？
+<br/>
+<Flex>
+  <LinksList 
+    title='管理模式'
+    links={[
+        ["列类型", "/docs/column-types/pg"], 
+        ["索引和约束", "/docs/indexes-constraints"],
+        ["数据库视图", "/docs/views"],
+        ["数据库模式", "/docs/schemas"],
+        ["序列", "/docs/sequences"],
+        ["扩展", "/docs/extensions/pg"],
+      ]}
+  />
+  <LinksList 
+    title='从零到英雄'
+    links={[
+        ["数据库连接", "/docs/connect-overview"], 
+        ["数据查询", "/docs/data-querying"], 
+        ["迁移", "/docs/migrations"], 
+      ]}
+  />
+</Flex>

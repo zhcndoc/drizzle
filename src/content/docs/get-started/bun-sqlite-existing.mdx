@@ -1,0 +1,90 @@
+import Npm from '@mdx/Npm.astro';
+import Npx from '@mdx/Npx.astro';
+import Callout from '@mdx/Callout.astro';
+import Prerequisites from "@mdx/Prerequisites.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+import WhatsNextPostgres from "@mdx/WhatsNextPostgres.astro";
+import Breadcrumbs from '@mdx/Breadcrumbs.astro';
+import FileStructure from '@mdx/get-started/FileStructure.mdx';
+import InstallPackages from '@mdx/get-started/InstallPackages.mdx';
+import SetupConfig from '@mdx/get-started/SetupConfig.mdx';
+import TransferCode from '@mdx/get-started/TransferCode.mdx';
+import QueryDatabase from '@mdx/get-started/QueryDatabase.mdx';
+import QueryDatabaseUpdated from '@mdx/get-started/QueryDatabaseUpdated.mdx';
+import RunFile from '@mdx/get-started/RunFile.mdx';
+import ApplyChanges from '@mdx/get-started/ApplyChanges.mdx';
+import SetupEnv from '@mdx/get-started/SetupEnv.mdx';
+import IntrospectSqlite from '@mdx/get-started/sqlite/IntrospectSqlite.mdx';
+import ConnectBun from '@mdx/get-started/sqlite/ConnectBun.mdx';
+import UpdateSchema from '@mdx/get-started/sqlite/UpdateSchema.mdx';
+
+<Breadcrumbs/>
+
+# 在现有项目中使用 Drizzle 和 SQLite 入门
+
+<Prerequisites>  
+  - **dotenv** - 管理环境变量的包 - [在这里阅读](https://www.npmjs.com/package/dotenv)
+  - **tsx** - 运行 TypeScript 文件的包 - [在这里阅读](https://tsx.is/)
+  - **bun** - 一体化 JavaScript 工具包 - [在这里阅读](https://bun.sh/)
+  - **bun:sqlite** - 高性能 SQLite3 驱动的原生实现 - [在这里阅读](https://bun.sh/docs/api/sqlite)
+</Prerequisites>
+
+<FileStructure />
+
+#### 第一步 - 安装所需的包
+
+<Npm>
+  drizzle-orm dotenv
+  -D drizzle-kit tsx @types/bun
+</Npm>
+
+#### 第二步 - 设置连接变量
+
+<SetupEnv env_variable='DB_FILE_NAME' />
+
+<Callout type='info' title='重要'>
+例如，如果您的项目根目录中有一个 SQLite 数据库文件，可以使用以下示例：
+```plaintext copy
+DB_FILE_NAME=mydb.sqlite
+```
+</Callout>
+
+
+#### 第三步 - 设置 Drizzle 配置文件
+
+<SetupConfig dialect='sqlite' env_variable='DB_FILE_NAME'/>
+
+#### 第四步 - 对您的数据库进行自省
+
+<IntrospectSqlite/>
+
+#### 第五步 - 将代码转移到您的实际架构文件中
+
+<TransferCode/>
+
+#### 第六步 - 将 Drizzle ORM 连接到数据库
+
+<ConnectBun/>
+
+#### 第七步 - 查询数据库
+
+<QueryDatabase dialect='bun:sqlite' env_variable='DB_FILE_NAME' />
+
+#### 第八步 - 运行 index.ts 文件
+
+要使用 `bun` 运行脚本，请使用以下命令：
+```bash copy
+bun src/index.ts
+```
+
+#### 第九步 - 更新您的表架构（可选）
+
+<UpdateSchema/>
+
+#### 第九步 - 将更改应用到数据库（可选）
+
+<ApplyChanges/>
+
+#### 第十步 - 使用新字段查询数据库（可选）
+
+<QueryDatabaseUpdated dialect='bun:sqlite' env_variable='DB_FILE_NAME' />

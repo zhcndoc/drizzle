@@ -1,0 +1,110 @@
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
+import Npm from "@mdx/Npm.astro";
+import Callout from '@mdx/Callout.astro';
+import Steps from '@mdx/Steps.astro';
+import AnchorCards from '@mdx/AnchorCards.astro';
+import Breadcrumbs from '@mdx/Breadcrumbs.astro';
+import Prerequisites from "@mdx/Prerequisites.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+import FileStructure from '@mdx/get-started/FileStructure.mdx';
+import InstallPackages from '@mdx/get-started/InstallPackages.mdx';
+import ConnectVercel from '@mdx/get-started/postgresql/ConnectVercel.mdx'
+import CreateTable from '@mdx/get-started/postgresql/CreateTable.mdx'
+import SetupConfig from '@mdx/get-started/SetupConfig.mdx';
+import ApplyChanges from '@mdx/get-started/ApplyChanges.mdx';
+import RunFile from '@mdx/get-started/RunFile.mdx';
+import QueryDatabase from '@mdx/get-started/QueryDatabase.mdx';
+import SetupEnv from '@mdx/get-started/SetupEnv.mdx';
+
+<Breadcrumbs/>
+
+# 使用 Drizzle 和 Vercel Postgres 开始
+
+<Prerequisites>
+  - **dotenv** - 管理环境变量的包 - [阅读这里](https://www.npmjs.com/package/dotenv)
+  - **tsx** - 运行 TypeScript 文件的包 - [阅读这里](https://tsx.is/)
+  - **Vercel Postgres 数据库** - [阅读这里](https://vercel.com/docs/storage/vercel-postgres)
+  - **Vercel Postgres 驱动程序** - [阅读这里](https://vercel.com/docs/storage/vercel-postgres/sdk) & [GitHub](https://github.com/vercel/storage/tree/main/packages/postgres)
+</Prerequisites>
+
+<FileStructure/>
+
+#### 第一步 - 安装必需的包
+<InstallPackages lib='@vercel/postgres'/>
+
+#### 第二步 - 设置连接变量
+
+<SetupEnv env_variable='POSTGRES_URL' />
+
+<Callout title='警告'>
+将变量命名为 `POSTGRES_URL` 对于 Vercel Postgres 很重要。
+
+在 Vercel Postgres 存储选项卡中，您可以找到 `.env.local` 选项卡并复制 `POSTGRES_URL` 变量。
+</Callout>
+
+#### 第三步 - 将 Drizzle ORM 连接到数据库
+
+<ConnectVercel/>
+
+#### 第四步 - 创建一个表
+
+<CreateTable />
+
+#### 第五步 - 设置 Drizzle 配置文件
+
+<SetupConfig dialect='postgresql' env_variable='POSTGRES_URL'/>
+
+#### 第六步 - 将更改应用到数据库
+
+<ApplyChanges />
+
+#### 第七步 - 填充并查询数据库
+
+```typescript copy filename="src/index.ts"
+import 'dotenv/config';
+import { eq } from 'drizzle-orm';
+import { drizzle } from 'drizzle-orm/vercel-postgres';
+import { usersTable } from './db/schema';
+
+async function main() {
+  const db = drizzle();
+
+  const user: typeof usersTable.$inferInsert = {
+    name: 'John',
+    age: 30,
+    email: 'john@example.com',
+  };
+
+  await db.insert(usersTable).values(user);
+  console.log('新用户已创建！')
+
+  const users = await db.select().from(usersTable);
+  console.log('从数据库获取所有用户: ', users)
+  /*
+  const users: {
+    id: number;
+    name: string;
+    age: number;
+    email: string;
+  }[]
+  */
+
+  await db
+    .update(usersTable)
+    .set({
+      age: 31,
+    })
+    .where(eq(usersTable.email, user.email));
+  console.log('用户信息已更新！')
+
+  await db.delete(usersTable).where(eq(usersTable.email, user.email));
+  console.log('用户已删除！')
+}
+
+main();
+```
+
+#### 第八步 - 运行 index.ts 文件
+
+<RunFile/>

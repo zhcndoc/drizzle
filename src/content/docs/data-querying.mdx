@@ -1,0 +1,169 @@
+import Callout from '@mdx/Callout.astro';
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Section from '@mdx/Section.astro';
+import Flex from "@mdx/Flex.astro"
+import LinksList from "@mdx/LinksList.astro"
+import Prerequisites from "@mdx/Prerequisites.astro";
+
+# Drizzle 查询 + CRUD
+
+<Prerequisites>
+  - 如何定义你的架构 - [架构基础](/docs/sql-schema-declaration)
+  - 如何连接数据库 - [连接基础](/docs/connect-overview)
+</Prerequisites>
+
+Drizzle 为你提供了几种查询数据库的方法，你可以根据下一个项目的需求来选择。
+它可以是 SQL 类似语法或关系语法。让我们来看看它们：
+
+## 为什么选择 SQL 类似语法？
+\
+**如果你知道 SQL，你就能掌握 Drizzle。**
+
+其他 ORM 和数据框架往往偏离或抽象 SQL，这导致了双重学习曲线：你需要同时学习 SQL 和框架的 API。
+
+Drizzle 则恰恰相反。
+我们拥抱 SQL，并将 Drizzle 的核心构建成类似 SQL 的形式，以便你几乎没有学习曲线，并能完全利用 SQL 的强大功能。
+
+<Section>
+```typescript copy
+// 访问你的数据
+await db
+  .select()
+	.from(posts)
+	.leftJoin(comments, eq(posts.id, comments.post_id))
+	.where(eq(posts.id, 10))
+```
+```sql
+SELECT * 
+FROM posts
+LEFT JOIN comments ON posts.id = comments.post_id
+WHERE posts.id = 10
+```
+</Section>
+
+使用 SQL 类似语法，你可以复制大部分纯 SQL 中可以做的事情，
+并清楚知道 Drizzle 将执行什么以及会生成什么查询。你可以执行各种范围的查询，
+包括选择、插入、更新、删除，以及使用别名、WITH 子句、子查询、准备语句等。
+让我们看更多示例。
+
+<CodeTabs items={['插入', '更新', '删除']}>
+<Section>
+```ts
+await db.insert(users).values({ email: 'user@gmail.com' })
+```
+```sql
+INSERT INTO users (email) VALUES ('user@gmail.com')
+```
+</Section>
+<Section>
+```ts
+await db.update(users)
+        .set({ email: 'user@gmail.com' })
+        .where(eq(users.id, 1))
+```
+```sql
+UPDATE users 
+SET email = 'user@gmail.com'
+WHERE users.id = 1
+```
+</Section>
+<Section>
+```ts
+await db.delete(users).where(eq(users.id, 1))
+```
+```sql
+DELETE FROM users WHERE users.id = 1
+```
+</Section>
+</CodeTabs>
+
+## 为什么不选择 SQL 类似语法？
+
+我们始终在追求一个完美平衡的解决方案。虽然 SQL 类似查询可以满足 100% 的需求，
+但在某些常见场景中，数据的查询可以更高效。
+
+我们构建了查询 API，以便你可以以最方便和高效的方式从数据库中获取关系型、嵌套数据，
+而无需担心联接或数据映射。
+
+**Drizzle 总是输出确切的一个 SQL 查询**。可以放心地与无服务器数据库一起使用，
+而无需担心性能或往返成本！
+
+<Section>
+```ts
+const result = await db.query.users.findMany({
+	with: {
+		posts: true
+	},
+});
+```
+{/* ```sql
+SELECT * FROM users ...
+``` */}
+</Section>
+
+## 高级
+使用 Drizzle，查询可以以你想要的任何方式组合和分区。
+你可以独立于主查询组合过滤器，分离子查询或条件语句，等等。
+让我们来看几个高级示例：
+
+#### 组合一个 WHERE 语句，然后在查询中使用它
+```ts
+async function getProductsBy({
+  name,
+  category,
+  maxPrice,
+}: {
+  name?: string;
+  category?: string;
+  maxPrice?: string;
+}) {
+  const filters: SQL[] = [];
+
+  if (name) filters.push(ilike(products.name, name));
+  if (category) filters.push(eq(products.category, category));
+  if (maxPrice) filters.push(lte(products.price, maxPrice));
+
+  return db
+    .select()
+    .from(products)
+    .where(and(...filters));
+}
+```
+
+#### 将子查询分离到不同变量中，然后在主查询中使用它们
+```ts
+const subquery = db
+	.select()
+	.from(internalStaff)
+	.leftJoin(customUser, eq(internalStaff.userId, customUser.id))
+	.as('internal_staff');
+
+const mainQuery = await db
+	.select()
+	.from(ticket)
+	.leftJoin(subquery, eq(subquery.internal_staff.userId, ticket.staffId));
+```
+
+#### 接下来是什么？
+<br/>
+<Flex>
+  <LinksList 
+    title='访问你的数据'
+    links={[
+        ["查询", "/docs/rqb"], 
+        ["选择", "/docs/select"],
+        ["插入", "/docs/insert"],
+        ["更新", "/docs/update"],
+        ["删除", "/docs/delete"],
+        ["过滤器", "/docs/operators"],
+        ["联接", "/docs/joins"],
+        ["sql`` 操作符", "/docs/sql"],
+      ]}
+  />
+  <LinksList 
+    title='从零到英雄'
+    links={[
+        ["迁移", "/docs/migrations"], 
+      ]}
+  />
+</Flex>

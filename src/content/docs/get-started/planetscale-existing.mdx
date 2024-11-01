@@ -1,0 +1,128 @@
+import Npm from '@mdx/Npm.astro';
+import Callout from '@mdx/Callout.astro';
+import Prerequisites from "@mdx/Prerequisites.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+import WhatsNextPostgres from "@mdx/WhatsNextPostgres.astro";
+import Breadcrumbs from '@mdx/Breadcrumbs.astro';
+import FileStructure from '@mdx/get-started/FileStructure.mdx';
+import InstallPackages from '@mdx/get-started/InstallPackages.mdx';
+import SetupEnv from '@mdx/get-started/SetupEnv.mdx';
+import ConnectPlanetScale from '@mdx/get-started/mysql/ConnectPlanetScale.mdx';
+import CreateTable from '@mdx/get-started/mysql/CreateTable.mdx';
+import UpdateSchema from '@mdx/get-started/mysql/UpdateSchema.mdx';
+import IntrospectMySQL from '@mdx/get-started/mysql/IntrospectMySQL.mdx';
+import QueryPlanetScale from '@mdx/get-started/mysql/QueryPlanetScale.mdx';
+import ApplyChanges from '@mdx/get-started/ApplyChanges.mdx';
+import RunFile from '@mdx/get-started/RunFile.mdx';
+import SetupConfig from '@mdx/get-started/SetupConfig.mdx';
+import TransferCode from '@mdx/get-started/TransferCode.mdx';
+
+<Breadcrumbs/>
+
+# 在现有项目中开始使用 Drizzle 和 PlanetScale
+
+<Prerequisites>  
+  - **dotenv** - 管理环境变量的软件包 - [查看这里](https://www.npmjs.com/package/dotenv)
+  - **tsx** - 运行 TypeScript 文件的软件包 - [查看这里](https://tsx.is/)
+  - **PlanetScale** - MySQL 数据库平台 - [查看这里](https://planetscale.com/)
+  - **database-js** - PlanetScale 无服务器驱动 - [查看这里](https://github.com/planetscale/database-js)
+</Prerequisites>
+
+<Callout title='重要' type='warning'>
+在本教程中，我们将使用 `database-js` 驱动程序通过 **HTTP** 调用 PlanetScale 数据库。如果您需要
+通过 TCP 连接到 PlanetScale，您可以参考我们的 [MySQL 开始使用](/docs/get-started/mysql-new) 页面。
+</Callout>
+
+<FileStructure/>
+
+#### 第一步 - 安装 **@planetscale/database** 软件包
+
+<InstallPackages lib='@planetscale/database'/>
+
+#### 第二步 - 设置连接变量
+
+<SetupEnv env_variable='DATABASE_URL' />
+
+#### 第三步 - 设置 Drizzle 配置文件
+
+<SetupConfig dialect='mysql' env_variable='DATABASE_URL'/>
+
+#### 第四步 - 审视你的数据库
+
+<IntrospectMySQL/>
+
+#### 第五步 - 将代码转移到你的实际架构文件
+
+<TransferCode/>
+
+#### 第六步 - 将 Drizzle ORM 连接到数据库
+
+<ConnectPlanetScale/>
+
+#### 第七步 - 查询数据库
+
+<QueryPlanetScale />
+
+#### 第八步 - 运行 index.ts 文件
+
+<RunFile/>
+
+#### 第九步 - 更新你的表架构（可选）
+
+<UpdateSchema/>
+
+#### 第十步 - 将更改应用到数据库（可选）
+
+<ApplyChanges/>
+
+#### 第十一步 - 使用新字段查询数据库（可选）
+
+```typescript copy filename="src/index.ts"
+import 'dotenv/config';
+import { eq } from 'drizzle-orm';
+import { drizzle } from 'drizzle-orm/planetscale-serverless';
+import { usersTable } from './db/schema';
+
+async function main() {
+  const db = drizzle({ connection: {
+      host: process.env.DATABASE_HOST!,
+      username: process.env.DATABASE_USERNAME!,
+      password: process.env.DATABASE_PASSWORD!,
+    }});
+
+  const user: typeof usersTable.$inferInsert = {
+    name: 'John',
+    age: 30,
+    email: 'john@example.com',
+    phone: '123-456-7890',
+  };
+
+  await db.insert(usersTable).values(user);
+  console.log('新用户已创建！')
+
+  const users = await db.select().from(usersTable);
+  console.log('从数据库获取所有用户: ', users)
+  /*
+  const users: {
+    id: number;
+    name: string;
+    age: number;
+    email: string;
+    phone: string | null;
+  }[]
+  */
+
+  await db
+    .update(usersTable)
+    .set({
+      age: 31,
+    })
+    .where(eq(usersTable.email, user.email));
+  console.log('用户信息已更新！')
+
+  await db.delete(usersTable).where(eq(usersTable.email, user.email));
+  console.log('用户已删除！')
+}
+
+main();
+```

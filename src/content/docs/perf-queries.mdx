@@ -1,0 +1,126 @@
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
+
+# 查询性能
+谈到 **Drizzle** — 我们是一个薄薄的 TypeScript 层，位于 SQL 之上，几乎没有开销，
+为了使其真正达到 0，您可以利用我们的预编译语句 API。
+
+**当您在数据库上运行查询时，会发生几件事：**
+- 查询构建器的所有配置都被连接到 SQL 字符串
+- 该字符串和参数被发送到数据库驱动程序
+- 驱动程序将 SQL 查询编译为二进制 SQL 执行格式并发送到数据库
+
+通过预编译语句，您只需在 Drizzle ORM 端进行一次 SQL 连接，
+然后数据库驱动程序就能够重用预编译的二进制 SQL，而不是每次都解析查询。
+这在处理大型 SQL 查询时具有极大的性能优势。
+
+不同的数据库驱动程序以不同的方式支持预编译语句，有时
+Drizzle ORM 可以比 [**更好的 sqlite3 驱动程序更快。**](https://twitter.com/_alexblokh/status/1593593415907909634)
+
+## 预编译语句
+<Tabs items={["PostgreSQL", "MySQL", "SQLite"]}>
+  <Tab>
+    ```typescript copy {3}
+    const db = drizzle(...);
+
+    const prepared = db.select().from(customers).prepare("statement_name");
+    
+    const res1 = await prepared.execute();
+    const res2 = await prepared.execute();
+    const res3 = await prepared.execute();
+    ```
+  </Tab> 
+  <Tab>
+    ```typescript copy {3}
+    const db = drizzle(...);
+
+    const prepared = db.select().from(customers).prepare();
+    
+    const res1 = await prepared.execute();
+    const res2 = await prepared.execute();
+    const res3 = await prepared.execute();
+    ```
+  </Tab> 
+  <Tab>
+    ```typescript copy {3}
+    const db = drizzle(...);
+
+    const prepared = db.select().from(customers).prepare();
+    
+    const res1 = prepared.all();
+    const res2 = prepared.all();
+    const res3 = prepared.all();
+    ```
+  </Tab> 
+</Tabs>
+
+## 占位符
+每当您需要嵌入动态运行时值时 - 您可以使用 `sql.placeholder(...)` API
+<Tabs items={["PostgreSQL", "MySQL", "SQLite"]}>
+  <Tab>
+    ```ts {6,9-10,15,18}
+    import { sql } from "drizzle-orm";
+
+    const p1 = db
+      .select()
+      .from(customers)
+      .where(eq(customers.id, sql.placeholder('id')))
+      .prepare("p1")
+
+    await p1.execute({ id: 10 }) // SELECT * FROM customers WHERE id = 10
+    await p1.execute({ id: 12 }) // SELECT * FROM customers WHERE id = 12
+
+    const p2 = db
+      .select()
+      .from(customers)
+      .where(sql`lower(${customers.name}) like ${sql.placeholder('name')}`)
+      .prepare("p2");
+
+    await p2.execute({ name: '%an%' }) // SELECT * FROM customers WHERE name ilike '%an%'
+    ```
+  </Tab>
+  <Tab>
+    ```ts copy {6,9-10,15,18}
+    import { sql } from "drizzle-orm";
+
+    const p1 = db
+      .select()
+      .from(customers)
+      .where(eq(customers.id, sql.placeholder('id')))
+      .prepare()
+
+    await p1.execute({ id: 10 }) // SELECT * FROM customers WHERE id = 10
+    await p1.execute({ id: 12 }) // SELECT * FROM customers WHERE id = 12
+
+    const p2 = db
+      .select()
+      .from(customers)
+      .where(sql`lower(${customers.name}) like ${sql.placeholder('name')}`)
+      .prepare();
+
+    await p2.execute({ name: '%an%' }) // SELECT * FROM customers WHERE name ilike '%an%'
+    ```
+  </Tab>
+  <Tab>
+    ```ts copy {6,9-10,15,18}
+    import { sql } from "drizzle-orm";
+
+    const p1 = db
+      .select()
+      .from(customers)
+      .where(eq(customers.id, sql.placeholder('id')))
+      .prepare()
+
+    p1.get({ id: 10 }) // SELECT * FROM customers WHERE id = 10
+    p1.get({ id: 12 }) // SELECT * FROM customers WHERE id = 12
+
+    const p2 = db
+      .select()
+      .from(customers)
+      .where(sql`lower(${customers.name}) like ${sql.placeholder('name')}`)
+      .prepare();
+
+    p2.all({ name: '%an%' }) // SELECT * FROM customers WHERE name ilike '%an%'
+    ```
+  </Tab> 
+</Tabs>

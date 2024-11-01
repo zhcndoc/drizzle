@@ -1,0 +1,54 @@
+import Npm from '@mdx/Npm.astro';
+
+# drizzle-typebox
+
+
+`drizzle-typebox` 是一个 **[Drizzle ORM](https://github.com/drizzle-team/drizzle-orm)** 的插件，允许您从 Drizzle ORM 模式生成 **[Typebox](https://github.com/sinclairzx81/typebox)** 模式。
+
+### 安装依赖
+
+<Npm>
+drizzle-typebox
+</Npm>
+
+    # 使用方法
+
+    ```ts
+    import { pgEnum, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
+    import { createInsertSchema, createSelectSchema } from 'drizzle-typebox';
+    import { Type } from '@sinclair/typebox';
+    import { Value } from '@sinclair/typebox/value';
+
+    const users = pgTable('users', {
+        id: serial('id').primaryKey(),
+        name: text('name').notNull(),
+        email: text('email').notNull(),
+        role: text('role', { enum: ['admin', 'user'] }).notNull(),
+        createdAt: timestamp('created_at').notNull().defaultNow(),
+    });
+
+    // 插入用户的模式 - 可用于验证 API 请求
+    const insertUserSchema = createInsertSchema(users);
+
+    // 选择用户的模式 - 可用于验证 API 响应
+    const selectUserSchema = createSelectSchema(users);
+
+    // 重写字段
+    const insertUserSchema = createInsertSchema(users, {
+        role: Type.String(),
+    });
+
+    // 精炼字段 - 如果您想在最终模式中使字段变为可空/可选之前更改字段时非常有用
+    const insertUserSchema = createInsertSchema(users, {
+        id: (schema) => Type.Number({ minimum: 0 }),
+        role: Type.String(),
+    });
+
+    // 使用示例
+
+    const isUserValid: boolean = Value.Check(insertUserSchema, {
+        name: 'John Doe',
+        email: 'johndoe@test.com',
+        role: 'admin',
+    });
+    ```

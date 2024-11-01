@@ -1,0 +1,486 @@
+import Callout from '@mdx/Callout.astro';
+import CodeTabs from '@mdx/CodeTabs.astro';
+import CodeTab from '@mdx/CodeTab.astro';
+import Section from '@mdx/Section.astro';
+
+# 神奇的 `sql` 操作符 🪄
+
+在使用 ORM 库时，你可能会遇到某些情况下，使用提供的 ORM 语法编写特定查询会感到困难。
+在这种情况下，你可以选择使用原始查询，
+这意味着构造一个原始字符串形式的查询。
+然而，原始查询往往缺乏类型安全和查询参数化的好处。
+
+为了解决这个问题，许多库引入了 `sql` 模板的概念。
+这个模板允许你编写更加类型安全和参数化的查询，增强代码的整体安全性和灵活性。
+Drizzle 作为一个强大的 ORM 库，也支持 SQL 模板。
+
+通过 Drizzle 的 `sql` 模板，你可以在构建查询时更进一步。
+如果在使用库的查询构建器编写整个查询时遇到困难，
+你可以在 Drizzle 查询的特定部分选择性使用 `sql` 模板。
+这种灵活性使你能够在部分 SELECT 语句、WHERE 子句、ORDER BY 子句、HAVING 子句、GROUP BY 子句，
+甚至关系查询构建器中使用 SQL 模板。
+
+利用 Drizzle 中 SQL 模板的能力，你可以维持类型安全和查询参数化的优点，
+同时实现所需的查询结构和复杂性。
+这使你能够在应用程序中创建更健壮和可维护的代码。
+
+## sql`` 模板
+
+在其他 ORM 中，
+你可能会遇到的一个最常见的用法是能够直接使用 `sql` 查询进行原始查询。
+
+```typescript copy
+import { sql } from 'drizzle-orm' 
+
+const id = 69;
+await db.execute(sql`select * from ${usersTable} where ${usersTable.id} = ${id}`)
+```
+
+它将生成当前查询
+
+```sql
+select * from "users" where "users"."id" = $1; --> [69]
+```
+
+任何提供给 sql 参数的表和列都会自动映射到相应的 SQL 语法，
+表名会进行转义，并且转义的表名会附加到列名上。
+
+此外，任何动态参数例如 `${id}` 将映射到 $1 占位符，
+并且相应的值将被移动到一个单独传递给数据库的值数组中。
+
+这种方法有效地防止了任何潜在的 SQL 注入漏洞。
+
+## `sql<T>`
+
+<Callout type="info" emoji="ℹ️">
+    请注意，`sql<T>` 不进行任何运行时映射。
+    你使用 `sql<T>` 定义的类型仅仅是 Drizzle 的辅助工具。
+    理解没有可行的方法动态确定确切类型是很重要的，因为 SQL 查询可以非常多样且可定制。
+</Callout>
+
+你可以在 Drizzle 中定义一个自定义类型，用于字段要求特定类型而不是 `unknown` 的地方。
+
+此功能在部分选择查询中尤其有用，确保所选字段的一致类型：
+
+```typescript
+// 未定义 sql<T> 类型
+const response: { id: unknown }[] = await db.select({
+    lowerName: sql`lower(${usersTable.id})`
+}).from(usersTable);
+
+// 定义了 sql<T> 类型
+const response: { id: string }[] = await db.select({
+    lowerName: sql<string>`lower(${usersTable.id})`
+}).from(usersTable);
+```
+
+## `sql``.mapWith()`
+
+对于需要对从数据库驱动传递给 Drizzle 的值进行运行时映射的情况，你可以使用 `.mapWith()`
+
+此函数接受不同的值，将在运行时映射响应。
+
+您可以复制特定的列映射策略，
+只要 mapWith 内部的接口与 Column 实现的接口相同。
+
+```typescript
+const usersTable = pgTable('users', {
+    id: serial('id').primaryKey(),
+    name: text('name').notNull(),
+});
+
+// 在运行时，这些值将与 Drizzle 中的 `text` 列映射相同
+sql`...`.mapWith(usersTable.name);
+```
+
+你还可以为 `DriverValueDecoder` 接口传递自己的实现：
+
+```ts 
+sql``.mapWith({
+	mapFromDriverValue: (value: any) => {
+		const mappedValue = value;
+		// 你想要应用的映射
+		return mappedValue;
+	},
+});
+    
+// 或者
+sql``.mapWith(Number);
+```
+
+## `sql``.as<T>()`
+
+在不同场景中，有时确定希望使用的自定义字段的名称可能很具挑战性。
+你可能会遇到需要明确为要被选择的字段指定别名的情况。
+这在处理复杂查询时特别有用。
+
+为了解决这些情况，我们引入了一个有用的 `.as('alias_name')` 助手，
+允许你明确地定义别名。利用这个特性，你可以为字段提供清晰有意义的名称，
+使你的查询更加直观可读。
+
+<Section>
+```typescript
+sql`lower(usersTable.name)`.as('lower_name')
+```
+```sql
+... "usersTable"."name" as lower_name ...
+```
+</Section>
+
+## `sql.raw()`
+
+在某些情况下，你可能不需要根据输入创建参数化值或将表/列映射为转义的。
+相反，你可能只想生成原始查询。对于这种情况，我们提供了 `sql.raw()` 函数。
+
+`sql.raw()` 函数允许你在查询中包含原始 SQL 语句，
+而不需要任何额外的处理或转义。
+此功能在你有预构造的 SQL 语句或当你需要直接将复杂或动态 SQL 代码纳入查询时非常有用。
+
+<Section>
+```typescript
+sql.raw(`select * from users where id = ${12}`);
+// 与
+sql`select * from users where id = ${12}`;
+```
+```sql
+select * from users where id = 12;
+--> 与
+select * from users where id = $1; --> [12]
+```
+</Section>
+
+你还可以在 sql 函数中利用 `sql.raw()`，使你能够直接包含任何原始字符串，
+而无需通过主 `sql` 模板函数进行转义。
+
+通过在 `sql` 函数内部使用 `sql.raw()`，你可以将未经转义的原始字符串直接并入你的查询。
+这在你有特定的 SQL 代码或表达式时非常有用，
+需要保持不被模板函数的自动转义或修改。
+
+<Section>
+```typescript
+sql`select * from ${usersTable} where id = ${12}`;
+// 与
+sql`select * from ${usersTable} where id = ${sql.raw(12)}`;
+```
+```sql
+select * from "users" where id = $1; --> [12]
+--> 与
+select * from "users" where id = 12;
+```
+</Section>
+
+## sql.fromList()
+
+`sql` 模板生成 SQL 块，它们是 SQL 部分的数组，
+在将 SQL 应用到数据库或 Drizzle 的查询后，将被连接到查询和参数中。
+
+在某些场景中，你可能需要使用自定义业务逻辑将这些块聚合到一个数组中，
+然后将它们连接成一个可以传递给数据库或查询的单一 SQL 语句。
+对于这种情况，fromList 函数非常有用。
+
+fromList 函数允许你将多个 SQL 块组合成一个单一的 SQL 语句。
+你可以根据特定要求聚合并连接个别 SQL 部分，
+然后获得一个统一的 SQL 查询，可以执行。
+
+<Section>
+```typescript
+const sqlChunks: SQL[] = [];
+
+sqlChunks.push(sql`select * from users`);
+
+// 一些逻辑
+
+sqlChunks.push(sql` where `);
+
+// 一些逻辑
+
+for (let i = 0; i < 5; i++) {
+	sqlChunks.push(sql`id = ${i}`);
+
+	if (i === 4) continue;
+	sqlChunks.push(sql` or `);
+}
+
+const finalSql: SQL = sql.fromList(sqlChunks)
+```
+```sql
+select * from users where id = $1 or id = $2 or id = $3 or id = $4 or id = $5; --> [0, 1, 2, 3, 4]
+```
+</Section>
+
+## sql.join()
+
+事实上，`sql.join` 函数的作用与 fromList 助手相似。
+然而，在处理两者之间的空间时，它提供了额外的灵活性
+SQL 块或指定用于连接 SQL 块的自定义分隔符。
+
+使用 `sql.join`，你可以使用指定的分隔符连接 SQL 块。
+此分隔符可以是任何你希望在块之间插入的字符串或字符。
+
+当你对 SQL 块的格式或分隔有特定要求时，这特别有用。
+通过指定自定义分隔符，
+你可以在最终的 SQL 查询中实现所需的结构和格式。
+
+<Section>
+```typescript
+const sqlChunks: SQL[] = [];
+
+sqlChunks.push(sql`select * from users`);
+
+// 一些逻辑
+
+sqlChunks.push(sql`where`);
+
+// 一些逻辑
+
+for (let i = 0; i < 5; i++) {
+	sqlChunks.push(sql`id = ${i}`);
+
+	if (i === 4) continue;
+    sqlChunks.push(sql`or`);
+}
+
+const finalSql: SQL = sql.join(sqlChunks, sql.raw(' '));
+```
+```sql
+select * from users where id = $1 or id = $2 or id = $3 or id = $4 or id = $5; --> [0, 1, 2, 3, 4]
+```
+</Section>
+
+## sql.append()
+
+如果你已经使用 `sql` 模板生成了 SQL，
+你可以通过使用 append 函数直接将新块添加到生成的 SQL 来实现与 fromList 相同的行为。
+
+通过使用 append 函数，你可以动态地向现有的 SQL 字符串添加额外的 SQL 块，
+有效地将它们连接在一起。
+这使你能够将自定义逻辑或业务规则并入最终的 SQL 查询。
+
+<Section>
+```typescript 
+const finalSql = sql`select * from users`;
+
+// 一些逻辑
+
+finalSql.append(sql` where `);
+
+// 一些逻辑
+
+for (let i = 0; i < 5; i++) {
+	finalSql.append(sql`id = ${i}`);
+
+	if (i === 4) continue;
+	finalSql.append(sql` or `);
+}
+```
+```sql
+select * from users where id = $1 or id = $2 or id = $3 or id = $4 or id = $5; --> [0, 1, 2, 3, 4]
+```
+</Section>
+
+## sql.empty()
+
+通过使用 sql.empty()，你可以从一个空的 SQL 对象开始，然后根据需要动态地将 SQL 块附加到它上。这使你能够逐步构建 SQL 查询，应用自定义逻辑或条件来确定每个块的内容。
+
+一旦你使用 sql.empty() 初始化了 SQL 对象，
+你可以利用 sql 模板的完整功能，如参数化、组合和转义。
+这使你能够以灵活和可控的方式构建 SQL 查询，
+适应特定的要求。
+
+```typescript 
+const finalSql = sql.empty();
+
+// 一些逻辑
+
+finalSql.append(sql`select * from users`);
+
+// 一些逻辑
+
+finalSql.append(sql` where `);
+
+// 一些逻辑
+
+for (let i = 0; i < 5; i++) {
+	finalSql.append(sql`id = ${i}`);
+
+	if (i === 4) continue;
+	finalSql.append(sql` or `);
+}
+```
+```sql
+select * from users where id = $1 or id = $2 or id = $3 or id = $4 or id = $5; --> [0, 1, 2, 3, 4]
+```
+
+## 将 `sql` 转换为字符串和参数
+
+在所有之前的示例中，你观察到了 SQL 模板语法在 TypeScript
+中的使用以及生成的 SQL 输出。
+
+如果你需要获取从 SQL 模板生成的查询字符串和相应的参数，
+你必须指定希望为其生成查询的数据库方言。
+不同的数据库在参数化和转义的语法上有所不同，因此选择适当的方言至关重要。
+
+一旦选择了方言，
+你可以利用相应实现的功能将 SQL 模板转换为所需的查询字符串和参数格式。
+这确保了与特定数据库系统的兼容性。
+
+<CodeTabs items={["PostgreSQL", "MySQL", "SQLite"]}>
+<CodeTab>
+<Section>
+```typescript copy
+import { PgDialect } from 'drizzle-orm/pg-core';
+
+const pgDialect = new PgDialect();
+pgDialect.sqlToQuery(sql`select * from ${usersTable} where ${usersTable.id} = ${12}`);
+```
+```sql
+select * from "users" where "users"."id" = $1; --> [ 12 ]
+```
+</Section>
+
+</CodeTab>
+<CodeTab>
+<Section>
+```typescript copy
+import { MySqlDialect } from 'drizzle-orm/mysql-core';
+
+const mysqlDialect = new MySqlDialect();
+mysqlDialect.sqlToQuery(sql`select * from ${usersTable} where ${usersTable.id} = ${12}`);
+```
+```sql
+select * from `users` where `users`.`id` = ?; --> [ 12 ]
+```
+</Section>
+</CodeTab>
+<CodeTab>
+<Section>
+```typescript copy
+import { SQLiteSyncDialect } from 'drizzle-orm/sqlite-core';
+
+const sqliteDialect = new SQLiteSyncDialect();
+sqliteDialect.sqlToQuery(sql`select * from ${usersTable} where ${usersTable.id} = ${12}`);
+```
+```sql
+select * from "users" where "users"."id" = ?; --> [ 12 ]
+```
+</Section>
+</CodeTab>
+</CodeTabs>
+
+## `sql` select
+
+你也可以在部分选择查询中使用 sql 功能。
+部分选择查询允许你从一个表中检索特定的字段或列，而不是获取完整行。
+
+有关部分选择查询的更多详细信息，
+可以参考 **[核心 API 文档](/docs/select#basic-and-partial-select)**。
+
+**从表中选择不同的自定义字段**
+
+在这里，你可以看到 **[`sql<T>`](/docs/sql#sqlt)**, **[`sql``.mapWith()`](/docs/sql#sqlmapwith)**, **[`sql``.as<T>()`](/docs/sql#sqlast)** 的用法。
+
+<Section>
+```typescript copy
+import { sql } from 'drizzle-orm'
+import { usersTable } from 'schema'
+
+await db.select({
+    id: usersTable.id,
+    lowerName: sql<string>`lower(${usersTable.name})`,
+    aliasedName: sql<string>`lower(${usersTable.name})`.as('aliased_column'),
+    count: sql<number>`count(*)`.mapWith(Number) 
+}).from(usersTable)
+```
+```sql
+select `id`, lower(`name`), lower(`name`) as `aliased_column`, count(*) from `users`;
+```
+</Section>
+
+## `sql` in where
+
+确实，Drizzle 提供了一组可用的表达式，你可以在 sql 模板中使用。
+然而，数据库通常有更多可用的表达式，
+包括通过扩展或其他手段提供的。
+
+为确保灵活性，并使你能够利用任何在 Drizzle 中未原生支持的表达式，
+你可以直接使用 sql 函数编写 SQL 模板。
+这使你能够充分发挥 SQL 的能力，
+结合特定于目标数据库的任何表达式或功能。
+
+使用 sql 模板时，你不会局限于 Drizzle 中预定义的表达式。
+相反，你可以表达复杂查询，
+并结合底层数据库系统提供的任何支持的表达式。
+
+
+**按 `id` 过滤，但使用 sql**
+<Section>
+```typescript copy
+import { sql } from 'drizzle-orm'
+import { usersTable } from 'schema'
+
+const id = 77
+
+await db.select()
+        .from(usersTable)
+        .where(sql`${usersTable.id} = ${id}`)
+```
+```sql
+select * from "users" where "users"."id" = $1; --> [ 77 ]
+```
+</Section>
+
+**高级的全文搜索 where 语句**
+<Section>
+```typescript copy
+import { sql } from 'drizzle-orm'
+import { usersTable } from 'schema'
+
+const searchParam = "Ale"
+
+await db.select()
+        .from(usersTable)
+        .where(sql`to_tsvector('simple', ${usersTable.name}) @@ to_tsquery('simple', ${searchParam})`)
+```
+```sql
+select * from "users" where to_tsvector('simple', "users"."name") @@ to_tsquery('simple', '$1'); --> [ "Ale" ]
+```
+</Section>
+
+## `sql` in orderBy
+
+`sql` 模板确实可以在 ORDER BY 子句中使用，
+当你需要某种特定功能进行排序而 Drizzle 中没有时，但又不想诉诸原始 SQL。
+
+<Section>
+```typescript copy
+import { sql } from 'drizzle-orm'
+import { usersTable } from 'schema'
+
+await db.select().from(usersTable).orderBy(sql`${usersTable.id} desc nulls first`)
+```
+```sql
+select * from "users" order by "users"."id" desc nulls first;
+```
+</Section>
+
+## `sql` in having 和 groupBy
+
+`sql` 模板确实可以在 HAVING 和 GROUP BY 子句中使用，当你需要某种特定功能进行分组，
+而 Drizzle 中没有，但又不想诉诸原始 SQL。
+
+<Section>
+```typescript copy
+import { sql } from 'drizzle-orm'
+import { usersTable } from 'schema'
+
+await db.select({ 
+    projectId: usersTable.projectId,
+    count: sql<number>`count(${usersTable.id})`.mapWith(Number)
+}).from(usersTable)
+    .groupBy(sql`${usersTable.projectId}`)
+    .having(sql`count(${usersTable.id}) > 300`)
+```
+```sql
+select "project_id", count("users"."id") from users group by "users"."project_id" having count("users"."id") > 300; 
+```
+</Section>

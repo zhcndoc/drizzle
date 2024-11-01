@@ -1,0 +1,120 @@
+import Npm from '@mdx/Npm.astro';
+import Npx from '@mdx/Npx.astro';
+import Callout from '@mdx/Callout.astro';
+import Prerequisites from "@mdx/Prerequisites.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+import WhatsNextPostgres from "@mdx/WhatsNextPostgres.astro";
+import Breadcrumbs from '@mdx/Breadcrumbs.astro';
+import FileStructure from '@mdx/get-started/FileStructure.mdx';
+import InstallPackages from '@mdx/get-started/InstallPackages.mdx';
+import SetupConfig from '@mdx/get-started/SetupConfig.mdx';
+import TransferCode from '@mdx/get-started/TransferCode.mdx';
+import QueryTurso from '@mdx/get-started/sqlite/QueryTurso.mdx';
+import QueryDatabaseUpdated from '@mdx/get-started/QueryDatabaseUpdated.mdx';
+import RunFile from '@mdx/get-started/RunFile.mdx';
+import ApplyChanges from '@mdx/get-started/ApplyChanges.mdx';
+import SetupEnv from '@mdx/get-started/SetupEnv.mdx';
+import CreateTable from '@mdx/get-started/sqlite/CreateTable.mdx';
+import ConnectLibsql from '@mdx/get-started/sqlite/ConnectLibsql.mdx';
+
+<Breadcrumbs/>
+
+# 开始使用 Drizzle 和 SQLite
+
+<Prerequisites>  
+  - **dotenv** - 管理环境变量的包 - [查看这里](https://www.npmjs.com/package/dotenv)
+  - **tsx** - 运行 TypeScript 文件的包 - [查看这里](https://tsx.is/)
+  - **Cloudflare D1** - 用于从您的 Workers 和 Pages 项目中查询的无服务器 SQL 数据库 - [查看这里](https://developers.cloudflare.com/d1/)
+  - **wrangler** - Cloudflare 开发者平台命令行界面 - [查看这里](https://developers.cloudflare.com/workers/wrangler)
+</Prerequisites>
+
+<FileStructure />
+
+#### 第一步 - 安装所需的包
+<InstallPackages lib=''/>
+
+#### 第二步 - 设置 wrangler.toml
+
+您需要一个 `wrangler.toml` 文件用于 D1 数据库，其内容大致如下：
+```toml
+name = "您的项目名称"
+main = "src/index.ts"
+compatibility_date = "2022-11-07"
+node_compat = true
+
+[[ d1_databases ]]
+binding = "DB"
+database_name = "您的数据库名称"
+database_id = "您的数据库 ID"
+migrations_dir = "drizzle"
+```
+
+#### 第三步 - 将 Drizzle ORM 连接到数据库
+
+```typescript copy
+import { drizzle } from 'drizzle-orm/d1';
+
+export interface Env {
+  <BINDING_NAME>: D1Database;
+}
+export default {
+  async fetch(request: Request, env: Env) {
+    const db = drizzle(env.<BINDING_NAME>);
+  },
+};
+```
+
+#### 第四步 - 创建一个表
+
+<CreateTable/>
+
+#### 第五步 - 设置 Drizzle 配置文件
+
+**Drizzle 配置** - 一个供 [Drizzle Kit](/docs/kit-overview) 使用的配置文件，包含有关您的数据库连接、迁移文件夹和模式文件的所有信息。
+
+在项目根目录创建一个 `drizzle.config.ts` 文件，并添加以下内容：
+
+```typescript copy filename="drizzle.config.ts"
+import 'dotenv/config';
+import { defineConfig } from 'drizzle-kit';
+
+export default defineConfig({
+  out: './drizzle',
+  schema: './src/db/schema.ts',
+  dialect: 'sqlite',
+  driver: '',
+  dbCredentials: {
+    accountId: process.env.CLOUDFLARE_ACCOUNT_ID!,
+    databaseId: process.env.CLOUDFLARE_DATABASE_ID!,
+    token: process.env.CLOUDFLARE_D1_TOKEN!,
+  },
+});
+```
+<Callout title='提示'>
+您可以查看 [我们的教程](/docs/guides/d1-http-with-drizzle-kit)，了解如何从 CloudFlare 获取环境变量
+</Callout>
+
+#### 第六步 - 将更改应用于数据库
+
+<ApplyChanges />
+
+#### 第七步 - 初始化并查询数据库
+
+```typescript copy
+import { drizzle } from 'drizzle-orm/d1';
+
+export interface Env {
+  <BINDING_NAME>: D1Database;
+}
+export default {
+  async fetch(request: Request, env: Env) {
+    const db = drizzle(env.<BINDING_NAME>);
+    const result = await db.select().from(users).all()
+    return Response.json(result);
+  },
+};
+```
+
+#### 第八步 - 运行 index.ts 文件
+
+<RunFile/>

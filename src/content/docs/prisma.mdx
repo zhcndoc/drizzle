@@ -1,0 +1,107 @@
+import Npm from '@mdx/Npm.astro';
+import Tabs from '@mdx/Tabs.astro';
+import Tab from '@mdx/Tab.astro';
+import CodeTabs from '@mdx/CodeTabs.astro';
+import CodeTab from '@mdx/CodeTab.astro';
+import Steps from '@mdx/Steps.astro';
+
+# Drizzle 扩展用于 Prisma
+
+如果您有一个现有的 Prisma 项目并想尝试 Drizzle 或逐步采用它，
+您可以使用我们的优质扩展，该扩展会将 Drizzle API 添加到您的 Prisma 客户端中。
+它将允许您在使用现有数据库连接的同时，结合使用 Drizzle 和 Prisma 查询。
+
+## 如何使用
+
+<Steps>
+#### 安装依赖
+
+您需要安装 Drizzle 本身和一个生成器包，该包将从 Prisma 模式生成 Drizzle 模式。
+<Npm>
+drizzle-orm@latest
+-D drizzle-prisma-generator
+</Npm>
+
+#### 更新您的 Prisma 模式
+
+将 Drizzle 生成器添加到您的 Prisma 模式中。`output` 是生成的 Drizzle 模式 TS 文件将放置的路径。
+```prisma copy filename="schema.prisma" {5-8}
+generator client {
+  provider = "prisma-client-js"
+}
+
+generator drizzle {
+  provider = "drizzle-prisma-generator"
+  output   = "./drizzle" // 生成的 Drizzle 表的放置位置
+}
+
+// 其余 Prisma 模式
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DB_URL")
+}
+
+model User {
+  id    Int     @id @default(autoincrement())
+  email String  @unique
+  name  String?
+}
+
+...
+```
+
+#### 生成 Drizzle 模式
+
+```bash
+prisma generate
+```
+
+#### 将 Drizzle 扩展添加到您的 Prisma 客户端
+
+<CodeTabs items={["PostgreSQL", "MySQL", "SQLite"]}>
+<CodeTab>
+```ts copy
+import { PrismaClient } from '@prisma/client';
+import { drizzle } from 'drizzle-orm/prisma/pg';
+
+const prisma = new PrismaClient().$extends(drizzle());
+```
+</CodeTab>
+<CodeTab>
+```ts copy
+import { PrismaClient } from '@prisma/client';
+import { drizzle } from 'drizzle-orm/prisma/mysql';
+
+const prisma = new PrismaClient().$extends(drizzle());
+```
+</CodeTab>
+<CodeTab>
+```ts copy
+import { PrismaClient } from '@prisma/client';
+import { drizzle } from 'drizzle-orm/prisma/sqlite';
+
+const prisma = new PrismaClient().$extends(drizzle());
+```
+</CodeTab>
+</CodeTabs>
+
+#### 通过 `prisma.$drizzle` 运行 Drizzle 查询 ✨
+
+为了使用 Drizzle 查询生成器，您需要对 Drizzle 表的引用。
+您可以从您在生成器配置中指定的输出路径导入它们。
+
+```ts copy
+import { User } from './drizzle';
+
+await prisma.$drizzle.insert().into(User).values({ email: 'sorenbs@drizzle.team', name: 'Søren' });
+const users = await prisma.$drizzle.select().from(User);
+```
+
+</Steps>
+
+## 限制
+
+- [关系查询](/docs/rqb) 不受支持，因为 [Prisma 驱动程序的限制](https://github.com/prisma/prisma/issues/17576)。因此，Prisma 无法以数组格式返回查询结果，这是关系查询正常工作的必要条件。
+- 在 SQLite 中，`.values()` （例如 `await db.select().from(table).values()`）不受支持，原因与上述相同。
+- [预处理语句](/docs/perf-queries#prepared-statement) 支持有限 - `.prepare()` 仅在 Drizzle 端构建 SQL 查询，因为没有适用于预处理查询的 Prisma API。

@@ -1,0 +1,66 @@
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
+import Npm from "@mdx/Npm.astro";
+import Callout from '@mdx/Callout.astro';
+import Steps from '@mdx/Steps.astro';
+import AnchorCards from '@mdx/AnchorCards.astro';
+import Breadcrumbs from '@mdx/Breadcrumbs.astro';
+import Prerequisites from "@mdx/Prerequisites.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+import FileStructure from '@mdx/get-started/FileStructure.mdx';
+import InstallPackages from '@mdx/get-started/InstallPackages.mdx';
+import ConnectXata from '@mdx/get-started/postgresql/ConnectXata.mdx'
+import CreateTable from '@mdx/get-started/postgresql/CreateTable.mdx'
+import SetupConfig from '@mdx/get-started/SetupConfig.mdx';
+import ApplyChanges from '@mdx/get-started/ApplyChanges.mdx';
+import RunFile from '@mdx/get-started/RunFile.mdx';
+import QueryXata from '@mdx/get-started/postgresql/QueryXata.mdx';
+import SetupEnv from '@mdx/get-started/SetupEnv.mdx';
+
+<Breadcrumbs/>
+
+# 开始使用 Drizzle 和 Xata
+
+<Prerequisites>
+  - **dotenv** - 管理环境变量的包 - [查看这里](https://www.npmjs.com/package/dotenv)
+  - **tsx** - 运行 TypeScript 文件的包 - [查看这里](https://tsx.is/)
+  - **Xata 数据库** - [查看这里](https://xata.io/docs)
+  - **Xata 驱动** - [查看这里](https://xata.io/docs/sdk/typescript/overview) & [GitHub](https://github.com/xataio/client-ts)
+</Prerequisites>
+
+<FileStructure/>
+
+#### 第一步 - 安装 **@xata.io/client** 包
+<InstallPackages lib='@xata.io/client'/>
+
+#### 第二步 - 设置连接变量
+
+<SetupEnv env_variable='DATABASE_URL' />
+
+#### 第三步 - 生成 Xata 客户端
+
+要生成 Xata 客户端，请参考 [Xata 文档](https://xata.io/docs/getting-started/installation)
+
+#### 第四步 - 将 Drizzle ORM 连接到数据库
+
+<ConnectXata/>
+
+#### 第五步 - 创建一个表
+
+<CreateTable />
+
+#### 第六步 - 设置 Drizzle 配置文件
+
+<SetupConfig dialect='postgresql' env_variable='DATABASE_URL'/>
+
+#### 第七步 - 向数据库应用更改
+
+<ApplyChanges />
+
+#### 第八步 - 填充和查询数据库
+
+<QueryXata />
+
+#### 第九步 - 运行 index.ts 文件
+
+<RunFile/>

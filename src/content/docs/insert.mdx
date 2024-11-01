@@ -1,0 +1,218 @@
+import IsSupportedChipGroup from '@mdx/IsSupportedChipGroup.astro';
+import Section from '@mdx/Section.astro';
+import Callout from '@mdx/Callout.astro';
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
+
+# SQL 插入
+Drizzle ORM 为您提供最接近 SQL 的方式将行插入数据库表中。
+
+## 插入一行
+使用 Drizzle 插入数据非常简单且类似 SQL。您可以自己看看：
+
+<Section>
+```typescript copy 
+await db.insert(users).values({ name: 'Andrew' });
+```
+```sql
+insert into "users" ("name") values ("Andrew");
+```
+</Section>
+
+如果您需要某个特定表的插入类型，可以使用 `typeof usersTable.$inferInsert` 语法。
+```typescript copy 
+type NewUser = typeof users.$inferInsert;
+
+const insertUser = async (user: NewUser) => {
+  return db.insert(users).values(user);
+}
+
+const newUser: NewUser = { name: "Alef" };
+await insertUser(newUser);
+```
+
+## 返回插入结果
+<IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'SQLite': true, 'MySQL': false }} />
+您可以在 PostgreSQL 和 SQLite 中插入一行并获得返回值，如下所示：
+```typescript copy
+await db.insert(users).values({ name: "Dan" }).returning();
+
+// 部分返回
+await db.insert(users).values({ name: "Partial Dan" }).returning({ insertedId: users.id });
+```
+
+## 插入 $returningId
+<IsSupportedChipGroup chips={{ 'PostgreSQL': false, 'SQLite': false, 'MySQL': true }} />
+
+MySQL 本身并不原生支持在使用 `INSERT` 后使用 `RETURNING`。对于 `自增`（或 `序列`）类型的 `主键`，只有一种方法可以做到，您可以访问 `insertId` 和 `affectedRows` 字段。我们为您准备了一种自动处理此类情况的方法，使用 Drizzle 自动接收所有插入的 ID 作为独立对象。
+
+```ts
+import { boolean, int, text, mysqlTable } from 'drizzle-orm/mysql-core';
+
+const usersTable = mysqlTable('users', {
+  id: int('id').primaryKey(),
+  name: text('name').notNull(),
+  verified: boolean('verified').notNull().default(false),
+});
+
+
+const result = await db.insert(usersTable).values([{ name: 'John' }, { name: 'John1' }]).$returningId();
+//    ^? { id: number }[]
+```
+
+使用 Drizzle，您还可以指定一个使用 `$default` 函数的 `主键`，该函数将在运行时生成自定义主键。我们也将在 `$returningId()` 调用中返回这些生成的键。
+
+```ts
+import { varchar, text, mysqlTable } from 'drizzle-orm/mysql-core';
+import { createId } from '@paralleldrive/cuid2';
+
+const usersTableDefFn = mysqlTable('users_default_fn', {
+  customId: varchar('id', { length: 256 }).primaryKey().$defaultFn(createId),
+  name: text('name').notNull(),
+});
+
+
+const result = await db.insert(usersTableDefFn).values([{ name: 'John' }, { name: 'John1' }]).$returningId();
+//  ^? { customId: string }[]
+```
+
+> 如果没有主键 -> 这种查询的类型将是 `{}[]`
+
+## 插入多行
+```typescript copy
+await db.insert(users).values([{ name: 'Andrew' }, { name: 'Dan' }]);
+```
+
+## 插入或更新及冲突处理
+Drizzle ORM 提供了简单的接口来处理插入或更新和冲突。
+
+### 冲突时不执行任何操作
+<IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'SQLite': true, 'MySQL': false }} />
+
+`onConflictDoNothing` 会在发生冲突时取消插入：
+
+```typescript copy
+await db.insert(users)
+  .values({ id: 1, name: 'John' })
+  .onConflictDoNothing();
+
+// 显式指定冲突目标
+await db.insert(users)
+  .values({ id: 1, name: 'John' })
+  .onConflictDoNothing({ target: users.id });
+```
+
+### 冲突时进行更新
+
+<IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'SQLite': true, 'MySQL': false }} />
+
+`onConflictDoUpdate` 会在发生冲突时更新该行：
+```typescript
+await db.insert(users)
+  .values({ id: 1, name: 'Dan' })
+  .onConflictDoUpdate({ target: users.id, set: { name: 'John' } });
+```
+
+#### `where` 子句
+
+`冲突时更新` 可以在两个不同位置使用 `where` 子句 -
+作为冲突目标的一部分（即用于部分索引）或作为 `更新` 子句的一部分：
+
+```sql
+insert into employees (employee_id, name)
+values (123, 'John Doe')
+on conflict (employee_id) where name <> 'John Doe'
+do update set name = excluded.name
+
+insert into employees (employee_id, name)
+values (123, 'John Doe')
+on conflict (employee_id) do update set name = excluded.name
+where name <> 'John Doe';
+```
+
+要在 Drizzle 中指定这些条件，您可以使用 `setWhere` 和 `targetWhere` 子句：
+
+```typescript
+await db.insert(employees)
+  .values({ employeeId: 123, name: 'John Doe' })
+  .onConflictDoUpdate({
+    target: employees.employeeId,
+    targetWhere: sql`name <> 'John Doe'`,
+    set: { name: sql`excluded.name` }
+  });
+
+await db.insert(employees)
+  .values({ employeeId: 123, name: 'John Doe' })
+  .onConflictDoUpdate({
+    target: employees.employeeId,
+    set: { name: 'John Doe' },
+    setWhere: sql`name <> 'John Doe'`
+  });
+```
+
+<hr />
+
+使用复合索引或复合主键进行插入或更新及冲突处理：
+
+```typescript
+await db.insert(users)
+  .values({ firstName: 'John', lastName: 'Doe' })
+  .onConflictDoUpdate({
+    target: [users.firstName, users.lastName],
+    set: { firstName: 'John1' }
+  });
+```
+
+### 主键重复时更新
+<IsSupportedChipGroup chips={{ 'PostgreSQL': false, 'SQLite': false, 'MySQL': true }} />
+
+MySQL 支持 [`ON DUPLICATE KEY UPDATE`](https://dev.mysql.com/doc/refman/8.0/en/insert-on-duplicate.html) 代替 `ON CONFLICT` 子句。MySQL 会根据主键和唯一索引自动确定冲突目标，如果 *任何* 唯一索引冲突，将更新该行。
+
+Drizzle 通过 `onDuplicateKeyUpdate` 方法支持这一点：
+
+```typescript
+// 注意，MySQL 自动根据主键和唯一索引确定目标
+await db.insert(users)
+  .values({ id: 1, name: 'John' })
+  .onDuplicateKeyUpdate({ set: { name: 'John' } });
+```
+
+虽然 MySQL 不直接支持在冲突时什么都不做，您可以通过将任意列的值设置为自身来执行无操作，从而达到相同的效果：
+
+```typescript
+import { sql } from 'drizzle-orm';
+
+await db.insert(users)
+  .values({ id: 1, name: 'John' })
+  .onDuplicateKeyUpdate({ set: { id: sql`id` } });
+```
+
+## WITH 插入子句
+
+<Callout>
+  查看如何使用 WITH 语句与 [select](/docs/select#with-clause)、[update](/docs/update#with-update-clause)、[delete](/docs/delete#with-delete-clause)
+</Callout>
+
+使用 `with` 子句可以帮助您通过将复杂查询拆分为称为公共表表达式 (CTEs) 的较小子查询来简化复杂查询：
+<Section>
+```typescript copy
+const userCount = db.$with('user_count').as(
+	db.select({ value: sql`count(*)`.as('value') }).from(users)
+);
+
+const result = await db.with(userCount)
+	.insert(users)
+	.values([
+		{ username: 'user1', admin: sql`((select * from ${userCount}) = 0)` }
+	])
+	.returning({
+		admin: users.admin
+	});
+```
+```sql
+with "user_count" as (select count(*) as "value" from "users") 
+insert into "users" ("username", "admin") 
+values ($1, ((select * from "user_count") = 0)) 
+returning "admin"
+```
+</Section>

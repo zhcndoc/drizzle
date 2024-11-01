@@ -1,0 +1,412 @@
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
+import IsSupportedChipGroup from '@mdx/IsSupportedChipGroup.astro';
+import Callout from '@mdx/Callout.astro';
+import Section from '@mdx/Section.astro';
+
+import CodeTab from '@mdx/CodeTab.astro';
+import CodeTabs from '@mdx/CodeTabs.astro';
+
+# Drizzle 软关系
+Drizzle 关系的唯一目的是让您以最简单和简洁的方式查询您的关系数据：
+
+<CodeTabs items={["关系查询", "带连接的选择"]}>
+<Section>
+```ts
+import * as schema from './schema';
+import { drizzle } from 'drizzle-orm/…';
+
+const db = drizzle(client, { schema });
+
+const result = db.query.users.findMany({
+  with: {
+    posts: true,
+  },
+});
+```
+```ts
+[{
+  id: 10,
+  name: "Dan",
+  posts: [
+    {
+      id: 1,
+      content: "SQL 很棒",
+      authorId: 10,
+    },
+    {
+      id: 2,
+      content: "但请检查关系查询",
+      authorId: 10,
+    }
+  ]
+}]
+```
+</Section>
+<Section>
+```ts
+import { drizzle } from 'drizzle-orm/…';
+import { eq } from 'drizzle-orm';
+import { posts, users } from './schema';
+
+const db = drizzle(client);
+
+const res = await db.select()
+                    .from(users)
+                    .leftJoin(posts, eq(posts.authorId, users.id))
+                    .orderBy(users.id)
+const mappedResult =  
+```
+</Section>
+</CodeTabs>
+
+
+### 一对一
+Drizzle ORM 为您提供 API，通过 `relations` 操作符定义表之间的 `一对一` 关系。
+
+一个用户可以邀请另一个用户的 `一对一` 关系示例（此示例使用自引用）：
+
+```typescript copy {10-15}
+import { pgTable, serial, text, integer, boolean } from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
+
+export const users = pgTable('users', {
+	id: serial('id').primaryKey(),
+	name: text('name'),
+	invitedBy: integer('invited_by'),
+});
+
+export const usersRelations = relations(users, ({ one }) => ({
+	invitee: one(users, {
+		fields: [users.invitedBy],
+		references: [users.id],
+	}),
+}));
+```
+
+另一个示例是用户在单独的表中存储的个人信息。在这种情况下，因为外键存储在“profile_info”表中，用户关系既没有字段也没有引用。这告诉 TypeScript `user.profileInfo` 是可选的：
+
+```typescript copy {9-17}
+import { pgTable, serial, text, integer, jsonb } from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
+
+export const users = pgTable('users', {
+	id: serial('id').primaryKey(),
+	name: text('name'),
+});
+
+export const usersRelations = relations(users, ({ one }) => ({
+	profileInfo: one(profileInfo),
+}));
+
+export const profileInfo = pgTable('profile_info', {
+	id: serial('id').primaryKey(),
+	userId: integer('user_id').references(() => users.id),
+	metadata: jsonb('metadata'),
+});
+
+export const profileInfoRelations = relations(profileInfo, ({ one }) => ({
+	user: one(users, { fields: [profileInfo.userId], references: [users.id] }),
+}));
+
+const user = await queryUserWithProfileInfo();
+//____^? type { id: number, profileInfo: { ... } | null  }
+```
+
+### 一对多
+Drizzle ORM 为您提供 API，通过 `relations` 操作符定义表之间的 `一对多` 关系。
+
+用户与他们撰写的文章之间的 `一对多` 关系示例：
+
+```typescript copy {9-11, 19-24}
+import { pgTable, serial, text, integer } from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
+
+export const users = pgTable('users', {
+	id: serial('id').primaryKey(),
+	name: text('name'),
+});
+
+export const usersRelations = relations(users, ({ many }) => ({
+	posts: many(posts),
+}));
+
+export const posts = pgTable('posts', {
+	id: serial('id').primaryKey(),
+	content: text('content'),
+	authorId: integer('author_id'),
+});
+
+export const postsRelations = relations(posts, ({ one }) => ({
+	author: one(users, {
+		fields: [posts.authorId],
+		references: [users.id],
+	}),
+}));
+```
+
+现在让我们为文章添加评论：
+```typescript copy {14,17-22,24-29}
+...
+
+export const posts = pgTable('posts', {
+	id: serial('id').primaryKey(),
+	content: text('content'),
+	authorId: integer('author_id'),
+});
+
+export const postsRelations = relations(posts, ({ one, many }) => ({
+	author: one(users, {
+		fields: [posts.authorId],
+		references: [users.id],
+	}),
+	comments: many(comments)
+}));
+
+export const comments = pgTable('comments', {
+	id: serial('id').primaryKey(),
+	text: text('text'),
+	authorId: integer('author_id'),
+	postId: integer('post_id'),
+});
+
+export const commentsRelations = relations(comments, ({ one }) => ({
+	post: one(posts, {
+		fields: [comments.postId],
+		references: [posts.id],
+	}),
+}));
+```
+
+
+### 多对多
+Drizzle ORM 为您提供 API，通过所谓的 `junction` 或 `join` 表定义表之间的 `多对多` 关系，
+它们必须显式定义并存储相关表之间的关联。
+
+用户与组之间的 `多对多` 关系示例：
+```typescript copy {9-11, 18-20, 37-46}
+import { relations } from 'drizzle-orm';
+import { integer, pgTable, primaryKey, serial, text } from 'drizzle-orm/pg-core';
+
+export const users = pgTable('users', {
+  id: serial('id').primaryKey(),
+  name: text('name'),
+});
+
+export const usersRelations = relations(users, ({ many }) => ({
+  usersToGroups: many(usersToGroups),
+}));
+
+export const groups = pgTable('groups', {
+  id: serial('id').primaryKey(),
+  name: text('name'),
+});
+
+export const groupsRelations = relations(groups, ({ many }) => ({
+  usersToGroups: many(usersToGroups),
+}));
+
+export const usersToGroups = pgTable(
+  'users_to_groups',
+  {
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id),
+    groupId: integer('group_id')
+      .notNull()
+      .references(() => groups.id),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.userId, t.groupId] }),
+  }),
+);
+
+export const usersToGroupsRelations = relations(usersToGroups, ({ one }) => ({
+  group: one(groups, {
+    fields: [usersToGroups.groupId],
+    references: [groups.id],
+  }),
+  user: one(users, {
+    fields: [usersToGroups.userId],
+    references: [users.id],
+  }),
+}));
+```
+
+### 外键
+
+您可能已经注意到，`relations` 看起来与外键相似——它们甚至有一个 `references` 属性。那么区别是什么呢？
+
+虽然外键也服务于相似的目的，定义表之间的关系，但它们与 `relations` 在不同级别上工作。
+
+外键是一个数据库级别的约束，它们在每个 `insert`/`update`/`delete` 操作时都会被检查，如果违反约束则会抛出错误。
+另一方面，`relations` 是一个更高层次的抽象，仅用于在应用程序级别定义表之间的关系。
+它们不会以任何方式影响数据库模式，并且不会隐式创建外键。
+
+这意味着 `relations` 和外键可以一起使用，但它们彼此之间并不依赖。
+您可以定义 `relations` 而不使用外键（反之亦然），这使得它们与不支持外键的数据库一起使用成为可能。
+
+以下两个示例在使用 Drizzle 关系查询时，查询数据的方式完全相同。
+<CodeTabs items={["schema1.ts", "schema2.ts"]}>
+<CodeTab>
+```ts {15}
+export const users = pgTable('users', {
+	id: serial('id').primaryKey(),
+	name: text('name'),
+});
+
+export const usersRelations = relations(users, ({ one, many }) => ({
+	profileInfo: one(users, {
+		fields: [profileInfo.userId],
+		references: [users.id],
+	}),
+}));
+
+export const profileInfo = pgTable('profile_info', {
+	id: serial('id').primaryKey(),
+	userId: integer("user_id"),
+	metadata: jsonb("metadata"),
+});
+```
+</CodeTab>
+<CodeTab>
+```ts {15}
+export const users = pgTable('users', {
+	id: serial('id').primaryKey(),
+	name: text('name'),
+});
+
+export const usersRelations = relations(users, ({ one, many }) => ({
+	profileInfo: one(users, {
+		fields: [profileInfo.userId],
+		references: [users.id],
+	}),
+}));
+
+export const profileInfo = pgTable('profile_info', {
+	id: serial('id').primaryKey(),
+	userId: integer("user_id").references(() => users.id),
+	metadata: jsonb("metadata"),
+});
+```
+</CodeTab>
+</CodeTabs>
+
+### 外键操作
+
+有关更多信息，请查看 [Postgres 外键文档](https://www.postgresql.org/docs/current/ddl-constraints.html#DDL-CONSTRAINTS-FK)
+
+您可以指定在父表中引用的数据被修改时应发生的操作。这些操作称为“外键操作”。PostgreSQL 提供了几种选项用于这些操作。
+
+删除/更新操作
+
+- `CASCADE`：删除父表中的行时，子表中的所有相应行也将被删除。这确保了子表中不存在孤立行。
+
+- `NO ACTION`：这是默认操作。如果子表中有相关行，它会阻止删除父表中的行。父表中的 DELETE 操作将失败。
+
+- `RESTRICT`：与 NO ACTION 类似，如果子表中有依赖行，它会阻止删除父行。它基本上与 NO ACTION 相同，并由于兼容性原因被包含在内。
+
+- `SET DEFAULT`：如果父表中的行被删除，子表中的外键列将被设置为其默认值（如果有）。如果没有默认值，DELETE 操作将失败。
+
+- `SET NULL`：当父表中的行被删除时，子表中的外键列将被设置为 NULL。此操作假设子表中的外键列允许 NULL 值。
+
+> 与 ON DELETE 类似，当引用的列被更改（更新）时，还存在 ON UPDATE。可能的操作是相同的，只是 SET NULL 和 SET DEFAULT 不能指定列列表。在这种情况下，CASCADE 意味着引用列的更新值应复制到引用行。
+在 drizzle 中，您可以使用 `references()` 的第二个参数添加外键操作。
+
+操作类型
+
+```typescript
+export type UpdateDeleteAction = 'cascade' | 'restrict' | 'no action' | 'set null' | 'set default';
+
+// references 接口的第二个参数
+actions?: {
+		onUpdate?: UpdateDeleteAction;
+		onDelete?: UpdateDeleteAction;
+	} | undefined
+```
+
+在以下示例中，将 `onDelete: 'cascade'` 添加到 `posts` 模式中的作者字段意味着删除 `user` 也将删除所有相关的 Post 记录。
+
+
+```typescript {11}
+import { pgTable, serial, text, integer } from 'drizzle-orm/pg-core';
+
+export const users = pgTable('users', {
+	id: serial('id').primaryKey(),
+	name: text('name'),
+});
+
+export const posts = pgTable('posts', {
+	id: serial('id').primaryKey(),
+	name: text('name'),
+	author: integer('author').references(() => users.id, {onDelete: 'cascade'}).notNull(),
+});
+```
+
+对于使用 `foreignKey` 操作符指定的约束，外键操作的定义语法为：
+
+```typescript {18-19}
+import { foreignKey, pgTable, serial, text, integer } from 'drizzle-orm/pg-core';
+
+export const users = pgTable('users', {
+	id: serial('id').primaryKey(),
+	name: text('name'),
+});
+
+export const posts = pgTable('posts', {
+	id: serial('id').primaryKey(),
+	name: text('name'),
+	author: integer('author').notNull(),
+}, (table) => ({
+		fk: foreignKey({
+			name: "author_fk",
+			columns: [table.author],
+			foreignColumns: [users.id],
+		})
+			.onDelete('cascade')
+			.onUpdate('cascade')
+	}),
+);
+```
+
+### 消歧义关系
+
+Drizzle 还提供 `relationName` 
+选项作为在您定义相同两张表之间的多个关系时消歧义的方式。
+例如，如果您定义一张包含 `author` 和 `reviewer` 
+关系的 `posts` 表。
+
+```ts {9-12, 21-32}
+import { pgTable, serial, text, integer } from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
+ 
+export const users = pgTable('users', {
+	id: serial('id').primaryKey(),
+	name: text('name'),
+});
+ 
+export const usersRelations = relations(users, ({ many }) => ({
+	author: many(posts, { relationName: 'author' }),
+	reviewer: many(posts, { relationName: 'reviewer' }),
+}));
+ 
+export const posts = pgTable('posts', {
+	id: serial('id').primaryKey(),
+	content: text('content'),
+	authorId: integer('author_id'),
+	reviewerId: integer('reviewer_id'),
+});
+ 
+export const postsRelations = relations(posts, ({ one }) => ({
+	author: one(users, {
+		fields: [posts.authorId],
+		references: [users.id],
+		relationName: 'author',
+	}),
+	reviewer: one(users, {
+		fields: [posts.reviewerId],
+		references: [users.id],
+		relationName: 'reviewer',
+	}),
+}));
+```

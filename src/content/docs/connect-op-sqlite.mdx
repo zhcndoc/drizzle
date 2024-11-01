@@ -1,0 +1,123 @@
+import Npm from "@mdx/Npm.astro";
+import Callout from '@mdx/Callout.astro';
+import AnchorCards from '@mdx/AnchorCards.astro';
+import Steps from '@mdx/Steps.astro';
+
+# Drizzle \<\> OP SQLite
+根据 **[官方 GitHub 页面](https://github.com/OP-Engineering/op-sqlite)**， 
+OP-SQLite 嵌入了最新版本的 SQLite，并提供了执行 SQL 查询的低级 API。
+
+<Npm>
+drizzle-orm @op-engineering/op-sqlite
+-D drizzle-kit 
+</Npm>
+
+```ts
+import { drizzle } from "drizzle-orm/op-sqlite";
+import { open } from '@op-engineering/op-sqlite';
+
+const opsqlite = open({
+  name: 'myDB',
+});
+const db = drizzle(opsqlite);
+
+await db.select().from(users);
+```
+
+你可以使用 Drizzle Kit 来生成 SQL 迁移。  
+在继续之前，请确保查看 [Drizzle Kit 迁移](/docs/kit-overview) 的工作原理。  
+OP SQLite 要求你将 SQL 迁移捆绑到应用中，我们已经为你准备好了。
+
+<Steps>
+
+#### 安装 babel 插件
+将 SQL 迁移文件直接捆绑为字符串到你的包中是必要的。
+```shell
+npm install babel-plugin-inline-import
+```
+
+#### 更新配置文件。
+你需要更新 `babel.config.js`、`metro.config.js` 和 `drizzle.config.ts` 文件
+```js filename='babel.config.js'
+module.exports = {
+  presets: ['module:@react-native/babel-preset'],
+  plugins: [
+    [
+      'inline-import',
+      {
+        extensions: ['.sql'],
+      },
+    ],
+  ],
+};
+```
+
+```js filename="metro.config.js"
+const { getDefaultConfig } = require('@react-native/metro-config');
+
+const config = getDefaultConfig(__dirname);
+
+config.resolver.sourceExts.push('sql');
+
+module.exports = config;
+```
+
+确保在 Drizzle Kit 配置中有 `dialect: 'sqlite'` 和 `driver: 'expo'`
+```ts filename="drizzle.config.ts"
+import type { Config } from 'drizzle-kit';
+
+export default {
+	schema: './db/schema.ts',
+	out: './drizzle',
+  dialect: 'sqlite',
+	driver: 'expo', // <--- 非常重要
+} satisfies Config;
+```
+
+#### 生成迁移
+在创建 SQL 架构文件和 drizzle.config.ts 文件后，你可以生成迁移
+```bash
+npx drizzle-kit generate
+```
+
+#### 将迁移添加到你的应用
+现在你需要从 `./drizzle` 文件夹将 `migrations.js` 文件导入到你的 Expo/React Native 应用中。 
+你可以在应用启动时使用我们自定义的 `useMigrations` 迁移钩子在 `useEffect` 钩子中手动运行迁移。
+
+```ts filename="App.tsx"
+import { drizzle } from "drizzle-orm/op-sqlite";
+import { open } from '@op-engineering/op-sqlite';
+import { useMigrations } from 'drizzle-orm/op-sqlite/migrator';
+import migrations from './drizzle/migrations';
+
+const opsqliteDb = open({
+  name: 'myDB',
+});
+
+const db = drizzle(opsqliteDb);
+
+export default function App() {
+  const { success, error } = useMigrations(db, migrations);
+
+  if (error) {
+    return (
+      <View>
+        <Text>迁移错误：{error.message}</Text>
+      </View>
+    );
+  }
+
+  if (!success) {
+    return (
+      <View>
+        <Text>迁移正在进行中...</Text>
+      </View>
+    );
+  }
+
+  return ...你的应用组件;
+}
+```
+
+</Steps>
+

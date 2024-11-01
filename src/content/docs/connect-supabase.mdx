@@ -1,0 +1,67 @@
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
+import Npm from "@mdx/Npm.astro";
+import Callout from '@mdx/Callout.astro';
+import Steps from '@mdx/Steps.astro';
+import AnchorCards from '@mdx/AnchorCards.astro';
+import Prerequisites from "@mdx/Prerequisites.astro";
+import WhatsNextPostgres from "@mdx/WhatsNextPostgres.astro";
+
+# Drizzle \<\> Supabase
+
+<Prerequisites>
+- 数据库 [连接基础](/docs/connect-overview) 与 Drizzle
+- Drizzle PostgreSQL 驱动 - [文档](/docs/get-started-postgresql)
+</Prerequisites>
+
+根据 **[官方网站](https://supabase.com/docs)**，Supabase 是一个开源的 Firebase 替代品，旨在使用最小的配置构建安全且高性能的 Postgres 后端。
+
+查看官方 **[Supabase + Drizzle](https://supabase.com/docs/guides/database/connecting-to-postgres#connecting-with-drizzle)** 文档。
+
+#### 第一步 - 安装软件包
+
+<Npm>
+drizzle-orm postgres
+-D drizzle-kit
+</Npm>
+
+#### 第二步 - 初始化驱动并进行查询
+
+```typescript copy filename="index.ts"
+import { drizzle } from 'drizzle-orm/postgres-js'
+
+const db = drizzle(process.env.DATABASE_URL);
+
+const allUsers = await db.select().from(...);
+```
+
+如果您需要提供现有的驱动程序：
+```typescript copy filename="index.ts"
+import { drizzle } from 'drizzle-orm/postgres-js'
+import postgres from 'postgres'
+
+const client = postgres(process.env.DATABASE_URL)
+const db = drizzle({ client });
+
+const allUsers = await db.select().from(...);
+```
+
+如果您决定通过 Supabase 使用连接池（在 [这里](https://supabase.com/docs/guides/database/connecting-to-postgres#connection-pooler) 描述），并启用了“事务”池模式，则确保将 prepare 关闭，因为不支持预编译语句。
+
+```typescript copy filename="index.ts"
+import { drizzle } from 'drizzle-orm/postgres-js'
+import postgres from 'postgres'
+
+// 禁用预取，因为在“事务”池模式下不支持 
+const client = postgres(process.env.DATABASE_URL, { prepare: false })
+const db = drizzle({ client });
+
+const allUsers = await db.select().from(...);
+```
+
+使用连接池连接到您的数据库以适应 **无服务器环境**，而在 **长时间运行的服务器** 中使用直接连接。
+
+#### 接下来是什么？
+
+<WhatsNextPostgres/>
+

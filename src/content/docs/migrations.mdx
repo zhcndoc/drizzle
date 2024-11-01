@@ -1,0 +1,352 @@
+---
+test: 10
+---
+export const a = 10;
+
+import Callout from '@mdx/Callout.astro';
+import Steps from '@mdx/Steps.astro';
+import CodeTab from '@mdx/CodeTab.astro';
+import CodeTabs from '@mdx/CodeTabs.astro';
+import Section from '@mdx/Section.astro';
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
+import Npm from '@mdx/Npm.astro';
+import Tag from '@mdx/Tag.astro'
+
+
+# Drizzle 迁移基础知识
+
+SQL 数据库要求你提前指定你将要存储的实体的 **严格模式**， 
+如果（当）你需要改变这些实体的形状 - 你需要通过 **模式迁移** 来实现。
+
+有多种生产级管理数据库迁移的方式。 
+Drizzle 旨在完美适应所有这些方式，无论你是选择 **数据库优先** 还是 **代码库优先**。
+
+**数据库优先** 是指你的数据库模式是事实来源。你要么直接在数据库上管理数据库模式， 
+要么通过数据库迁移工具，然后将数据库模式拉入代码库的应用实体中。
+
+**代码库优先** 是指代码库中的数据库模式是事实来源，且受版本控制。你在 JavaScript/TypeScript 中声明和管理数据库模式，
+然后使用 Drizzle 将该模式应用于数据库，直接或通过外部迁移工具。
+
+#### Drizzle 如何提供帮助？
+我们构建了 [**drizzle-kit**](/docs/kit-overview) - 用于管理迁移的 CLI 应用程序。 
+```shell
+drizzle-kit migrate
+drizzle-kit generate
+drizzle-kit push
+drizzle-kit pull
+```
+它旨在根据你当前的业务需求，让你选择如何处理迁移。
+
+它适用于数据库优先和代码库优先两种方法，允许你 **推送你的模式** 或 **生成 SQL 迁移** 文件，或 **从数据库拉取模式**。
+无论你是单独工作还是在团队中，它都非常完美。
+<br/>
+
+<hr/>
+<rem/>
+
+**现在让我们为你的项目选择最佳选项：**
+<rem/>
+
+<Tag style="font-size: 12px">**选项 1**</Tag>
+> 我自己管理数据库模式，使用外部迁移工具或直接在数据库上运行 SQL 迁移。
+> 从 Drizzle 中，我只需要从我的数据库中获取当前模式状态并将其保存为 TypeScript 模式文件。
+
+<Callout collapsed="Expand details">
+这是一种 **数据库优先** 的方法。你将数据库模式作为 **事实来源**， 
+Drizzle 允许你使用 [`drizzle-kit pull`](/docs/drizzle-kit-pull) 命令将数据库模式拉取到 TypeScript 中。
+
+<Section>
+```
+                                  ┌────────────────────────┐      ┌─────────────────────────┐ 
+                                  │                        │ <---  CREATE TABLE "users" (
+┌──────────────────────────┐      │                        │        "id" SERIAL PRIMARY KEY,
+│ ~ drizzle-kit pull       │      │                        │        "name" TEXT,
+└─┬────────────────────────┘      │        DATABASE        │        "email" TEXT UNIQUE
+  │                               │                        │       );
+  └ Pull datatabase schema -----> │                        │
+  ┌ Generate Drizzle       <----- │                        │
+  │ schema TypeScript file        └────────────────────────┘
+  │
+  v
+```
+```typescript
+import * as p from "drizzle-orm/pg-core";
+
+export const users = p.pgTable("users", {
+  id: p.serial().primaryKey(),
+  name: p.text(),
+  email: p.text().unique(), 
+};
+```
+</Section>
+</Callout>
+
+<rem/>
+<rem/>
+<rem/>
+
+<Tag style="font-size: 12px">**选项 2**</Tag>
+> 我希望在我的 TypeScript 代码库中拥有数据库模式，
+> 我不想处理 SQL 迁移文件。
+> 我希望 Drizzle 将我的模式“推送”到数据库。
+
+<Callout collapsed="Expand details">
+这是一种 **代码库优先** 的方法。你将 TypeScript Drizzle 模式作为 **事实来源**， 
+Drizzle 允许你使用 [`drizzle-kit push`](/docs/drizzle-kit-push) 命令将模式更改推送到数据库。
+
+这是快速原型设计的最佳方法，
+我们看到几十个团队和独立开发者成功地将其作为生产应用程序的主要迁移流程。
+
+<Section>
+```typescript {6} filename="src/schema.ts"
+import * as p from "drizzle-orm/pg-core";
+
+export const users = p.pgTable("users", {
+  id: p.serial().primaryKey(),
+  name: p.text(),
+  email: p.text().unique(), // <--- 添加的列
+};
+```
+```
+为 `users` 表添加列                                                                          
+┌──────────────────────────┐                  
+│ + email: text().unique() │                  
+└─┬────────────────────────┘                  
+  │                                           
+  v                                           
+┌──────────────────────────┐                  
+│ ~ drizzle-kit push       │                  
+└─┬────────────────────────┘                  
+  │                                           ┌──────────────────────────┐
+  └ Pull current datatabase schema ---------> │                          │
+                                              │                          │
+  ┌ Generate alternations based on diff <---- │         DATABASE         │
+  │                                           │                          │
+  └ Apply migrations to the database -------> │                          │
+                                       │      └──────────────────────────┘
+                                       │
+  ┌────────────────────────────────────┴──────────────┐
+   ALTER TABLE `users` ADD COLUMN `email` TEXT UNIQUE; 
+```
+</Section>
+</Callout>
+
+<rem/>
+<rem/>
+<rem/>
+
+<Tag style="font-size: 12px">**选项 3**</Tag>
+> 我希望在我的 TypeScript 代码库中拥有数据库模式，
+> 我希望 Drizzle 为我生成 SQL 迁移文件并将其应用到我的数据库。
+
+<Callout collapsed="Expand details">
+这是一种 **代码库优先** 的方法。你将 TypeScript Drizzle 模式作为事实来源， 
+Drizzle 允许你基于模式更改生成 SQL 迁移文件，使用 [`drizzle-kit generate`](/docs/drizzle-kit-generate），
+然后使用 [`drizzle-kit migrate`](/docs/drizzle-kit-migrate) 命令将其应用到数据库。 
+<Section>
+```typescript filename="src/schema.ts"
+import * as p from "drizzle-orm/pg-core";
+
+export const users = p.pgTable("users", {
+  id: p.serial().primaryKey(),
+  name: p.text(),
+  email: p.text().unique(), 
+};
+```
+```                                  
+┌────────────────────────┐                  
+│ $ drizzle-kit generate │                  
+└─┬──────────────────────┘                  
+  │                                           
+  └ 1. 读取先前的迁移文件夹
+    2. 找到当前和先前模式之间的差异
+    3. 如有必要，提示开发者进行重命名
+  ┌ 4. 生成 SQL 迁移并持久保存到文件
+  │    ┌─┴───────────────────────────────────────┐  
+  │      📂 drizzle       
+  │      └ 📂 20242409125510_premium_mister_fear
+  │        ├ 📜 snapshot.json
+  │        └ 📜 migration.sql
+  v
+```
+```sql
+-- drizzle/20242409125510_premium_mister_fear/migration.sql
+
+CREATE TABLE "users" (
+ "id" SERIAL PRIMARY KEY,
+ "name" TEXT,
+ "email" TEXT UNIQUE
+);
+```
+```
+┌───────────────────────┐                  
+│ $ drizzle-kit migrate │                  
+└─┬─────────────────────┘                  
+  │                                                         ┌──────────────────────────┐                                         
+  └ 1. 读取迁移.sql 文件                                                        │                          │
+    2. 从数据库中获取迁移历史 -------------> │                          │
+  ┌ 3. 选择以前未应用的迁移 <-------------- │         DATABASE         │
+  └ 4. 将新迁移应用于数据库 -------------> │                          │
+                                                            │                          │
+                                                            └──────────────────────────┘
+[✓] 完成！                                                 
+```
+</Section>
+</Callout>
+
+<rem/>
+<rem/>
+<rem/>
+
+<Tag style="font-size: 12px">**选项 4**</Tag>
+> 我希望在我的 TypeScript 代码库中拥有数据库模式，
+> 我希望 Drizzle 为我生成 SQL 迁移文件，并希望 Drizzle 在运行时应用它们。
+
+<Callout collapsed="Expand details">
+这是一种 **代码库优先** 的方法。你将 TypeScript Drizzle 模式作为事实来源， 
+Drizzle 允许你根据模式更改生成 SQL 迁移文件，使用 [`drizzle-kit generate`](/docs/drizzle-kit-generate），
+然后你可以在应用程序运行时将其应用到数据库。
+
+这种方法广泛用于 **单体** 应用程序，
+在零停机部署期间应用数据库迁移，并在发生故障时回滚 DDL 更改。
+这也应用于 **无服务器** 部署，在部署过程中以 **自定义资源** 运行迁移。
+
+<Section>
+```typescript filename="src/schema.ts"
+import * as p from "drizzle-orm/pg-core";
+
+export const users = p.pgTable("users", {
+  id: p.serial().primaryKey(),
+  name: p.text(),
+  email: p.text().unique(), 
+};
+```
+```                                  
+┌────────────────────────┐                  
+│ $ drizzle-kit generate │                  
+└─┬──────────────────────┘                  
+  │                                           
+  └ 1. 读取先前的迁移文件夹
+    2. 找到当前和先前模式之间的差异
+    3. 如有必要，提示开发者进行重命名
+  ┌ 4. 生成 SQL 迁移并持久保存到文件
+  │    ┌─┴───────────────────────────────────────┐  
+  │      📂 drizzle       
+  │      └ 📂 20242409125510_premium_mister_fear
+  │        ├ 📜 snapshot.json
+  │        └ 📜 migration.sql
+  v
+```
+```sql
+-- drizzle/20242409125510_premium_mister_fear/migration.sql
+
+CREATE TABLE "users" (
+ "id" SERIAL PRIMARY KEY,
+ "name" TEXT,
+ "email" TEXT UNIQUE
+);
+```
+```ts
+// index.ts
+import { drizzle } from "drizzle-orm/node-postgres"
+import { migrate } from 'drizzle-orm/node-postgres/migrator';
+
+const db = drizzle(process.env.DATABASE_URL);
+
+await migrate(db);
+```
+```
+┌───────────────────────┐                  
+│ npx tsx src/index.ts  │                  
+└─┬─────────────────────┘                  
+  │                                                      
+  ├ 1. 初始化数据库连接                             ┌──────────────────────────┐                                         
+  └ 2. 读取迁移.sql 文件                                                        │                          │
+    3. 从数据库中获取迁移历史 -------------> │                          │
+  ┌ 4. 选择以前未应用的迁移 <-------------- │         DATABASE         │
+  └ 5. 将新迁移应用于数据库 -------------> │                          │
+                                                            │                          │
+                                                            └──────────────────────────┘
+[✓] 完成！                                                 
+```
+</Section>
+</Callout>
+
+<rem/>
+<rem/>
+<rem/>
+
+<Tag style="font-size: 12px">**选项 5**</Tag>
+> 我希望在我的 TypeScript 代码库中拥有数据库模式，
+> 我希望 Drizzle 为我生成 SQL 迁移文件，
+> 但我会自己将其应用到我的数据库或使用外部迁移工具。
+
+<Callout collapsed="Expand details">
+这是一种 **代码库优先** 的方法。你将 TypeScript Drizzle 模式作为事实来源， 
+Drizzle 允许你基于模式更改生成 SQL 迁移文件，使用 [`drizzle-kit generate`](/docs/drizzle-kit-generate)，
+然后你可以直接或通过外部迁移工具将其应用于数据库。
+
+<Section>
+```typescript filename="src/schema.ts"
+import * as p from "drizzle-orm/pg-core";
+
+export const users = p.pgTable("users", {
+  id: p.serial().primaryKey(),
+  name: p.text(),
+  email: p.text().unique(), 
+};
+```
+```                                  
+┌────────────────────────┐                  
+│ $ drizzle-kit generate │                  
+└─┬──────────────────────┘                  
+  │                                           
+  └ 1. 读取先前的迁移文件夹
+    2. 找到当前和先前模式之间的差异
+    3. 如有必要，提示开发者进行重命名
+  ┌ 4. 生成 SQL 迁移并持久保存到文件
+  │    ┌─┴───────────────────────────────────────┐  
+  │      📂 drizzle       
+  │      └ 📂 20242409125510_premium_mister_fear
+  │        ├ 📜 snapshot.json
+  │        └ 📜 migration.sql
+  v
+```
+```sql
+-- drizzle/20242409125510_premium_mister_fear/migration.sql
+
+CREATE TABLE "users" (
+ "id" SERIAL PRIMARY KEY,
+ "name" TEXT,
+ "email" TEXT UNIQUE
+);
+```
+```
+┌───────────────────────────────────┐                  
+│ (._.) 现在你运行你的迁移 │           
+└─┬─────────────────────────────────┘  
+  │
+  直接到数据库
+  │                                         ┌────────────────────┐
+  ├────────────────────────────────────┬───>│                    │  
+  │                                    │    │      Database      │           
+ or via external tools                 │    │                    │   
+  │                                    │    └────────────────────┘
+  │  ┌────────────────────┐            │      
+  └──│ Bytebase           ├────────────┘         
+     ├────────────────────┤  
+     │ Liquibase          │
+     ├────────────────────┤ 
+     │ Atlas              │
+     ├────────────────────┤ 
+     │ etc…               │
+     └────────────────────┘
+
+[✓] 完成！                                                 
+```
+</Section>
+</Callout>
+
+<rem/>
+<rem/>

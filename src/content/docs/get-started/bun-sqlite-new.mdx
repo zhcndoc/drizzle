@@ -1,0 +1,73 @@
+import Npm from '@mdx/Npm.astro';
+import Npx from '@mdx/Npx.astro';
+import Callout from '@mdx/Callout.astro';
+import Prerequisites from "@mdx/Prerequisites.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+import WhatsNextPostgres from "@mdx/WhatsNextPostgres.astro";
+import Breadcrumbs from '@mdx/Breadcrumbs.astro';
+import FileStructure from '@mdx/get-started/FileStructure.mdx';
+import InstallPackages from '@mdx/get-started/InstallPackages.mdx';
+import SetupConfig from '@mdx/get-started/SetupConfig.mdx';
+import TransferCode from '@mdx/get-started/TransferCode.mdx';
+import QueryDatabase from '@mdx/get-started/QueryDatabase.mdx';
+import QueryDatabaseUpdated from '@mdx/get-started/QueryDatabaseUpdated.mdx';
+import RunFile from '@mdx/get-started/RunFile.mdx';
+import ApplyChanges from '@mdx/get-started/ApplyChanges.mdx';
+import SetupEnv from '@mdx/get-started/SetupEnv.mdx';
+import CreateTable from '@mdx/get-started/sqlite/CreateTable.mdx';
+import ConnectBun from '@mdx/get-started/sqlite/ConnectBun.mdx';
+
+<Breadcrumbs/>
+
+# 使用 Drizzle 和 Bun:SQLite 入门
+
+<Prerequisites>  
+  - **bun** - JavaScript 一体化工具包 - [点击阅读](https://bun.sh/)
+  - **bun:sqlite** - 高性能 SQLite3 驱动的原生实现 - [点击阅读](https://bun.sh/docs/api/sqlite)
+</Prerequisites>
+
+<FileStructure />
+
+#### 步骤 1 - 安装所需的包
+<Npm>
+  drizzle-orm
+  -D drizzle-kit @types/bun
+</Npm>
+
+#### 步骤 2 - 设置连接变量
+
+<SetupEnv env_variable='DB_FILE_NAME' />
+
+<Callout type='info' title='重要'>
+例如，如果您想在项目根目录中创建一个 SQLite 数据库文件以进行测试，可以使用以下示例：
+```plaintext copy
+DB_FILE_NAME=mydb.sqlite
+```
+</Callout>
+
+#### 步骤 3 - 将 Drizzle ORM 连接到数据库
+
+<ConnectBun/>
+
+#### 步骤 4 - 创建一个表
+
+<CreateTable/>
+
+#### 步骤 5 - 设置 Drizzle 配置文件
+
+<SetupConfig dialect='sqlite' env_variable='DB_FILE_NAME' />
+
+#### 步骤 6 - 将更改应用到数据库
+
+<ApplyChanges />
+
+#### 步骤 7 - 生成并查询数据库
+
+<QueryDatabase dialect='bun:sqlite' env_variable='DB_FILE_NAME' />
+
+#### 步骤 8 - 运行 index.ts 文件
+
+要使用 `bun` 运行脚本，请使用以下命令：
+```bash copy
+bun src/index.ts
+```

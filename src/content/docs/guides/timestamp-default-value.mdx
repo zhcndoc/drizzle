@@ -1,0 +1,311 @@
+---
+title: SQL 时间戳作为默认值
+slug: timestamp-default-value
+---
+
+import Section from "@mdx/Section.astro";
+import Prerequisites from "@mdx/Prerequisites.astro";
+import CodeTabs from '@mdx/CodeTabs.astro';
+import CodeTab from '@mdx/CodeTab.astro';
+
+<Prerequisites>
+- 开始使用 [PostgreSQL](/docs/get-started-postgresql)、[MySQL](/docs/get-started-mysql) 和 [SQLite](/docs/get-started-sqlite)
+- 了解 [PostgreSQL](/docs/column-types/pg)、[MySQL](/docs/column-types/mysql) 和 [SQLite](/docs/column-types/sqlite) 的列数据类型
+- [sql 操作符](/docs/sql)
+</Prerequisites>
+
+### PostgreSQL
+
+要在 PostgreSQL 中将当前时间戳设置为默认值，可以使用 `defaultNow()` 方法或带有 `now()` 函数的 `sql` 操作符，该函数返回当前日期和时间（带有时区）：
+
+<Section>
+```ts copy {6,9}
+import { sql } from 'drizzle-orm';
+import { timestamp, pgTable, serial } from 'drizzle-orm/pg-core';
+
+export const users = pgTable('users', {
+  id: serial('id').primaryKey(),
+  timestamp1: timestamp('timestamp1').notNull().defaultNow(),
+  timestamp2: timestamp('timestamp2', { mode: 'string' })
+    .notNull()
+    .default(sql`now()`),
+});
+```
+
+```sql
+CREATE TABLE IF NOT EXISTS "users" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"timestamp1" timestamp DEFAULT now() NOT NULL,
+	"timestamp2" timestamp DEFAULT now() NOT NULL
+);
+```
+</Section>
+
+`mode` 选项定义了应用程序中如何处理值。使用 `string` 模式的值在应用程序中被视为 `string`，但在数据库中存储为时间戳。
+
+<Section>
+```plaintext
+// 存储在数据库中的数据
++----+----------------------------+----------------------------+
+| id |         timestamp1         |         timestamp2         |
++----+----------------------------+----------------------------+
+| 1  | 2024-04-11 14:14:28.038697 | 2024-04-11 14:14:28.038697 |
++----+----------------------------+----------------------------+
+```
+
+```ts
+// 应用程序返回的数据
+[
+  {
+    id: 1,
+    timestamp1: 2024-04-11T14:14:28.038Z, // 日期对象
+    timestamp2: '2024-04-11 14:14:28.038697' // 字符串
+  }
+]
+```
+</Section>
+
+要在 PostgreSQL 中将 Unix 时间戳设置为默认值，可以使用 `sql` 操作符和 `extract(epoch from now())` 函数，该函数返回自 `1970-01-01 00:00:00 UTC` 以来的秒数：
+
+<Section>
+```ts copy {8}
+import { sql } from 'drizzle-orm';
+import { integer, pgTable, serial } from 'drizzle-orm/pg-core'
+
+export const users = pgTable('users', {
+  id: serial('id').primaryKey(),
+  timestamp: integer('timestamp')
+    .notNull()
+    .default(sql`extract(epoch from now())`),
+});
+```
+
+```sql
+CREATE TABLE IF NOT EXISTS "users" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"timestamp" integer DEFAULT extract(epoch from now()) NOT NULL
+);
+```
+
+```plaintext
+// 存储在数据库中的数据
++----+------------+
+| id | timestamp  |
++----+------------+
+|  1 | 1712846784 |
++----+------------+
+```
+
+```ts
+// 应用程序返回的数据
+[ 
+  { 
+    id: 1, 
+    timestamp: 1712846784 // 数字
+  } 
+]
+```
+</Section>
+
+
+### MySQL
+
+要在 MySQL 中将当前时间戳设置为默认值，可以使用 `defaultNow()` 方法或带有 `now()` 函数的 `sql` 操作符，该函数返回当前日期和时间 `(YYYY-MM-DD HH-MM-SS)`：
+
+<Section>
+```ts copy {6,9,12}
+import { sql } from 'drizzle-orm';
+import { mysqlTable, serial, timestamp } from 'drizzle-orm/mysql-core';
+
+export const users = mysqlTable('users', {
+  id: serial('id').primaryKey(),
+  timestamp1: timestamp('timestamp1').notNull().defaultNow(),
+  timestamp2: timestamp('timestamp2', { mode: 'string' })
+    .notNull()
+    .default(sql`now()`),
+  timestamp3: timestamp('timestamp3', { fsp: 3 }) // 小数秒部分
+    .notNull()
+    .default(sql`now(3)`),
+});
+```
+
+```sql
+CREATE TABLE `users` (
+	`id` serial AUTO_INCREMENT NOT NULL,
+	`timestamp1` timestamp NOT NULL DEFAULT now(),
+	`timestamp2` timestamp NOT NULL DEFAULT now(),
+	`timestamp3` timestamp(3) NOT NULL DEFAULT now(3),
+	CONSTRAINT `users_id` PRIMARY KEY(`id`)
+);
+```
+</Section>
+
+`fsp` 选项定义在时间戳中包含的小数秒数。默认值为 `0`。  
+`mode` 选项定义了应用程序中如何处理值。使用 `string` 模式的值在应用程序中被视为 `string`，但在数据库中存储为时间戳。
+
+<Section>
+```plaintext
+// 存储在数据库中的数据
++----+---------------------+---------------------+-------------------------+
+| id | timestamp1          | timestamp2          | timestamp3              |
++----+---------------------+---------------------+-------------------------+
+|  1 | 2024-04-11 15:24:53 | 2024-04-11 15:24:53 | 2024-04-11 15:24:53.236 |
++----+---------------------+---------------------+-------------------------+
+```
+
+```ts
+// 应用程序返回的数据
+[
+  {
+    id: 1,
+    timestamp1: 2024-04-11T15:24:53.000Z, // 日期对象
+    timestamp2: '2024-04-11 15:24:53', // 字符串
+    timestamp3: 2024-04-11T15:24:53.236Z // 日期对象
+  }
+]
+```
+</Section>
+
+要在 MySQL 中将 Unix 时间戳设置为默认值，可以使用 `sql` 操作符和 `unix_timestamp()` 函数，该函数返回自 `1970-01-01 00:00:00 UTC` 以来的秒数：
+
+<Section>
+```ts copy {8}
+import { sql } from 'drizzle-orm';
+import { mysqlTable, serial, int } from 'drizzle-orm/mysql-core';
+
+export const users = mysqlTable('users', {
+  id: serial('id').primaryKey(),
+  timestamp: int('timestamp')
+    .notNull()
+    .default(sql`(unix_timestamp())`),
+});
+```
+
+```sql
+CREATE TABLE `users` (
+	`id` serial AUTO_INCREMENT NOT NULL,
+	`timestamp` int NOT NULL DEFAULT (unix_timestamp()),
+	CONSTRAINT `users_id` PRIMARY KEY(`id`)
+);
+```
+
+```plaintext
+// 存储在数据库中的数据
++----+------------+
+| id | timestamp  |
++----+------------+
+|  1 | 1712847986 |
++----+------------+
+```
+
+```ts
+// 应用程序返回的数据
+[ 
+  { 
+    id: 1, 
+    timestamp: 1712847986 // 数字
+  } 
+]
+```
+</Section>
+
+### SQLite
+
+要在 SQLite 中将当前时间戳设置为默认值，可以使用带有 `current_timestamp` 常量的 `sql` 操作符，该常量返回当前 UTC 日期和时间的文本表示 `(YYYY-MM-DD HH:MM:SS)`：
+
+<Section>
+```ts copy {8}
+import { sql } from 'drizzle-orm';
+import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+
+export const users = sqliteTable('users', {
+  id: integer('id').primaryKey(),
+  timestamp: text('timestamp')
+    .notNull()
+    .default(sql`(current_timestamp)`),
+});
+```
+
+```sql
+CREATE TABLE `users` (
+	`id` integer PRIMARY KEY NOT NULL,
+	`timestamp` text DEFAULT (current_timestamp) NOT NULL
+);
+```
+
+```plaintext
+// 存储在数据库中的数据
++----+---------------------+
+| id | timestamp           |
++----+---------------------+
+|  1 | 2024-04-11 15:40:43 |
++----+---------------------+
+```
+
+```ts
+// 应用程序返回的数据
+[
+  {
+    id: 1,
+    timestamp: '2024-04-11 15:40:43' // 字符串
+  }
+]
+```
+</Section>
+
+要在 SQLite 中将 Unix 时间戳设置为默认值，可以使用 `sql` 操作符和 `unixepoch()` 函数，该函数返回自 `1970-01-01 00:00:00 UTC` 以来的秒数：
+
+<Section>
+```ts copy {8,11,14}
+import { sql } from 'drizzle-orm';
+import { integer, sqliteTable } from 'drizzle-orm/sqlite-core';
+
+export const users = sqliteTable('users', {
+  id: integer('id').primaryKey(),
+  timestamp1: integer('timestamp1', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+  timestamp2: integer('timestamp2', { mode: 'timestamp_ms' })
+    .notNull()
+    .default(sql`(unixepoch() * 1000)`),
+  timestamp3: integer('timestamp3', { mode: 'number' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+});
+```
+
+```sql
+CREATE TABLE `users` (
+	`id` integer PRIMARY KEY NOT NULL,
+	`timestamp1` integer DEFAULT (unixepoch()) NOT NULL,
+	`timestamp2` integer DEFAULT (unixepoch() * 1000) NOT NULL,
+	`timestamp3` integer DEFAULT (unixepoch()) NOT NULL
+);
+```
+</Section>
+
+`mode` 选项定义了应用程序中如何处理值。在应用程序中，使用 `timestamp` 和 `timestamp_ms` 模式的值被视为 `Date` 对象，但在数据库中存储为整数。  
+它们之间的区别在于，`timestamp` 处理秒，而 `timestamp_ms` 处理毫秒。
+
+<Section>
+```plaintext
+// 存储在数据库中的数据
++------------+------------+---------------+------------+
+| id         | timestamp1 | timestamp2    | timestamp3 |
++------------+------------+---------------+------------+
+| 1          | 1712835640 | 1712835640000 | 1712835640 |
++------------+------------+---------------+------------+
+```
+
+```ts
+// 应用程序返回的数据
+[
+  {
+    id: 1,
+    timestamp1: 2024-04-11T11:40:40.000Z, // 日期对象
+    timestamp2: 2024-04-11T11:40:40.000Z, // 日期对象
+    timestamp3: 1712835640 // 数字
+  }
+]
+```
+</Section>

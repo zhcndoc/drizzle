@@ -1,0 +1,275 @@
+---
+title: SQL Limit/Offset 分页
+slug: limit-offset-pagination
+---
+
+import CodeTabs from '@mdx/CodeTabs.astro';
+import CodeTab from '@mdx/CodeTab.astro';
+import Section from "@mdx/Section.astro";
+import Prerequisites from "@mdx/Prerequisites.astro";
+import IsSupportedChipGroup from "@mdx/IsSupportedChipGroup.astro";
+
+<IsSupportedChipGroup chips={{PostgreSQL: true, MySQL: true, SQLite: true}}/>
+
+<Prerequisites>
+- 开始使用 [PostgreSQL](/docs/get-started-postgresql)，[MySQL](/docs/get-started-mysql) 和 [SQLite](/docs/get-started-sqlite)
+- [选择语句](/docs/select) 中使用 [排序子句](/docs/select#order-by) 和 [限制与偏移子句](/docs/select#limit--offset)
+- 使用 [关系查询](/docs/rqb) 的 [排序子句](/docs/rqb#order-by) 和 [限制与偏移子句](/docs/rqb#limit--offset)
+- [动态查询构建](/docs/dynamic-query-building)
+</Prerequisites>
+
+本指南演示如何在 Drizzle 中实现 `limit/offset` 分页：
+
+<CodeTabs items={["index.ts", "schema.ts"]}>
+  <CodeTab>
+    ```ts copy {9,10,11}
+    import { asc } from 'drizzle-orm';
+    import { users } from './schema';
+
+    const db = drizzle(...);
+
+    await db
+      .select()
+      .from(users)
+      .orderBy(asc(users.id)) // 必须有排序
+      .limit(4) // 返回的行数
+      .offset(4); // 跳过的行数
+    ```
+
+    ```sql
+    select * from users order by id asc limit 4 offset 4;
+    ```
+
+    ```ts
+    // 返回第5-8行
+    [
+      {
+        id: 5,
+        firstName: 'Beth',
+        lastName: 'Davis',
+        createdAt: 2024-03-11T20:51:46.787Z
+      },
+      {
+        id: 6,
+        firstName: 'Charlie',
+        lastName: 'Miller',
+        createdAt: 2024-03-11T21:15:46.787Z
+      },
+      {
+        id: 7,
+        firstName: 'Clara',
+        lastName: 'Wilson',
+        createdAt: 2024-03-11T21:33:46.787Z
+      },
+      {
+        id: 8,
+        firstName: 'David',
+        lastName: 'Moore',
+        createdAt: 2024-03-11T21:45:46.787Z
+      }
+    ]
+    ```
+  </CodeTab>
+  <CodeTab>
+    ```ts copy
+    import { pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
+
+    export const users = pgTable('users', {
+      id: serial('id').primaryKey(),
+      firstName: text('first_name').notNull(),
+      lastName: text('last_name').notNull(),
+      createdAt: timestamp('created_at').notNull().defaultNow(),
+    });
+    ```
+
+    ```plaintext
+    +----+------------+-----------+----------------------------+
+    | id | first_name | last_name |         created_at         |
+    +----+------------+-----------+----------------------------+
+    |  1 | Alice      | Johnson   | 2024-03-08 12:23:55.251797 |
+    +----+------------+-----------+----------------------------+
+    |  2 | Alex       | Smith     | 2024-03-08 12:25:55.182    |
+    +----+------------+-----------+----------------------------+
+    |  3 | Aaron      | Williams  | 2024-03-08 12:28:55.182    |
+    +----+------------+-----------+----------------------------+
+    |  4 | Brian      | Brown     | 2024-03-08 12:34:55.182    |
+    +----+------------+-----------+----------------------------+
+    |  5 | Beth       | Davis     | 2024-03-08 12:40:55.182    |
+    +----+------------+-----------+----------------------------+
+    |  6 | Charlie    | Miller    | 2024-03-08 13:04:55.182    |
+    +----+------------+-----------+----------------------------+
+    |  7 | Clara      | Wilson    | 2024-03-08 13:22:55.182    |
+    +----+------------+-----------+----------------------------+
+    |  8 | David      | Moore     | 2024-03-08 13:34:55.182    |
+    +----+------------+-----------+----------------------------+
+    ```
+  </CodeTab>
+</CodeTabs>
+
+限制是要返回的行数（`页面大小`），而偏移是要跳过的行数（`(页面号 - 1) * 页面大小`）。 
+为了确保分页一致性，必须按唯一列排序。否则，结果可能会不一致。
+
+如果需要按照非唯一列排序，也应在排序中附加一个唯一列。
+
+以下是如何使用两个列实现 `limit/offset` 分页的示例：
+
+<Section>
+```ts copy {5}
+const getUsers = async (page = 1, pageSize = 3) => {
+  await db
+    .select()
+    .from(users)
+    .orderBy(asc(users.firstName), asc(users.id)) // 按 first_name（非唯一）和 id（主键）排序
+    .limit(pageSize) 
+    .offset((page - 1) * pageSize);
+}
+
+await getUsers();
+```
+</Section>
+
+Drizzle 具有实用的关系查询 API，可以轻松实现 `limit/offset` 分页：
+
+<Section>
+```ts copy {7,8,9}
+import * as schema from './db/schema';
+
+const db = drizzle({ schema });
+
+const getUsers = async (page = 1, pageSize = 3) => {
+  await db.query.users.findMany({
+    orderBy: (users, { asc }) => asc(users.id),
+    limit: pageSize,
+    offset: (page - 1) * pageSize,
+  });
+};
+
+await getUsers();
+```
+</Section>
+
+Drizzle 提供简单且灵活的 API，让您可以轻松创建自定义解决方案。以下是如何使用 `.$dynamic()` 函数创建自定义分页功能：
+
+<Section>
+```ts copy {11,12,13,16}
+import { SQL, asc } from 'drizzle-orm';
+import { PgColumn, PgSelect } from 'drizzle-orm/pg-core';
+
+function withPagination<T extends PgSelect>(
+  qb: T,
+  orderByColumn: PgColumn | SQL | SQL.Aliased,
+  page = 1,
+  pageSize = 3,
+) {
+  return qb
+    .orderBy(orderByColumn)
+    .limit(pageSize)
+    .offset((page - 1) * pageSize);
+}
+
+const query = db.select().from(users); // 需要进行分页的查询
+
+await withPagination(query.$dynamic(), asc(users.id));
+```
+
+</Section>
+
+您可以通过使用 `延迟连接` 技术来提高 `limit/offset` 分页的性能。此方法在数据的一个子集上执行分页，而不是在整个表上。
+
+您可以这样实现：
+
+```ts copy {10}
+const getUsers = async (page = 1, pageSize = 10) => {
+   const sq = db
+    .select({ id: users.id })
+    .from(users)
+    .orderBy(users.id)
+    .limit(pageSize)
+    .offset((page - 1) * pageSize)
+    .as('subquery');
+
+   await db.select().from(users).innerJoin(sq, eq(users.id, sq.id)).orderBy(users.id);
+};
+```
+
+**`limit/offset` 分页的好处**：实现简单，页面容易访问，这意味着您可以在不保存先前页面状态的情况下导航到任何页面。
+
+**`limit/offset` 分页的缺点**：随着偏移量的增加，查询性能下降，因为数据库必须扫描所有在偏移量之前的行以跳过它们，以及由于数据移动造成的不一致性，可能会导致同一行在不同页面上被返回或行被跳过。
+
+它的工作原理如下：
+
+<Section>
+```ts copy
+const getUsers = async (page = 1, pageSize = 3) => {
+  await db
+    .select()
+    .from(users)
+    .orderBy(asc(users.id))
+    .limit(pageSize)
+    .offset((page - 1) * pageSize);
+};
+
+// 用户正在浏览第一页
+await getUsers();
+```
+
+```ts
+// 第一页的结果
+[
+  {
+    id: 1,
+    firstName: 'Alice',
+    lastName: 'Johnson',
+    createdAt: 2024-03-10T17:17:06.148Z
+  },
+  {
+    id: 2,
+    firstName: 'Alex',
+    lastName: 'Smith',
+    createdAt: 2024-03-10T17:19:06.147Z
+  },
+  {
+    id: 3,
+    firstName: 'Aaron',
+    lastName: 'Williams',
+    createdAt: 2024-03-10T17:22:06.147Z
+  }
+]
+```
+
+```ts
+// 当用户浏览第一页时，删除了 id 为 2 的行
+await db.delete(users).where(eq(users.id, 2));
+
+// 用户导航到第二页
+await getUsers(2);
+```
+
+```ts
+// 第二页，id 为 3 的行被跳过
+[
+  {
+    id: 5,
+    firstName: 'Beth',
+    lastName: 'Davis',
+    createdAt: 2024-03-10T17:34:06.147Z
+  },
+  {
+    id: 6,
+    firstName: 'Charlie',
+    lastName: 'Miller',
+    createdAt: 2024-03-10T17:58:06.147Z
+  },
+  {
+    id: 7,
+    firstName: 'Clara',
+    lastName: 'Wilson',
+    createdAt: 2024-03-10T18:16:06.147Z
+  }
+]
+```
+</Section>
+
+因此，如果您的数据库在实时中频繁执行插入和删除操作，或者您需要对大型表进行高性能分页，您应该考虑使用 [基于游标](/docs/guides/cursor-based-pagination) 的分页。
+
+要了解有关 `延迟连接` 技术的更多信息，您可以参考以下指南：[Planetscale 分页指南](https://planetscale.com/blog/mysql-pagination) 和 [Aaron Francis 的高效分页指南](https://aaronfrancis.com/2022/efficient-pagination-using-deferred-joins)。
