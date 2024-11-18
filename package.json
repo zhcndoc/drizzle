@@ -2,7 +2,6 @@
   "name": "orm-drizzle-docs-astro",
   "type": "module",
   "version": "0.0.1",
-  "packageManager": "pnpm@9.12.3",
   "scripts": {
     "preinstall": "npx only-allow pnpm",
     "dev": "astro dev --host",
