@@ -64,6 +64,11 @@
   ["kit-seed-data", "数据播种"],
   ["kit-web-mobile", "网页和移动"],
   ["drizzle-config-file", "drizzle.config.ts"],
+
+  "Seeding",
+  ["seed-overview", "Overview"],
+  ["seed-get-started", "Get Started"],
+  ["seed-functions", "Generators"],
   
   "访问您的数据",
   ["rqb", "查询"],
