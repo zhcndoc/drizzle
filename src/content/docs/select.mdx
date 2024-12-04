@@ -12,7 +12,7 @@ Drizzle 为您提供了从数据库中获取数据的最 SQL 风格的方法，�
 而其尚不支持的功能，可以通过强大的 [`sql`](/docs/sql) 操作符由用户添加。
 
 假设您有一个如下面定义的 `users` 表：
-<Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', 'SingleStore']}>
 <Tab>
 ```typescript
 import { pgTable, serial, text } from 'drizzle-orm/pg-core';
@@ -26,12 +26,12 @@ export const users = pgTable('users', {
 </Tab>
 <Tab>
 ```typescript
-import { mysqlTable, serial, text } from 'drizzle-orm/mysql-core';
+import { mysqlTable, serial, text, int } from 'drizzle-orm/mysql-core';
 
 export const users = mysqlTable('users', {
   id: serial('id').primaryKey(),
   name: text('name').notNull(),
-  age: integer('age'),
+  age: int('age'),
 });
 ```
 </Tab>
@@ -43,6 +43,17 @@ export const users = sqliteTable('users', {
   id: integer('id').primaryKey(),
   name: text('name').notNull(),
   age: integer('age'),
+});
+```
+</Tab>
+<Tab>
+```typescript
+import { singlestoreTable, serial, text, int } from 'drizzle-orm/singlestore-core';
+
+export const users = singlestoreTable('users', {
+  id: int('id').primaryKey(),
+  name: text('name').notNull(),
+  age: int('age'),
 });
 ```
 </Tab>
@@ -775,7 +786,7 @@ db
 
 ### 迭代器
 
-<IsSupportedChipGroup chips={{ 'MySQL': true, 'PostgreSQL[WIP]': false, 'SQLite[WIP]': false,  }} />
+<IsSupportedChipGroup chips={{ 'MySQL': true, 'PostgreSQL[WIP]': false, 'SQLite[WIP]': false, 'SingleStore[WIP]': false }} />
 
 如果您需要从查询中返回大量行而不希望将它们全部加载到内存中，可以使用 `.iterator()` 将查询转换为异步迭代器：
 

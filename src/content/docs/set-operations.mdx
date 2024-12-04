@@ -2,6 +2,7 @@ import Tab from '@mdx/Tab.astro';
 import Tabs from '@mdx/Tabs.astro';
 import CodeTabs from '@mdx/CodeTabs.astro';
 import CodeTab from '@mdx/CodeTab.astro';
+import Callout from '@mdx/Callout.astro';
 
 # 集合操作
 
@@ -13,7 +14,7 @@ SQL 标准定义了以下三种集合操作：`UNION`、`INTERSECT`、`EXCEPT`�
 
 获取 customers 和 users 表中的所有名称，不带重复。
 
-<Tabs items={["PostgreSQL", "MySQL", "SQLite"]}>
+<Tabs items={["PostgreSQL", "MySQL", "SQLite", "SingleStore"]}>
   <Tab>
   <CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
 	<CodeTab>
@@ -185,6 +186,64 @@ SQL 标准定义了以下三种集合操作：`UNION`、`INTERSECT`、`EXCEPT`�
     </CodeTab>
   </CodeTabs>
   </Tab> 
+  <Tab>
+  <CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
+	<CodeTab>
+	```typescript copy
+    import { union } from 'drizzle-orm/singlestore-core'
+    import { users, customers } from './schema'
+
+    const allNamesForUserQuery = db.select({ name: users.name }).from(users);
+
+    const result = await union(
+		allNamesForUserQuery,
+		db.select({ name: customers.name }).from(customers)
+	).limit(10);
+    ```
+    ```sql
+    (select `name` from `sellers`)
+    union
+    (select `name` from `customers`)
+    limit ?
+    ```
+	</CodeTab>
+    <CodeTab>
+    ```ts copy
+    import { users, customers } from './schema'
+
+    const result = await db
+      .select({ name: users.name })
+      .from(users)
+      .union(db.select({ name: customers.name }).from(customers))
+      .limit(10);
+    ```
+    ```sql
+    (select `name` from `sellers`)
+    union
+    (select `name` from `customers`)
+    limit ?
+    ```
+    </CodeTab>
+    <CodeTab>
+	```typescript copy
+    import { int, mysqlTable, text, varchar } from "drizzle-orm/singlestore-core";
+
+    const users = mysqlTable('sellers', {
+        id: int('id').primaryKey(),
+        name: varchar('name', { length: 256 }).notNull(),
+        address: text('address'),
+    });
+    
+    const customers = mysqlTable('customers', {
+        id: int('id').primaryKey(),
+        name: varchar('name', { length: 256 }).notNull(),
+        city: text('city'),
+        email: varchar('email', { length: 256 }).notNull()
+    });
+    ```
+    </CodeTab>
+  </CodeTabs>
+  </Tab> 
 </Tabs>
 
 ### 并集所有（Union All）
@@ -195,7 +254,7 @@ SQL 标准定义了以下三种集合操作：`UNION`、`INTERSECT`、`EXCEPT`�
 由于可能会有重复的交易，
 你希望保留所有记录，而不消除重复项。
 
-<Tabs items={["PostgreSQL", "MySQL", "SQLite"]}>
+<Tabs items={["PostgreSQL", "MySQL", "SQLite", "SingleStore"]}>
   <Tab>
   <CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
 	<CodeTab>
@@ -364,6 +423,65 @@ SQL 标准定义了以下三种集合操作：`UNION`、`INTERSECT`、`EXCEPT`�
     </CodeTab>
   </CodeTabs>
   </Tab> 
+  <Tab>
+  <Callout type='warning'>
+  UNION ALL with ORDER BY behavior inconsistent with MySQL: SingleStore parses UNION ALL followed by ORDER BY commands differently from MySQL. In SingleStore, the following query is valid. In MySQL, it is invalid.
+  </Callout>
+  <CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
+	<CodeTab>
+	```typescript copy
+    import { unionAll } from 'drizzle-orm/singlestore-core'
+    import { onlineSales, inStoreSales } from './schema'
+
+    const onlineTransactions = db.select({ transaction: onlineSales.transactionId }).from(onlineSales);
+    const inStoreTransactions = db.select({ transaction: inStoreSales.transactionId }).from(inStoreSales);
+
+    const result = await unionAll(onlineTransactions, inStoreTransactions);
+    ```
+    ```sql
+    select `transaction_id` from `online_sales`
+    union all
+    select `transaction_id` from `in_store_sales`
+    ```
+    </CodeTab>
+    <CodeTab>
+    ```ts copy
+    import { onlineSales, inStoreSales } from './schema'
+
+    const result = await db
+      .select({ transaction: onlineSales.transactionId })
+      .from(onlineSales)
+      .unionAll(
+        db.select({ transaction: inStoreSales.transactionId }).from(inStoreSales)
+      );
+    ```
+    ```sql
+    (select `transaction_id` from `online_sales`)
+    union all 
+    (select `transaction_id` from `in_store_sales`)
+    ```
+	</CodeTab>
+    <CodeTab>
+	```typescript copy
+    import { int, mysqlTable, text, timestamp, varchar } from "drizzle-orm/singlestore-core";
+
+    const onlineSales = mysqlTable('online_sales', {
+        transactionId: int('transaction_id').primaryKey(),
+        productId: int('product_id').unique(),
+        quantitySold: int('quantity_sold'),
+        saleDate: timestamp('sale_date', { mode: 'date' }),
+    });
+    
+    const inStoreSales = mysqlTable('in_store_sales', {
+        transactionId: int('transaction_id').primaryKey(),
+        productId: int('product_id').unique(),
+        quantitySold: int('quantity_sold'),
+        saleDate: timestamp('sale_date', { mode: 'date' }),
+    });
+    ```
+    </CodeTab>
+  </CodeTabs>
+  </Tab> 
 </Tabs>
 
 ### 交集（Intersect）
@@ -377,7 +495,7 @@ SQL 标准定义了以下三种集合操作：`UNION`、`INTERSECT`、`EXCEPT`�
 在此场景中，你希望找到两个系间的共同课程，
 但不希望同一课程即使被同一系的多个学生注册也计数多次。
 
-<Tabs items={["PostgreSQL", "MySQL", "SQLite"]}>
+<Tabs items={["PostgreSQL", "MySQL", "SQLite", "SingleStore"]}>
   <Tab>
   <CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
 	<CodeTab>
@@ -528,6 +646,56 @@ SQL 标准定义了以下三种集合操作：`UNION`、`INTERSECT`、`EXCEPT`�
     </CodeTab>
   </CodeTabs>
   </Tab> 
+  <Tab>
+    <CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
+	<CodeTab>
+	```typescript copy
+    import { intersect } from 'drizzle-orm/singlestore-core'
+    import { depA, depB } from './schema'
+
+    const departmentACourses = db.select({ courseName: depA.courseName }).from(depA);
+    const departmentBCourses = db.select({ courseName: depB.courseName }).from(depB);
+
+    const result = await intersect(departmentACourses, departmentBCourses);
+    ```
+    ```sql
+    select `projects_name` from `department_a_projects`
+    intersect
+    select `projects_name` from `department_b_projects`
+    ```
+	</CodeTab>
+    <CodeTab>
+    ```typescript copy
+    import { depA, depB } from './schema'
+
+    const result = await db
+      .select({ courseName: depA.courseName })
+      .from(depA)
+      .intersect(db.select({ courseName: depB.courseName }).from(depB));
+    ```
+    ```sql
+    select `projects_name` from `department_a_projects`
+    intersect
+    select `projects_name` from `department_b_projects`
+    ```
+    </CodeTab>
+    <CodeTab>
+	```typescript copy
+    import { int, mysqlTable, varchar } from "drizzle-orm/singlestore-core";
+
+    const depA = mysqlTable('department_a_courses', {
+        studentId: int('student_id'),
+        courseName: varchar('course_name', { length: 256 }).notNull(),
+    });
+    
+    const depB = pgTable('department_b_courses', {
+        studentId: int('student_id'),
+        courseName: varchar('course_name', { length: 256 }).notNull(),
+    });
+    ```
+    </CodeTab>
+  </CodeTabs>
+  </Tab> 
 </Tabs>
 
 ### 交集所有（Intersect All）
@@ -542,7 +710,7 @@ SQL 标准定义了以下三种集合操作：`UNION`、`INTERSECT`、`EXCEPT`�
 但你希望保留数量信息，
 即使同一产品被不同的客户多次下单。
 
-<Tabs items={["PostgreSQL", "MySQL"]}>
+<Tabs items={["PostgreSQL", "MySQL", "SingleStore"]}>
   <Tab>
   <CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
 	<CodeTab>
@@ -678,6 +846,9 @@ SQL 标准定义了以下三种集合操作：`UNION`、`INTERSECT`、`EXCEPT`�
     ```
     </CodeTab>
   </CodeTabs>
+  </Tab>
+  <Tab>
+  Not supported by SingleStore
   </Tab> 
 </Tabs>
 
@@ -692,7 +863,7 @@ SQL 标准定义了以下三种集合操作：`UNION`、`INTERSECT`、`EXCEPT`�
 你不希望同一项目计数多次，
 即使同一部门的多个员工都被分配给该项目。
 
-<Tabs items={["PostgreSQL", "MySQL", "SQLite"]}>
+<Tabs items={["PostgreSQL", "MySQL", "SQLite", "SingleStore"]}>
   <Tab>
   <CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
 	<CodeTab>
@@ -843,6 +1014,56 @@ SQL 标准定义了以下三种集合操作：`UNION`、`INTERSECT`、`EXCEPT`�
     </CodeTab>
   </CodeTabs>
   </Tab> 
+  <Tab>
+  <CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
+	<CodeTab>
+	```typescript copy
+    import { except } from 'drizzle-orm/singlestore-core'
+    import { depA, depB } from './schema'
+
+    const departmentACourses = db.select({ courseName: depA.projectsName }).from(depA);
+    const departmentBCourses = db.select({ courseName: depB.projectsName }).from(depB);
+
+    const result = await except(departmentACourses, departmentBCourses);
+    ```
+    ```sql
+    select `projects_name` from `department_a_projects`
+    except
+    select `projects_name` from `department_b_projects`
+    ```
+	</CodeTab>
+    <CodeTab>
+    ```ts copy
+    import { depA, depB } from './schema'
+
+    const result = await db
+        .select({ courseName: depA.projectsName })
+        .from(depA)
+        .except(db.select({ courseName: depB.projectsName }).from(depB));
+    ```
+    ```sql
+    select `projects_name` from `department_a_projects`
+    except
+    select `projects_name` from `department_b_projects`
+    ```
+    </CodeTab>
+    <CodeTab>
+	```typescript 
+    import { int, mysqlTable, varchar } from "drizzle-orm/singlestore-core";
+
+    const depA = mysqlTable('department_a_projects', {
+        employeeId: int('employee_id'),
+        projectsName: varchar('projects_name', { length: 256 }).notNull(),
+    });
+    
+    const depB = mysqlTable('department_b_projects', {
+        employeeId: int('employee_id'),
+        projectsName: varchar('projects_name', { length: 256 }).notNull(),
+    });
+    ```
+    </CodeTab>
+  </CodeTabs>
+  </Tab> 
 </Tabs>
 
 ### 差集所有（Except All）
@@ -855,7 +1076,7 @@ SQL 标准定义了以下三种集合操作：`UNION`、`INTERSECT`、`EXCEPT`�
 在此场景中，你希望找到仅由普通客户下单的产品，并且不由 VIP 客户下单。
 你希望保留数量信息，即使同一产品被不同的普通客户多次下单。
 
-<Tabs items={["PostgreSQL", "MySQL"]}>
+<Tabs items={["PostgreSQL", "MySQL", "SingleStore"]}>
   <Tab>
   <CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
 	<CodeTab>
@@ -992,4 +1213,7 @@ SQL 标准定义了以下三种集合操作：`UNION`、`INTERSECT`、`EXCEPT`�
     </CodeTab>
   </CodeTabs>
   </Tab> 
+  <Tab>
+  Not supported by SingleStore
+  </Tab>
 </Tabs>

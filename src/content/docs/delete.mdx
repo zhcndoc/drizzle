@@ -14,7 +14,7 @@ await db.delete(users).where(eq(users.name, 'Dan'));
 
 ### 限制
 
-<IsSupportedChipGroup chips={{ 'PostgreSQL': false, 'MySQL': true, 'SQLite': true }} />
+<IsSupportedChipGroup chips={{ 'PostgreSQL': false, 'MySQL': true, 'SQLite': true, 'SingleStore': true }} />
 
 使用 `.limit()` 向查询添加 `limit` 子句 - 例如：
 <Section>
@@ -49,7 +49,7 @@ delete from "users" where "users"."name" = $1 order by "name" asc, "name2" desc;
 </Section>
 
 ### 带返回值的删除
-<IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'SQLite': true, 'MySQL': false }} />
+<IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'SQLite': true, 'MySQL': false, 'SingleStore': false}} />
 您可以在 PostgreSQL 和 SQLite 中删除一行并获取返回值：
 ```typescript copy
 const deletedUser = await db.delete(users)

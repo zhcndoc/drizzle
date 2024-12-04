@@ -5,7 +5,8 @@ import Callout from '@mdx/Callout.astro';
 import Section from '@mdx/Section.astro';
 
 # 视图
-## 视图声明
+
+<IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'SQLite': true, 'MySQL': true, 'SingleStore': false }} />
 您可以通过多种方式在 Drizzle ORM 中声明视图。
 
 你可以声明需要创建的视图，或者声明已存在于数据库中的视图。

@@ -22,7 +22,7 @@ await db.update(users)
 
 ### 限制
 
-<IsSupportedChipGroup chips={{ 'PostgreSQL': false, 'MySQL': true, 'SQLite': true }} />
+<IsSupportedChipGroup chips={{ 'PostgreSQL': false, 'MySQL': true, 'SQLite': true, 'SingleStore': true }} />
 
 使用 `.limit()` 将 `limit` 子句添加到查询中 - 例如：
 <Section>
@@ -57,7 +57,7 @@ update "users" set "verified" = $1 order by "name" asc, "name2" desc;
 </Section>
 
 ### 带返回值的更新
-<IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'SQLite': true, 'MySQL': false }} />
+<IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'SQLite': true, 'MySQL': false , 'SingleStore': false}} />
 您可以在 PostgreSQL 和 SQLite 中更新行并返回它：
 ```typescript copy
 const updatedUserId: { updatedId: number }[] = await db.update(users)
@@ -99,7 +99,7 @@ returning "id"
 
 ## Update ... from
 
-<IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': false, 'SQLite': true }} />
+<IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': false, 'SQLite': true, 'SingleStore': false }} />
 
 As the SQLite documentation mentions:
 
@@ -146,7 +146,7 @@ from "cities" "c"
 ```
 </Section>
 
-<IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': false, 'SQLite': false }} />
+<IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': false, 'SQLite': false, 'SingleStore': false }} />
 
 In Postgres, you can also return columns from the joined tables.
 <Section>

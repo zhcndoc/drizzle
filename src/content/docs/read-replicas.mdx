@@ -7,7 +7,7 @@ import Tabs from '@mdx/Tabs.astro';
 SELECT 查询，以及在主实例上执行创建、删除和更新操作时，您可以在 Drizzle 中利用 
 `withReplicas()` 函数。
 
-<Tabs items={["PostgreSQL", "MySQL", "SQLite"]}>
+<Tabs items={["PostgreSQL", "MySQL", "SQLite", "SingleStore"]}>
 <Tab>
 ```ts copy
 import { sql } from 'drizzle-orm';
@@ -80,6 +80,42 @@ const usersTable = sqliteTable('users', {
 const primaryDb = drizzle({ client: createClient({ url: 'DATABASE_URL', authToken: 'DATABASE_AUTH_TOKEN' }) });
 const read1 = drizzle({ client: createClient({ url: 'DATABASE_URL', authToken: 'DATABASE_AUTH_TOKEN' }) });
 const read2 = drizzle({ client: createClient({ url: 'DATABASE_URL', authToken: 'DATABASE_AUTH_TOKEN' }) });
+
+const db = withReplicas(primaryDb, [read1, read2]);
+```
+</Tab>
+<Tab>
+```ts copy
+import { drizzle } from "drizzle-orm/singlestore";
+import mysql from "mysql2/promise";
+import { boolean, singlestoreTable, serial, text, withReplicas } from 'drizzle-orm/singlestore-core';
+
+const usersTable = singlestoreTable('users', {
+	id: serial('id' as string).primaryKey(),
+	name: text('name').notNull(),
+	verified: boolean('verified').notNull().default(false),
+});
+
+const primaryClient = await mysql.createConnection({
+  host: "host",
+  user: "user",
+  database: "primary_db",
+})
+const primaryDb = drizzle({ client: primaryClient });
+
+const read1Client = await mysql.createConnection({
+  host: "host",
+  user: "user",
+  database: "read_1",
+})
+const read1 = drizzle({ client: read1Client });
+
+const read2Client = await mysql.createConnection({
+  host: "host",
+  user: "user",
+  database: "read_2",
+})
+const read2 = drizzle({ client: read2Client });
 
 const db = withReplicas(primaryDb, [read1, read2]);
 ```

@@ -32,7 +32,7 @@ await insertUser(newUser);
 ```
 
 ## 返回插入结果
-<IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'SQLite': true, 'MySQL': false }} />
+<IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'SQLite': true, 'MySQL': false, 'SingleStore': false}} />
 您可以在 PostgreSQL 和 SQLite 中插入一行并获得返回值，如下所示：
 ```typescript copy
 await db.insert(users).values({ name: "Dan" }).returning();
@@ -42,7 +42,7 @@ await db.insert(users).values({ name: "Partial Dan" }).returning({ insertedId: u
 ```
 
 ## 插入 $returningId
-<IsSupportedChipGroup chips={{ 'PostgreSQL': false, 'SQLite': false, 'MySQL': true }} />
+<IsSupportedChipGroup chips={{ 'PostgreSQL': false, 'SQLite': false, 'MySQL': true, 'SingleStore': true }} />
 
 MySQL 本身并不原生支持在使用 `INSERT` 后使用 `RETURNING`。对于 `自增`（或 `序列`）类型的 `主键`，只有一种方法可以做到，您可以访问 `insertId` 和 `affectedRows` 字段。我们为您准备了一种自动处理此类情况的方法，使用 Drizzle 自动接收所有插入的 ID 作为独立对象。
 
@@ -87,7 +87,7 @@ await db.insert(users).values([{ name: 'Andrew' }, { name: 'Dan' }]);
 Drizzle ORM 提供了简单的接口来处理插入或更新和冲突。
 
 ### 冲突时不执行任何操作
-<IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'SQLite': true, 'MySQL': false }} />
+<IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'SQLite': true, 'MySQL': false, 'SingleStore': false }} />
 
 `onConflictDoNothing` 会在发生冲突时取消插入：
 
@@ -164,7 +164,7 @@ await db.insert(users)
 ```
 
 ### 主键重复时更新
-<IsSupportedChipGroup chips={{ 'PostgreSQL': false, 'SQLite': false, 'MySQL': true }} />
+<IsSupportedChipGroup chips={{ 'PostgreSQL': false, 'SQLite': false, 'MySQL': true, 'SingleStore': true }} />
 
 MySQL 支持 [`ON DUPLICATE KEY UPDATE`](https://dev.mysql.com/doc/refman/8.0/en/insert-on-duplicate.html) 代替 `ON CONFLICT` 子句。MySQL 会根据主键和唯一索引自动确定冲突目标，如果 *任何* 唯一索引冲突，将更新该行。
 

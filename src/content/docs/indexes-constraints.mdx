@@ -20,7 +20,7 @@ SQL 约束是强加于表列的规则。它们用于防止无效数据被输入�
 显式的 `DEFAULT` 子句可以指定默认值为 `NULL`，
 字符串常量，BLOB 常量，带符号数字或任何用括号括起来的常量表达式。
 
-<Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', 'SingleStore']}>
   <Tab>
     <Section>
     ```typescript
@@ -86,6 +86,25 @@ SQL 约束是强加于表列的规则。它们用于防止无效数据被输入�
     </Section>
 
   </Tab>
+  <Tab>
+    <Section>
+    ```typescript
+    import { sql } from "drizzle-orm";
+    import { int, time, singlestoreTable } from "drizzle-orm/singlestore-core";
+    
+    const table = singlestoreTable("table", {
+      int: int("int").default(42),
+      time: time("time").default(sql`cast("14:06:10" AS TIME)`),
+    });
+    ```
+    ```sql
+    CREATE TABLE `table` (
+      `int` int DEFAULT 42,
+      `time` time DEFAULT cast("14:06:10" AS TIME)
+    );
+    ```
+    </Section>
+  </Tab>
 </Tabs>
 
 ### 非空
@@ -95,7 +114,7 @@ SQL 约束是强加于表列的规则。它们用于防止无效数据被输入�
 这强制字段始终包含一个值，这意味着您不能插入新记录，
 或在没有为该字段添加值的情况下更新记录。
 
-<Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', 'SingleStore']}>
   <Tab>
     <Section>
       ```typescript copy
@@ -148,6 +167,24 @@ SQL 约束是强加于表列的规则。它们用于防止无效数据被输入�
     </Section>
 
   </Tab>
+    <Tab>
+    <Section>
+      ```typescript
+      import { int, singlestoreTable } from "drizzle-orm/singlestore-core";
+
+      const table = singlestoreTable('table', {
+        int: int('int').notNull(),
+      });
+      ```
+
+      ```sql
+      CREATE TABLE `table` (
+        `int` int NOT NULL,
+      );
+      ```
+    </Section>
+
+  </Tab>
 </Tabs>
 
 ### 唯一
@@ -162,7 +199,7 @@ SQL 约束是强加于表列的规则。它们用于防止无效数据被输入�
   每个表可以有多个 `UNIQUE` 约束，但每个表只能有一个 `PRIMARY KEY` 约束。
 </Callout>
 
-<Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', 'SingleStore']}>
   <Tab>
     <Section>
       ```typescript copy
@@ -307,6 +344,49 @@ SQL 约束是强加于表列的规则。它们用于防止无效数据被输入�
     </Section>
 
   </Tab>
+    <Tab>
+    <Section>
+      ```typescript
+      import { int, varchar, unique, singlestoreTable } from "drizzle-orm/singlestore-core";
+
+      export const user = singlestoreTable('user', {
+        id: int('id').unique(),
+      });
+
+      export const table = singlestoreTable('table', {
+        id: int('id').unique('custom_name'),
+      });
+
+      export const composite = singlestoreTable('composite_example', {
+        id: int('id'),
+        name: varchar('name', { length: 256 }),
+      }, (t) => ({
+        unq: unique().on(t.id, t.name),
+        unq2: unique('custom_name').on(t.id, t.name)
+      }));
+      ```
+
+      ```sql
+      CREATE TABLE `user` (
+      	`id` int,
+      	CONSTRAINT `user_id_unique` UNIQUE(`id`)
+      );
+
+      CREATE TABLE `table` (
+      	`id` int,
+      	CONSTRAINT `custom_name` UNIQUE(`id`)
+      );
+
+      CREATE TABLE `composite_example` (
+	    `id` int,
+	    `name` varchar(256),
+	    CONSTRAINT `composite_example_id_name_unique` UNIQUE(`id`,`name`),
+	    CONSTRAINT `custom_name` UNIQUE(`id`,`name`)
+      );
+      ```
+    </Section>
+
+  </Tab>
 </Tabs>
 
 ### 检查
@@ -317,7 +397,7 @@ SQL 约束是强加于表列的规则。它们用于防止无效数据被输入�
 
 如果您在表上定义了 `CHECK` 约束，则可以根据行中其他列的值限制某些列中的值。
 
-<Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', 'SingleStore']}>
   <Tab>
     <Section>
       ```typescript copy
@@ -405,6 +485,9 @@ SQL 约束是强加于表列的规则。它们用于防止无效数据被输入�
     </Section>
 
   </Tab>
+  <Tab>
+    Currently not supported in SingleStore
+  </Tab>
 </Tabs>
 
 ### 主键
@@ -414,7 +497,7 @@ SQL 约束是强加于表列的规则。它们用于防止无效数据被输入�
 
 一个表只能有 **一个** 主键；在表中，该主键可以由单个列或多个列（字段）组成。
 
-<Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', 'SingleStore']}>
   <Tab>
     <Section>
       ```typescript copy
@@ -493,6 +576,32 @@ SQL 约束是强加于表列的规则。它们用于防止无效数据被输入�
     </Section>
 
   </Tab>
+  <Tab>
+    <Section>
+      ```typescript
+      import { int, text, singlestoreTable } from "drizzle-orm/singlestore-core";
+
+      export const user = singlestoreTable("user", {
+        id: int("id").autoincrement().primaryKey(),
+      })
+
+      export const table = singlestoreTable("table", {
+        cuid: text("cuid").primaryKey(),
+      })
+      ```
+
+      ```sql
+      CREATE TABLE `user` (
+        `id` int AUTO_INCREMENT PRIMARY KEY NOT NULL
+      );
+
+      CREATE TABLE `table` (
+        `cuid` text PRIMARY KEY NOT NULL
+      );
+      ```
+    </Section>
+
+  </Tab>
 </Tabs>
 
 ### 复合主键
@@ -500,7 +609,7 @@ SQL 约束是强加于表列的规则。它们用于防止无效数据被输入�
 与 `PRIMARY KEY` 相似，复合主键使用多个字段唯一标识表中的每条记录。
 
 Drizzle ORM 提供一个独立的 `primaryKey` 操作符来实现这一点：
-<Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', 'SingleStore']}>
   <Tab>
     <Section>
       ```typescript copy {18, 19}
@@ -616,6 +725,44 @@ Drizzle ORM 提供一个独立的 `primaryKey` 操作符来实现这一点：
     </Section>
 
   </Tab>
+  <Tab>
+    <Section>
+      ```typescript {18, 19}
+      import { int, text, primaryKey, mysqlTable } from "drizzle-orm/singlestore-core";
+
+      export const user = singlestoreTable("user", {
+        id: int("id").autoincrement().primaryKey(),
+        name: text("name"),
+      });
+
+      export const book = singlestoreTable("book", {
+        id: int("id").autoincrement().primaryKey(),
+        name: text("name"),
+      });
+
+      export const booksToAuthors = singlestoreTable("books_to_authors", {
+        authorId: int("author_id"),
+        bookId: int("book_id"),
+      }, (table) => {
+        return {
+          pk: primaryKey({ columns: [table.bookId, table.authorId] }),
+          pkWithCustomName: primaryKey({ name: 'custom_name', columns: [table.bookId, table.authorId] }),
+        };
+      });
+      ```
+
+      ```sql {6}
+      ...
+
+      CREATE TABLE `books_to_authors` (
+        `author_id` int,
+        `book_id` int,
+        PRIMARY KEY(`book_id`,`author_id`)
+      );
+      ```
+    </Section>
+
+  </Tab>
 </Tabs>
 
 ### 外键
@@ -627,7 +774,7 @@ Drizzle ORM 提供一个独立的 `primaryKey` 操作符来实现这一点：
 Drizzle ORM 提供多种声明外键的方法。
 您可以在列声明语句中声明它们：
 
-<Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', 'SingleStore']}>
   <Tab>
     ```typescript copy {11}
     import { serial, text, integer, pgTable } from "drizzle-orm/pg-core";
@@ -679,12 +826,15 @@ Drizzle ORM 提供多种声明外键的方法。
     ```
 
   </Tab>
+  <Tab>
+    Currently not supported in SingleStore
+  </Tab>
 </Tabs>
 
 如果您想进行自我引用，由于 TypeScript 的限制，
 您将必须显式设置引用回调的返回类型或使用独立的 `foreignKey` 操作符。
 
-<Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', 'SingleStore']}>
   <Tab>
     ```typescript copy {6,16-19}
     import { serial, text, integer, foreignKey, pgTable, AnyPgColumn } from "drizzle-orm/pg-core";
@@ -766,9 +916,12 @@ Drizzle ORM 提供多种声明外键的方法。
     ```
 
   </Tab>
+  <Tab>
+    Currently not supported in SingleStore
+  </Tab>
 </Tabs>
 要声明多列外键，可以使用专用的 `foreignKey` 操作符：
-<Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', 'SingleStore']}>
   <Tab>
     ```typescript copy {4-5,14-15,18-21}
     import { serial, text, foreignKey, pgTable, AnyPgColumn } from "drizzle-orm/pg-core";
@@ -856,13 +1009,16 @@ Drizzle ORM 提供多种声明外键的方法。
     ```
 
   </Tab>
+  <Tab>
+    Currently not supported in SingleStore
+  </Tab>
 </Tabs>
 
 ## 索引
 
 Drizzle ORM 提供 `index` 和 `unique index` 声明的 API：
 
-<Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', 'SingleStore']}>
   <Tab>
     <Section>
     ```typescript copy {9-10}
@@ -987,5 +1143,31 @@ index('name')
       .on(table.name)
       .where(sql`...`)
     ```
+  </Tab>
+  <Tab>
+    <Section>
+    ```typescript copy {9-10}
+    import { int, text, index, uniqueIndex, singlestoreTable } from "drizzle-orm/singlestore-core";
+
+    export const user = singlestoreTable("user", {
+      id: int("id").primaryKey().autoincrement(),
+      name: text("name"),
+      email: text("email"),
+    }, (table) => {
+      return {
+        nameIdx: index("name_idx").on(table.name),
+        emailIdx: uniqueIndex("email_idx").on(table.email),
+      };
+    });
+    ```
+    ```sql {5-6}
+    CREATE TABLE `user` (
+      ...
+    );
+
+    CREATE INDEX `name_idx` ON `user` (`name`);
+    CREATE UNIQUE INDEX `email_idx` ON `user` (`email`);
+    ```
+    </Section>
   </Tab>
 </Tabs>

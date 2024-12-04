@@ -7,7 +7,7 @@ import Callout from '@mdx/Callout.astro';
 要使用此功能，您需要安装 `drizzle-orm@0.32.0` 或更高版本，以及 `drizzle-kit@0.23.0` 或更高版本
 </Callout>
 
-<IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'SQLite': false, 'MySQL': false }} />
+<IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'SQLite': false, 'MySQL': false, 'SingleStore': false }} />
 
 PostgreSQL 中的序列是特殊的单行表，用于生成唯一标识符，通常用于自动递增的主键值。它们提供了一种线程安全的方式，以在多个会话中生成唯一的连续值。
 <br/>
