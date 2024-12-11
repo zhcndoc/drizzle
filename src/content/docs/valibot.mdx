@@ -1,8 +1,9 @@
 import Npm from '@mdx/Npm.astro';
+import Callout from '@mdx/Callout.astro';
 
 # drizzle-valibot
 
-`drizzle-valibot` 是一个 **[Drizzle ORM](https://github.com/drizzle-team/drizzle-orm)** 的插件，允许你从 Drizzle ORM 模式生成 **[valibot](https://valibot.dev/)** 模式。
+`drizzle-valibot` 是一个 **[Drizzle ORM](https://github.com/drizzle-team/drizzle-orm)** 的插件，允许你从 Drizzle ORM 方案生成 **[Valibot](https://valibot.dev/)** 方案。
 
 ### 安装依赖
 
@@ -10,43 +11,475 @@ import Npm from '@mdx/Npm.astro';
 drizzle-valibot
 </Npm>
 
-# 使用
+<Callout type="warning">
+此文档适用于 `drizzle-valibot@0.3.0` 及更高版本
 
-```ts
-import { pgEnum, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
-import { createInsertSchema, createSelectSchema } from 'drizzle-valibot';
-import { string, parse, number } from 'valibot';
+你还必须安装 Drizzle ORM v0.36.0 或更高版本，以及 Valibot v1.0.0-beta.7 或更高版本。
+</Callout>
+
+### 选择方案
+
+定义从数据库查询的数据形状 - 可用于验证 API 响应。
+
+```ts copy
+import { pgTable, text, integer } from 'drizzle-orm/pg-core';
+import { createSelectSchema } from 'drizzle-valibot';
+import { parse } from 'valibot';
 
 const users = pgTable('users', {
-	id: serial('id').primaryKey(),
-	name: text('name').notNull(),
-	email: text('email').notNull(),
-	role: text('role', { enum: ['admin', 'user'] }).notNull(),
-	createdAt: timestamp('created_at').notNull().defaultNow(),
+  id: integer().generatedAlwaysAsIdentity().primaryKey(),
+  name: text().notNull(),
+  age: integer().notNull()
 });
 
-// 用于插入用户的模式 - 可用于验证 API 请求
-const insertUserSchema = createInsertSchema(users);
+const userSelectSchema = createSelectSchema(users);
 
-// 用于选择用户的模式 - 可用于验证 API 响应
-const selectUserSchema = createSelectSchema(users);
+const rows = await db.select({ id: users.id, name: users.name }).from(users).limit(1);
+const parsed: { id: number; name: string; age: number } = parse(userSelectSchema, rows[0]); // 错误：上述查询中未返回 `age`
 
-// 重写字段
-const insertUserSchema = createInsertSchema(users, {
-	role: string(),
-});
-
-// 精炼字段 - 如果你想在最终模式变为可为 null/可选之前更改字段，这很有用
-const insertUserSchema = createInsertSchema(users, {
-	id: (schema) => number([minValue(0)]),
-	role: string(),
-});
-
-// 用法
-
-const isUserValid = parse(insertUserSchema, {
-	name: 'John Doe',
-	email: 'johndoe@test.com',
-	role: 'admin',
-});
+const rows = await db.select().from(users).limit(1);
+const parsed: { id: number; name: string; age: number } = parse(userSelectSchema, rows[0]); // 将成功解析
 ```
+
+视图和枚举也受到支持。
+
+```ts copy
+import { pgEnum } from 'drizzle-orm/pg-core';
+import { createSelectSchema } from 'drizzle-valibot';
+import { parse } from 'valibot';
+
+const roles = pgEnum('roles', ['admin', 'basic']);
+const rolesSchema = createSelectSchema(roles);
+const parsed: 'admin' | 'basic' = parse(rolesSchema, ...);
+
+const usersView = pgView('users_view').as((qb) => qb.select().from(users).where(gt(users.age, 18)));
+const usersViewSchema = createSelectSchema(usersView);
+const parsed: { id: number; name: string; age: number } = parse(usersViewSchema, ...);
+```
+
+### 插入方案
+
+定义要插入到数据库中的数据形状 - 可用于验证 API 请求。
+
+```ts copy
+import { pgTable, text, integer } from 'drizzle-orm/pg-core';
+import { createInsertSchema } from 'drizzle-valibot';
+import { parse } from 'valibot';
+
+const users = pgTable('users', {
+  id: integer().generatedAlwaysAsIdentity().primaryKey(),
+  name: text().notNull(),
+  age: integer().notNull()
+});
+
+const userInsertSchema = createInsertSchema(users);
+
+const user = { name: 'John' };
+const parsed: { name: string, age: number } = parse(userInsertSchema, user); // 错误：`age` 未定义
+
+const user = { name: 'Jane', age: 30 };
+const parsed: { name: string, age: number } = parse(userInsertSchema, user); // 将成功解析
+await db.insert(users).values(parsed);
+```
+
+### 更新方案
+
+定义要在数据库中更新的数据形状 - 可用于验证 API 请求。
+
+```ts copy
+import { pgTable, text, integer } from 'drizzle-orm/pg-core';
+import { createUpdateSchema } from 'drizzle-valibot';
+import { parse } from 'valibot';
+
+const users = pgTable('users', {
+  id: integer().generatedAlwaysAsIdentity().primaryKey(),
+  name: text().notNull(),
+  age: integer().notNull()
+});
+
+const userUpdateSchema = createUpdateSchema(users);
+
+const user = { id: 5, name: 'John' };
+const parsed: { name?: string | undefined, age?: number | undefined } = parse(userUpdateSchema, user); // 错误：`id` 是一个生成列，无法更新
+
+const user = { age: 35 };
+const parsed: { name?: string | undefined, age?: number | undefined } = parse(userUpdateSchema, user); // 将成功解析
+await db.update(users).set(parsed).where(eq(users.name, 'Jane'));
+```
+
+### 细化
+
+每个创建模式函数接受一个额外的可选参数，你可以用来扩展、修改或完全覆盖字段的方案。定义一个回调函数将扩展或修改，而提供一个 Valibot 方案将覆盖它。
+
+```ts copy
+import { pgTable, text, integer, json } from 'drizzle-orm/pg-core';
+import { createSelectSchema } from 'drizzle-valibot';
+import { parse, pipe, maxLength, object, string } from 'valibot';
+
+const users = pgTable('users', {
+  id: integer().generatedAlwaysAsIdentity().primaryKey(),
+  name: text().notNull(),
+  bio: text(),
+  preferences: json()
+});
+
+const userSelectSchema = createSelectSchema(users, {
+  name: (schema) => pipe(schema, maxLength(20)), // 扩展方案
+  bio: (schema) => pipe(schema, maxLength(1000)), // 在变为可空/可选之前扩展方案
+  preferences: object({ theme: string() }) // 覆盖字段，包括其可空性
+});
+
+const parsed: {
+  id: number;
+  name: string,
+  bio?: string | undefined;
+  preferences: {
+    theme: string;
+  };
+} = parse(userSelectSchema, ...);
+```
+
+### 数据类型参考
+
+```ts
+pg.boolean();
+
+mysql.boolean();
+
+sqlite.integer({ mode: 'boolean' });
+
+// 方案
+boolean();
+```
+
+```ts
+pg.date({ mode: 'date' });
+pg.timestamp({ mode: 'date' });
+
+mysql.date({ mode: 'date' });
+mysql.datetime({ mode: 'date' });
+mysql.timestamp({ mode: 'date' });
+
+sqlite.integer({ mode: 'timestamp' });
+sqlite.integer({ mode: 'timestamp_ms' });
+
+// 方案
+date();
+```
+
+```ts
+pg.date({ mode: 'string' });
+pg.timestamp({ mode: 'string' });
+pg.cidr();
+pg.inet();
+pg.interval();
+pg.macaddr();
+pg.macaddr8();
+pg.numeric();
+pg.text();
+pg.sparsevec();
+pg.time();
+
+mysql.binary();
+mysql.date({ mode: 'string' });
+mysql.datetime({ mode: 'string' });
+mysql.decimal();
+mysql.time();
+mysql.timestamp({ mode: 'string' });
+mysql.varbinary();
+
+sqlite.numeric();
+sqlite.text({ mode: 'text' });
+
+// 方案
+string();
+```
+
+```ts
+pg.bit({ dimensions: ... });
+
+// 方案
+pipe(string(), regex(/^[01]+$/), maxLength(dimensions));
+```
+
+```ts
+pg.uuid();
+
+// 方案
+pipe(string(), uuid());
+```
+
+```ts
+pg.char({ length: ... });
+
+mysql.char({ length: ... });
+
+// 方案
+pipe(string(), length(length));
+```
+
+```ts
+pg.varchar({ length: ... });
+
+mysql.varchar({ length: ... });
+
+sqlite.text({ mode: 'text', length: ... });
+
+// 方案
+pipe(string(), maxLength(length));
+```
+
+```ts
+mysql.tinytext();
+
+// 方案
+pipe(string(), maxLength(255)); // 无符号 8 位整数限制
+```
+
+```ts
+mysql.text();
+
+// 方案
+pipe(string(), maxLength(65_535)); // 无符号 16 位整数限制
+```
+
+```ts
+mysql.mediumtext();
+
+// 方案
+pipe(string(), maxLength(16_777_215)); // 无符号 24 位整数限制
+```
+
+```ts
+mysql.longtext();
+
+// 方案
+pipe(string(), maxLength(4_294_967_295)); // 无符号 32 位整数限制
+```
+
+```ts
+pg.text({ enum: ... });
+pg.char({ enum: ... });
+pg.varchar({ enum: ... });
+
+mysql.tinytext({ enum: ... });
+mysql.mediumtext({ enum: ... });
+mysql.text({ enum: ... });
+mysql.longtext({ enum: ... });
+mysql.char({ enum: ... });
+mysql.varchar({ enum: ... });
+mysql.mysqlEnum(..., ...);
+
+sqlite.text({ mode: 'text', enum: ... });
+
+// 方案
+enum(enum);
+```
+
+```ts
+mysql.tinyint();
+
+// 方案
+pipe(number(), minValue(-128), maxValue(127), integer()); // 8 位整数上下限
+```
+
+```ts
+mysql.tinyint({ unsigned: true });
+
+// 方案
+pipe(number(), minValue(0), maxValue(255), integer()); // 无符号 8 位整数上下限
+```
+
+```ts
+pg.smallint();
+pg.smallserial();
+
+mysql.smallint();
+
+// 方案
+pipe(number(), minValue(-32_768), maxValue(32_767), integer()); // 16 位整数上下限
+```
+
+```ts
+mysql.smallint({ unsigned: true });
+
+// 方案
+pipe(number(), minValue(0), maxValue(65_535), integer()); // 无符号 16 位整数上下限
+```
+
+```ts
+pg.real();
+
+mysql.float();
+
+// 方案
+pipe(number(), minValue(-8_388_608), maxValue(8_388_607)); // 24 位整数上下限
+```
+
+```ts
+mysql.mediumint();
+
+// 方案
+pipe(number(), minValue(-8_388_608), maxValue(8_388_607), integer()); // 24 位整数上下限
+```
+
+```ts
+mysql.float({ unsigned: true });
+
+// 方案
+pipe(number(), minValue(0), maxValue(16_777_215)); // 无符号 24 位整数上下限
+```
+
+```ts
+mysql.mediumint({ unsigned: true });
+
+// 方案
+pipe(number(), minValue(0), maxValue(16_777_215), integer()); // 无符号 24 位整数上下限
+```
+
+```ts
+pg.integer();
+pg.serial();
+
+mysql.int();
+
+// 方案
+pipe(number(), minValue(-2_147_483_648), maxValue(2_147_483_647), integer()); // 32 位整数上下限
+```
+
+```ts
+mysql.int({ unsigned: true });
+
+// 方案
+pipe(number(), minValue(0), maxValue(4_294_967_295), integer()); // 无符号 32 位整数上下限
+```
+
+```ts
+pg.doublePrecision();
+
+mysql.double();
+mysql.real();
+
+sqlite.real();
+
+// 方案
+pipe(number(), minValue(-140_737_488_355_328), maxValue(140_737_488_355_327)); // 48 位整数上下限
+```
+
+```ts
+mysql.double({ unsigned: true });
+
+// 方案
+pipe(number(), minValue(0), maxValue(281_474_976_710_655)); // 无符号 48 位整数上下限
+```
+
+```ts
+pg.bigint({ mode: 'number' });
+pg.bigserial({ mode: 'number' });
+
+mysql.bigint({ mode: 'number' });
+mysql.bigserial({ mode: 'number' });
+
+sqlite.integer({ mode: 'number' });
+
+// 方案
+pipe(number(), minValue(-9_007_199_254_740_991), maxValue(9_007_199_254_740_991), integer()); // Javascript 最小和最大安全整数
+```
+
+```ts
+mysql.serial();
+
+// 方案
+pipe(number(), minValue(0), maxValue(9_007_199_254_740_991), integer()); // Javascript 最大安全整数
+```
+
+```ts
+pg.bigint({ mode: 'bigint' });
+pg.bigserial({ mode: 'bigint' });
+
+mysql.bigint({ mode: 'bigint' });
+
+sqlite.blob({ mode: 'bigint' });
+
+// 方案
+pipe(bigint(), minValue(-9_223_372_036_854_775_808n), maxValue(9_223_372_036_854_775_807n)); // 64 位整数上下限
+```
+
+```ts
+mysql.bigint({ mode: 'bigint', unsigned: true });
+
+// 方案
+pipe(bigint(), minValue(0), maxValue(18_446_744_073_709_551_615n)); // 无符号 64 位整数上下限
+```
+
+```ts
+mysql.year();
+
+// 方案
+pipe(number(), minValue(1_901), maxValue(2_155), integer());
+```
+
+```ts
+pg.geometry({ type: 'point', mode: 'tuple' });
+pg.point({ mode: 'tuple' });
+
+// 方案
+tuple([number(), number()]);
+```
+
+```ts
+pg.geometry({ type: 'point', mode: 'xy' });
+pg.point({ mode: 'xy' });
+
+// 方案
+object({ x: number(), y: number() });
+```
+
+```ts
+pg.halfvec({ dimensions: ... });
+pg.vector({ dimensions: ... });
+
+// 方案
+pipe(array(number()), length(dimensions));
+```
+
+```ts
+pg.line({ mode: 'abc' });
+
+// 方案
+object({ a: number(), b: number(), c: number() });
+```
+
+```ts
+pg.line({ mode: 'tuple' });
+
+// 方案
+tuple([number(), number(), number()]);
+```
+
+```ts
+pg.json();
+pg.jsonb();
+
+mysql.json();
+
+sqlite.blob({ mode: 'json' });
+sqlite.text({ mode: 'json' });
+
+// 方案
+const self = union([union([string(), number(), boolean(), null()]), array(lazy(() => self)), record(string(), lazy(() => self))]);
+```
+
+```ts
+sqlite.blob({ mode: 'buffer' });
+
+// 方案
+custom<Buffer>((v) => v instanceof Buffer);
+```
+
+```ts
+pg.dataType().array(...);
+
+// 方案
+pipe(array(baseDataTypeSchema), length(size));
+``` 
