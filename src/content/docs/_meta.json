@@ -63,7 +63,6 @@
   ["drizzle-kit-studio", "`studio`"],
   ["kit-custom-migrations", "自定义迁移"],
   ["kit-migrations-for-teams", "团队迁移"],
-  ["kit-seed-data", "数据播种"],
   ["kit-web-mobile", "网页和移动"],
   ["drizzle-config-file", "drizzle.config.ts"],
 
