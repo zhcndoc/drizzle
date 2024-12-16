@@ -2,16 +2,21 @@ import Callout from '@mdx/Callout.astro';
 
 # 生成器
 
+<Callout title='warning'>
+目前，在支持的生成器中同时指定 `arraySize` 和 `isUnique` 将导致生成唯一值（而不是唯一数组），然后这些值将被打包成数组。
+</Callout>
+
 ## ---
 
 ### `default`
 
 <rem025 />
-每次调用生成器时都会生成相同的给定值。
+每次调用生成器时会生成相同的给定值。
 
 |  | param          | default     | type
 |:-| :--------      | :--------   | :--------
 |  |`defaultValue`  |--           |`any`
+|  |`arraySize`     |--           |`number`
 
 <rem025 />
 
@@ -23,7 +28,11 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
     columns: {
       content: funcs.default({
         // 要生成的值
-        defaultValue: "帖子内容" 
+        defaultValue: "帖子内容",
+
+        // 每个一维数组中的元素数量。 
+        // （如指定，将生成数组。）
+        arraySize: 3
       }),
     },
   },
@@ -34,12 +43,13 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 ### `valuesFromArray`
 
 <rem025 />
-从给定数组生成值。
+从给定数组生成值
 
 |  | param      | default                   | type
 |:-| :--------  | :--------                 | :--------
 |  |`values`    |--                         |`any[]` \| `{ weight: number; values: any[] }[]`
-|  |`isUnique`  |数据库列唯一性           |`boolean`
+|  |`isUnique`  |数据库列的唯一性         |`boolean`
+|  |`arraySize` |--                         |`number`
 
 
 <rem025 />
@@ -50,11 +60,15 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
   posts: {
     columns: {
       title: funcs.valuesFromArray({
-        // 要生成的值的数组（可以是加权值的数组）
+        // 要生成的值数组（可以是加权值数组）
         values: ["标题1", "标题2", "标题3", "标题4", "标题5"],
 
-        // 控制生成的值是否唯一的属性
+        // 控制生成值是否唯一的属性
         isUnique: true,
+        
+        // 每个一维数组中的元素数量。 
+        // （如指定，将生成数组。）
+        arraySize: 3
       }),
     },
   },
@@ -65,7 +79,7 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 ### `intPrimaryKey`
 
 <rem025 />
-生成从1开始的连续整数。
+生成从 1 开始的顺序整数。
 
 |  | param      | default    | type
 |:-| :--------  | :--------  | :--------
@@ -89,14 +103,15 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 ### `number`
 
 <rem025 />
-生成给定范围内的小数。
+在给定范围内生成带小数的数字
 
 |  | param      | default                                                                                               | type
 |:-| :--------  | :--------                                                                                             | :--------
-|  |`isUnique`  |数据库列唯一性                                                                                         |`boolean`
+|  |`isUnique`  |数据库列的唯一性                                                                                     |`boolean`
 |  |`precision` |`100`                                                                                                  |`number`
-|  |`maxValue`  |``` `precision * 1000` 如果 isUnique 等于 false``` ``` `precision * count` 如果 isUnique 等于 true```  |`number`
+|  |`maxValue`  |``` `precision * 1000` 如果 isUnique 为 false ``` ``` `precision * count` 如果 isUnique 为 true ```  |`number`
 |  |`minValue`  |`-maxValue`                                                                                            |`number`
+|  |`arraySize` |--                                                                                                     |`number`
 
 <rem025 />
 ```ts 
@@ -113,12 +128,16 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
         maxValue: 120,
         
         // 生成数字的精度：
-        // 精度等于10表示值精确到十分之一 (1.2, 34.6);
-        // 精度等于100表示值精确到百分之一 (1.23, 34.67)。
+        // 精度为 10 意味着值精确到十分之一 (1.2, 34.6);
+        // 精度为 100 意味着值精确到百分之一 (1.23, 34.67)。
         precision: 100,
 
-        // 控制生成的值是否唯一的属性。
+        // 控制生成值是否唯一的属性。
         isUnique: false,
+
+        // 每个一维数组中的元素数量。 
+        // （如指定，将生成数组。）
+        arraySize: 3
       }),
     },
   },
@@ -129,13 +148,14 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 ### `int`
 
 <rem025 />
-生成给定范围内的整数。
+在给定范围内生成整数
 
 |  | param      | default                                                                            | type
 |:-| :--------  | :--------                                                                          | :--------
-|  |`isUnique`  |数据库列唯一性                                                                      |`boolean`
-|  |`maxValue`  |``` `1000` 如果 isUnique 等于 false``` ``` `count * 10` 如果 isUnique 等于 true```  |`number \| bigint`
-|  |`minValue`  |`-maxValue`                                                                         |`number \| bigint`
+|  |`isUnique`  |数据库列的唯一性                                                                  |`boolean`
+|  |`maxValue`  |``` `1000` 如果 isUnique 为 false ``` ``` `count * 10` 如果 isUnique 为 true ```  |`number \| bigint`
+|  |`minValue`  |`-maxValue`                                                                       |`number \| bigint`
+|  |`arraySize` |--                                                                                |`number`
 
 <rem025 />
 ```ts 
@@ -151,32 +171,13 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
         // 范围的上边界。
         maxValue: 100,
 
-        // 控制生成的值是否唯一的属性。
+        // 控制生成值是否唯一的属性。
         isUnique: false,
+
+        // 每个一维数组中的元素数量。 
+        // （如指定，将生成数组。）
+        arraySize: 3
       }),
-    },
-  },
-}));
-
-```
-
-### `uuid`
-
-<rem025 />
-生成 v4 UUID 字符串。
-
-|  | param      | default    | type
-|:-| :--------  | :--------  | :--------
-|  |--          |--          |--
-
-<rem025 />
-```ts 
-import { seed } from "drizzle-seed";
-
-await seed(db, schema, { count: 1000 }).refine((funcs) => ({
-  products: {
-    columns: {
-      id: funcs.uuid(),
     },
   },
 }));
@@ -186,11 +187,11 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 ### `boolean`
 
 <rem025 />
-生成布尔值（真或假）。
+生成布尔值（真或假）
 
 |  | param      | default    | type
 |:-| :--------  | :--------  | :--------
-|  |--          |--          |--
+|  |`arraySize` |--          |`number`
 
 <rem025 />
 ```ts 
@@ -199,7 +200,11 @@ import { seed } from "drizzle-seed";
 await seed(db, schema, { count: 1000 }).refine((funcs) => ({
   users: {
     columns: {
-      isAvailable: funcs.boolean(),
+      isAvailable: funcs.boolean({
+        // 每个一维数组中的元素数量。 
+        // （如指定，将生成数组。）
+        arraySize: 3
+      }),
     },
   },
 }));
@@ -209,15 +214,16 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 ### `date`
 
 <rem025 />
-生成给定范围内的日期。
+在给定范围内生成日期
 
-|  | param      | default                                                     | type
-|:-| :--------  | :--------------                                                   | :--------
+|  | param      | default                 | type
+|:-| :--------  | :--------------         | :--------
 |  |`minDate`   |`new Date('2020-05-08')` | `string \| Date`
 |  |`maxDate`   |`new Date('2028-05-08')` | `string \| Date`
+|  |`arraySize` |--                       |`number`
 
 <Callout type='warning'>
-如果只提供一个参数（`minDate` 或 `maxDate`），则未指定的参数将通过在指定日期上添加或减少8年来计算。
+如果只提供了一个参数（`minDate` 或 `maxDate`），则未指定的参数将通过在指定参数上加减 8 年来计算
 </Callout>
 
 <rem025 />
@@ -232,7 +238,11 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
         minDate: "1990-01-01",
 
         // 范围的上边界。
-        maxDate: "2010-12-31" 
+        maxDate: "2010-12-31",
+
+        // 每个一维数组中的元素数量。 
+        // （如指定，将生成数组。）
+        arraySize: 3
       }),
     },
   },
@@ -243,11 +253,11 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 ### `time`
 
 <rem025 />
-生成24小时格式的时间。
+生成 24 小时制的时间
 
 |  | param      | default    | type
 |:-| :--------  | :--------  | :--------
-|  |--          |--          |--
+|  |`arraySize` |--          |`number`
 
 <rem025 />
 ```ts 
@@ -256,7 +266,11 @@ import { seed } from "drizzle-seed";
 await seed(db, schema, { count: 1000 }).refine((funcs) => ({
   users: {
     columns: {
-      birthTime: funcs.time(),
+      birthTime: funcs.time({
+        // 每个一维数组中的元素数量。 
+        // （如指定，将生成数组。）
+        arraySize: 3
+      }),
     },
   },
 }));
@@ -266,11 +280,11 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 ### `timestamp`
 
 <rem025 />
-生成时间戳。
+生成时间戳
 
 |  | param      | default    | type
 |:-| :--------  | :--------  | :--------
-|  |--          |--          |--
+|  |`arraySize` |--          |`number`
 
 <rem025 />
 ```ts 
@@ -279,7 +293,11 @@ import { seed } from "drizzle-seed";
 await seed(db, schema, { count: 1000 }).refine((funcs) => ({
   orders: {
     columns: {
-      shippedDate: funcs.timestamp(),
+      shippedDate: funcs.timestamp({
+        // 每个一维数组中的元素数量。 
+        // （如指定，将生成数组。）
+        arraySize: 3
+      }),
     },
   },
 }));
@@ -289,11 +307,11 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 ### `datetime`
 
 <rem025 />
-生成日期时间对象。
+生成日期时间对象
 
 |  | param      | default    | type
 |:-| :--------  | :--------  | :--------
-|  |--          |--          |--
+|  |`arraySize` |--          |`number`
 <rem025 />
 ```ts 
 import { seed } from "drizzle-seed";
@@ -301,7 +319,11 @@ import { seed } from "drizzle-seed";
 await seed(db, schema, { count: 1000 }).refine((funcs) => ({
   orders: {
     columns: {
-      shippedDate: funcs.datetime(),
+      shippedDate: funcs.datetime({
+        // 每个一维数组中的元素数量。 
+        // （如指定，将生成数组。）
+        arraySize: 3
+      }),
     },
   },
 }));
@@ -311,11 +333,11 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 ### `year`
 
 <rem025 />
-生成 `YYYY` 格式的年份。
+生成 `YYYY` 格式的年份
 
 |  | param      | default    | type
 |:-| :--------  | :--------  | :--------
-|  |--          |--          |--
+|  |`arraySize` |--          |`number`
 
 <rem025 />
 ```ts 
@@ -324,7 +346,11 @@ import { seed } from "drizzle-seed";
 await seed(db, schema, { count: 1000 }).refine((funcs) => ({
   users: {
     columns: {
-      birthYear: funcs.year(),
+      birthYear: funcs.year({
+        // 每个一维数组中的元素数量。 
+        // （如指定，将生成数组。）
+        arraySize: 3
+      }),
     },
   },
 }));
@@ -334,21 +360,21 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 ### `json`
 
 <rem025 />
-生成具有固定结构的 JSON 对象。
+生成具有固定结构的 JSON 对象
 
 ```ts
 { email, name, isGraduated, hasJob, salary, startedWorking, visitedCountries}
 
-// 或
+// 或者
 
 { email, name, isGraduated, hasJob, visitedCountries }
 ```
 
-> JSON 结构将随机选择。
+> JSON 结构将随机选择
 
 |  | param      | default    | type
 |:-| :--------  | :--------  | :--------
-|  |--          |--          |--
+|  |`arraySize` |--          |`number`
 
 <rem025 />
 ```ts 
@@ -357,7 +383,11 @@ import { seed } from "drizzle-seed";
 await seed(db, schema, { count: 1000 }).refine((funcs) => ({
   users: {
     columns: {
-      metadata: funcs.json(),
+      metadata: funcs.json({
+        // 每个一维数组中的元素数量。 
+        // （如指定，将生成数组。）
+        arraySize: 3
+      }),
     },
   },
 }));
@@ -369,11 +399,12 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 <rem025 />
 生成时间间隔。
 
-生成值示例： `1 year 12 days 5 minutes`
+生成值的示例： `1 year 12 days 5 minutes`
 
-|  | param      | default                    | type
-|:-| :--------  | :--------                  | :--------
-|  |`isUnique`  | 列的唯一性  |`boolean`
+|  | param      | default            | type
+|:-| :--------  | :--------          | :--------
+|  |`isUnique`  | 列唯一性           |`boolean`
+|  |`arraySize` |--                  |`number`
 
 <rem025 />
 ```ts 
@@ -383,8 +414,12 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
   users: {
     columns: {
       timeSpentOnWebsite: funcs.interval({
-        // `isUnique` - 控制生成的值是否唯一的属性
-        isUnique: true
+        // `isUnique` - 属性控制生成值是否将唯一
+        isUnique: true,
+
+        // 每个一维数组中的元素数量。 
+        // （如指定，将生成数组。）
+        arraySize: 3
       }),
     },
   },
@@ -395,11 +430,12 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 ### `string`
 
 <rem025 />
-生成随机字符串。
+生成随机字符串
 
-|  | param      | default                    | type
-|:-| :--------  | :--------                  | :--------
-|  |`isUnique`  | -  |`boolean`
+|  | param      | default    | type
+|:-| :--------  | :--------  | :--------
+|  |`isUnique`  |--          |`boolean`
+|  |`arraySize` |--          |`number`
 
 <rem025 />
 ```ts 
@@ -409,8 +445,12 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
   users: {
     columns: {
       hashedPassword: funcs.string({
-        // `isUnique` - 控制生成的值是否唯一的属性
-        isUnique: false 
+        // `isUnique` - 属性控制生成值是否将唯一
+        isUnique: false,
+        
+        // 每个一维数组中的元素数量。 
+        // （如指定，将生成数组。）
+        arraySize: 3
       }),
     },
   },
@@ -418,14 +458,40 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 
 ```
 
+### `uuid`
+
+<rem025 />
+生成 v4 UUID 字符串
+
+|  | param      | default    | type
+|:-| :--------  | :--------  | :--------
+|  |`arraySize` |--          |`number`
+
+<rem025 />
+```ts 
+import { seed } from "drizzle-seed";
+await seed(db, schema, { count: 1000 }).refine((funcs) => ({
+  products: {
+    columns: {
+      id: funcs.uuid({
+        // 每个一维数组中的元素数量。 
+        // （如指定，将生成数组。）
+        arraySize: 3
+      }),
+    },
+  },
+}));
+```
+
 ### `firstName`
 
 <rem025 />
-生成一个人的名字。
+生成一个人的名字
 
-|  | param      | default                    | type
-|:-| :--------  | :--------                  | :--------
-|  |`isUnique`  | -  |`boolean`
+|  | param      | default    | type
+|:-| :--------  | :--------  | :--------
+|  |`isUnique`  |--          |`boolean`
+|  |`arraySize` |--          |`number`
 
 <rem025 />
 ```ts 
@@ -435,8 +501,12 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
   users: {
     columns: {
       firstName: funcs.firstName({
-        // `isUnique` - 控制生成的值是否唯一的属性
-        isUnique: true 
+        // `isUnique` - 属性控制生成值是否将唯一
+        isUnique: true,
+
+        // 每个一维数组中的元素数量。 
+        // （如指定，将生成数组。）
+        arraySize: 3
       }),
     },
   },
@@ -447,11 +517,12 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 ### `lastName`
 
 <rem025 />
-生成一个人的姓氏。
+生成一个人的姓氏
 
-|  | param      | default                    | type
-|:-| :--------  | :--------                  | :--------
-|  |`isUnique`  | -  |`boolean`
+|  | param      | default    | type
+|:-| :--------  | :--------  | :--------
+|  |`isUnique`  |--          |`boolean`
+|  |`arraySize` |--          |`number`
 
 <rem025 />
 ```ts 
@@ -461,8 +532,12 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
   users: {
     columns: {
       lastName: funcs.lastName({
-        // `isUnique` - 控制生成的值是否唯一的属性
-        isUnique: false 
+        // `isUnique` - 属性控制生成值是否将唯一
+        isUnique: false,
+        
+        // 每个一维数组中的元素数量。 
+        // （如指定，将生成数组。）
+        arraySize: 3
       }),
     },
   },
@@ -473,11 +548,12 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 ### `fullName`
 
 <rem025 />
-生成一个人的全名。
+生成一个人的全名
 
-|  | param      | default                    | type
-|:-| :--------  | :--------                  | :--------
-|  |`isUnique`  | -  |`boolean`
+|  | param      | default    | type
+|:-| :--------  | :--------  | :--------
+|  |`isUnique`  |--          |`boolean`
+|  |`arraySize` |--          |`number`
 
 <rem025 />
 ```ts 
@@ -487,8 +563,12 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
   users: {
     columns: {
       fullName: funcs.fullName({
-        // `isUnique` - 控制生成的值是否唯一的属性
-        isUnique: true 
+        // `isUnique` - 属性控制生成值是否将唯一
+        isUnique: true,
+
+        // 每个一维数组中的元素数量。 
+        // （如指定，将生成数组。）
+        arraySize: 3
       }),
     },
   },
@@ -499,11 +579,11 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 ### `email`
 
 <rem025 />
-生成唯一的电子邮件地址。
+生成唯一的电子邮件地址
 
 |  | param      | default    | type
 |:-| :--------  | :--------  | :--------
-|  |--          |--          |--
+|  |`arraySize` |--          |`number`
 
 <rem025 />
 ```ts 
@@ -512,7 +592,11 @@ import { seed } from "drizzle-seed";
 await seed(db, schema, { count: 1000 }).refine((funcs) => ({
   users: {
     columns: {
-      email: funcs.email(),
+      email: funcs.email({
+        // 每个一维数组中的元素数量。 
+        // （如指定，将生成数组。）
+        arraySize: 3
+      }),
     },
   },
 }));
@@ -522,13 +606,14 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 ### `phoneNumber`
 
 <rem025 />
-生成唯一的电话号码。
+生成唯一的电话号码
 
 |  | param                    | default                                         | type
 |:-| :--------                | :--------                                       | :--------
 |  |`template`                |--                                               |`string`
-|  |`prefixes`                |[用于前缀的已用数据集](https://github.com/OleksiiKH0240/drizzle-orm/blob/main/drizzle-seed/src/datasets/phonesInfo.ts)   |`string[]`
-|  |`generatedDigitsNumbers`  | `7` - `如果定义了前缀`            |`number \| number[]`
+|  |`prefixes`                |[用于前缀的数据集](https://github.com/OleksiiKH0240/drizzle-orm/blob/main/drizzle-seed/src/datasets/phonesInfo.ts)   |`string[]`
+|  |`generatedDigitsNumbers`  | `7` - `如果定义了前缀`                       |`number \| number[]`
+|  |`arraySize`               |--                                               |`number`
 
 <rem025 />
 ```ts 
@@ -539,8 +624,12 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
   users: {
     columns: {
       phoneNumber: funcs.phoneNumber({ 
-        // `template` - 电话号码模板，在这里所有的 '#' 符号将被生成的数字替换。
-        template: "+(380) ###-####" 
+        // `template` - 电话号码模板，其中所有 '#' 符号将被生成的数字替换。
+        template: "+(380) ###-####",
+
+        // 每个一维数组中的元素数量。 
+        // （如指定，将生成数组。）
+        arraySize: 3
       }),
     },
   },
@@ -550,16 +639,20 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 ```ts 
 import { seed } from "drizzle-seed";
 
-//使用前缀和 generatedDigitsNumbers 属性生成电话号码。
+//使用前缀和生成的数字数量属性生成电话号码
 await seed(db, schema, { count: 1000 }).refine((funcs) => ({
   users: {
     columns: {
       phoneNumber: funcs.phoneNumber({
-        // `prefixes` - 你想要作为电话号码前缀的任何字符串数组（与 `template` 属性不兼容）。
+        // `prefixes` - 你希望作为电话号码前缀的任何字符串的数组。（与 `template` 属性不兼容）
         prefixes: ["+380 99", "+380 67"],
 
-        // `generatedDigitsNumbers` - 将添加到前缀后的数字数量（与 `template` 属性不兼容）。
+        // `generatedDigitsNumbers` - 将添加到前缀后的数字数量。（与 `template` 属性不兼容）
         generatedDigitsNumbers: 7,
+
+        // 每个一维数组中的元素数量。 
+        // （如指定，将生成数组。）
+        arraySize: 3
       }),
     },
   },
@@ -569,16 +662,20 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 ```ts 
 import { seed } from "drizzle-seed";
 
-//使用前缀和 generatedDigitsNumbers 属性生成电话号码，但为前缀使用不同的 generatedDigitsNumbers。
+//使用前缀和生成的数字数量属性生成电话号码，但为前缀使用不同的生成数字数量
 await seed(db, schema, { count: 1000 }).refine((funcs) => ({
   users: {
     columns: {
       phoneNumber: funcs.phoneNumber({
-        // `prefixes` - 你想要作为电话号码前缀的任何字符串数组（与 `template` 属性不兼容）。
+        // `prefixes` - 你希望作为电话号码前缀的任何字符串的数组。（与 `template` 属性不兼容）
         prefixes: ["+380 99", "+380 67", "+1"],
 
-        // `generatedDigitsNumbers` - 将添加到前缀后的数字数量（与 `template` 属性不兼容）。
+        // `generatedDigitsNumbers` - 将添加到前缀后的数字数量。（与 `template` 属性不兼容）
         generatedDigitsNumbers: [7, 7, 10],
+
+        // 每个一维数组中的元素数量。 
+        // （如指定，将生成数组。）
+        arraySize: 3
       }),
     },
   },
@@ -588,11 +685,12 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 ### `country`
 
 <rem025 />
-生成国家名称。
+生成国家名称
 
-|  | param      | default                    | type
-|:-| :--------  | :--------                  | :--------
-|  |`isUnique`  | -  |`boolean`
+|  | param      | default    | type
+|:-| :--------  | :--------  | :--------
+|  |`isUnique`  |--          |`boolean`
+|  |`arraySize` |--          |`number`
 
 <rem025 />
 
@@ -603,8 +701,12 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
   users: {
     columns: {
       country: funcs.country({
-        // `isUnique` - 控制生成的值是否唯一的属性
-        isUnique: false 
+        // `isUnique` - 属性控制生成值是否将唯一
+        isUnique: false,
+        
+        // 每个一维数组中的元素数量。 
+        // （如指定，将生成数组。）
+        arraySize: 3
       }),
     },
   },
@@ -615,11 +717,12 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 ### `city`
 
 <rem025 />
-生成城市名称。
+生成城市名称
 
-|  | param      | default                    | type
-|:-| :--------  | :--------                  | :--------
-|  |`isUnique`  | -  |`boolean`
+|  | param      | default    | type
+|:-| :--------  | :--------  | :--------
+|  |`isUnique`  |--          |`boolean`
+|  |`arraySize` |--          |`number`
 
 <rem025 />
 
@@ -630,8 +733,12 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
   users: {
     columns: {
       city: funcs.city({
-        // `isUnique` - 控制生成的值是否唯一的属性
-        isUnique: false 
+        // `isUnique` - 属性控制生成值是否将唯一
+        isUnique: false,
+
+        // 每个一维数组中的元素数量。 
+        // （如指定，将生成数组。）
+        arraySize: 3
       }),
     },
   },
@@ -642,11 +749,11 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 ### `streetAddress`
 
 <rem025 />
-生成街道地址。
+生成街道地址
 
-|  | param      | default                    | type
-|:-| :--------  | :--------                  | :--------
-|  |`isUnique`  | -  |`boolean`
+|  | param      | default    | type
+|:-| :--------  | :--------  | :--------
+|  |`isUnique`  |--          |`boolean`
 
 <rem025 />
 
@@ -657,8 +764,12 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
   users: {
     columns: {
       streetAddress: funcs.streetAddress({
-        // `isUnique` - 控制生成的值是否唯一的属性
-        isUnique: false 
+        // `isUnique` - 属性控制生成值是否将唯一
+        isUnique: false,
+        
+        // 每个一维数组中的元素数量。 
+        // （如指定，将生成数组。）
+        arraySize: 3 
       }),
     },
   },
@@ -669,11 +780,11 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 ### `jobTitle`
 
 <rem025 />
-生成职位名称。
+生成职位名称
 
 |  | param      | default    | type
 |:-| :--------  | :--------  | :--------
-|  |--          |--          |--
+|  |`arraySize` |--          |`number`
 
 <rem025 />
 
@@ -683,7 +794,11 @@ import { seed } from "drizzle-seed";
 await seed(db, schema, { count: 1000 }).refine((funcs) => ({
   users: {
     columns: {
-      jobTitle: funcs.jobTitle(),
+      jobTitle: funcs.jobTitle({
+        // 每个一维数组中的元素数量。 
+        // （如指定，将生成数组。）
+        arraySize: 3
+      }),
     },
   },
 }));
@@ -693,11 +808,12 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 ### `postcode`
 
 <rem025 />
-生成邮政编码。
+生成邮政编码
 
-|  | param      | default                    | type
-|:-| :--------  | :--------                  | :--------
-|  |`isUnique`  | -  |`boolean`
+|  | param      | default    | type
+|:-| :--------  | :--------  | :--------
+|  |`isUnique`  |--          |`boolean`
+|  |`arraySize` |--          |`number`
 
 <rem025 />
 
@@ -708,8 +824,12 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
   users: {
     columns: {
       postcode: funcs.postcode({
-        // `isUnique` - 控制生成的值是否唯一的属性
-        isUnique: true 
+        // `isUnique` - 属性控制生成值是否将唯一
+        isUnique: true,
+
+        // 每个一维数组中的元素数量。 
+        // （如指定，将生成数组。）
+        arraySize: 3
       }),
     },
   },
@@ -720,11 +840,11 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 ### `state`
 
 <rem025 />
-生成美国州名。
+生成美国州名
 
 |  | param      | default    | type
 |:-| :--------  | :--------  | :--------
-|  |--          |--          |--
+|  |`arraySize` |--          |`number`
 
 <rem025 />
 
@@ -734,7 +854,11 @@ import { seed } from "drizzle-seed";
 await seed(db, schema, { count: 1000 }).refine((funcs) => ({
   users: {
     columns: {
-      state: funcs.state(),
+      state: funcs.state({
+        // 每个一维数组中的元素数量。 
+        // （如指定，将生成数组。）
+        arraySize: 3
+      }),
     },
   },
 }));
@@ -744,11 +868,12 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 ### `companyName`
 
 <rem025 />
-生成随机公司的名称。
+生成随机公司的名称
 
-|  | param      | default                    | type
-|:-| :--------  | :--------                  | :--------
-|  |`isUnique`  | -  |`boolean`
+|  | param      | default    | type
+|:-| :--------  | :--------  | :--------
+|  |`isUnique`  |--          |`boolean`
+|  |`arraySize` |--          |`number`
 
 <rem025 />
 
@@ -759,8 +884,12 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
   users: {
     columns: {
       company: funcs.companyName({ 
-        // `isUnique` - 控制生成的值是否唯一的属性
-        isUnique: true 
+        // `isUnique` - 属性控制生成值是否将唯一
+        isUnique: true,
+
+        // 每个一维数组中的元素数量。 
+        // （如指定，将生成数组。）
+        arraySize: 3
       }),
     },
   },
@@ -774,7 +903,8 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 
 |  | param            | default    | type
 |:-| :--------        | :--------  | :--------
-|  |`sentencesCount`  | 1           |`number`
+|  |`sentencesCount`  | 1          |`number`
+|  |`arraySize`       |--          |`number`
 
 <rem025 />
 
@@ -785,8 +915,12 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
   posts: {
     columns: {
       content: funcs.loremIpsum({
-        // `sentencesCount` - 作为一个生成值（字符串）想要生成的句子数量。
-        sentencesCount: 2 
+        // `sentencesCount` - 你希望生成作为一个生成值（字符串）的句子数量。
+        sentencesCount: 2,
+
+        // 每个一维数组中的元素数量。 
+        // （如指定，将生成数组。）
+        arraySize: 3
       }),
     },
   },
@@ -797,15 +931,17 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 ### `point`
 
 <rem025 />
-生成指定范围内的二维点，用于 x 和 y 坐标。
+生成在 x 和 y 坐标的指定范围内的二维点。
 
 |  | param       | default                                                                                 | type
 |:-| :--------   | :--------                                                                               | :--------
-|  |`isUnique`   |数据库列唯一性                                                                           |`boolean`
-|  |`maxXValue`  |``` `10 * 1000` 如果 isUnique 等于 false``` ``` `10 * count` 如果 isUnique 等于 true```  |`number`
+|  |`isUnique`   |数据库列的唯一性                                                                       |`boolean`
+|  |`maxXValue`  |``` `10 * 1000` 如果 isUnique 为 false ``` ``` `10 * count` 如果 isUnique 为 true ```  |`number`
 |  |`minXValue`  |`-maxXValue`                                                                             |`number`
-|  |`maxYValue`  |``` `10 * 1000` 如果 isUnique 等于 false``` ``` `10 * count` 如果 isUnique 等于 true```  |`number`
+|  |`maxYValue`  |``` `10 * 1000` 如果 isUnique 为 false ``` ``` `10 * count` 如果 isUnique 为 true ```  |`number`
 |  |`minYValue`  |`-maxYValue`                                                                             |`number`
+|  |`arraySize`  |--                                                                                       |`number`
+
 
 <rem025 />
 
@@ -816,20 +952,24 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
   triangles: {
     columns: {
       pointCoords: funcs.point({
-        // `isUnique` - 控制生成的值是否唯一的属性。
+        // `isUnique` - 属性控制生成值是否将唯一
         isUnique: true,
 
-        // `minXValue` - x 坐标的范围下限。
+        // `minXValue` - x 坐标的下边界。
         minXValue: -5,
 
-        // `maxXValue` - x 坐标的范围上限。
+        // `maxXValue` - x 坐标的上边界。
         maxXValue: 20,
 
-        // `minYValue` - y 坐标的范围下限。
+        // `minYValue` - y 坐标的下边界。
         minYValue: 0,
 
-        // `maxYValue` - y 坐标的范围上限。
+        // `maxYValue` - y 坐标的上边界。
         maxYValue: 30,
+
+        // 每个一维数组中的元素数量。 
+        // （如指定，将生成数组。）
+        arraySize: 3
       }),
     },
   },
@@ -840,21 +980,22 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 ### `line`
 
 <rem025 />
-生成指定范围内的二维线，用于线的 a、b 和 c 参数。
+生成在指定范围内的二维线的 a、b 和 c 参数。
 
 ```
-线性方程： a*x + b*y + c = 0
+线方程： a*x + b*y + c = 0
 ```
 
 |  | param       | default                                                                                 | type
 |:-| :--------   | :--------                                                                               | :--------
-|  |`isUnique`   |数据库列唯一性                                                                           |`boolean`
-|  |`maxAValue`  |``` `10 * 1000` 如果 isUnique 等于 false``` ``` `10 * count` 如果 isUnique 等于 true```  |`number`
+|  |`isUnique`   |数据库列的唯一性                                                                       |`boolean`
+|  |`maxAValue`  |``` `10 * 1000` 如果 isUnique 为 false ``` ``` `10 * count` 如果 isUnique 为 true ```  |`number`
 |  |`minAValue`  |`-maxAValue`                                                                             |`number`
-|  |`maxBValue`  |``` `10 * 1000` 如果 isUnique 等于 false``` ``` `10 * count` 如果 isUnique 等于 true```  |`number`
+|  |`maxBValue`  |``` `10 * 1000` 如果 isUnique 为 false ``` ``` `10 * count` 如果 isUnique 为 true ```  |`number`
 |  |`minBValue`  |`-maxBValue`                                                                             |`number`
-|  |`maxCValue`  |``` `10 * 1000` 如果 isUnique 等于 false``` ``` `10 * count` 如果 isUnique 等于 true```  |`number`
+|  |`maxCValue`  |``` `10 * 1000` 如果 isUnique 为 false ``` ``` `10 * count` 如果 isUnique 为 true ```  |`number`
 |  |`minCValue`  |`-maxCValue`                                                                             |`number`
+|  |`arraySize`  |--                                                                                       |`number`
 <rem025 />
 
 ```ts 
@@ -864,27 +1005,33 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
   lines: {
     columns: {
       lineParams: funcs.point({
-        // `isUnique` - 控制生成的值是否唯一的属性。
+        // `isUnique` - 属性控制生成值是否将唯一
         isUnique: true,
 
-        // `minAValue` - a 参数的范围下限。
+        // `minAValue` - a 参数的下边界。
         minAValue: -5,
 
-        // `maxAValue` - a 参数的范围上限。
+        // `maxAValue` - a 参数的上边界。
         maxAValue: 20,
 
-        // `minBValue` - b 参数的范围下限。
+        // `minBValue` - b 参数的下边界。
         minBValue: 0,
 
-        // `maxBValue` - b 参数的范围上限。
+        // `maxBValue` - b 参数的上边界。
         maxBValue: 30,
 
-        // `minCValue` - c 参数的范围下限。
+        // `minCValue` - c 参数的下边界。
         minCValue: 0,
 
-        // `maxCValue` - c 参数的范围上限。
+        // `maxCValue` - c 参数的上边界。
         maxCValue: 10,
+
+        // 每个一维数组中的元素数量。 
+        // （如指定，将生成数组。）
+        arraySize: 3
       }),
     },
   },
 }));
+
+```

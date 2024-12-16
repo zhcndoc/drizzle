@@ -808,3 +808,90 @@ for await (const row of iterator) {
   console.log(row);
 }
 ```
+
+## ---
+
+### 使用索引
+
+`USE INDEX` 提示告诉优化器在处理查询时考虑哪些索引。优化器不会强制使用这些索引，但如果它们合适，会优先使用它们。
+
+<IsSupportedChipGroup chips={{ 'MySQL': true, 'PostgreSQL': false, 'SQLite': false, 'SingleStore': false }} />
+
+```ts copy
+export const users = mysqlTable('users', {
+	id: int('id').primaryKey(),
+	name: varchar('name', { length: 100 }).notNull(),
+}, () => [usersTableNameIndex]);
+
+const usersTableNameIndex = index('users_name_index').on(users.name);
+
+await db.select()
+  .from(users, { useIndex: usersTableNameIndex })
+  .where(eq(users.name, 'David'));
+```
+
+您还可以在任何您想要的连接上使用此选项
+
+```ts
+await db.select()
+  .from(users)
+  .leftJoin(posts, eq(posts.userId, users.id), { useIndex: usersTableNameIndex })
+  .where(eq(users.name, 'David'));
+```
+
+### 忽略索引
+
+`IGNORE INDEX` 提示告诉优化器避免使用特定的索引来处理查询。MySQL 将考虑所有其他索引（如果有的话），或在必要时执行全表扫描。
+
+<IsSupportedChipGroup chips={{ 'MySQL': true, 'PostgreSQL': false, 'SQLite': false, 'SingleStore': false }} />
+
+```ts copy
+export const users = mysqlTable('users', {
+	id: int('id').primaryKey(),
+	name: varchar('name', { length: 100 }).notNull(),
+}, () => [usersTableNameIndex]);
+
+const usersTableNameIndex = index('users_name_index').on(users.name);
+
+await db.select()
+  .from(users, { ignoreIndex: usersTableNameIndex })
+  .where(eq(users.name, 'David'));
+```
+
+您还可以在任何您想要的连接上使用此选项
+
+```ts
+await db.select()
+  .from(users)
+  .leftJoin(posts, eq(posts.userId, users.id), { useIndex: usersTableNameIndex })
+  .where(eq(users.name, 'David'));
+```
+
+
+### 强制索引
+
+`FORCE INDEX`提示强制优化器使用指定的索引进行查询。如果指定的索引无法使用，MySQL不会回退到其他索引；它可能会改为进行全表扫描。
+
+<IsSupportedChipGroup chips={{ 'MySQL': true, 'PostgreSQL': false, 'SQLite': false, 'SingleStore': false }} />
+
+```ts copy
+export const users = mysqlTable('users', {
+	id: int('id').primaryKey(),
+	name: varchar('name', { length: 100 }).notNull(),
+}, () => [usersTableNameIndex]);
+
+const usersTableNameIndex = index('users_name_index').on(users.name);
+
+await db.select()
+  .from(users, { forceIndex: usersTableNameIndex })
+  .where(eq(users.name, 'David'));
+```
+
+您还可以在任何您想要的连接上使用此选项
+
+```ts
+await db.select()
+  .from(users)
+  .leftJoin(posts, eq(posts.userId, users.id), { useIndex: usersTableNameIndex })
+  .where(eq(users.name, 'David'));
+```
