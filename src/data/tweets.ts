@@ -84,7 +84,7 @@ export const tweets: ITweet[] = [
     avatar: t3dotgg,
     name: "Theo",
     login: "t3dotgg",
-    text: "Drizzle is terrible. It doesn’t even support Mongo.",
+    text: "Drizzle 非常糟糕。它甚至都还不支持 Mongo。",
     href: "https://x.com/t3dotgg/status/1787604253860847775",
   },
   {
@@ -150,7 +150,7 @@ export const tweets: ITweet[] = [
     avatar: hisbvdis,
     name: "Roma Zvarych",
     login: "hisbvdis",
-    text: `我终于从 @prisma 切换到了 @DrizzleORM。\n这不是一件容易的事。\n亲爱的 Drizzle 团队，你们创造了一个很棒的 orm，但是文档很糟糕。\n无论如何，祝你们好运，谢谢。`,
+    text: `我终于从 @prisma 切换到了 @DrizzleORM。这不是一件容易的事。亲爱的 Drizzle 团队，你们创造了一个很棒的 orm，但是文档很糟糕。无论如何，祝你们好运，谢谢。`,
     href: "https://x.com/hisbvdis/status/1807783878515400977",
   },
   {

@@ -34,9 +34,9 @@ export default defineConfig({
       },
     }
   },
-  // image: {
-  //   domains: ["img.youtube.com"],
-  // },
+  image: {
+    domains: ["img.youtube.com"],
+  },
   prefetch: import.meta.env.DEV ? undefined : {
     prefetchAll: true,
     defaultStrategy: "viewport",

@@ -1,109 +1,109 @@
 2024-12:
   - | 
-    <b>Kit <a href='https://github.com/drizzle-team/drizzle-orm/releases/tag/drizzle-kit%400.29.0'>v0.29.0</a> release</b>
-    and <b>ORM <a href='https://github.com/drizzle-team/drizzle-orm/releases/tag/0.37.0'>v0.37.0</a> release</b>
+    <b>Kit <a href='https://github.com/drizzle-team/drizzle-orm/releases/tag/drizzle-kit%400.29.0'>v0.29.0</a> 发布</b>
+    and <b>ORM <a href='https://github.com/drizzle-team/drizzle-orm/releases/tag/0.37.0'>v0.37.0</a> 发布</b>
 
     <ul>
-    <li>New dialect <b>SingleStore</b> is available in Drizzle</li>
-    <li>New driver for <b>Durable Objects SQLite</b> is available in Drizzle</li>
-    <li>[BUG]: $with is undefined on withReplicas</li>
-    <li>[BUG]: Neon serverless driver accepts authToken as a promise, but the $withAuth does not</li>
+    <li>新方言 <b>SingleStore</b> 在 Drizzle 中可用</li>
+    <li>新驱动程序 <b>Durable Objects SQLite</b> 在 Drizzle 中可用</li>
+    <li>[BUG]: $with 在 withReplicas 上未定义</li>
+    <li>[BUG]: Neon 无服务器驱动程序接受 authToken 作为一个 promise，但 $withAuth 不接受。</li>
     </ul>
 
 2024-11:
   - |
-    <b>🎉 OneDollarStats is now available in Open Alpha release!</b>
+    <b>🎉 OneDollarStats 现在在 Open Alpha 版本中可用！</b>
 
-    <a href='https://onedollarstats.com/'>OneDollarStats</a> is a $1 per month web analytics built by Drizzle Team
-
-  - |
-    <b>🎉 New `drizzle-seed` package is now available</b>
-
-    For more info check our <a href='https://orm.drizzle.team/docs/seed-overview'>seed documentation</a>
+    <a href='https://onedollarstats.com/'>OneDollarStats</a> 是一个每月 $1 的网络分析工具，由 Drizzle 团队构建
 
   - |
-    <b>ORM <a href='https://github.com/drizzle-team/drizzle-orm/releases/tag/0.36.4'>v0.36.4</a> release</b>
+    <b>🎉 新 `drizzle-seed` 包现在可用</b>
+
+    更多信息请查看我们的 <a href='https://orm.drizzle.team/docs/seed-overview'>seed 文档</a>
+
+  - |
+    <b>ORM <a href='https://github.com/drizzle-team/drizzle-orm/releases/tag/0.36.4'>v0.36.4</a> 发布</b>
 
     <ul>
-    <li>Added .$withAuth() API for Neon HTTP driver</li>
-    <li>Added OVERRIDING SYSTEM VALUE api to db.insert()</li>
+    <li>为 Neon HTTP 驱动程序添加了 .$withAuth() API</li>
+    <li>为 db.insert() 添加了 OVERRIDING SYSTEM VALUE api</li>
     </ul>
 
   - |
-    <b>ORM <a href='https://github.com/drizzle-team/drizzle-orm/releases/tag/0.36.3'>v0.36.3</a> release</b>
+    <b>ORM <a href='https://github.com/drizzle-team/drizzle-orm/releases/tag/0.36.3'>v0.36.3</a> 发布</b>
 
     <ul>
-    <li>Support for UPDATE ... FROM in PostgreSQL and SQLite</li>
-    <li>Support for INSERT INTO ... SELECT in all dialects</li>
+    <li>支持 PostgreSQL 和 SQLite 中的 UPDATE ... FROM</li>
+    <li>支持所有方言中的 INSERT INTO ... SELECT</li>
     </ul>
 
   - |
-    <b>Kit <a href='https://github.com/drizzle-team/drizzle-orm/releases/tag/drizzle-kit%400.28.1'>v0.28.1</a> release</b>
-    and <b>ORM <a href='https://github.com/drizzle-team/drizzle-orm/releases/tag/0.36.2'>v0.36.2</a> release</b>
+    <b>Kit <a href='https://github.com/drizzle-team/drizzle-orm/releases/tag/drizzle-kit%400.28.1'>v0.28.1</a> 发布</b>
+    和 <b>ORM <a href='https://github.com/drizzle-team/drizzle-orm/releases/tag/0.36.2'>v0.36.2</a> 发布</b>
 
     <ul>
-    <li>Support more types in like, notLike, ilike and notIlike expressions</li>
-    <li>Fixed typos in repository: thanks @armandsalle, @masto, @wackbyte, @Asher-JH, @MaxLeiter</li>
-    <li>fix: wrong dialect set in mysql/sqlite introspect</li>
-    <li>Fixed .generated behavior with non-strict tsconfig</li>
-    <li>Fix Drizzle ORM for expo-sqlite</li>
-    <li>Fixed lack of schema name on columns in sql</li>
-    <li>fix: Adjust neon http driver entity kind</li>
-    <li>Export PgIntegerBuilderInitial type</li>
-    <li>[MySQL] Correct $returningId() implementation to correctly store selected fields</li>
+    <li>支持更多类型在 like, notLike, ilike 和 notIlike 表达式中</li>
+    <li>修复拼写错误在仓库中：感谢 @armandsalle, @masto, @wackbyte, @Asher-JH, @MaxLeiter</li>
+    <li>修复：mysql/sqlite introspect 中的错误方言</li>
+    <li>修复 .generated 行为与非严格 tsconfig</li>
+    <li>修复 Drizzle ORM for expo-sqlite</li>
+    <li>修复 sql 中列的 schema 名称缺失</li>
+    <li>修复：调整 neon http 驱动程序实体类型</li>
+    <li>导出 PgIntegerBuilderInitial 类型</li>
+    <li>[MySQL] 正确实现 $returningId() 以正确存储选定字段</li>
     </ul>
 
   - |
-    <b>Kit <a href='https://github.com/drizzle-team/drizzle-orm/releases/tag/drizzle-kit%400.28.0'>v0.28.0</a> release</b>
-    and <b>ORM <a href='https://github.com/drizzle-team/drizzle-orm/releases/tag/0.36.1'>v0.36.1</a> release</b>
+    <b>Kit <a href='https://github.com/drizzle-team/drizzle-orm/releases/tag/drizzle-kit%400.28.0'>v0.28.0</a> 发布</b>
+    和 <b>ORM <a href='https://github.com/drizzle-team/drizzle-orm/releases/tag/0.36.1'>v0.36.1</a> 发布</b>
 
     <ul>
-    <li>Added an OHM static imports checker to identify unexpected imports within a chain of imports in the drizzle-kit repo. For example, it checks if drizzle-orm is imported before drizzle-kit and verifies if the drizzle-orm import is available in your project.</li>
-    <li>Adding more columns to Supabase auth.users table schema</li>
+    <li>添加了一个 OHM 静态导入检查器，以识别 drizzle-kit 仓库中链式导入中的意外导入。例如，它检查 drizzle-orm 是否在 drizzle-kit 之前导入，并验证 drizzle-orm 导入是否在您的项目中可用。</li>
+    <li>添加更多列到 Supabase auth.users 表 schema</li>
     </ul>
 
     <ul>
-    <b>Bug Fixes</b>
-    <li>[BUG]: Using sql.placeholder with limit and/or offset for a prepared statement produces TS error</li>
-    <li>[BUG] If a query I am trying to modify with a dynamic query (....$dynamic()) contains any placeholders, I'm getting an error that says No value for placeholder.... provided</li>
-    <li>[BUG]: Error thrown when trying to insert an array of new rows using generatedAlwaysAsIdentity() for the id column</li>
-    <li>[BUG]: Unable to Use BigInt Types with Bun and Drizzle</li>
-    <li>[BUG]: [drizzle-kit]: Fix breakpoints option cannot be disabled</li>
-    <li>[BUG]: drizzle-kit introspect: SMALLINT import missing and incorrect DECIMAL UNSIGNED handling</li>
-    <li>Unsigned tinyints preventing migrations</li>
-    <li>[BUG]: Can't parse float(8,2) from database (precision and scale and/or unsigned breaks float types)</li>
-    <li>[BUG]: PgEnum generated migration doesn't escape single quotes</li>
-    <li>[BUG]: single quote not escaped correctly in migration file</li>
-    <li>[BUG]: Migrations does not escape single quotes</li>
-    <li>[BUG]: Issue with quoted default string values</li>
-    <li>[BUG]: SQl commands in wrong roder</li>
-    <li>[BUG]: Time with precision in drizzle-orm/pg-core adds double-quotes around type</li>
-    <li>[BUG]: Postgres push fails due to lack of quotes</li>
-    <li>[BUG]: TypeError: Cannot read properties of undefined (reading 'compositePrimaryKeys')</li>
-    <li>[BUG]: drizzle-kit introspect generates CURRENT_TIMESTAMP without sql operator on date column</li>
-    <li>[BUG]: Drizzle-kit introspect doesn't pull correct defautl statement</li>
-    <li>[BUG]: Problem on MacBook - This statement does not return data. Use run() instead</li>
-    <li>[BUG]: Enum column names that are used as arrays are not quoted</li>
-    <li>[BUG]: drizzle-kit generate ignores index operators</li>
-    <li>dialect param config error message is wrong</li>
-    <li>[BUG]: Error setting default enum field values</li>
-    <li>[BUG]: drizzle-kit does not respect the order of columns configured in primaryKey()</li>
-    <li>[BUG]: Cannot drop Unique Constraint MySQL</li>
+    <b>错误修复</b>
+    <li>[BUG]: 在使用 sql.placeholder 与 limit 和/或 offset 进行预处理语句时生成 TS 错误</li>
+    <li>[BUG]: 当修改的查询(....$dynamic())包含任何占位符时,会收到错误提示"未提供占位符的值..."</li>
+    <li>[BUG]: 尝试插入使用 generatedAlwaysAsIdentity() 为 id 列生成的新行时抛出错误</li>
+    <li>[BUG]: 无法在 Bun 和 Drizzle 中使用 BigInt 类型</li>
+    <li>[BUG]: [drizzle-kit]: 无法禁用修复断点选项</li>
+    <li>[BUG]: drizzle-kit introspect: SMALLINT 导入缺失和不正确的 DECIMAL UNSIGNED 处理</li>
+    <li>无符号 tinyints 阻止迁移</li>
+    <li>[BUG]: 无法从数据库解析 float(8,2) (精度和小数位数和/或无符号破坏浮点类型)</li>
+    <li>[BUG]: PgEnum 生成的迁移没有转义单引号</li>
+    <li>[BUG]: 迁移文件中单引号转义不正确</li>
+    <li>[BUG]: 迁移未转义单引号</li>
+    <li>[BUG]: 引用的默认字符串值存在问题</li>
+    <li>[BUG]: SQL 命令顺序错误</li>
+    <li>[BUG]: drizzle-orm/pg-core 中带精度的时间类型在类型周围添加了双引号</li>
+    <li>[BUG]: 由于缺少引号导致 Postgres 推送失败</li>
+    <li>[BUG]: TypeError: 无法读取未定义的属性 (读取 'compositePrimaryKeys')</li>
+    <li>[BUG]: drizzle-kit introspect 在日期列上生成的 CURRENT_TIMESTAMP 缺少 sql 运算符</li>
+    <li>[BUG]: Drizzle-kit introspect 未拉取正确的默认语句</li>
+    <li>[BUG]: MacBook 上的问题 - 此语句不返回数据。请使用 run() 代替</li>
+    <li>[BUG]: 作为数组使用的枚举列名未加引号</li>
+    <li>[BUG]: drizzle-kit generate 忽略索引运算符</li>
+    <li>[BUG]: dialect 参数配置错误消息有误</li>
+    <li>[BUG]: 设置默认枚举字段值时出错</li>
+    <li>[BUG]: drizzle-kit 不遵守 primaryKey() 中配置的列顺序</li>
+    <li>[BUG]: 无法删除 MySQL 中的唯一约束</li>
     </ul>
   - |
-    <b>Kit <a href='https://github.com/drizzle-team/drizzle-orm/releases/tag/drizzle-kit%400.27.2'>v0.27.2</a> release</b>
+    <b>Kit <a href='https://github.com/drizzle-team/drizzle-orm/releases/tag/drizzle-kit%400.27.2'>v0.27.2</a> 发布</b>
 
     <ul>
-    <li>Fix [BUG]: Undefined properties when using drizzle-kit push</li>
-    <li>Fix TypeError: Cannot read properties of undefined (reading 'isRLSEnabled')</li>
-    <li>Fix push bugs, when pushing a schema with linked policy to a table from drizzle-orm/supabase</li>
+    <li>[BUG]: 使用 drizzle-kit push 时未定义属性</li>
+    <li>[BUG]: TypeError: 无法读取未定义的属性 (reading 'isRLSEnabled')</li>
+    <li>[BUG]: 当从 drizzle-orm/supabase 推送包含链接策略的 schema 到表时，推送出现错误</li>
     </ul>
 
   - |
-    <b>Kit <a href='https://github.com/drizzle-team/drizzle-orm/releases/tag/drizzle-kit%400.27.1'>v0.27.1</a> release</b>
+    <b>Kit <a href='https://github.com/drizzle-team/drizzle-orm/releases/tag/drizzle-kit%400.27.1'>v0.27.1</a> 发布</b>
 
     <ul>
-    <li>Fix: [BUG]: When using RLS policies and Views, the view is the last clause generated</li>
+    <li>[BUG]: 使用 RLS 策略和视图时，视图是最后一个生成的子句</li>
     </ul>
 
 2024-10:
