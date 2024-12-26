@@ -2,68 +2,63 @@ import Tab from "@mdx/Tab.astro";
 import Tabs from "@mdx/Tabs.astro";
 import Callout from "@mdx/Callout.astro";
 
-# Versioning
+# 版本控制
 
-`drizzle-seed` uses versioning to manage outputs for static and dynamic data. To ensure true 
-determinism, ensure that values remain unchanged when using the same `seed` number. If changes are made to 
-static data sources or dynamic data generation logic, the version will be updated, allowing
-you to choose between sticking with the previous version or using the latest.
+`drizzle-seed` 使用版本控制来管理静态和动态数据的输出。为确保真正的确定性，请确保在使用相同的 `seed` 编号时值保持不变。如果对静态数据源或动态数据生成逻辑进行更改，版本将会更新，这样您可以选择坚持使用以前的版本或使用最新版本。
 
-You can upgrade to the latest `drizzle-seed` version for new features, such as additional
-generators, while maintaining deterministic outputs with a previous version if needed. This
-is particularly useful when you need to rely on existing deterministic data while accessing new functionality.
+您可以升级到最新的 `drizzle-seed` 版本以获得新功能，例如额外的生成器，同时在需要时保持确定性输出的旧版本。这在您需要依赖现有确定性数据同时访问新功能时特别有用。
 
 ```ts
 await seed(db, schema, { version: '2' });
 ```
 
-## History
-|     |     api version  |   npm version    |     Changed generators                             |
+## 历史
+|     |     API 版本  |   npm 版本    |     更改的生成器                             |
 | :-: | :--------------: | :--------------: | :-------------:                         |
 |     |  `v1`            | `0.1.1`          |                                         |
 |     |  `v2 (LTS) `       | `0.2.1`          |`string()`, `interval({ isUnique: true })` |
 
-<Callout collapsed="How it works under the hood?">
-> This is not an actual API change; it is just an example of how we will proceed with `drizzle-seed` versioning.
+<Callout collapsed="底层工作原理？">
+> 这不是实际的 API 更改；这只是我们如何进行 `drizzle-seed` 版本控制的一个示例。
 
-For example, `lastName` generator was changed, and new version, `V2`, of this generator became available.
+例如，`lastName` 生成器发生了变化，新的版本 `V2` 的此生成器可用。
 
-Later, `firstName` generator was changed, making `V3` version of this generator available.
+后来，`firstName` 生成器发生了改变，生成了此生成器的 `V3` 版本。
 
-|                  |       `V1`       |      `V2`       |   `V3(latest)`   |
+|                  |       `V1`       |      `V2`       |   `V3(最新)`   |
 | :--------------: | :--------------: | :-------------: | :--------------: |
 | **LastNameGen**  | `LastNameGenV1`  | `LastNameGenV2` |                  |
 | **FirstNameGen** | `FirstNameGenV1` |                 | `FirstNameGenV3` |
 
 
-##### Use the `firstName` generator of version 3 and the `lastName` generator of version 2
+##### 使用版本 3 的 `firstName` 生成器和版本 2 的 `lastName` 生成器
 ```ts
 await seed(db, schema);
 ```
 
-If you are not ready to use latest generator version right away, you can specify max version to use
+如果您尚未准备好立即使用最新的生成器版本，可以指定最大使用版本
 
-##### Use the `firstName` generator of version 1 and the `lastName` generator of version 2
+##### 使用版本 1 的 `firstName` 生成器和版本 2 的 `lastName` 生成器
 ```ts
 await seed(db, schema, { version: '2' });
 ```
 
-##### Use the `firstName` generator of version 1 and the `lastName` generator of version 1.
+##### 使用版本 1 的 `firstName` 生成器和版本 1 的 `lastName` 生成器。
 ```ts
 await seed(db, schema, { version: '1' });
 ```
 
 </Callout>
 
-## Version 2
-#### Unique `interval` generator was changed
+## 版本 2
+#### 唯一的 `interval` 生成器已更改
 
-<Callout title='Reason for upgrade'>
-An older version of the generator could produce intervals like `1 minute 60 seconds` and `2 minutes 0 seconds`, treating them as distinct intervals.
-However, when the `1 minute 60 seconds` interval is inserted into a PostgreSQL database, it is automatically converted to `2 minutes 0 seconds`. As a result, attempting to insert the `2 minutes 0 seconds` interval into a unique column afterwards will cause an error
+<Callout title='升级原因'>
+较旧版本的生成器可能生成类似 `1 minute 60 seconds` 和 `2 minutes 0 seconds` 的间隔，将它们视为不同的间隔。
+然而，当将 `1 minute 60 seconds` 间隔插入到 PostgreSQL 数据库时，它会自动转换为 `2 minutes 0 seconds`。因此，在之后尝试将 `2 minutes 0 seconds` 间隔插入唯一列将会导致错误。
 </Callout>
 
-You will be affected, if your table includes a unique column of type `interval`:
+如果您的表包含类型为 `interval` 的唯一列，则会受到影响：
 <Tabs items={['PostgreSQL']}>
 <Tab>
 ```ts
@@ -86,7 +81,7 @@ main();
 </Tab>
 </Tabs>
 
-You will be affected, if you use the unique `interval` generator in your seeding script, as shown in the script below:
+如果您在种子脚本中使用唯一的 `interval` 生成器，如下面的脚本所示，也会受到影响：
 <Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
 <Tab>
 ```ts
@@ -204,13 +199,13 @@ main();
 </Tab>
 </Tabs>
 
-#### `string` generators were changed: both non-unique and unique
+#### `string` 生成器已更改：包括非唯一和唯一的
 
-<Callout title='Reason to upgrade'>
-Ability to generate a unique string based on the length of the text column (e.g., `varchar(20)`)
+<Callout title='升级原因'>
+能够根据文本列的长度生成唯一字符串（例如，`varchar(20)`）
 </Callout>
 
-You will be affected, if your table includes a column of a text-like type with a maximum length parameter or a unique column of a text-like type:
+如果您的表包含具有最大长度参数的文本类型列或唯一文本类型列，则会受到影响：
 <Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
 <Tab>
 ```ts
@@ -287,7 +282,7 @@ main();
 </Tab>
 </Tabs>
 
-You will be affected, if you use the `string` generator in your seeding script, as shown in the script below:
+如果您在种子脚本中使用 `string` 生成器，如下面的脚本所示，也会受到影响：
 <Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
 <Tab>
 ```ts
