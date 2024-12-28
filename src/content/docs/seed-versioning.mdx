@@ -1,6 +1,7 @@
 import Tab from "@mdx/Tab.astro";
 import Tabs from "@mdx/Tabs.astro";
 import Callout from "@mdx/Callout.astro";
+import TableWrapper from "@mdx/TableWrapper.astro";
 
 # 版本控制
 
@@ -13,10 +14,12 @@ await seed(db, schema, { version: '2' });
 ```
 
 ## 历史
-|     |     API 版本  |   npm 版本    |     更改的生成器                             |
-| :-: | :--------------: | :--------------: | :-------------:                         |
-|     |  `v1`            | `0.1.1`          |                                         |
-|     |  `v2 (LTS) `       | `0.2.1`          |`string()`, `interval({ isUnique: true })` |
+<TableWrapper>
+|          API 版本  |   npm 版本    |     更改的生成器                             |
+|  :-------------- | :-------------- | :-------------                         |
+|       `v1`            | `0.1.1`          |                                         |
+|       `v2 (LTS) `       | `0.2.1`          |`string()`, `interval({ isUnique: true })` |
+</TableWrapper>
 
 <Callout collapsed="底层工作原理？">
 > 这不是实际的 API 更改；这只是我们如何进行 `drizzle-seed` 版本控制的一个示例。

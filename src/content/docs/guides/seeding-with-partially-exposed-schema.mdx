@@ -1,0 +1,140 @@
+---
+title: 用外键为部分暴露的表进行数据填充
+slug: seeding-with-partially-exposed-tables
+---
+
+import IsSupportedChipGroup from "@mdx/IsSupportedChipGroup.astro";
+import Prerequisites from "@mdx/Prerequisites.astro";
+import CodeTabs from '@mdx/CodeTabs.astro';
+import CodeTab from '@mdx/CodeTab.astro';
+import Callout from '@mdx/Callout.astro';
+
+<IsSupportedChipGroup chips={{PostgreSQL: true, MySQL: true, SQLite: true}}/>
+
+<Prerequisites>
+- 了解如何使用 [PostgreSQL](/docs/get-started-postgresql), [MySQL](/docs/get-started-mysql) 或 [SQLite](/docs/get-started-sqlite)
+- 熟悉 [Drizzle Seed](/docs/seed-overview)
+</Prerequisites>
+
+## 示例 1
+假设您尝试使用以下所示的填充脚本和模式来填充数据库。
+<CodeTabs items={["index.ts", "schema.ts"]}>
+<CodeTab>
+```ts
+import { bloodPressure } from './schema.ts';
+
+async function main() {
+  const db = drizzle(...);
+  await seed(db, { bloodPressure });
+}
+main();
+
+```
+</CodeTab>
+
+<CodeTab>
+```ts copy {10}
+import { serial, pgTable, integer, doublePrecision } from "drizzle-orm/pg-core";
+
+export const users = pgTable("users", {
+    id: serial("id").primaryKey(),
+});
+
+export const bloodPressure = pgTable("bloodPressure", {
+	bloodPressureId: serial().primaryKey(),
+	pressure: doublePrecision(),
+	userId: integer().references(() => users.id).notNull(),
+})
+```
+</CodeTab>
+</CodeTabs>
+如果 `bloodPressure` 表在 `userId` 列上有非空约束，那么运行填充脚本将导致错误。
+
+```
+错误: 列 'userId' 具有非空约束，
+并且您没有为 'bloodPressure' 表中的 'userId' 列指定外键表。
+```
+
+<Callout title='这意味着什么？'>
+这意味着我们不能在 `userId` 列中填充 Null 值，因为该列有非空约束。
+此外，您没有将 `users` 表暴露给 `seed` 函数的模式，因此我们无法生成 `users.id` 来填充 `userId` 列。
+</Callout>
+
+此时，您有几种选择来解决错误：
+- 您可以删除 `userId` 列上的非空约束；
+- 您可以将 `users` 表暴露给 `seed` 函数的模式
+```ts 
+await seed(db, { bloodPressure, users });
+```
+- 您可以 [改进](/docs/guides/seeding-with-partially-exposed-tables#refining-the-userid-column-generator) `userId` 列生成器；
+
+## 示例 2
+
+<CodeTabs items={["index.ts", "schema.ts"]}>
+<CodeTab>
+```ts
+import { bloodPressure } from './schema.ts';
+
+async function main() {
+  const db = drizzle(...);
+  await seed(db, { bloodPressure });
+}
+main();
+
+```
+</CodeTab>
+
+<CodeTab>
+```ts copy {10}
+import { serial, pgTable, integer, doublePrecision } from "drizzle-orm/pg-core";
+
+export const users = pgTable("users", {
+    id: serial("id").primaryKey(),
+});
+
+export const bloodPressure = pgTable("bloodPressure", {
+	bloodPressureId: serial().primaryKey(),
+	pressure: doublePrecision(),
+	userId: integer().references(() => users.id),
+})
+```
+</CodeTab>
+</CodeTabs>
+
+通过运行上述填充脚本，您将看到一个警告
+```
+在 'bloodPressure' 表中的 'userId' 列将填充 Null 值
+因为您既没有为 'userId' 列指定外键表
+也没有为 'userId' 列提供函数的细化。
+```
+<Callout title='这意味着什么？'>
+这意味着您既没有将 `users` 表提供给 `seed` 函数的模式，也没有改进 `userId` 列生成器。 
+因此，`userId` 列将填充 Null 值。
+</Callout>
+然后您将有两个选择：
+- 如果您可以接受用 Null 值填充 `userId` 列，可以忽略该警告；
+
+- 否则，您可以 [改进](/docs/guides/seeding-with-partially-exposed-tables#refining-the-userid-column-generator) `userId` 列生成器。 
+
+## 改进 `userId` 列生成器
+这样做需要 `users` 表中已经有类似于 1 和 2 的 ID。
+<CodeTabs items={["index.ts"]}>
+<CodeTab>
+```ts copy {8}
+import { bloodPressure } from './schema.ts';
+
+async function main() {
+  const db = drizzle(...);
+  await seed(db, { bloodPressure }).refine((funcs) => ({
+    bloodPressure: {
+      columns: {
+        userId: funcs.valuesFromArray({ values: [1, 2] })
+      }
+    }
+  }));
+}
+main();
+
+```
+</CodeTab>
+</CodeTabs>
