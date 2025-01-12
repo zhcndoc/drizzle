@@ -1,0 +1,150 @@
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
+import Npm from "@mdx/Npm.astro";
+import Callout from '@mdx/Callout.astro';
+import Steps from '@mdx/Steps.astro';
+import AnchorCards from '@mdx/AnchorCards.astro';
+import Prerequisites from "@mdx/Prerequisites.astro";
+import WhatsNextPostgres from "@mdx/WhatsNextPostgres.astro";
+
+# Drizzle \<\> Nile
+
+<Prerequisites>
+- 数据库 [连接基础](/docs/connect-overview) 与 Drizzle
+- Nile 数据库 - [网站](https://thenile.dev)
+- Drizzle PostgreSQL 驱动 - [文档](/docs/get-started-postgresql)
+</Prerequisites>
+
+根据 **[官方网站](https://thenile.dev)**，Nile 是为多租户应用重新设计的 PostgreSQL。
+
+请查看官方 **[Nile + Drizzle 快速入门](https://www.thenile.dev/docs/getting-started/languages/drizzle)** 和 **[迁移](https://www.thenile.dev/docs/getting-started/schema_migrations/drizzle) 文档。
+
+您可以使用 Nile 与任何 Drizzle 的 Postgres 驱动，我们将在下文中展示 `node-postgres` 的使用。
+
+#### 第一步 - 安装软件包
+
+<Npm>
+drizzle-orm postgres
+-D drizzle-kit
+</Npm>
+
+#### 第二步 - 初始化驱动并进行查询
+
+```typescript copy filename="index.ts"
+// 确保安装了 'pg' 包
+import { drizzle } from 'drizzle-orm/node-postgres'
+
+const db = drizzle(process.env.NILEDB_URL);
+
+const response = await db.select().from(...);
+```
+
+如果您需要提供现有的驱动：
+
+```typescript copy filename="index.ts"
+// 确保安装了 'pg' 包
+import { pgTable, serial, text, varchar } from "drizzle-orm/pg-core";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+const db = drizzle({ client: pool });
+
+const response = await db.select().from(...);
+```
+
+#### 连接到虚拟租户数据库
+
+Nile 提供虚拟租户数据库，当您设置租户上下文时，Nile 会将您的查询定向到该特定租户的虚拟数据库，所有查询都将应用于该租户（即 `select * from table` 将仅返回该租户的记录）。
+
+为了设置租户上下文，我们将每个查询包装在一个事务中，在运行事务之前设置适当的租户上下文。
+
+可以将租户 ID 作为参数简单地传递给包装器：
+
+```typescript copy filename="index.ts"
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { todosTable, tenants } from "./db/schema";
+import { sql } from 'drizzle-orm';
+import 'dotenv/config';
+
+const db = drizzle(process.env.NILEDB_URL);
+
+function tenantDB<T>(tenantId: string, cb: (tx: any) => T | Promise<T>): Promise<T> {
+  return db.transaction(async (tx) => {
+    if (tenantId) {
+      await tx.execute(sql`set local nile.tenant_id = '${sql.raw(tenantId)}'`);
+    }
+
+    return cb(tx);
+  }) as Promise<T>;
+}
+
+// 在 Web 应用中，您可能会从请求路径参数或头获取租户 ID
+const tenantId = '01943e56-16df-754f-a7b6-6234c368b400'
+
+const response = await tenantDB(tenantId, async (tx) => {
+    // 这里不需要 "where" 子句
+    return await tx.select().from(todosTable);
+});
+
+console.log(response);
+```
+
+如果您使用支持的 Web 框架，可以设置 [AsyncLocalStorage](https://nodejs.org/api/async_context.html) 并使用中间件将其填充租户 ID。在这种情况下，您的 Drizzle 客户端设置将是：
+
+```typescript copy filename="db/index.ts
+import { drizzle } from 'drizzle-orm/node-postgres';
+import dotenv from "dotenv/config";
+import { sql } from "drizzle-orm";
+import { AsyncLocalStorage } from "async_hooks";
+
+export const db = drizzle(process.env.NILEDB_URL);
+export const tenantContext = new AsyncLocalStorage<string | undefined>();
+
+export function tenantDB<T>(cb: (tx: any) => T | Promise<T>): Promise<T> {
+  return db.transaction(async (tx) => {
+    const tenantId = tenantContext.getStore();
+    console.log("执行查询的租户: " + tenantId);
+    // 如果存在租户 ID，将其设置在事务上下文中
+    if (tenantId) {
+      await tx.execute(sql`set local nile.tenant_id = '${sql.raw(tenantId)}'`);
+    }
+
+    return cb(tx);
+  }) as Promise<T>;
+}
+```
+
+然后，配置中间件以填充 AsyncLocalStorage，并在处理请求时使用 `tenantDB` 方法：
+
+```typescript copy filename="app.ts"
+// 中间件以设置租户上下文
+app.use("/api/tenants/:tenantId/*", async (c, next) => {
+  const tenantId = c.req.param("tenantId");
+  console.log("将上下文设置为租户: " + tenantId);
+  return tenantContext.run(tenantId, () => next());
+});
+
+// 路由处理程序
+app.get("/api/tenants/:tenantId/todos", async (c) => {
+    const todos = await tenantDB(c, async (tx) => {
+      return await tx
+        .select({
+          id: todoSchema.id,
+          tenant_id: todoSchema.tenantId,
+          title: todoSchema.title,
+          estimate: todoSchema.estimate,
+        })
+        .from(todoSchema);
+    });
+    return c.json(todos);
+});
+```
+
+#### 接下来是什么？
+
+<WhatsNextPostgres/>
+
+
+

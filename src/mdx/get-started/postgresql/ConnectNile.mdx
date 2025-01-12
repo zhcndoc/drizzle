@@ -1,0 +1,40 @@
+import Callout from '@mdx/Callout.astro';
+import CodeTabs from "@mdx/CodeTabs.astro";
+
+在 `src/db` 目录中创建一个 `index.ts` 文件并初始化连接：
+
+<CodeTabs items={["node-postgres", "带配置的 node-postgres", "你的 node-postgres 驱动程序"]}>
+```typescript copy
+import 'dotenv/config';
+import { drizzle } from 'drizzle-orm/node-postgres';
+
+const db = drizzle(process.env.NILEDB_URL!);
+```
+```typescript copy
+import 'dotenv/config';
+import { drizzle } from 'drizzle-orm/node-postgres';
+
+// 你可以指定 node-postgres 连接选项中的任何属性
+const db = drizzle({ 
+  connection: { 
+    connectionString: process.env.NILEDB_URL!,
+    ssl: true
+  }
+});
+```
+```typescript copy
+import 'dotenv/config';
+import { pgTable, serial, text, varchar } from "drizzle-orm/pg-core";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
+
+const pool = new Pool({
+  connectionString: process.env.NILEDB_URL!,
+});
+const db = drizzle({ client: pool });
+```
+</CodeTabs>
+
+<Callout title='多租户'>
+Nile 提供 **虚拟租户数据库**。当你查询 Nile 时，可以设置租户上下文，Nile 会将你的查询指向此特定租户的虚拟数据库。所有带有租户上下文的查询只会应用于该租户（即 `select * from table` 将仅返回该租户的记录）。要了解有关如何使用 Drizzle 设置租户上下文的更多信息，请查看 **[官方 Nile-Drizzle 示例](https://www.thenile.dev/docs/getting-started/languages/drizzle#72-tenantdb)**。
+</Callout>

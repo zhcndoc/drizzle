@@ -1,0 +1,57 @@
+import CodeWithProps from "@mdx/CodeWithProps.astro";
+
+让我们**更新** `src/index.ts` 文件，以创建、读取、更新和删除租户和待办事项的查询。
+
+<CodeWithProps dialect='node-postgres' env_variable='NILEDB_URL'>
+```typescript copy filename="src/index.ts"
+import 'dotenv/config';
+import { drizzle } from 'drizzle-orm/$dialect$';
+import { eq, sql } from 'drizzle-orm';
+import { tenantsTable, todosTable } from './db/schema';
+  
+const db = drizzle(process.env.$env_variable$!);
+
+async function main() {
+  const tenant: typeof tenantsTable.$inferInsert = {
+    name: 'AwesomeSauce Inc.',
+  };
+
+  await db.insert(tenantsTable).values(tenant);
+  console.log('新租户创建成功！')
+
+  const tenants = await db.select().from(tenantsTable);
+  console.log('从数据库获取所有租户: ', tenants)
+
+  const todo: typeof todosTable.$inferInsert = {
+    tenantId: tenants[0].id,
+    title: '用 AI 内容更新演示文稿'
+  }
+
+  await db.insert(todosTable).values(todo);
+  console.log('新待办事项创建成功！')
+
+  const todos = await db.select().from(todosTable);
+  console.log('从数据库获取所有待办事项: ', todos)
+
+  await db.execute(sql`SET nile.tenant_id = '${sql.raw(tenants[0].id)}'`);
+  console.log("设置租户上下文");
+
+  // 注意查询中缺少 tenant_id
+  const tenant_todos = await db.select().from(todosTable);
+  console.log('从租户虚拟数据库获取所有待办事项: ', tenant_todos)
+
+  await db
+    .update(todosTable)
+    .set({
+      complete: true,
+    })
+    .where(eq(todosTable.id, todo.id));
+  console.log('待办事项标记为完成！')
+
+  await db.delete(todosTable).where(eq(todosTable.id, todo.id));
+  console.log('待办事项已删除！')
+}
+
+main();
+```
+</CodeWithProps>

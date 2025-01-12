@@ -355,12 +355,12 @@ CREATE TABLE "users" (
 <Tag style="font-size: 12px">**Option 6**</Tag>
 > 我想在我的 TypeScript 代码库中拥有数据库架构，
 > 我希望 Drizzle 将我的 Drizzle 架构的 SQL 表示输出到控制台，
-> 然后我将通过 Atlas 应用这些架构到我的数据库中。
+> 然后我将通过 [Atlas](https://atlasgo.io/guides/orms/drizzle)应用这些架构到我的数据库中。
 
 <Callout collapsed="Expand details">
-这是一种 **代码库优先** 的方法。你将 TypeScript Drizzle 架构作为事实来源， 
-Drizzle 允许你基于模式更改生成 SQL 表示，使用 [`drizzle-kit export`](/docs/drizzle-kit-generate)，
-然后你可以通过外部迁移工具将这些架构应用到数据库。
+这是一种**以代码库为先**的方法。你拥有 TypeScript Drizzle 模式作为真实来源，并且
+Drizzle 允许你根据模式变化导出 SQL 语句，使用 [`drizzle-kit export`](/docs/drizzle-kit-generate)，然后
+你可以通过 [Atlas](https://atlasgo.io/guides/orms/drizzle) 或其他外部 SQL 迁移工具将它们应用到数据库。
 
 <Section>
 ```typescript filename="src/schema.ts"
@@ -377,13 +377,10 @@ export const users = p.pgTable("users", {
 │ $ drizzle-kit export   │                  
 └─┬──────────────────────┘                  
   │                                           
-  └ 1. 读取你的 Drizzle 架构
-    2. 生成架构的 SQL 表示
-  ┌ 3. 输出到控制台
+  └ 1. read your drizzle schema
+    2. generated SQL representation of your schema
+  ┌ 3. outputs to console
   │    
-  │       
-  │      
-  │        
   │        
   v
 ```
