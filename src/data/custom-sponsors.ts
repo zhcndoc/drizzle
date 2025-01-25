@@ -389,21 +389,6 @@ export const customSponsors: ISponsor[] = [
   },
   {
     tier: {
-      name: "$250 a month",
-      isOneTime: false,
-    },
-    sponsorEntity: {
-      __typename: "Organization",
-      login: "sheetjs.com",
-      name: "SheetJS",
-      avatarUrl: "/images/sheetjs.png",
-    },
-    createdAt: "2024-08-13T16:35:56Z",
-    isActive: true,
-    imageType: ImageType.IMAGE,
-  },
-  {
-    tier: {
       name: "$1000 a month",
       isOneTime: false,
     },
@@ -469,6 +454,30 @@ export const customSponsors: ISponsor[] = [
     lightStyle: {
       background:
         'url("/svg/praha-light.svg") 0% 0% / cover no-repeat content-box',
+    },
+  },
+  {
+    tier: {
+      name: "$1000 a month",
+      isOneTime: false,
+    },
+    sponsorEntity: {
+      __typename: "Organization",
+      login: "driz.link/lokalise",
+      name: "Lokalise",
+      avatarUrl:
+        '<svg width="1200" height="1200" viewBox="0 0 1200 1200" fill="none" xmlns="http://www.w3.org/2000/svg"></svg>',
+    },
+    createdAt: "2025-01-23T16:35:56Z",
+    isActive: true,
+    imageType: ImageType.SVG,
+    darkStyle: {
+      background:
+        'url("/svg/lokalise-dark.svg") 0% 0% / cover no-repeat content-box',
+    },
+    lightStyle: {
+      background:
+        'url("/svg/lokalise-light.svg") 0% 0% / cover no-repeat content-box',
     },
   },
   {
