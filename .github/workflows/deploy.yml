@@ -21,7 +21,6 @@ jobs:
 
       - name: Build project
         run: |
-          echo "${{ github.event.repository.name }}"
           corepack enable
           pnpm install
           pnpm run build
@@ -50,4 +49,4 @@ jobs:
           SSH_PRIVATE_KEY: ${{ secrets.SERVER_KEY }}
           SOURCE: "."
           ARGS: "-azr --delete"
-          TARGET: "${{ secrets.SERVER_PATH }}/drizzle/"
+          TARGET: "${{ secrets.SERVER_PATH }}/${{ github.event.repository.name }}/"
