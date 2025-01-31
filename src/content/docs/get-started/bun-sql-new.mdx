@@ -14,21 +14,26 @@ import QueryDatabaseUpdated from '@mdx/get-started/QueryDatabaseUpdated.mdx';
 import RunFile from '@mdx/get-started/RunFile.mdx';
 import ApplyChanges from '@mdx/get-started/ApplyChanges.mdx';
 import SetupEnv from '@mdx/get-started/SetupEnv.mdx';
-import CreateTable from '@mdx/get-started/sqlite/CreateTable.mdx';
-import ConnectBun from '@mdx/get-started/sqlite/ConnectBun.mdx';
+import CreateTable from '@mdx/get-started/postgresql/CreateTable.mdx';
+import ConnectBun from '@mdx/get-started/postgresql/ConnectBun.mdx';
 
 <Breadcrumbs/>
 
-# 使用 Drizzle 和 Bun:SQLite 入门
+# 开始使用 Drizzle 和 Bun:SQLite
 
 <Prerequisites>  
-  - **bun** - JavaScript 一体化工具包 - [点击阅读](https://bun.sh/)
-  - **bun:sqlite** - 高性能 SQLite3 驱动的原生实现 - [点击阅读](https://bun.sh/docs/api/sqlite)
+  - **bun** - javaScript 一体化工具包 - [点击这里阅读](https://bun.sh/)
+  - **Bun SQL** - 用于与 PostgreSQL 数据库进行交互的本机绑定 - [点击这里阅读](https://bun.sh/docs/api/sql)
 </Prerequisites>
+
+<Callout type='error'>
+在版本 `1.2.0` 中，Bun 在执行并发语句时存在问题，如果您尝试同时运行多个查询，可能会导致错误。
+我们已经创建了一个 [github 问题](https://github.com/oven-sh/bun/issues/16774) 供您跟踪。一旦修复，您应该不再在 Bun 的 SQL 方面遇到此类错误。
+</Callout>
 
 <FileStructure />
 
-#### 步骤 1 - 安装所需的包
+#### 步骤 1 - 安装所需的软件包
 <Npm>
   drizzle-orm
   -D drizzle-kit @types/bun
@@ -36,34 +41,27 @@ import ConnectBun from '@mdx/get-started/sqlite/ConnectBun.mdx';
 
 #### 步骤 2 - 设置连接变量
 
-<SetupEnv env_variable='DB_FILE_NAME' />
-
-<Callout type='info' title='重要'>
-例如，如果您想在项目根目录中创建一个 SQLite 数据库文件以进行测试，可以使用以下示例：
-```plaintext copy
-DB_FILE_NAME=mydb.sqlite
-```
-</Callout>
+<SetupEnv env_variable='DATABASE_URL' />
 
 #### 步骤 3 - 将 Drizzle ORM 连接到数据库
 
 <ConnectBun/>
 
-#### 步骤 4 - 创建一个表
+#### 步骤 4 - 创建表格
 
 <CreateTable/>
 
 #### 步骤 5 - 设置 Drizzle 配置文件
 
-<SetupConfig dialect='sqlite' env_variable='DB_FILE_NAME' />
+<SetupConfig dialect='postgresql' env_variable='DATABASE_URL'/>
 
 #### 步骤 6 - 将更改应用到数据库
 
 <ApplyChanges />
 
-#### 步骤 7 - 生成并查询数据库
+#### 步骤 7 - 初始化并查询数据库
 
-<QueryDatabase dialect='bun-sqlite' env_variable='DB_FILE_NAME' />
+<QueryDatabase dialect='bun-sql' env_variable='DATABASE_URL'/>
 
 #### 步骤 8 - 运行 index.ts 文件
 

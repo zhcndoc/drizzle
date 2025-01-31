@@ -1,0 +1,29 @@
+import CodeTabs from "@mdx/CodeTabs.astro";
+
+在 `src` 目录中创建一个 `index.ts` 文件并初始化连接：
+
+<CodeTabs items={["bun sql", "bun sql with config"]}>
+```typescript copy
+import 'dotenv/config';
+import { drizzle } from 'drizzle-orm/bun-sql';
+
+const db = drizzle(process.env.DATABASE_URL!);
+```
+```typescript copy
+import 'dotenv/config';
+import { drizzle } from 'drizzle-orm/bun-sql';
+
+// You can specify any property from the bun sql connection options
+const db = drizzle({ connection: { url: process.env.DATABASE_URL! }});
+```
+</CodeTabs>
+
+如果您需要提供您现有的驱动程序：
+```typescript copy
+import 'dotenv/config';
+import { drizzle } from 'drizzle-orm/bun-sql';
+import { SQL } from 'bun';
+
+const client = new SQL(process.env.DATABASE_URL!);
+const db = drizzle({ client });
+```

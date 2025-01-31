@@ -471,6 +471,49 @@ select "id", "name", "age" from sq;
 ```
 </Section>
 
+您还可以在 `with` 中提供 `insert`、`update` 和 `delete` 语句。
+
+<Section>
+```typescript copy
+const sq = db.$with('sq').as(
+    db.insert(users).values({ name: 'John' }).returning(),
+);
+
+const result = await db.with(sq).select().from(sq);
+```
+```sql
+with "sq" as (insert into "users" ("id", "name") values (default, 'John') returning "id", "name") 
+select "id", "name" from "sq"
+```
+</Section>
+
+<Section>
+```typescript copy
+const sq = db.$with('sq').as(
+    db.update(users).set({ age: 25 }).where(eq(users.name, 'John')).returning(),
+);
+const result = await db.with(sq).select().from(sq);
+```
+```sql
+with "sq" as (update "users" set "age" = 25 where "users"."name" = 'John' returning "id", "name", "age") 
+select "id", "name", "age" from "sq"
+```
+</Section>
+
+<Section>
+```typescript copy
+const sq = db.$with('sq').as(
+  db.delete(users).where(eq(users.name, 'John')).returning(),
+);
+
+const result = await db.with(sq).select().from(sq);
+```
+```sql
+with "sq" as (delete from "users" where "users"."name" = $1 returning "id", "name", "age") 
+select "id", "name", "age" from "sq"
+```
+</Section>
+
 若要选择 CTE 中的任意 SQL 值作为字段并在其他 CTE 或主查询中引用它们，
 您需要为它们添加别名：
 ```typescript copy

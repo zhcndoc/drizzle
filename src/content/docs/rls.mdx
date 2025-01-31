@@ -303,6 +303,17 @@ export const authenticatedRole = pgRole('authenticated').existing();
 export const anonymousRole = pgRole('anonymous').existing();
 
 export const authUid = (userIdColumn: AnyPgColumn) => sql`(select auth.user_id() = ${userIdColumn})`;
+
+export const neonIdentitySchema = pgSchema('neon_identity');
+
+export const usersSync = neonIdentitySchema.table('users_sync', {
+  rawJson: jsonb('raw_json').notNull(),
+  id: text().primaryKey().notNull(),
+  name: text(),
+  email: text(),
+  createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' }),
+  deletedAt: timestamp('deleted_at', { withTimezone: true, mode: 'string' }),
+});
 ```
 
 例如，您可以像这样使用 `Neon` 预定义的角色和函数：
