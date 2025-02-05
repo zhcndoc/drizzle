@@ -1,0 +1,231 @@
+---
+title: "使用 Netlify Edge 函数和 Supabase 数据库的 Drizzle"
+date: "2025-01-30"
+---
+
+import Prerequisites from "@mdx/Prerequisites.astro";
+import Npm from '@mdx/Npm.astro';
+import Steps from '@mdx/Steps.astro';
+import Section from "@mdx/Section.astro";
+import Callout from "@mdx/Callout.astro";
+
+本教程演示了如何使用 Drizzle ORM 与 [Netlify Edge 函数](https://docs.netlify.com/edge-functions/overview/) 和 [Supabase 数据库](https://supabase.com/docs/guides/database/overview) 数据库。
+
+<Prerequisites>
+- 你应该安装最新版本的 [Netlify CLI](https://docs.netlify.com/cli/get-started/#installation)。
+- 你应该已经安装了 Drizzle ORM 和 [Drizzle kit](/docs/kit-overview)。你可以通过运行以下命令来完成这一步：
+<Npm>
+drizzle-orm
+-D drizzle-kit
+</Npm>
+
+- 你应该已经安装了用于管理环境变量的 `dotenv` 包。如果你使用的是 Node.js `v20.6.0` 或更高版本，则不需要安装它，因为 Node.js 原生支持 `.env` 文件。有关更多信息，请阅读 [这里](https://nodejs.org/en/blog/release/v20.6.0#built-in-env-file-support)。
+<Npm>
+  dotenv
+</Npm>
+
+- 可选地，你可以安装 `@netlify/edge-functions` 包，以导入稍后将使用的 `Context` 对象的类型。
+<Npm>
+  @netlify/edge-functions
+</Npm>
+</Prerequisites>
+
+<Callout type="warning">
+这些安装的包仅用于在 [创建表](#create-a-table)、[设置 Drizzle 配置文件](#setup-drizzle-config-file) 和 [将更改应用于数据库](#apply-changes-to-the-database) 步骤中在数据库中创建表。这些包不会影响在 Netlify Edge 函数内部运行的代码。我们将使用 `import_map.json` 导入 Edge 函数所需的包。
+</Callout>
+
+<Steps>
+#### 创建一个新的 Supabase 项目
+
+你可以在 [仪表板](https://supabase.com/dashboard) 中创建新的 Supabase 项目，也可以通过此 [链接](https://database.new/) 进行创建。
+
+#### 设置连接字符串变量
+
+你可以通过点击仪表板顶部的 **连接** 以查找 `项目连接详细信息`，并从 `交易池` 部分复制 URI。记得用你的实际数据库密码替换密码占位符。
+
+将 `DATABASE_URL` 变量添加到你的 `.env` 文件中。
+
+```plaintext copy
+DATABASE_URL=<YOUR_DATABASE_URL>
+```
+
+有关连接 Supabase 数据库的更多信息，请查看 [文档](https://supabase.com/docs/guides/database/connecting-to-postgres#connection-pooler)。
+
+#### 设置 Netlify Edge 函数
+
+在你的项目根目录中创建 `netlify/edge-functions` 目录。这是你将存储 Edge 函数的地方。
+
+在 `netlify/edge-functions` 目录中创建一个函数 `user.ts`。
+
+```typescript copy filename="netlify/edge-functions/user.ts"
+import type { Context } from "@netlify/edge-functions";
+
+export default async (request: Request, context: Context) => {
+  return new Response("用户数据");
+};
+```
+
+<Callout type="warning">
+`Request` 和 `Response` 对象的类型在全局范围内。
+</Callout>
+
+#### 设置导入
+
+在你的项目根目录中创建一个 `import_map.json` 文件，并添加以下内容：
+
+```json copy filename="import_map.json"
+{
+  "imports": {
+    "drizzle-orm/": "https://esm.sh/drizzle-orm/",
+    "postgres": "https://esm.sh/postgres"
+  }
+}
+```
+
+有关 `import_map.json` 的更多信息，请查看 Netlify Edge 函数的 [文档](https://docs.netlify.com/edge-functions/api/#import-maps)。
+
+#### 创建 Netlify 配置文件
+
+在你的项目根目录中创建一个 `netlify.toml` 文件，并添加以下内容：
+
+```toml copy filename="netlify.toml"
+[functions]
+  deno_import_map = "./import_map.json"
+
+[[edge_functions]]
+  path = "/user"
+  function = "user"
+```
+
+此配置告诉 Netlify 使用 `import_map.json` 文件进行 Deno 导入，并将对 `/user` 路径的请求路由到 `user.ts` 函数。
+有关 `netlify.toml` 的更多信息，请查看 [文档](https://docs.netlify.com/configure-builds/file-based-configuration/)。
+
+#### 创建一个表
+
+在 `netlify/edge-functions/common` 目录中创建一个 `schema.ts` 文件，并声明一个表模式：
+
+```typescript copy filename="netlify/edge-functions/common/schema.ts"
+import { pgTable, serial, text, integer } from "drizzle-orm/pg-core";
+
+export const usersTable = pgTable('users_table', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  age: integer('age').notNull(),
+  email: text('email').notNull().unique(),
+})
+```
+
+#### 设置 Drizzle 配置文件
+
+**Drizzle 配置** - 一个被 [Drizzle Kit](/docs/kit-overview) 使用的配置文件，包含关于数据库连接、迁移文件夹和模式文件的所有信息。
+
+在你的项目根目录中创建一个 `drizzle.config.ts` 文件，并添加以下内容：
+
+```typescript copy filename="drizzle.config.ts"
+import 'dotenv/config'; // 如果你使用 Node.js v20.6.0 或更高版本，请移除此行
+import type { Config } from "drizzle-kit";
+
+export default {
+  schema: './netlify/edge-functions/common/schema.ts',
+  out: './drizzle',
+  dialect: 'postgresql',
+  dbCredentials: {
+    url: process.env.DATABASE_URL!,
+  },
+} satisfies Config;
+```
+
+在本教程中，我们将使用 Drizzle kit 将更改推送到 Neon 数据库。
+
+#### 将更改应用于数据库
+
+```bash copy
+npx drizzle-kit push
+```
+<Callout type="warning">推送命令适合于需要快速测试新模式设计或在本地开发环境中进行快速迭代的情况，无需管理迁移文件的开销。</Callout>
+
+另外，你可以使用迁移工作流。有关更多信息，请阅读 [迁移文档](/docs/migrations)。
+
+#### 将 Drizzle ORM 连接到你的数据库
+
+更新你的 `netlify/edge-functions/user.ts` 文件并设置数据库配置：
+
+```typescript copy filename="netlify/edge-functions/user.ts"
+import type { Context } from "@netlify/edge-functions";
+import { usersTable } from "./common/schema.ts";
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
+
+export default async (request: Request, context: Context) => {
+  const queryClient = postgres(Netlify.env.get("DATABASE_URL")!);
+  const db = drizzle({ client: queryClient });
+
+  const users = await db.select().from(usersTable);
+
+  return new Response(JSON.stringify(users));
+};
+```
+
+<Callout type="warning">
+如果你在使用 VS Code，你可能会看到导入部分下面有红色下划线。Edge 函数仍然会执行。要消除红色下划线，可以在下一步中配置 VS Code 使用 Edge 函数。
+</Callout>
+
+#### 在本地测试你的代码
+
+运行以下命令以启动 Netlify 开发服务器：
+
+```bash copy
+netlify dev
+```
+
+首次运行该命令时，它会建议你配置 VS Code 以使用 Edge 函数。点击 `是` 进行配置。一个 `settings.json` 文件将会在 `.vscode` 目录中创建。
+如果你仍然看到红色下划线，可以重新启动 Deno 语言服务器。
+
+打开你的浏览器并导航到路由 `/user`。你应该能从 Neon 数据库中看到返回的用户数据：
+
+```plaintext
+[]
+```
+
+如果你没有向 `users_table` 表中添加任何数据，它可能是一个空数组。
+
+#### 初始化一个新的 Netlify 项目
+
+运行以下命令以初始化一个新的 Netlify 项目：
+
+```bash copy
+netlify init
+```
+
+在 CLI 中回答问题以创建一个新的 Netlify 项目。在本教程中，我们将选择 `是，手动创建和部署站点` -> `<YOUR_TEAM>` -> `<SITE_NAME>`。
+
+#### 设置 Netlify 环境变量
+
+运行以下命令将你的环境变量导入到 Netlify：
+
+```bash copy
+netlify env:import .env
+```
+
+有关 Netlify 环境变量的更多信息，请查看 [文档](https://docs.netlify.com/environment-variables/get-started/)。
+
+#### 部署你的项目
+
+运行以下命令以部署你的项目：
+
+```bash copy
+netlify deploy
+```
+
+按照 CLI 中的说明将你的项目部署到 Netlify。在本教程中，我们的发布目录为 `'.'`。
+
+默认情况下，这是一个 [草稿部署](https://docs.netlify.com/cli/get-started/#draft-deploys)。
+要进行生产部署，请运行以下命令：
+
+```bash copy
+netlify deploy --prod
+```
+
+</Steps>
+
+最后，你可以使用部署网站的 URL，导航到你创建的路由 `(例如 /user)` 以访问你的 Edge 函数。

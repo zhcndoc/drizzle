@@ -127,9 +127,9 @@ SQL 中的生成列是一项功能，允许您在表中创建列，其值基于�
           (): SQL => sql`to_tsvector('english', ${test.content})`
         ),
       },
-      (t) => ({
-        idx: index("idx_content_search").using("gin", t.contentSearch),
-      })
+      (t) => [
+        index("idx_content_search").using("gin", t.contentSearch)
+      ]
     );
     ```
     ```sql {4}

@@ -54,9 +54,9 @@ CREATE EXTENSION vector;
       url: text('url').notNull(),
       embedding: vector('embedding', { dimensions: 1536 }),
     },
-    (table) => ({
-      embeddingIndex: index('embeddingIndex').using('hnsw', table.embedding.op('vector_cosine_ops')),
-    }),
+    (table) => [
+      index('embeddingIndex').using('hnsw', table.embedding.op('vector_cosine_ops')),
+    ]
   );
   ```
   </CodeTab>

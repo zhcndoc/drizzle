@@ -69,10 +69,9 @@ await db.execute(
       id: serial('id').primaryKey(),
       title: text('title').notNull(),
     },
-    (table) => ({
-      titleSearchIndex: index('title_search_index')
-      .using('gin', sql`to_tsvector('english', ${table.title})`),
-    }),
+    (table) => [
+      index('title_search_index').using('gin', sql`to_tsvector('english', ${table.title})`),
+    ]
   );
   ```
   </CodeTab>
@@ -235,15 +234,15 @@ select * from posts
       title: text('title').notNull(),
       description: text('description').notNull(),
     },
-    (table) => ({
-      searchIndex: index('search_index').using(
+    (table) => [
+      index('search_index').using(
         'gin',
         sql`(
             setweight(to_tsvector('english', ${table.title}), 'A') ||
             setweight(to_tsvector('english', ${table.description}), 'B')
         )`,
       ),
-    }),
+    ],
   );
   ```
   </CodeTab>

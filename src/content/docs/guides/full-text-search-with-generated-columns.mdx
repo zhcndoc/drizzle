@@ -1,0 +1,176 @@
+---
+title: 使用生成列进行全文搜索
+slug: full-text-search-with-generated-columns
+---
+
+import Section from "@mdx/Section.astro";
+import Prerequisites from "@mdx/Prerequisites.astro";
+import CodeTabs from '@mdx/CodeTabs.astro';
+import CodeTab from '@mdx/CodeTab.astro';
+
+<Prerequisites>
+- 开始使用 [PostgreSQL](/docs/get-started-postgresql)
+- [选择语句](/docs/select)
+- [索引](/docs/indexes-constraints#indexes)
+- [sql 操作符](/docs/sql) 
+- [全文搜索](/learn/guides/postgresql-full-text-search)
+- [生成列](/docs/generated-columns)
+</Prerequisites>
+
+本指南演示了如何使用 Drizzle 和生成列在 PostgreSQL 中实现全文搜索。生成列是一个特殊的列，它总是从其他列计算得出。它的好处在于你不必每次查询表时都计算该列的值：
+
+<CodeTabs items={["schema.ts", "migration.sql"]}>
+  <CodeTab>
+  ```ts copy {18,19,20,23}
+import { SQL, sql } from 'drizzle-orm';
+import { index, pgTable, serial, text, customType } from 'drizzle-orm/pg-core';
+
+export const tsvector = customType<{
+  data: string;
+}>({
+  dataType() {
+    return `tsvector`;
+  },
+});
+
+export const posts = pgTable(
+  'posts',
+  {
+    id: serial('id').primaryKey(),
+    title: text('title').notNull(),
+    body: text('body').notNull(),
+    bodySearch: tsvector('body_search')
+      .notNull()
+      .generatedAlwaysAs((): SQL => sql`to_tsvector('english', ${posts.body})`),
+  },
+  (t) => [
+    index('idx_body_search').using('gin', t.bodySearch),
+  ]
+);
+  ```
+  </CodeTab>
+  ```sql
+CREATE TABLE "posts" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"title" text NOT NULL,
+	"body" text NOT NULL,
+	"body_search" "tsvector" GENERATED ALWAYS AS (to_tsvector('english', "posts"."body")) STORED NOT NULL
+);
+--> statement-breakpoint
+CREATE INDEX "idx_body_search" ON "posts" USING gin ("body_search");
+  ```
+</CodeTabs>
+
+当你向表中插入一行时，生成列的值是从创建列时提供的表达式计算得出的：
+
+<Section>
+```ts 
+import { posts } from './schema';
+
+const db = drizzle(...);
+
+const body = "金色的树叶覆盖了宁静的街道，清脆的微风充满空气，带来了雨的气息和变化的承诺"
+
+await db.insert(posts).values({
+    body,
+    title: "秋天的美丽",
+  }
+).returning();
+```
+
+```json
+[
+  {
+    id: 1,
+    title: '秋天的美丽',
+    body: '金色的树叶覆盖了宁静的街道，清脆的微风充满空气，带来了雨的气息和变化的承诺',
+    bodySearch: "'air':13 'breez':10 'bring':14 'chang':23 'cover':3 'crisp':9 'fill':11 'golden':1 'leav':2 'promis':21 'quiet':5 'rain':18 'scent':16 'street':6"
+  }
+]
+```
+</Section>
+
+这就是如何通过生成列在 PostgreSQL 中使用 Drizzle ORM 实现全文搜索的方法。`@@` 操作符用于直接匹配：
+
+<Section>
+```ts copy {6}
+const searchParam = "bring";
+
+await db
+  .select()
+  .from(posts)
+  .where(sql`${posts.bodySearch} @@ to_tsquery('english', ${searchParam})`);
+```
+
+```sql
+select * from posts where body_search @@ to_tsquery('english', 'bring');
+```
+</Section>
+
+这是一个更高级的模式，其中有一个生成列。`search` 列是由 `title` 和 `body` 列生成的，`setweight()` 函数用于为全文搜索分配不同的权重。这通常用于标记来自文档不同部分的条目，如标题与正文。
+
+<CodeTabs items={["schema.ts", "migration.sql"]}>
+  <CodeTab>
+  ```ts copy {18,19,20,21,22,23,24,28}
+import { SQL, sql } from 'drizzle-orm';
+import { index, pgTable, serial, text, customType } from 'drizzle-orm/pg-core';
+
+export const tsvector = customType<{
+  data: string;
+}>({
+  dataType() {
+    return `tsvector`;
+  },
+});
+
+export const posts = pgTable(
+ 'posts',
+ {
+   id: serial('id').primaryKey(),
+   title: text('title').notNull(),
+   body: text('body').notNull(),
+   search: tsvector('search')
+     .notNull()
+     .generatedAlwaysAs(
+        (): SQL =>
+         sql`setweight(to_tsvector('english', ${posts.title}), 'A')
+          ||
+          setweight(to_tsvector('english', ${posts.body}), 'B')`,
+     ),
+  },
+  (t) => [
+    index('idx_search').using('gin', t.search),
+  ],
+);
+  ```
+  </CodeTab>
+  ```sql
+CREATE TABLE "posts" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"title" text NOT NULL,
+	"body" text NOT NULL,
+	"search" "tsvector" GENERATED ALWAYS AS (setweight(to_tsvector('english', "posts"."title"), 'A')
+          ||
+          setweight(to_tsvector('english', "posts"."body"), 'B')) STORED NOT NULL
+);
+--> statement-breakpoint
+CREATE INDEX "idx_search" ON "posts" USING gin ("search");
+  ```
+</CodeTabs>
+
+这就是如何使用全文搜索查询表的方法：
+
+<Section>
+```ts copy {6}
+const search = 'travel';
+
+await db
+  .select()
+  .from(posts)
+  .where(sql`${posts.search} @@ to_tsquery('english', ${search})`);
+```
+
+```sql
+select * from posts where search @@ to_tsquery('english', 'travel');
+```
+</Section>

@@ -216,18 +216,18 @@ SQL 约束是对表列施加的规则。它们用于防止无效数据被输入�
       export const composite = pgTable('composite_example', {
         id: integer('id'),
         name: text('name'),
-      }, (t) => [{
-        unq: unique().on(t.id, t.name),
-        unq2: unique('custom_name').on(t.id, t.name)
-      }]);
+      }, (t) => [
+        unique().on(t.id, t.name),
+        unique('custom_name').on(t.id, t.name)
+      ]);
 
       // In Postgres 15.0+ NULLS NOT DISTINCT is available
       // This example demonstrates both available usages
       export const userNulls = pgTable('user_nulls_example', {
         id: integer('id').unique("custom_name", { nulls: 'not distinct' }),
-      }, (t) => [{
-        unq: unique().on(t.id).nullsNotDistinct()
-      }]);
+      }, (t) => [
+        unique().on(t.id).nullsNotDistinct()
+      ]);
       ```
 
       ```sql
@@ -273,10 +273,10 @@ SQL 约束是对表列施加的规则。它们用于防止无效数据被输入�
       export const composite = mysqlTable('composite_example', {
         id: int('id'),
         name: varchar('name', { length: 256 }),
-      }, (t) => ({
-        unq: unique().on(t.id, t.name),
-        unq2: unique('custom_name').on(t.id, t.name)
-      }));
+      }, (t) => [
+        unique().on(t.id, t.name),
+        unique('custom_name').on(t.id, t.name)
+      ]);
       ```
 
       ```sql
@@ -316,10 +316,10 @@ SQL 约束是对表列施加的规则。它们用于防止无效数据被输入�
       export const composite = sqliteTable('composite_example', {
         id: int('id'),
         name: text('name'),
-      }, (t) => ({
-        unq: unique().on(t.id, t.name),
-        unq2: unique('custom_name').on(t.id, t.name)
-      }));
+      }, (t) => [
+        unique().on(t.id, t.name),
+        unique('custom_name').on(t.id, t.name)
+      ]);
       ```
 
       ```sql
@@ -360,10 +360,10 @@ SQL 约束是对表列施加的规则。它们用于防止无效数据被输入�
       export const composite = singlestoreTable('composite_example', {
         id: int('id'),
         name: varchar('name', { length: 256 }),
-      }, (t) => ({
-        unq: unique().on(t.id, t.name),
-        unq2: unique('custom_name').on(t.id, t.name)
-      }));
+      }, (t) => [
+        unique().on(t.id, t.name),
+        unique('custom_name').on(t.id, t.name)
+      ]);
       ```
 
       ```sql
@@ -411,9 +411,9 @@ SQL 约束是对表列施加的规则。它们用于防止无效数据被输入�
           username: text().notNull(),
           age: integer(),
         },
-        (table) => [{
-          checkConstraint: check("age_check1", sql`${table.age} > 21`),
-        }]
+        (table) => [
+          check("age_check1", sql`${table.age} > 21`),
+        ]
       );
       ```
       ```sql
@@ -440,9 +440,9 @@ SQL 约束是对表列施加的规则。它们用于防止无效数据被输入�
           username: text().notNull(),
           age: int(),
         },
-        (table) => ({
-          checkConstraint: check("age_check1", sql`${table.age} > 21`),
-        })
+        (table) => [
+          check("age_check1", sql`${table.age} > 21`)
+        ]
       );
       ```
       ```sql
@@ -469,9 +469,9 @@ SQL 约束是对表列施加的规则。它们用于防止无效数据被输入�
           username: text().notNull(),
           age: int(),
         },
-        (table) => ({
-          checkConstraint: check("age_check1", sql`${table.age} > 21`),
-        })
+        (table) => [
+          check("age_check1", sql`${table.age} > 21`)
+        ]
       );
       ```
       ```sql
@@ -628,12 +628,11 @@ Drizzle ORM 提供了一个独立的 `primaryKey` 操作符来实现这一点：
       export const booksToAuthors = pgTable("books_to_authors", {
         authorId: integer("author_id"),
         bookId: integer("book_id"),
-      }, (table) => {
-        return [{
-          pk: primaryKey({ columns: [table.bookId, table.authorId] }),
-          pkWithCustomName: primaryKey({ name: 'custom_name', columns: [table.bookId, table.authorId] }),
-        }];
-      });
+      }, (table) => [
+        primaryKey({ columns: [table.bookId, table.authorId] }),
+        // Or PK with custom name
+        primaryKey({ name: 'custom_name', columns: [table.bookId, table.authorId] }),
+      ]);
       ```
 
       ```sql {6, 9}
@@ -668,12 +667,11 @@ Drizzle ORM 提供了一个独立的 `primaryKey` 操作符来实现这一点：
       export const booksToAuthors = mysqlTable("books_to_authors", {
         authorId: int("author_id"),
         bookId: int("book_id"),
-      }, (table) => {
-        return {
-          pk: primaryKey({ columns: [table.bookId, table.authorId] }),
-          pkWithCustomName: primaryKey({ name: 'custom_name', columns: [table.bookId, table.authorId] }),
-        };
-      });
+      }, (table) => [
+        primaryKey({ columns: [table.bookId, table.authorId] }),
+        // Or PK with custom name
+        primaryKey({ name: 'custom_name', columns: [table.bookId, table.authorId] })
+      ]);
       ```
 
       ```sql {6}
@@ -706,12 +704,11 @@ Drizzle ORM 提供了一个独立的 `primaryKey` 操作符来实现这一点：
       export const bookToAuthor = sqliteTable("book_to_author", {
         authorId: integer("author_id"),
         bookId: integer("book_id"),
-      }, (table) => {
-        return {
-          pk: primaryKey({ columns: [table.bookId, table.authorId] }),
-          pkWithCustomName: primaryKey({ name: 'custom_name', columns: [table.bookId, table.authorId] }),
-        };
-      });
+      }, (table) => [
+        primaryKey({ columns: [table.bookId, table.authorId] }),
+        // Or PK with custom name
+        primaryKey({ name: 'custom_name', columns: [table.bookId, table.authorId] })
+      ]);
       ```
       ```sql {6}
       ...
@@ -743,12 +740,11 @@ Drizzle ORM 提供了一个独立的 `primaryKey` 操作符来实现这一点：
       export const booksToAuthors = singlestoreTable("books_to_authors", {
         authorId: int("author_id"),
         bookId: int("book_id"),
-      }, (table) => {
-        return {
-          pk: primaryKey({ columns: [table.bookId, table.authorId] }),
-          pkWithCustomName: primaryKey({ name: 'custom_name', columns: [table.bookId, table.authorId] }),
-        };
-      });
+      }, (table) => [
+        primaryKey({ columns: [table.bookId, table.authorId] }),
+        // Or PK with custom name
+        primaryKey({ name: 'custom_name', columns: [table.bookId, table.authorId] }),
+      ]);
       ```
 
       ```sql {6}
@@ -849,15 +845,13 @@ Drizzle ORM 提供了几种声明外键的方法。
       id: serial("id"),
       name: text("name"),
       parentId: integer("parent_id"),
-    }, (table) => {
-      return [{
-        parentReference: foreignKey({
-          columns: [table.parentId],
-          foreignColumns: [table.id],
-          name: "custom_fk"
-        }),
-      }];
-    });
+    }, (table) => [
+      foreignKey({
+        columns: [table.parentId],
+        foreignColumns: [table.id],
+        name: "custom_fk"
+      })
+    ]);
     ```
 
   </Tab>
@@ -876,15 +870,13 @@ Drizzle ORM 提供了几种声明外键的方法。
       id: int("id").primaryKey().autoincrement(),
       name: text("name"),
       parentId: int("parent_id")
-    }, (table) => {
-      return {
-        parentReference: foreignKey({
-          columns: [table.parentId],
-          foreignColumns: [table.id],
-          name: "custom_fk"
-        }),
-      };
-    });
+    }, (table) => [
+      foreignKey({
+        columns: [table.parentId],
+        foreignColumns: [table.id],
+        name: "custom_fk"
+      })
+    ]);
     ```
 
   </Tab>
@@ -903,15 +895,13 @@ Drizzle ORM 提供了几种声明外键的方法。
       id: integer("id").primaryKey({ autoIncrement: true }),
       name: text("name"),
       parentId: integer("parent_id"),
-    }, (table) => {
-      return {
-        parentReference: foreignKey({
-          columns: [table.parentId],
-          foreignColumns: [table.id],
-          name: "custom_fk"
-        }),
-      };
-    });
+    }, (table) => [
+      foreignKey({
+        columns: [table.parentId],
+        foreignColumns: [table.id],
+        name: "custom_fk"
+      })
+    ]);
     ```
 
   </Tab>
@@ -928,25 +918,21 @@ Drizzle ORM 提供了几种声明外键的方法。
     export const user = pgTable("user", {
       firstName: text("firstName"),
       lastName: text("lastName"),
-    }, (table) => {
-      return {
-        pk: primaryKey({ columns: [table.firstName, table.lastName]}),
-      };
-    });
+    }, (table) => [
+      primaryKey({ columns: [table.firstName, table.lastName]})
+    ]);
 
     export const profile = pgTable("profile", {
       id: serial("id").primaryKey(),
       userFirstName: text("user_first_name"),
       userLastName: text("user_last_name"),
-    }, (table) => {
-      return [{
-        userReference: foreignKey({
-          columns: [table.userFirstName, table.userLastName],
-          foreignColumns: [user.firstName, user.lastName]
-          name: "custom_fk"
-        })
-      }]
-    })
+    }, (table) => [
+      foreignKey({
+        columns: [table.userFirstName, table.userLastName],
+        foreignColumns: [user.firstName, user.lastName],
+        name: "custom_fk"
+      })
+    ])
     ```
 
   </Tab>
@@ -957,25 +943,21 @@ Drizzle ORM 提供了几种声明外键的方法。
     export const user = mysqlTable("user", {
       firstName: text("firstName"),
       lastName: text("lastName"),
-    }, (table) => {
-      return {
-        pk: primaryKey({ columns: [table.firstName, table.lastName]}),
-      };
-    });
+    }, (table) => [
+      primaryKey({ columns: [table.firstName, table.lastName]})
+    ]);
 
     export const profile = mysqlTable("profile", {
       id: int("id").autoincrement().primaryKey(),
       userFirstName: text("user_first_name"),
       userLastName: text("user_last_name"),
-    }, (table) => {
-      return {
-        userReference: foreignKey({
-          columns: [table.userFirstName, table.userLastName],
-          foreignColumns: [user.firstName, user.lastName],
-          name: "custom_name"
-        })
-      }
-    });
+    }, (table) => [
+      foreignKey({
+        columns: [table.userFirstName, table.userLastName],
+        foreignColumns: [user.firstName, user.lastName],
+        name: "custom_name"
+      })
+    ]);
     ```
 
   </Tab>
@@ -986,25 +968,21 @@ Drizzle ORM 提供了几种声明外键的方法。
     export const user = sqliteTable("user", {
       firstName: text("firstName"),
       lastName: text("lastName"),
-    }, (table) => {
-      return {
-        pk: primaryKey({ columns: [table.firstName, table.lastName]}),
-      };
-    });
+    }, (table) => [
+      primaryKey({ columns: [table.firstName, table.lastName]})
+    ]);
 
     export const profile = sqliteTable("profile", {
       id: integer("id").primaryKey({ autoIncrement: true }),
       userFirstName: text("user_first_name"),
       userLastName: text("user_last_name"),
-    }, (table) => {
-      return {
-        userReference: foreignKey({
-          columns: [table.userFirstName, table.userLastName],
-          foreignColumns: [user.firstName, user.lastName],
-          name: "custom_name"
-        })
-      }
-    });
+    }, (table) => [
+      foreignKey({
+        columns: [table.userFirstName, table.userLastName],
+        foreignColumns: [user.firstName, user.lastName],
+        name: "custom_name"
+      })
+    ]);
     ```
 
   </Tab>
@@ -1027,12 +1005,10 @@ Drizzle ORM 提供了 `index` 和 `unique index` 声明的 API：
       id: serial("id").primaryKey(),
       name: text("name"),
       email: text("email"),
-    }, (table) => {
-      return {
-        nameIdx: index("name_idx").on(table.name),
-        emailIdx: uniqueIndex("email_idx").on(table.email),
-      };
-    });
+    }, (table) => [
+      index("name_idx").on(table.name),
+      uniqueIndex("email_idx").on(table.email)
+    ]);
     ```
     ```sql {5-6}
     CREATE TABLE "user" (
@@ -1077,12 +1053,10 @@ index('name')
       id: int("id").primaryKey().autoincrement(),
       name: text("name"),
       email: text("email"),
-    }, (table) => {
-      return {
-        nameIdx: index("name_idx").on(table.name),
-        emailIdx: uniqueIndex("email_idx").on(table.email),
-      };
-    });
+    }, (table) => [
+      index("name_idx").on(table.name),
+      uniqueIndex("email_idx").on(table.email),
+    ]);
     ```
     ```sql {5-6}
     CREATE TABLE `user` (
@@ -1117,12 +1091,10 @@ index('name')
       id: integer("id").primaryKey({ autoIncrement: true }),
       name: text("name"),
       email: text("email"),
-    }, (table) => {
-      return {
-        nameIdx: index("name_idx").on(table.name),
-        emailIdx: uniqueIndex("email_idx").on(table.email),
-      };
-    });
+    }, (table) => [
+      index("name_idx").on(table.name),
+      uniqueIndex("email_idx").on(table.email),
+    ]);
     ```
     ```sql {5-6}
     CREATE TABLE `user` (
@@ -1152,12 +1124,10 @@ index('name')
       id: int("id").primaryKey().autoincrement(),
       name: text("name"),
       email: text("email"),
-    }, (table) => {
-      return {
-        nameIdx: index("name_idx").on(table.name),
-        emailIdx: uniqueIndex("email_idx").on(table.email),
-      };
-    });
+    }, (table) => [
+      index("name_idx").on(table.name),
+      uniqueIndex("email_idx").on(table.email),
+    ]);
     ```
     ```sql {5-6}
     CREATE TABLE `user` (

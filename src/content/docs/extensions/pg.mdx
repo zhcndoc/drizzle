@@ -58,11 +58,11 @@ CREATE TABLE IF NOT EXISTS "table" (
 
 const table = pgTable('items', {
     embedding: vector({ dimensions: 3 })
-}, (table) => ({
-    l2: index('l2_index').using('hnsw', table.embedding.op('vector_l2_ops'))
-    ip: index('ip_index').using('hnsw', table.embedding.op('vector_ip_ops'))
-    cosine: index('cosine_index').using('hnsw', table.embedding.op('vector_cosine_ops'))
-}))
+}, (table) => [
+  index('l2_index').using('hnsw', table.embedding.op('vector_l2_ops'))
+  index('ip_index').using('hnsw', table.embedding.op('vector_ip_ops'))
+  index('cosine_index').using('hnsw', table.embedding.op('vector_cosine_ops'))
+])
 ```
 
 #### L1 距离、汉明距离和杰卡德距离 - 在 pg_vector 0.7.0 版本中添加
@@ -74,11 +74,11 @@ const table = pgTable('items', {
 
 const table = pgTable('table', {
     embedding: vector({ dimensions: 3 })
-}, (table) => ({
-    l1: index('l1_index').using('hnsw', table.embedding.op('vector_l1_ops')),
-    hamming: index('hamming_index').using('hnsw', table.embedding.op('bit_hamming_ops')),
-    bit: index('bit_jaccard_index').using('hnsw', table.embedding.op('bit_jaccard_ops'))
-}))
+}, (table) => [
+  index('l1_index').using('hnsw', table.embedding.op('vector_l1_ops')),
+  index('hamming_index').using('hnsw', table.embedding.op('bit_hamming_ops')),
+  index('bit_jaccard_index').using('hnsw', table.embedding.op('bit_jaccard_ops'))
+])
 ```
 
 #### 辅助函数
@@ -192,7 +192,7 @@ const items = pgTable('items', {
 
 const table = pgTable('table', {
   	geo: geometry({ type: 'point' }),
-}, (table) => ({
-    gist: index('custom_idx').using('gist', table.geo)
-}))
+}, (table) => [
+  index('custom_idx').using('gist', table.geo)
+])
 ```

@@ -35,10 +35,10 @@ Drizzle 提供了简单灵活的 API，让你可以轻松使用 SQL 类似的语
       name: text('name').notNull(),
       email: text('email').notNull(),
     },
-    (table) => ({
-      // emailUniqueIndex: uniqueIndex('emailUniqueIndex').on(sql`lower(${table.email})`),
-      emailUniqueIndex: uniqueIndex('emailUniqueIndex').on(lower(table.email)),
-    }),
+    (table) => [
+         // uniqueIndex('emailUniqueIndex').on(sql`lower(${table.email})`),
+      uniqueIndex('emailUniqueIndex').on(lower(table.email)),
+    ],
   );
 
   // 自定义小写函数
@@ -98,10 +98,10 @@ Drizzle 提供了简单灵活的 API，让你可以轻松使用 SQL 类似的语
       name: varchar('name', { length: 255 }).notNull(),
       email: varchar('email', { length: 255 }).notNull(),
     },
-    (table) => ({
-      // emailUniqueIndex: uniqueIndex('emailUniqueIndex').on(sql`(lower(${table.email}))`),
-      emailUniqueIndex: uniqueIndex('emailUniqueIndex').on(lower(table.email)),
-    }),
+    (table) => [
+         // uniqueIndex('emailUniqueIndex').on(sql`(lower(${table.email}))`),
+      uniqueIndex('emailUniqueIndex').on(lower(table.email)),
+    ]
   );
 
   // 自定义小写函数
@@ -166,10 +166,10 @@ Drizzle 提供了简单灵活的 API，让你可以轻松创建这样的索引�
       name: text('name').notNull(),
       email: text('email').notNull(),
     },
-    (table) => ({
-      // emailUniqueIndex: uniqueIndex('emailUniqueIndex').on(sql`lower(${table.email})`),
-      emailUniqueIndex: uniqueIndex('emailUniqueIndex').on(lower(table.email)),
-    }),
+    (table) => [
+      // uniqueIndex('emailUniqueIndex').on(sql`lower(${table.email})`),
+      uniqueIndex('emailUniqueIndex').on(lower(table.email)),
+    ]
   );
 
   // 自定义小写函数

@@ -203,13 +203,12 @@ select * from users
 import { index, ...imports } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
-// 列声明
+  // 列声明
 },
-(t) => ({
-  firstNameIndex: index('first_name_index').on(t.firstName).asc(),
-  firstNameAndIdIndex: index('first_name_and_id_index').on(t.firstName, t.id).asc(),
-}),
-);
+(t) => [
+  index('first_name_index').on(t.firstName).asc(),
+  index('first_name_and_id_index').on(t.firstName, t.id).asc(),
+]);
 ```
 
 ```sql

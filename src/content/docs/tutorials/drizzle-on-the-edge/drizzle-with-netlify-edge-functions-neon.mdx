@@ -1,0 +1,235 @@
+---
+title: "使用 Netlify Edge Functions 和 Neon Postgres 的 Drizzle"
+date: "2025-01-30"
+---
+
+import Prerequisites from "@mdx/Prerequisites.astro";
+import Npm from '@mdx/Npm.astro';
+import Steps from '@mdx/Steps.astro';
+import Section from "@mdx/Section.astro";
+import Callout from "@mdx/Callout.astro";
+
+本教程演示了如何使用 Drizzle ORM 和 [Netlify Edge Functions](https://docs.netlify.com/edge-functions/overview/) 及 [Neon Postgres](https://neon.tech/) 数据库。
+
+<Prerequisites>
+- 您应该安装了最新版本的 [Netlify CLI](https://docs.netlify.com/cli/get-started/#installation)。
+- 您应该已安装 Drizzle ORM 和 [Drizzle kit](/docs/kit-overview)。您可以通过运行以下命令来完成此操作：
+<Npm>
+drizzle-orm
+-D drizzle-kit
+</Npm>
+
+- 您应该已安装 `dotenv` 包以管理环境变量。如果您使用 Node.js `v20.6.0` 或更高版本，则无需安装，因为 Node.js 原生支持 `.env` 文件。详细了解 [这里](https://nodejs.org/en/blog/release/v20.6.0#built-in-env-file-support)。
+<Npm>
+  dotenv
+</Npm>
+
+- 可选地，您可以安装 `@netlify/edge-functions` 包，以导入稍后将使用的 `Context` 对象的类型。
+<Npm>
+  @netlify/edge-functions
+</Npm>
+</Prerequisites>
+
+<Callout type="warning">
+这些安装的包仅用于在 [创建表](#create-a-table)、[设置 Drizzle 配置文件](#setup-drizzle-config-file) 和 [将更改应用到数据库](#apply-changes-to-the-database) 步骤中创建数据库中的表。这些包不会影响在 Netlify Edge Functions 内部运行的代码。我们将使用 `import_map.json` 导入 Edge Functions 所需的包。
+</Callout>
+
+<Steps>
+#### 设置 Neon Postgres
+
+登录到 [Neon 控制台](https://console.neon.tech/app/projects) 并导航到项目部分。选择一个项目或单击 `新建项目` 按钮以创建一个新项目。
+
+您的 Neon 项目附带一个可直接使用的名为 `neondb` 的 Postgres 数据库。我们将在本教程中使用它。
+
+#### 设置连接字符串变量
+
+在 **项目仪表板** 部分单击 `连接` 按钮并复制您的数据库连接字符串。它应该看起来类似于：
+
+```bash
+postgres://username:password@ep-cool-darkness-123456.us-east-2.aws.neon.tech/neondb?sslmode=require
+```
+
+在 `.env` 文件中添加 `DATABASE_URL` 环境变量，用于连接 Neon 数据库。
+
+```text copy
+DATABASE_URL=NEON_DATABASE_CONNECTION_STRING
+```
+
+#### 设置 Netlify Edge Functions
+
+在项目根目录下创建 `netlify/edge-functions` 目录。这是您将存储 Edge Functions 的地方。
+
+在 `netlify/edge-functions` 目录中创建一个函数 `user.ts`。
+
+```typescript copy filename="netlify/edge-functions/user.ts"
+import type { Context } from "@netlify/edge-functions";
+
+export default async (request: Request, context: Context) => {
+  return new Response("用户数据");
+};
+```
+
+<Callout type="warning">
+`Request` 和 `Response` 对象的类型处于全局作用域中。
+</Callout>
+
+#### 设置导入
+
+在项目根目录中创建一个 `import_map.json` 文件并添加以下内容：
+
+```json copy filename="import_map.json"
+{
+  "imports": {
+    "drizzle-orm/": "https://esm.sh/drizzle-orm/",
+    "@neondatabase/serverless": "https://esm.sh/@neondatabase/serverless"
+  }
+}
+```
+
+在 Netlify Edge Functions 中详细了解 `import_map.json` [这里](https://docs.netlify.com/edge-functions/api/#import-maps)。
+
+#### 创建 Netlify 配置文件
+
+在项目根目录中创建一个 `netlify.toml` 文件并添加以下内容：
+
+```toml copy filename="netlify.toml"
+[functions]
+  deno_import_map = "./import_map.json"
+
+[[edge_functions]]
+  path = "/user"
+  function = "user"
+```
+
+此配置告诉 Netlify 使用 `import_map.json` 文件进行 Deno 导入，并将对 `/user` 路径的请求路由到 `user.ts` 函数。
+在 [这里](https://docs.netlify.com/configure-builds/file-based-configuration/) 了解更多关于 `netlify.toml` 的内容。
+
+#### 创建表
+
+在 `netlify/edge-functions/common` 目录中创建一个 `schema.ts` 文件并声明一个表模式：
+
+```typescript copy filename="netlify/edge-functions/common/schema.ts"
+import { pgTable, serial, text, integer } from "drizzle-orm/pg-core";
+
+export const usersTable = pgTable('users_table', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  age: integer('age').notNull(),
+  email: text('email').notNull().unique(),
+})
+```
+
+#### 设置 Drizzle 配置文件
+
+**Drizzle 配置** - 用于 [Drizzle Kit](/docs/kit-overview) 的配置文件，包含有关您的数据库连接、迁移文件夹和模式文件的所有信息。
+
+在项目根目录中创建一个 `drizzle.config.ts` 文件并添加以下内容：
+
+```typescript copy filename="drizzle.config.ts"
+import 'dotenv/config'; // 如果使用 Node.js v20.6.0 或更高版本，则删除此行
+import type { Config } from "drizzle-kit";
+
+export default {
+  schema: './netlify/edge-functions/common/schema.ts',
+  out: './drizzle',
+  dialect: 'postgresql',
+  dbCredentials: {
+    url: process.env.DATABASE_URL!,
+  },
+} satisfies Config;
+```
+
+在本教程中，我们将使用 Drizzle kit 将更改推送到 Neon 数据库。
+
+#### 将更改应用到数据库
+
+```bash copy
+npx drizzle-kit push
+```
+<Callout type="warning">推送命令适用于需要快速测试新架构设计或在本地开发环境中进行更改的情况，允许快速迭代而无需管理迁移文件的开销。</Callout>
+
+或者，您可以使用迁移工作流程。关于它的更多信息请查看这里： [迁移](/docs/migrations)。
+
+#### 将 Drizzle ORM 连接到您的数据库
+
+更新您的 `netlify/edge-functions/user.ts` 文件并设置您的数据库配置：
+
+```typescript copy filename="netlify/edge-functions/user.ts"
+import type { Context } from "@netlify/edge-functions";
+import { usersTable } from "./common/schema.ts";
+import { neon } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-http';
+
+export default async (request: Request, context: Context) => {
+  const sql = neon(Netlify.env.get("DATABASE_URL")!);
+  const db = drizzle({ client: sql });
+
+  const users = await db.select().from(usersTable);
+
+  return new Response(JSON.stringify(users));
+};
+```
+
+<Callout type="warning">
+如果您在使用 VS Code，导入可能会看到红色下划线。Edge Function 仍将执行。要消除红色下划线，您可以在下一步中配置 VS Code 使用 Edge Functions。
+</Callout>
+
+#### 在本地测试您的代码
+
+运行以下命令以启动 Netlify 开发服务器：
+
+```bash copy
+netlify dev
+```
+
+当您第一次运行该命令时，它会建议配置 VS Code 使用 Edge Functions。单击 `是` 进行配置。在 `.vscode` 目录中将创建 `settings.json` 文件。
+如果您仍然看到红色下划线，可以重新启动 Deno 语言服务器。
+
+在浏览器中打开并导航到 `/user` 路由。您应该会看到从 Neon 数据库返回的用户数据：
+
+```plaintext
+[]
+```
+
+如果您尚未向 `users_table` 表中添加数据，则可能会看到一个空数组。
+
+#### 初始化一个新的 Netlify 项目
+
+运行以下命令以初始化一个新的 Netlify 项目：
+
+```bash copy
+netlify init
+```
+
+在 CLI 中回答问题以创建一个新的 Netlify 项目。在本教程中，我们将选择 `是，手动创建和部署网站` -> `<YOUR_TEAM>` -> `<SITE_NAME>`。
+
+#### 设置 Netlify 环境变量
+
+运行以下命令以将您的环境变量导入到 Netlify：
+
+```bash copy
+netlify env:import .env
+```
+
+在 [这里](https://docs.netlify.com/environment-variables/get-started/) 了解有关 Netlify 环境变量的更多信息。
+
+#### 部署您的项目
+
+运行以下命令以部署您的项目：
+
+```bash copy
+netlify deploy
+```
+
+按照 CLI 中的说明将您的项目部署到 Netlify。在本教程中，我们的发布目录是 `'.'`。
+
+默认情况下这是一个 [草稿部署](https://docs.netlify.com/cli/get-started/#draft-deploys)。
+要进行生产部署，请运行以下命令：
+
+```bash copy
+netlify deploy --prod
+```
+
+</Steps>
+
+最后，您可以使用已部署网站的 URL 并导航到您创建的路由（例如 `/user`）以访问您的 Edge Function。
