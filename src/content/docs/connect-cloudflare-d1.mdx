@@ -31,19 +31,39 @@ drizzle-orm
 
 #### 第二步 - 初始化驱动并进行查询
 
-您需要为 D1 数据库创建一个 `wrangler.toml` 文件，内容大致如下：
+您需要有一个 `wrangler.json` 或 `wrangler.toml` 文件用于 D1 数据库，内容大致如下：
+<CodeTabs items={["wrangler.json", "wrangler.toml"]}>
+```json
+{
+    "name": "YOUR_PROJECT_NAME",
+    "main": "src/index.ts",
+    "compatibility_date": "2024-09-26",
+    "compatibility_flags": [
+        "nodejs_compat"
+    ],
+    "d1_databases": [
+        {
+            "binding": "BINDING_NAME",
+            "database_name": "YOUR_DB_NAME",
+            "database_id": "YOUR_DB_ID",
+            "migrations_dir": "drizzle/migrations"
+        }
+    ]
+}
+```
 ```toml
-name = "您的项目名称"
+name = "YOUR_PROJECT_NAME"
 main = "src/index.ts"
 compatibility_date = "2022-11-07"
 node_compat = true
 
 [[ d1_databases ]]
-binding = "DB"
-database_name = "您的数据库名称"
-database_id = "您的数据库 ID"
+binding = "BINDING_NAME"
+database_name = "YOUR_DB_NAME"
+database_id = "YOUR_DB_ID"
 migrations_dir = "drizzle/migrations"
 ```
+</CodeTabs>
 
 进行您的第一个 D1 查询：
 ```typescript copy
