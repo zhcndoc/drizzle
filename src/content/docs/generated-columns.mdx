@@ -79,7 +79,7 @@ SQL 中的生成列是一项功能，允许您在表中创建列，其值基于�
     ```
     ```sql
     CREATE TABLE IF NOT EXISTS "test" (
-	    "gen_name" text GENERATED ALWAYS AS (hello "world"!) STORED,
+	    "gen_name" text GENERATED ALWAYS AS (hello "world"!) STORED
     );
     ```
     </CodeTab>
@@ -97,7 +97,7 @@ SQL 中的生成列是一项功能，允许您在表中创建列，其值基于�
     ```sql
     CREATE TABLE IF NOT EXISTS "test" (
 	    "first_name" text,
-	    "gen_name" text GENERATED ALWAYS AS (hi, "test"."first_name"!) STORED,
+	    "gen_name" text GENERATED ALWAYS AS (hi, "test"."first_name"!) STORED
     );
     ```
     </CodeTab>
@@ -190,7 +190,7 @@ SQL 中的生成列是一项功能，允许您在表中创建列，其值基于�
     ```
     ```sql
     CREATE TABLE `test` (
-	    `gen_name` text GENERATED ALWAYS AS (hello "world"!) VIRTUAL,
+	    `gen_name` text GENERATED ALWAYS AS (hello "world"!) VIRTUAL
     );
     ```
     </CodeTab>
@@ -208,8 +208,8 @@ SQL 中的生成列是一项功能，允许您在表中创建列，其值基于�
     ```
     ```sql
     CREATE TABLE `test` (
-	  `first_name` text,
-    	`gen_name` text GENERATED ALWAYS AS (hi, `test`.`first_name`!) VIRTUAL,
+    	`first_name` text,
+    	`gen_name` text GENERATED ALWAYS AS (hi, `test`.`first_name`!) VIRTUAL
     );
     ```
     </CodeTab>
@@ -290,7 +290,7 @@ SQL 中的生成列是一项功能，允许您在表中创建列，其值基于�
     ```
     ```sql
     CREATE TABLE `test` (
-	    `gen_name` text GENERATED ALWAYS AS (hello "world"!) VIRTUAL,
+	    `gen_name` text GENERATED ALWAYS AS (hello "world"!) VIRTUAL
     );
     ```
 
@@ -307,7 +307,7 @@ SQL 中的生成列是一项功能，允许您在表中创建列，其值基于�
     ```sql
     CREATE TABLE `test` (
 	    `first_name` text,
-	    `gen_name` text GENERATED ALWAYS AS (hi, "first_name"!) VIRTUAL,
+	    `gen_name` text GENERATED ALWAYS AS (hi, "first_name"!) VIRTUAL
     );
     ```
 
