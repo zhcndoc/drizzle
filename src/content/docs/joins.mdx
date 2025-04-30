@@ -2,13 +2,13 @@ import CodeTabs from '@mdx/CodeTabs.astro';
 import CodeTab from '@mdx/CodeTab.astro';
 import Section from '@mdx/Section.astro';
 
-# 连接 [SQL]
-SQL 中的连接子句用于组合 2 个或更多表，基于它们之间的相关列。
-Drizzle ORM 的连接语法是在 SQL 类似性与类型安全性之间取得平衡。
+# 联接 [SQL]
+SQL中的联接子句用于基于两个或多个表之间的相关列组合它们。
+Drizzle ORM 的联接语法在 SQL 语法和类型安全之间达成了平衡。
 
-## 连接类型
-Drizzle ORM 提供了 `INNER JOIN`、`FULL JOIN`、`LEFT JOIN` 和 `RIGHT JOIN` 的 API。
-让我们快速浏览一下基于以下表模式的示例：
+## 联接类型
+Drizzle ORM 提供了 `INNER JOIN [LATERAL]`、`FULL JOIN`、`LEFT JOIN [LATERAL]`、`RIGHT JOIN`、`CROSS JOIN [LATERAL]` 的 API。
+让我们快速看一下基于下面表模式的示例：
 ```typescript copy
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
@@ -22,7 +22,7 @@ export const pets = pgTable('pets', {
 })
 ```
 
-### 左连接
+### 左联接
 <Section>
 ```typescript copy
 const result = await db.select().from(users).leftJoin(pets, eq(users.id, pets.ownerId))
@@ -31,7 +31,7 @@ const result = await db.select().from(users).leftJoin(pets, eq(users.id, pets.ow
 select ... from "users" left join "pets" on "users"."id" = "pets"."owner_id"
 ```
 ```typescript
-// 结果类型
+// result type
 const result: {
     user: {
         id: number;
@@ -46,7 +46,32 @@ const result: {
 ```
 </Section>
 
-### 右连接
+### 左联接 Lateral
+<Section>
+```typescript copy
+const subquery = db.select().from(pets).where(gte(users.age, 16)).as('userPets')
+const result = await db.select().from(users).leftJoinLateral(subquery, sql`true`)
+```
+```sql
+select ... from "users" left join lateral (select ... from "pets" where "users"."age" >= 16) "userPets" on true
+```
+```typescript
+// result type
+const result: {
+    user: {
+        id: number;
+        name: string;
+    };
+    userPets: {
+        id: number;
+        name: string;
+        ownerId: number;
+    } | null;
+}[];
+```
+</Section>
+
+### 右联接
 <Section>
 ```typescript copy
 const result = await db.select().from(users).rightJoin(pets, eq(users.id, pets.ownerId))
@@ -55,7 +80,7 @@ const result = await db.select().from(users).rightJoin(pets, eq(users.id, pets.o
 select ... from "users" right join "pets" on "users"."id" = "pets"."owner_id"
 ```
 ```typescript
-// 结果类型
+// result type
 const result: {
     user: {
         id: number;
@@ -69,7 +94,8 @@ const result: {
 }[];
 ```
 </Section>
-### 内连接
+
+### 内联接
 <Section>
 ```typescript copy
 const result = await db.select().from(users).innerJoin(pets, eq(users.id, pets.ownerId))
@@ -78,7 +104,7 @@ const result = await db.select().from(users).innerJoin(pets, eq(users.id, pets.o
 select ... from "users" inner join "pets" on "users"."id" = "pets"."owner_id"
 ```
 ```typescript
-// 结果类型
+// result type
 const result: {
     user: {
         id: number;
@@ -92,7 +118,33 @@ const result: {
 }[];
 ```
 </Section>
-### 全连接
+
+### 内联接 Lateral
+<Section>
+```typescript copy
+const subquery = db.select().from(pets).where(gte(users.age, 16)).as('userPets')
+const result = await db.select().from(users).innerJoinLateral(subquery, sql`true`)
+```
+```sql
+select ... from "users" inner join lateral (select ... from "pets" where "users"."age" >= 16) "userPets" on true
+```
+```typescript
+// result type
+const result: {
+    user: {
+        id: number;
+        name: string;
+    };
+    userPets: {
+        id: number;
+        name: string;
+        ownerId: number;
+    };
+}[];
+```
+</Section>
+
+### 全联接
 <Section>
 ```typescript copy
 const result = await db.select().from(users).fullJoin(pets, eq(users.id, pets.ownerId))
@@ -101,7 +153,7 @@ const result = await db.select().from(users).fullJoin(pets, eq(users.id, pets.ow
 select ... from "users" full join "pets" on "users"."id" = "pets"."owner_id"
 ```
 ```typescript
-// 结果类型
+// result type
 const result: {
     user: {
         id: number;
@@ -116,9 +168,58 @@ const result: {
 ```
 </Section>
 
+### 交叉联接
+<Section>
+```typescript copy
+const result = await db.select().from(users).crossJoin(pets)
+```
+```sql
+select ... from "users" cross join "pets"
+```
+```typescript
+// result type
+const result: {
+    user: {
+        id: number;
+        name: string;
+    };
+    pets: {
+        id: number;
+        name: string;
+        ownerId: number;
+    };
+}[];
+```
+</Section>
+
+### 交叉联接 Lateral
+<Section>
+```typescript copy
+const subquery = db.select().from(pets).where(gte(users.age, 16)).as('userPets')
+const result = await db.select().from(users).crossJoinLateral(subquery)
+```
+```sql
+select ... from "users" cross join lateral (select ... from "pets" where "users"."age" >= 16) "userPets"
+```
+```typescript
+// result type
+const result: {
+    user: {
+        id: number;
+        name: string;
+    };
+    userPets: {
+        id: number;
+        name: string;
+        ownerId: number;
+    };
+}[];
+```
+</Section>
+
 ## 部分选择
-如果您需要选择特定字段子集或具有扁平响应类型，
-Drizzle ORM 支持部分选择的连接，并将根据 `.select({ ... })` 结构自动推断返回类型。
+如果您需要选择特定字段的子集或希望有一个平坦的响应类型，Drizzle ORM
+支持带有部分选择的联接，并会根据 `.select({ ... })` 结构自动推断返回类型。
 <Section>
 ```typescript copy
 await db.select({
@@ -130,17 +231,16 @@ await db.select({
 select "users"."id", "pets"."id" from "users" left join "pets" on "users"."id" = "pets"."owner_id"
 ```
 ```typescript
-// 结果类型
+// result type
 const result: {
   userId: number;
   petId: number | null;
 }[];
 ```
 </Section>
-您可能注意到 `petId` 现在可以为 null，这是因为我们正在进行左连接，并且可能有没有宠物的用户。
+您可能已经注意到 `petId` 现在可以为 null，这是因为我们是左联接，并且可能有没有宠物的用户。
 
-在使用 `sql` 操作符进行字段的部分选择和汇总时，
-记住使用 `sql<type | null>` 以正确推断结果类型，这完全取决于您！
+在使用 `sql` 操作符进行部分选择字段和聚合时，记得要使用 `sql<type | null>` 以便正确推断结果类型，这取决于你自己！
 <Section>
 ```typescript copy
 const result = await db.select({
@@ -148,14 +248,14 @@ const result = await db.select({
   petId: pets.id,
   petName1: sql`upper(${pets.name})`,
   petName2: sql<string | null>`upper(${pets.name})`,
-  //˄我们应该在类型中明确指出 'string | null'，因为我们正在左连接该字段
+  //˄我们应该在类型中明确告诉' 字符串 | null'，因为我们左联接了该字段
 }).from(user).leftJoin(pets, eq(users.id, pets.ownerId))
 ```
 ```sql
 select "users"."id", "pets"."id", upper("pets"."name")... from "users" left join "pets" on "users"."id" = "pets"."owner_id"
 ```
 ```typescript
-// 结果类型
+// result type
 const result: {
   userId: number;
   petId: number | null;
@@ -164,8 +264,8 @@ const result: {
 }[];
 ```
 </Section>
-为了避免在连接具有大量列的表时出现大量可为 null 的字段，我们可以利用我们的 **嵌套选择对象语法**，
-我们的智能类型推断将使整个对象变为可为 null，而不是将所有表字段都设为可为 null！
+为了避免在联接带有大量列的表时出现多个可为 null 的字段，我们可以利用我们的 **嵌套选择对象语法**，
+我们的智能类型推断将使整个对象变为可为 null，而不是使所有表字段可为 null！
 <Section>
 ```typescript copy
 await db.select({
@@ -182,7 +282,7 @@ await db.select({
 select ... from "users" full join "pets" on "users"."id" = "pets"."owner_id"
 ```
 ```typescript
-// 结果类型
+// result type
 const result: {
     userId: number | null;
     userName: string | null;
@@ -195,10 +295,10 @@ const result: {
 ```
 </Section>
 
-## 别名和自连接
-Drizzle ORM 支持表别名，这在您需要进行自连接时非常方便。
+## 别名与自连接
+Drizzle ORM 支持表别名，当您需要进行自连接时非常方便。
 
-假设您需要获取带有父母的用户：
+假设您需要获取用户及其父母：
 <CodeTabs items={["index.ts", "schema.ts"]}>
 <CodeTab>
 ```typescript copy
@@ -214,7 +314,7 @@ const result = db
 select ... from "user" left join "user" "parent" on "parent"."id" = "user"."parent_id"
 ```
 ```typescript
-// 结果类型
+// result type
 const result: {
     user: {
         id: number;
@@ -241,9 +341,9 @@ export const user = pgTable("user", {
 </CodeTabs>
 
 ## 聚合结果
-Drizzle ORM 从驱动程序传递名称映射的结果，而无需更改结构。
+Drizzle ORM 从驱动程序提供名称映射的结果，而不改变结构。
 
-您可以自由地操作结果，下面是映射多对一关系数据的示例：
+您可以自由地按您想要的方式处理结果，这是一个映射多对一关系数据的示例：
 ```typescript
 type User = typeof users.$inferSelect;
 type Pet = typeof pets.$inferSelect;
@@ -271,14 +371,14 @@ const result = rows.reduce<Record<number, { user: User; pets: Pet[] }>>(
   {}
 );
 
-// 结果类型
+// result type
 const result: Record<number, {
     user: User;
     pets: Pet[];
 }>;
 ```
 
-## 一对多示例
+## 多对一示例
 ```typescript
 import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
@@ -323,4 +423,3 @@ db.select()
   .leftJoin(chatGroups, eq(usersToChatGroups.groupId, chatGroups.id))
   .where(eq(chatGroups.id, 1))
   .all();
-```

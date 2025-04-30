@@ -97,6 +97,7 @@
   ["generated-columns", "生成的列"],
   ["transactions", "事务"],
   ["batch-api", "批处理"],
+  ["cache", "缓存"],
   ["dynamic-query-building", "动态查询构建"],
   ["read-replicas", "只读副本"],
   ["custom-types", "自定义类型"],
