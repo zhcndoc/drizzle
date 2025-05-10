@@ -9,6 +9,7 @@
   ["limit-offset-pagination", "限制/偏移分页"],
   ["cursor-based-pagination", "基于游标分页"],
   ["timestamp-default-value", "将时间戳作为默认值"],
+  ["gel-ext-auth", "Gel Auth 扩展与 Drizzle"],
   ["select-parent-rows-with-at-least-one-related-child-row", "选择至少有一个相关子行的父行"],
   ["empty-array-default-value", "将空数组作为默认值"],
   ["update-many-with-different-value", "为每一行使用不同的值进行批量更新"],

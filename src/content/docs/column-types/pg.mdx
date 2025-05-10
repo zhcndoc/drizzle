@@ -690,7 +690,7 @@ CREATE TABLE IF NOT EXISTS "items" (
 ```typescript
 const items = pgTable('items', {
     line: line(),
-    lineObj: point({ mode: 'abc' }),
+    lineObj: line({ mode: 'abc' }),
 });
 ```
 

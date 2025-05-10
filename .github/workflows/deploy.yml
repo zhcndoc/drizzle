@@ -11,43 +11,60 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - uses: pnpm/action-setup@master
         with:
           version: latest
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - name: Build project
-        run: pnpm install && pnpm run build
+      - run: pnpm install && pnpm run build
 
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: build-artifact
           path: dist
 
-  deploy-to-server:
+  # deploy-to-server:
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/download-artifact@v4
+  #       with:
+  #         name: build-artifact
+
+  #     - uses: easingthemes/ssh-deploy@main
+  #       with:
+  #         REMOTE_HOST: ${{ secrets.SERVER_HOST }}
+  #         REMOTE_PORT: ${{ secrets.SERVER_PORT }}
+  #         REMOTE_USER: ${{ secrets.SERVER_USER }}
+  #         SSH_PRIVATE_KEY: ${{ secrets.SERVER_KEY }}
+  #         SOURCE: "."
+  #         ARGS: "-azr --delete"
+  #         TARGET: "${{ secrets.SERVER_PATH }}/${{ github.event.repository.name }}/"
+
+  push-to-branch:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.SYNC_TOKEN }}
+
+      - run: |
+          git checkout --orphan site
+          git rm -rf . >/dev/null
+
+      - uses: actions/download-artifact@v4
         with:
           name: build-artifact
 
-      - name: Deploy to Server
-        uses: easingthemes/ssh-deploy@main
-        with:
-          REMOTE_HOST: ${{ secrets.SERVER_HOST }}
-          REMOTE_PORT: ${{ secrets.SERVER_PORT }}
-          REMOTE_USER: ${{ secrets.SERVER_USER }}
-          SSH_PRIVATE_KEY: ${{ secrets.SERVER_KEY }}
-          SOURCE: "."
-          ARGS: "-azr --delete"
-          TARGET: "${{ secrets.SERVER_PATH }}/${{ github.event.repository.name }}/"
+      - run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add .
+          git commit -m "upload build artifact to site branch"
+          git push origin site -f
