@@ -14,7 +14,7 @@ drizzle-zod
 <Callout type="warning">
 该文档适用于 `drizzle-zod@0.6.0` 及更高版本
 
-你还必须安装 Drizzle ORM v0.36.0 或更高版本以及 Zod v3.0.0 或更高版本。
+你还必须安装 Drizzle ORM v0.36.0 或更高版本以及 Zod v3.25.1 或更高版本。
 </Callout>
 
 ### 选择模式
@@ -110,10 +110,10 @@ await db.update(users).set(parsed).where(eq(users.name, 'Jane'));
 ```ts copy
 import { pgTable, text, integer, json } from 'drizzle-orm/pg-core';
 import { createSelectSchema } from 'drizzle-zod';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
 const users = pgTable('users', {
-  id: integer().generatedAlwaysAsIdentity().primaryKey(),
+  id: integer().primaryKey(),
   name: text().notNull(),
   bio: text(),
   preferences: json()
@@ -165,7 +165,7 @@ const userInsertSchema = createInsertSchema(users, {
 ```ts copy
 import { pgTable, timestamp } from 'drizzle-orm/pg-core';
 import { createSchemaFactory } from 'drizzle-zod';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
 const users = pgTable('users', {
   ...,
