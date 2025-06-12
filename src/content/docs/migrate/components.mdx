@@ -30,15 +30,15 @@ import YoutubeCards from "@mdx/YoutubeCards.astro";
 
 ## Callout
 
-<Callout emoji={"😀"}>Callout example</Callout>
+<Callout emoji={"😀"}>提示示例</Callout>
 
-<Callout>Callout example</Callout>
+<Callout>提示示例</Callout>
 
-<Callout type={"info"}>Callout example</Callout>
+<Callout type={"info"}>提示示例</Callout>
 
-<Callout type={"warning"}>Callout example</Callout>
+<Callout type={"warning"}>提示示例</Callout>
 
-<Callout type={"error"}>Callout example</Callout>
+<Callout type={"error"}>提示示例</Callout>
 
 ## CodeTabs with CodeTab
 
@@ -111,7 +111,7 @@ import YoutubeCards from "@mdx/YoutubeCards.astro";
 
 ## Section
 
-For codeblocks connection
+代码块连接示例
 
 <Section>
 ```typescript
@@ -206,29 +206,29 @@ CREATE TABLE `table` (
 
 <SimpleLinkCards
   cards={{
-    "PostgreSQL column types": "/docs/column-types/pg",
-    "MySQL column types": "/docs/column-types/mysql",
-    "SQLite column types": "/docs/column-types/sqlite",
+    "PostgreSQL 列类型": "/docs/column-types/pg",
+    "MySQL 列类型": "/docs/column-types/mysql",
+    "SQLite 列类型": "/docs/column-types/sqlite",
   }}
 />
 
 ## Steps
 
-With h4 headers
+带 h4 标题
 
 <Steps>
 
-#### Install babel plugin
+#### 安装 babel 插件
 
-It's necessary to bundle SQL migration files as string directly to your bundle.
+需要将 SQL 迁移文件直接打包为字符串。
 
 ```shell
 npm install babel-plugin-inline-import
 ```
 
-#### Update config files.
+#### 更新配置文件.
 
-You will need to update `babel.config.js`, `metro.config.js` and `drizzle.config.ts` files
+你需要更新 `babel.config.js`、`metro.config.js` 和 `drizzle.config.ts` 文件
 
 ```js filename='babel.config.js'
 module.exports = function (api) {
@@ -236,7 +236,7 @@ module.exports = function (api) {
 
   return {
     presets: ["babel-preset-expo"],
-    plugins: [["inline-import", { extensions: [".sql"] }]], // <-- add this
+    plugins: [["inline-import", { extensions: [".sql"] }]], // <-- 增加这个
   };
 };
 ```
@@ -247,19 +247,19 @@ module.exports = function (api) {
 <YoutubeCards cards={[
 	{
 		id: "4ZhtoOFKFP8",
-		title: "Easiest Database Setup in Next.js&nbsp;14 with Turso&nbsp;&&nbsp;Drizzle",
+		title: "Next.js 14 中最简单的数据库设置，使用 Turso 和 Drizzle",
 		description: "Sam Meech-Ward",
 		time: '38:08'
 	}, 
 	{
 		id: "NfVELsEZFsA",
-		title: "Next.js Project with Vercel, Neon, Drizzle, TailwindCSS, FlowBite and more!",
+		title: "使用 Vercel、Neon、Drizzle、TailwindCSS、FlowBite 等技术的 Next.js 项目！",
 		description: "CodingEntrepreneurs",
 		time: '5:46:28'
 	}, 
 	{
 		id: "_SLxGYzv6jo",
-		title: "I Have A New Favorite Database&nbsp;Tool",
+		title: "我有了新的最爱数据库工具",
 		description: "Theo - t3.gg",
 		time: '5:46'
 	}

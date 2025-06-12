@@ -219,9 +219,9 @@ npx drizzle-kit push
 | `extensionsFilters` |            | 数据库扩展的内部数据库过滤器                             |
 
 <Npx>
-drizzle-kit pull --dialect=postgresql --schema=src/schema.ts --url=postgresql://user:password@host:port/dbname
-drizzle-kit pull --dialect=postgresql --schema=src/schema.ts --driver=pglite url=database/
-drizzle-kit pull --dialect=postgresql --schema=src/schema.ts --tablesFilter='user*' --extensionsFilters=postgis url=postgresql://user:password@host:port/dbname
+drizzle-kit pull --dialect=postgresql --url=postgresql://user:password@host:port/dbname
+drizzle-kit pull --dialect=postgresql --driver=pglite url=database/
+drizzle-kit pull --dialect=postgresql --tablesFilter='user*' --extensionsFilters=postgis url=postgresql://user:password@host:port/dbname
 </Npx>
 
 ![](@/assets/gifs/introspect_mysql.gif)

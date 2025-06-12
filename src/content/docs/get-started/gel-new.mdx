@@ -20,19 +20,19 @@ import SetupEnv from '@mdx/get-started/SetupEnv.mdx';
 
 <Breadcrumbs/>
 
-# Get Started with Drizzle and Gel
+# 使用 Drizzle 和 Gel 快速入门
 
 <Prerequisites>
-  - **tsx** - package for running TypeScript files - [read here](https://tsx.is/)
-  - **gel-js** - package for querying your Gel database - [read here](https://github.com/geldata/gel-js)
+  - **tsx** - 运行 TypeScript 文件的包 - [点击阅读](https://tsx.is/)
+  - **gel-js** - 用于查询 Gel 数据库的包 - [点击阅读](https://github.com/geldata/gel-js)
 </Prerequisites>
 
-Drizzle has native support for Gel connections with the `gel` client.
+Drizzle 原生支持使用 `gel` 客户端连接 Gel。
 
-This is the basic file structure of the project. In the `src` directory, we have table definition in `index.ts`. In `drizzle` folder there are generated Gel to Drizzle schema
+这是项目的基础文件结构。在 `src` 目录中，我们有 `index.ts` 文件，用于表的定义。在 `drizzle` 文件夹中则存放了从 Gel 生成的 Drizzle schema。
 
 ```plaintext
-📦 <project root>
+📦 <项目根目录>
  ├ 📂 drizzle
  ├ 📂 src
  │ └ 📜 index.ts
@@ -41,15 +41,15 @@ This is the basic file structure of the project. In the `src` directory, we have
  └ 📜 tsconfig.json
 ```
 
-#### Step 1 - Install and init **Gel** project
+#### 第1步 - 安装并初始化 **Gel** 项目
 
 <Npx>
 gel project init
 </Npx>
 
-#### Step 2 - Define basic Gel schema
+#### 第2步 - 定义基础 Gel schema
 
-In `dbschema/default.esdl` file add a basic Gel schema
+在 `dbschema/default.esdl` 文件中添加基础的 Gel schema
 
 ```esdl
 module default {
@@ -61,23 +61,23 @@ module default {
 }
 ```
 
-#### Step 3 - Push Gel schema to the database
+#### 第3步 - 推送 Gel schema 到数据库
 
-Generate Gel migration file:
+生成 Gel 迁移文件：
 ```bash
 gel migration create
 ```
 
-Apply Gel migrations to the database
+应用 Gel 迁移到数据库：
 ```bash
 gel migration apply
 ```
 
 <Callout>
-Now you should have this file structure
+现在你的文件结构应该是这样
 
 ```plaintext
-📦 <project root>
+📦 <项目根目录>
  ├ 📂 dbschema
  │ ├ 📂 migrations
  │ ├ 📜 default.esdl
@@ -91,17 +91,17 @@ Now you should have this file structure
 ```
 </Callout>
 
-#### Step 4 - Install required packages
+#### 第4步 - 安装所需包
 <Npm>
   drizzle-orm gel
   -D drizzle-kit tsx
 </Npm>
 
-#### Step 5 - Setup Drizzle config file
+#### 第5步 - 配置 Drizzle 配置文件
 
-**Drizzle config** - a configuration file that is used by [Drizzle Kit](/docs/kit-overview) and contains all the information about your database connection, migration folder and schema files.
+**Drizzle 配置文件** 是 [Drizzle Kit](/docs/kit-overview) 使用的配置文件，包含了数据库连接、迁移文件夹及 schema 文件的所有信息。
 
-Create a `drizzle.config.ts` file in the root of your project and add the following content:
+在项目根目录创建 `drizzle.config.ts` 文件，并添加如下内容：
 
 ```typescript copy filename="drizzle.config.ts"
 import { defineConfig } from 'drizzle-kit';
@@ -111,14 +111,14 @@ export default defineConfig({
 });
 ```
 
-#### Step 6 - Pull Gel types to Drizzle schema
+#### 第6步 - 从 Gel 同步类型到 Drizzle schema
 
-Pull your database schema:
+同步你的数据库 schema：
 <Npx>
 drizzle-kit pull
 </Npx>
 
-Here is an example of the generated schema.ts file:
+这是示例生成的 schema.ts 文件：
 
 ```typescript filename="drizzle/schema.ts"
 import { gelTable, uniqueIndex, uuid, smallint, text } from "drizzle-orm/gel-core"
@@ -134,9 +134,9 @@ export const users = gelTable("users", {
 ]);
 ```
 
-#### Step 7 - Connect Drizzle ORM to the database
+#### 第7步 - 连接 Drizzle ORM 到数据库
 
-Create a `index.ts` file in the `src` directory and initialize the connection:
+在 `src` 目录下创建 `index.ts` 文件并初始化连接：
 
 ```typescript copy filename="src/index.ts"
 import { drizzle } from "drizzle-orm/gel";
@@ -146,7 +146,7 @@ const gelClient = createClient();
 const db = drizzle({ client: gelClient });
 ```
 
-#### Step 8 - Query the database
+#### 第8步 - 查询数据库
 
 ```typescript copy filename="src/index.ts"
 import { eq } from "drizzle-orm";
@@ -165,10 +165,10 @@ async function main() {
   };
 
   await db.insert(users).values(user);
-  console.log("New user created!");
+  console.log("新用户已创建！");
 
   const usersResponse = await db.select().from(users);
-  console.log("Getting all users from the database: ", usersResponse);
+  console.log("从数据库获取所有用户：", usersResponse);
   /*
   const users: {
     id: number;
@@ -184,15 +184,15 @@ async function main() {
       age: 31,
     })
     .where(eq(users.email, user.email));
-  console.log("User info updated!");
+  console.log("用户信息已更新！");
 
   await db.delete(users).where(eq(users.email, user.email));
-  console.log("User deleted!");
+  console.log("用户已删除！");
 }
 
 main();
 ```
 
-#### Step 9 - Run index.ts file
+#### 第9步 - 运行 index.ts 文件
 
 <RunFile/>

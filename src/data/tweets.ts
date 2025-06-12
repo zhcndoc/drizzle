@@ -180,7 +180,7 @@ export const tweets: ITweet[] = [
     avatar: brodaNoel,
     name: "Broda Noel",
     login: "BrodaNoel",
-    text: "Is this a joke? Because if this is a joke, it's really really really bad joke, because now I'm fucking hating @DrizzleORM without even knowing who they are.\nI mean, this is not a good marketing strategy if this was a marketing-joke.\nAnd if it's actually true, I'll hate them more.",
+    text: "这是个笑话吗？因为如果这是个笑话，那真的是个非常糟糕的笑话，因为我现在甚至不知道他们是谁就讨厌 @DrizzleORM。我是说，如果这是个营销笑话，那真的不是一个好的营销策略。如果这是真的，我会更讨厌他们。",
     href: "https://x.com/BrodaNoel/status/1913248949252616287",
   },
 ];

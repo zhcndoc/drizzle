@@ -3,14 +3,6 @@ import Npm from '@mdx/Npm.astro';
 
 # 缓存
 
-<Callout type='warning'>
-仅在 `drizzle-orm@cache` 标签中可用
-
-<Npm>
-drizzle-orm@cache
-</Npm>
-</Callout>
-
 Drizzle 默认将每个查询直接发送到你的数据库。没有隐藏的操作，没有自动缓存或失效 - 你将始终看到确切的执行内容。如果你需要缓存，必须手动选择。
 
 默认情况下，Drizzle 使用 `explicit` 缓存策略（即 `global: false`），因此除非你请求，否则不会缓存任何内容。这防止了在你的应用中出现惊讶或隐藏的性能陷阱。或者，你可以启用 `all` 缓存（`global: true`），这样每个选择都将首先查看缓存。

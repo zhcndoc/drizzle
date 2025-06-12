@@ -16,51 +16,51 @@ import SetupConfig from '@mdx/get-started/SetupConfig.mdx';
 
 <Breadcrumbs/>
 
-# Get Started with Drizzle and SingleStore
+# 使用 Drizzle 和 SingleStore 入门
 
 <Prerequisites>  
-  - **dotenv** - package for managing environment variables - [read here](https://www.npmjs.com/package/dotenv)
-  - **tsx** - package for running TypeScript files - [read here](https://tsx.is/)
-  - **mysql2** - package for querying your MySQL database - [read here](https://github.com/sidorares/node-mysql2)
+  - **dotenv** —— 用于管理环境变量的包 —— [点击查看](https://www.npmjs.com/package/dotenv)
+  - **tsx** —— 用于运行 TypeScript 文件的包 —— [点击查看](https://tsx.is/)
+  - **mysql2** —— 用于查询 MySQL 数据库的包 —— [点击查看](https://github.com/sidorares/node-mysql2)
 </Prerequisites>
 
-To use Drizzle with a SingleStore database, you should use the `singlestore` driver
+要将 Drizzle 用于 SingleStore 数据库，您应使用 `singlestore` 驱动。
 
-According to the **[official website](https://github.com/sidorares/node-mysql2)**, 
-`mysql2` is a MySQL client for Node.js with focus on performance.  
+根据 **[官方网站](https://github.com/sidorares/node-mysql2)**，  
+`mysql2` 是一个专注于性能的 Node.js MySQL 客户端。
 
-Drizzle ORM natively supports `mysql2` with `drizzle-orm/singlestore` package for SingleStore database.
+Drizzle ORM 原生支持 `mysql2`，并提供了用于 SingleStore 数据库的 `drizzle-orm/singlestore` 包。
 
 <FileStructure/>
 
-#### Step 1 - Install **mysql2** package
+#### 第 1 步 - 安装 **mysql2** 包
 
 <InstallPackages lib='mysql2'/>
 
-#### Step 2 - Setup connection variables
+#### 第 2 步 - 设置连接变量
 
 <SetupEnv env_variable='DATABASE_URL' />
 
-#### Step 3 - Connect Drizzle ORM to the database
+#### 第 3 步 - 连接 Drizzle ORM 到数据库
 
 <ConnectSingleStore/>
 
-#### Step 4 - Create a table
+#### 第 4 步 - 创建一个表
 
 <CreateSingleStoreTable/>
 
-#### Step 5 - Setup Drizzle config file
+#### 第 5 步 - 设置 Drizzle 配置文件
 
 <SetupConfig dialect='singlestore' env_variable='DATABASE_URL'/>
 
-#### Step 6 - Applying changes to the database
+#### 第 6 步 - 应用数据库更改
 
 <ApplyChanges />
 
-#### Step 7 - Seed and Query the database
+#### 第 7 步 - 填充并查询数据库
 
 <QueryDatabase dialect='singlestore' env_variable='DATABASE_URL'/>
 
-#### Step 8 - Run index.ts file
+#### 第 8 步 - 运行 index.ts 文件
 
 <RunFile/>

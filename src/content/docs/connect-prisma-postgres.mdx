@@ -1,0 +1,71 @@
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
+import Npm from "@mdx/Npm.astro";
+import Callout from '@mdx/Callout.astro';
+import Steps from '@mdx/Steps.astro';
+import AnchorCards from '@mdx/AnchorCards.astro';
+import Prerequisites from "@mdx/Prerequisites.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Section from "@mdx/Section.astro";
+import WhatsNextPostgres from "@mdx/WhatsNextPostgres.astro";
+
+# Drizzle \<\> Prisma Postgres
+<Prerequisites>
+- 使用 Drizzle 的数据库[连接基础](/docs/connect-overview)
+- Prisma Postgres 无服务器数据库 - [官网](https://prisma.io/postgres)
+- Prisma Postgres 直接连接 - [文档](https://www.prisma.io/docs/postgres/database/direct-connections) 
+- Drizzle PostgreSQL 驱动 - [文档](/docs/get-started-postgresql)
+</Prerequisites>
+
+Prisma Postgres 是一个基于 [unikernels](https://www.prisma.io/blog/announcing-prisma-postgres-early-access) 构建的无服务器数据库。它拥有大量的免费额度，[基于操作的定价](https://www.prisma.io/blog/operations-based-billing) 并且没有冷启动。
+
+你可以使用 PostgreSQL 的 [`node-postgres`](https://node-postgres.com/) 或 [`postgres.js`](https://github.com/porsager/postgres) 驱动进行连接。
+
+<Callout type="info">
+Prisma Postgres 也有一个[无服务器驱动](https://www.prisma.io/docs/postgres/database/serverless-driver)，将来 Drizzle ORM 会支持它。
+</Callout>
+
+#### 第一步 - 安装包
+<CodeTabs items={["node-postgres (pg)", "postgres.js"]}>
+<Npm>
+drizzle-orm pg
+-D drizzle-kit
+</Npm>
+
+<Npm>
+drizzle-orm postres
+-D drizzle-kit
+</Npm>
+
+</CodeTabs>
+
+
+#### 第二步 - 初始化驱动并执行查询
+<CodeTabs items={["node-postgres (pg)", "postgres.js"]}>
+```typescript 
+// 确保安装了 'pg' 包 
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+const db = drizzle({ client: pool });
+ 
+const result = await db.execute('select 1');
+```
+```typescript
+// 确保安装了 'postgres' 包
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
+
+const queryClient = postgres(process.env.DATABASE_URL);
+const db = drizzle({ client: queryClient });
+
+const result = await db.execute('select 1');
+```
+</CodeTabs>
+
+#### 接下来？
+
+<WhatsNextPostgres/>

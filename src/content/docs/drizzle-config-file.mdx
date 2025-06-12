@@ -247,7 +247,7 @@ export default defineConfig({
   dbCredentials: {
     url: "postgres://user:password@host:port/db",
   }
-})
+});
 ```
 ```ts
 import { defineConfig } from 'drizzle-kit'
@@ -263,7 +263,7 @@ export default defineConfig({
     database: "dbname",
     ssl: true, // 可以是布尔值 | "require" | "allow" | "prefer" | "verify-full" | node:tls 中的选项
   }
-})
+});
 ```
 </Section>
 <Section>
@@ -275,7 +275,7 @@ export default defineConfig({
   dbCredentials: {
     url: "postgres://user:password@host:port/db",
   }
-})
+});
 ```
 ```ts
 import { defineConfig } from 'drizzle-kit'
@@ -291,7 +291,7 @@ export default defineConfig({
     database: "dbname",
     ssl: "...", // 可以是: string | SslOptions (来自 mysql2 包的 ssl 选项)
   }
-})
+});
 ```
 </Section>
 ```ts
@@ -306,7 +306,7 @@ export default defineConfig({
     // 或
     url: "file:sqlite.db" // file: 前缀是 libsql 所需的
   }
-})
+});
 ```
 ```ts
 import { defineConfig } from 'drizzle-kit'
@@ -323,7 +323,7 @@ export default defineConfig({
     // 或
     url: "file:sqlite.db", // file: 前缀是 libsql 所需的
   }
-})
+});
 ```
 ```ts
 import { defineConfig } from 'drizzle-kit'
@@ -336,7 +336,7 @@ export default defineConfig({
     databaseId: "",
     token: "",
   }
-})
+});
 ```
 ```ts
 import { defineConfig } from 'drizzle-kit'
@@ -360,7 +360,7 @@ export default defineConfig({
   dbCredentials: {
     url: "./database/", // 数据库文件夹路径
   }
-})
+});
 ```
 </CodeTabs>
 
@@ -504,7 +504,7 @@ export default defineConfig({
 | :------------ | :-----------------   |
 | 类型          | `string[]` |
 | 默认       | `["public"]`                    |
-| 命令      | `generate` `push` `pull`   |
+| 命令      | `push` `pull`   |
 
 <rem025/>
 
@@ -573,7 +573,7 @@ export default defineConfig({
 ```ts
 export default defineConfig({
   dialect: "postgresql",
-  extensionsFilters: entities: {
+  entities: {
     roles: true
   }
 });

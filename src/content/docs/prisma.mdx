@@ -102,6 +102,6 @@ const users = await prisma.$drizzle.select().from(User);
 
 ## 限制
 
-- [关系查询](/docs/rqb) 不受支持，因为 [Prisma 驱动程序的限制](https://github.com/prisma/prisma/issues/17576)。因此，Prisma 无法以数组格式返回查询结果，这是关系查询正常工作的必要条件。
-- 在 SQLite 中，`.values()` （例如 `await db.select().from(table).values()`）不受支持，原因与上述相同。
-- [预处理语句](/docs/perf-queries#prepared-statement) 支持有限 - `.prepare()` 仅在 Drizzle 端构建 SQL 查询，因为没有适用于预处理查询的 Prisma API。
+- 由于 [Prisma 驱动程序的限制](https://github.com/prisma/prisma/issues/17576)，不支持 [关系查询](/docs/rqb)。因此，Prisma 无法以数组格式返回查询结果，而这对于关系查询的工作是必需的。
+- 在 SQLite 中，`.values()`（例如 `await db.select().from(table).values()`）不受支持，原因与上述相同。
+- [预处理语句](/docs/perf-queries#prepared-statement) 的支持有限 - `.prepare()` 仅会在 Drizzle 端构建 SQL 查询，因为没有用于预处理查询的 Prisma API。

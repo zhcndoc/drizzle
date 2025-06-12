@@ -6,18 +6,18 @@ import WhatsNextPostgres from "@mdx/WhatsNextPostgres.astro";
 
 # Drizzle \<\> SingleStore
 
-To use Drizzle with a SingleStore database, you should use the `mysql2` driver
+要在 SingleStore 数据库中使用 Drizzle，应该使用 `mysql2` 驱动。
 
-Drizzle ORM natively supports `mysql2` with `drizzle-orm/singlestore` package.
+Drizzle ORM 使用 `drizzle-orm/singlestore` 包原生支持 `mysql2`。
 
-#### Step 1 - Install packages
+#### 第 1 步 - 安装包
 <Npm>
 drizzle-orm mysql2
 -D drizzle-kit
 </Npm>
 
-#### Step 2 - Initialize the driver and make a query
-<CodeTabs items={['mysql2', 'mysql with config']}>
+#### 第 2 步 - 初始化驱动并执行查询
+<CodeTabs items={['mysql2', '含配置的 mysql']}>
 ```typescript copy
 import { drizzle } from "drizzle-orm/singlestore";
 
@@ -28,16 +28,16 @@ const response = await db.select().from(...)
 ```typescript copy
 import { drizzle } from "drizzle-orm/singlestore";
 
-// You can specify any property from the mysql2 connection options
+// 你可以指定来自 mysql2 连接选项的任何属性
 const db = drizzle({ connection:{ uri: process.env.DATABASE_URL }});
 
 const response = await db.select().from(...)
 ```
 </CodeTabs>
 
-If you need to provide your existing driver:
+如果需要提供你现有的驱动：
 
-<CodeTabs items={['Client connection', 'Pool connection']}>
+<CodeTabs items={['客户端连接', '连接池连接']}>
   ```typescript copy
   import { drizzle } from "drizzle-orm/singlestore";
   import mysql from "mysql2/promise";
@@ -67,25 +67,25 @@ If you need to provide your existing driver:
 </CodeTabs>
 
 <Callout type="warning" emoji="⚙️">
-  For the built in `migrate` function with DDL migrations we and drivers strongly encourage you to use single `client` connection.  
+  对于内置带有 DDL 迁移的 `migrate` 功能，我们和驱动强烈建议你使用单一的 `client` 连接。
 
-  For querying purposes feel free to use either `client` or `pool` based on your business demands.
+  针对查询用途，可以根据业务需求自由选择使用 `client` 或 `pool`。
 </Callout>
 
-#### Limitations
+#### 限制
 
-Currently, the SingleStore dialect has a set of limitations and features that do not work on the SingleStore database side:
+当前，SingleStore 方言存在一系列限制和特性，这些特性在 SingleStore 数据库端不可用：
 
-- SingleStore's serial column type only ensures the uniqueness of column values.
-- `ORDER BY` and `LIMIT` cannot be chained together.
-- Foreign keys are not supported (check).
-- `INTERSECT ALL` and `EXCEPT ALL` operations are not supported by SingleStore.
-- Nested transactions are not supported by [SingleStore](https://docs.singlestore.com/cloud/reference/sql-reference/procedural-sql-reference/transactions-in-stored-procedures/).
-- SingleStore [only supports](https://docs.singlestore.com/cloud/getting-started-with-singlestore-helios/about-singlestore-helios/singlestore-helios-faqs/durability/) one `isolationLevel`.
-- The FSP option in `DATE`, `TIMESTAMP`, and `DATETIME` is not supported.
-- The relational API is not supported and will be implemented once the SingleStore team develops all the necessary APIs for it.
-- There may be more limitations because SingleStore is not 100% compatible with MySQL.
+- SingleStore 的 serial 列类型只保证列值的唯一性。
+- `ORDER BY` 和 `LIMIT` 不能连锁使用。
+- 不支持外键（正在检查中）。
+- SingleStore 不支持 `INTERSECT ALL` 和 `EXCEPT ALL` 操作。
+- SingleStore 不支持嵌套事务（详见[官方文档](https://docs.singlestore.com/cloud/reference/sql-reference/procedural-sql-reference/transactions-in-stored-procedures/)）。
+- SingleStore [只支持](https://docs.singlestore.com/cloud/getting-started-with-singlestore-helios/about-singlestore-helios/singlestore-helios-faqs/durability/)一个 `isolationLevel`。
+- `DATE`、`TIMESTAMP` 和 `DATETIME` 类型中的 FSP 选项不被支持。
+- 关系型 API 不被支持，待 SingleStore 团队开发完所有必需的相关 API 后将实现。
+- 由于 SingleStore 与 MySQL 并非 100% 兼容，可能存在更多限制。
 
-#### What's next?
+#### 接下来是什么？
 
 <WhatsNextPostgres/>

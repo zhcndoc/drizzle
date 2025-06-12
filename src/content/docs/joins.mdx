@@ -304,7 +304,7 @@ Drizzle ORM 支持表别名，当您需要进行自连接时非常方便。
 ```typescript copy
 import { user } from "./schema";
 
-const parent = aliasedTable(user, "parent")
+const parent = alias(user, "parent");
 const result = db
   .select()
   .from(user)

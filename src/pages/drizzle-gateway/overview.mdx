@@ -1,0 +1,123 @@
+import CenteredLayout from "@/ui/CenteredLayout.astro";
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
+import Steps from '@mdx/Steps.astro';
+import Npm from "@mdx/Npm.astro";
+import Npx from "@mdx/Npx.astro";
+import f from "@mdx/RowCodeWrap.astro"
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Callout from '@mdx/Callout.astro';
+
+
+
+<CenteredLayout isStudio={true} customTitle="认识 Drizzle Studio">
+
+# Drizzle Gateway
+Drizzle Gateway 是 Drizzle Studio 的一个可自托管版本，你可以将其部署到自己的基础设施并连接多个 SQL 数据库。  
+费用为每年 20 美元，支持 1 个数据库连接，额外连接每个每年 10 美元。
+
+<CodeTabs items={["Docker", "linux-arm64", "linux-x64", "macos-arm64", "macos-x64"]}>
+```shell
+# 拉取最新版本
+docker pull ghcr.io/drizzle-team/gateway:0.1.1 
+
+# 持久化卷用于配置文件存储
+docker volume create drizzle-gateway 
+
+# 启动 Studio
+docker run -d \
+  --name drizzle-gate \
+  --restart always \
+  -p 4983:4983 \
+  -e PORT=4983 \ # 设置 Drizzle Gateway 端口（可选）
+  -e STORE_PATH=./app \ # 设置存储路径（可选）
+  -e MASTERPASS=your_master_password \ # 设置主密码（可选）
+  -v drizzle-gateway:/app \
+  ghcr.io/drizzle-team/gateway:0.1.1
+
+# 一旦 Drizzle Gateway 启动，你可以通过 http://localhost:4983 访问其网页界面
+```
+
+```shell
+mkdir drizzle-gateway
+cd drizzle-gateway
+
+curl -Lo start https://pub-e240a4fd7085425baf4a7951e7611520.r2.dev/drizzle-gateway-0.1.1-linux-arm64
+
+chmod +x start
+./start
+
+# 一旦 Drizzle Gateway 启动，你可以通过 http://localhost:4983 访问其网页界面
+```
+
+```shell
+mkdir drizzle-gateway
+cd drizzle-gateway
+
+curl -Lo start https://pub-e240a4fd7085425baf4a7951e7611520.r2.dev/drizzle-gateway-0.1.1-linux-x64
+
+chmod +x start
+./start
+
+# 一旦 Drizzle Gateway 启动，你可以通过 http://localhost:4983 访问其网页界面
+```
+
+```shell
+mkdir drizzle-gateway
+cd drizzle-gateway
+
+curl -Lo start https://pub-e240a4fd7085425baf4a7951e7611520.r2.dev/drizzle-gateway-0.1.1-macos-arm64
+
+chmod +x start
+./start
+
+# 一旦 Drizzle Gateway 启动，你可以通过 http://localhost:4983 访问其网页界面
+```
+
+```shell
+mkdir drizzle-gateway
+cd drizzle-gateway
+
+curl -Lo start https://pub-e240a4fd7085425baf4a7951e7611520.r2.dev/drizzle-gateway-0.1.1-macos-x64
+
+chmod +x start
+./start
+
+# 一旦 Drizzle Gateway 启动，你可以通过 http://localhost:4983 访问其网页界面
+```
+</CodeTabs>
+
+<Callout collapsed="它是如何工作的？">
+Drizzle Studio 服务器托管一个管理面板，访问地址为 `host:port`，首次访问时需要将其与我们的 `gateway.drizzle.studio` 授权服务器链接，并通过 GitHub 登录。  
+连接成功后，你可以添加数据库连接，系统会提示你购买订阅（1 个连接槽每年 20 美元，5 个连接槽每年 50 美元），我们还提供 7 天免费试用期。  
+我们还实现了“客户”订阅模式，如果你将其作为别人基础设施的一部分部署，希望他们承担订阅费用，也可以使用该模式。  
+
+Drizzle Gateway 兼容 `arm` 和 `amd` 架构，可在 MacOS（Intel / M 芯片）和 Linux 系统上使用，任你选择。  
+
+它在 `:4983` 端口运行 Drizzle Gateway 服务器，如需更改端口，可通过设置 `PORT` 环境变量实现。  
+重要：确保为 Docker 容器挂载一个持久化存储到 `/app` 根目录，用于存储会话数据并支持服务器重启时恢复。  
+
+如需修改 `/app` 根路径，可通过设置 `STORE_PATH` 环境变量实现。  
+
+你可以提供 `MASTERPASS` 环境变量为管理员访问设密码，同时这也会开启“密码码”功能，你可以为其他用户设置受保护访问，无权修改密码码。
+</Callout>
+
+## 更新日志
+订阅最新动态，请访问 [Twitter](https://twitter.com/DrizzleORM) 或 [Discord](https://driz.link/discord)  
+
+#### `v0.1.1 2025/11/06`
+- 新增创建/修改/删除 schema 的功能。
+- 新增创建/修改表的功能。
+- 新增创建/修改视图的功能。
+- 新增创建枚举类型的功能。
+- 新增 uuid、cidr、inet、macaddr 和 macaddr8 数据类型。
+- 新增支持带复制粘贴功能的范围选择。
+- 新增展开子视图的新设置选项。
+- 新增日期和时间选择器。
+- 改进 INSERT/UPDATE/DELETE 的错误处理。
+- 新增多行编辑器。
+- 新增 schema 管理的错误处理。
+- 新增按页分页的新设置选项。
+- 新增表头单元格显示列类型。
+  
+</CenteredLayout>
