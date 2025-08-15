@@ -14,7 +14,7 @@ import CreateTable from '@mdx/get-started/postgresql/CreateTable.mdx'
 import SetupConfig from '@mdx/get-started/SetupConfig.mdx';
 import ApplyChanges from '@mdx/get-started/ApplyChanges.mdx';
 import RunFile from '@mdx/get-started/RunFile.mdx';
-import QueryXata from '@mdx/get-started/postgresql/QueryXata.mdx';
+import QueryDatabase from '@mdx/get-started/QueryDatabase.mdx';
 import SetupEnv from '@mdx/get-started/SetupEnv.mdx';
 
 <Breadcrumbs/>
@@ -22,45 +22,42 @@ import SetupEnv from '@mdx/get-started/SetupEnv.mdx';
 # 开始使用 Drizzle 和 Xata
 
 <Prerequisites>
-  - **dotenv** - 管理环境变量的包 - [查看这里](https://www.npmjs.com/package/dotenv)
-  - **tsx** - 运行 TypeScript 文件的包 - [查看这里](https://tsx.is/)
-  - **Xata 数据库** - [查看这里](https://xata.io/docs)
-  - **Xata 驱动** - [查看这里](https://xata.io/docs/sdk/typescript/overview) & [GitHub](https://github.com/xataio/client-ts)
+  - **dotenv** - 管理环境变量的包 - [阅读这里](https://www.npmjs.com/package/dotenv)
+  - **tsx** - 运行 TypeScript 文件的包 - [阅读这里](https://tsx.is/)
+  - **Xata Postgres 数据库** - [阅读这里](https://xata.io/documentation)
 </Prerequisites>
 
 <FileStructure/>
 
-#### 第一步 - 安装 **@xata.io/client** 包
-<InstallPackages lib='@xata.io/client'/>
+#### 第一步 - 安装 **postgres** 包
+<InstallPackages lib='postgres'/>
 
 #### 第二步 - 设置连接变量
 
 <SetupEnv env_variable='DATABASE_URL' />
 
-#### 第三步 - 生成 Xata 客户端
+你可以通过遵循 [Xata 文档](https://xata.io/documentation/getting-started) 来获取连接字符串。
 
-要生成 Xata 客户端，请参考 [Xata 文档](https://xata.io/docs/getting-started/installation)
-
-#### 第四步 - 将 Drizzle ORM 连接到数据库
+#### 第三步 - 连接 Drizzle ORM 到数据库
 
 <ConnectXata/>
 
-#### 第五步 - 创建一个表
+#### 第四步 - 创建一个表
 
 <CreateTable />
 
-#### 第六步 - 设置 Drizzle 配置文件
+#### 第五步 - 设置 Drizzle 配置文件
 
 <SetupConfig dialect='postgresql' env_variable='DATABASE_URL'/>
 
-#### 第七步 - 向数据库应用更改
+#### 第六步 - 应用数据库变更
 
 <ApplyChanges />
 
-#### 第八步 - 填充和查询数据库
+#### 第七步 - 填充数据并查询数据库
 
-<QueryXata />
+<QueryDatabase dialect='postgres-js' env_variable='DATABASE_URL'/>
 
-#### 第九步 - 运行 index.ts 文件
+#### 第八步 - 运行 index.ts 文件
 
 <RunFile/>

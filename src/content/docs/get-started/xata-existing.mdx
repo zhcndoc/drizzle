@@ -16,8 +16,8 @@ import TransferCode from '@mdx/get-started/TransferCode.mdx';
 import ApplyChanges from '@mdx/get-started/ApplyChanges.mdx';
 import RunFile from '@mdx/get-started/RunFile.mdx';
 import ConnectXata from '@mdx/get-started/postgresql/ConnectXata.mdx'
-import QueryXata from '@mdx/get-started/postgresql/QueryXata.mdx';
-import QueryXataUpdated from '@mdx/get-started/postgresql/QueryXataUpdated.mdx';
+import QueryDatabase from '@mdx/get-started/QueryDatabase.mdx';
+import QueryDatabaseUpdated from '@mdx/get-started/QueryDatabaseUpdated.mdx';
 import UpdateSchema from '@mdx/get-started/postgresql/UpdateSchema.mdx';
 
 <Breadcrumbs/>
@@ -25,53 +25,54 @@ import UpdateSchema from '@mdx/get-started/postgresql/UpdateSchema.mdx';
 # 在现有项目中开始使用 Drizzle 和 Xata
 
 <Prerequisites>
-  - **dotenv** - 用于管理环境变量的包 - [阅读这里](https://www.npmjs.com/package/dotenv)
-  - **tsx** - 用于运行 TypeScript 文件的包 - [阅读这里](https://tsx.is/)
-  - **Xata 数据库** - [阅读这里](https://xata.io/docs)
-  - **Xata 驱动程序** - [阅读这里](https://xata.io/docs/sdk/typescript/overview) & [GitHub](https://github.com/xataio/client-ts)
+  - **dotenv** - 管理环境变量的包 - [查看这里](https://www.npmjs.com/package/dotenv)
+  - **tsx** - 运行 TypeScript 文件的包 - [查看这里](https://tsx.is/)
+  - **Xata Postgres 数据库** - [查看这里](https://xata.io/documentation)
 </Prerequisites>
 
 <FileStructure/>
 
-#### 步骤 1 - 安装 **@xata.io/client** 包
-<InstallPackages lib='@xata.io/client'/>
+#### 第 1 步 - 安装 **postgres** 包
+<InstallPackages lib='postgres'/>
 
-#### 步骤 2 - 设置连接变量
+#### 第 2 步 - 设置连接变量
 
 <SetupEnv env_variable='DATABASE_URL' />
 
-#### 步骤 3 - 设置 Drizzle 配置文件
+你可以通过参考 [Xata 文档](https://xata.io/documentation/getting-started) 来获取连接字符串。
+
+#### 第 3 步 - 设置 Drizzle 配置文件
 
 <SetupConfig dialect='postgresql' env_variable='DATABASE_URL'/>
 
-#### 步骤 4 - 检查你的数据库
+#### 第 4 步 - 检查你的数据库
 
 <IntrospectPostgreSQL/>
 
-#### 步骤 5 - 将代码转移到实际的架构文件
+#### 第 5 步 - 将代码迁移到实际的架构文件
 
 <TransferCode/>
 
-#### 步骤 6 - 将 Drizzle ORM 连接到数据库
+#### 第 6 步 - 将 Drizzle ORM 连接到数据库
 
 <ConnectXata/>
 
-#### 步骤 7 - 查询数据库
+#### 第 7 步 - 查询数据库
 
-<QueryXata />
+<QueryDatabase dialect='postgres-js' env_variable='DATABASE_URL'/>
 
-#### 步骤 8 - 运行 index.ts 文件
+#### 第 8 步 - 运行 index.ts 文件
 
 <RunFile/>
 
-#### 步骤 9 - 更新你的表架构（可选）
+#### 第 9 步 - 更新你的表架构（可选）
 
 <UpdateSchema/>
 
-#### 步骤 10 - 将更改应用到数据库（可选）
+#### 第 10 步 - 将更改应用到数据库（可选）
 
 <ApplyChanges />
 
-#### 步骤 11 - 使用新字段查询数据库（可选）
+#### 第 11 步 - 使用新字段查询数据库（可选）
 
-<QueryXataUpdated />
+<QueryDatabaseUpdated dialect='postgres-js' env_variable='DATABASE_URL' />

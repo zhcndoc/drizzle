@@ -25,6 +25,7 @@ import silvenonTweet from "@/assets/images/tweets/silvenonTweet.webp";
 import spacesexdragon from "@/assets/images/tweets/spacesexdragon.jpg";
 import spacesexdragonTweet from "@/assets/images/tweets/spacesexdragonTweet.jpg";
 import brodaNoel from "@/assets/images/tweets/brodaNoel.jpg";
+import jacobmparis from "@/assets/images/tweets/jacobmparis.jpg";
 
 // Tweet images
 
@@ -89,12 +90,13 @@ export const tweets: ITweet[] = [
     href: "https://x.com/t3dotgg/status/1787604253860847775",
   },
   {
-    avatar: aarondfrancis,
-    name: "Aaron Francis",
-    login: "aarondfrancis",
-    text: "你们应该照搬 Eloquent 的所有内容",
-    href: "https://x.com/aarondfrancis/status/1641145228189892613?s=20",
+    avatar: brodaNoel,
+    name: "Broda Noel",
+    login: "BrodaNoel",
+    text: "这是个笑话吗？因为如果这是个笑话，那真的是个非常非常糟糕的笑话，因为我现在根本不知道他们是谁就已经非常讨厌@DrizzleORM了。\n我的意思是，如果这是一个营销笑话，那这不是一个好的营销策略。\n如果这是真的，我会更讨厌他们。",
+    href: "https://x.com/BrodaNoel/status/1913248949252616287",
   },
+
   {
     avatar: imfelquis,
     name: "Ofelquis Gimenes",
@@ -155,6 +157,13 @@ export const tweets: ITweet[] = [
     href: "https://x.com/hisbvdis/status/1807783878515400977",
   },
   {
+    avatar: jacobmparis,
+    name: "@jacobparis.com",
+    login: "jacobmparis",
+    text: "@DrizzleORM 你能把我放在主页上吗？\ngf 说外面在下小雨，我想发送一个你们网站的链接。",
+    href: "https://x.com/jacobmparis/status/1955767013596369283",
+  },
+  {
     avatar: aokijs,
     name: "Aoki",
     login: "aokijs",
@@ -177,10 +186,10 @@ export const tweets: ITweet[] = [
     tweetImage: spacesexdragonTweet,
   },
   {
-    avatar: brodaNoel,
-    name: "Broda Noel",
-    login: "BrodaNoel",
-    text: "这是个笑话吗？因为如果这是个笑话，那真的是个非常糟糕的笑话，因为我现在甚至不知道他们是谁就讨厌 @DrizzleORM。我是说，如果这是个营销笑话，那真的不是一个好的营销策略。如果这是真的，我会更讨厌他们。",
-    href: "https://x.com/BrodaNoel/status/1913248949252616287",
+    avatar: aarondfrancis,
+    name: "Aaron Francis",
+    login: "aarondfrancis",
+    text: "你们应该只复制 Eloquent 拥有的所有内容。",
+    href: "https://x.com/aarondfrancis/status/1641145228189892613?s=20",
   },
 ];
