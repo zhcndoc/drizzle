@@ -1,0 +1,201 @@
+# Drizzle
+
+> Drizzle is a modern TypeScript ORM developers wanna use in their next project. It is lightweight at only ~7.4kb minified+gzipped, and it's tree shakeable with exactly 0 dependencies. It supports every PostgreSQL, MySQL, SQLite and SingleStore database and is serverless-ready by design.
+
+## 遇见 Drizzle
+
+- [开始使用 Drizzle](https://drizzle.zhcndoc.com/docs/get-started)
+- [使用 Drizzle 和 PostgreSQL 开始](https://drizzle.zhcndoc.com/docs/get-started/postgresql-new)
+- [在现有项目中开始使用 Drizzle 和 PostgreSQL](https://drizzle.zhcndoc.com/docs/get-started/postgresql-existing)
+- [使用 Drizzle 和 Gel 快速入门](https://drizzle.zhcndoc.com/docs/get-started/gel-new)
+- [在已有项目中使用 Drizzle 和 Gel 入门](https://drizzle.zhcndoc.com/docs/get-started/gel-existing)
+- [使用 Drizzle 和 SingleStore 入门](https://drizzle.zhcndoc.com/docs/get-started/singlestore-new)
+- [Get Started with Drizzle and SingleStore in existing project](https://drizzle.zhcndoc.com/docs/get-started/singlestore-existing)
+- [开始使用 Drizzle 和 Neon](https://drizzle.zhcndoc.com/docs/get-started/neon-new)
+- [在现有项目中开始使用 Drizzle 和 Neon](https://drizzle.zhcndoc.com/docs/get-started/neon-existing)
+- [开始使用 Drizzle 和 Supabase](https://drizzle.zhcndoc.com/docs/get-started/supabase-new)
+- [在现有项目中开始使用 Drizzle 和 Supabase](https://drizzle.zhcndoc.com/docs/get-started/supabase-existing)
+- [开始使用 Drizzle 和 Xata](https://drizzle.zhcndoc.com/docs/get-started/xata-new)
+- [在现有项目中开始使用 Drizzle 和 Xata](https://drizzle.zhcndoc.com/docs/get-started/xata-existing)
+- [快速开始 Drizzle 和 PGlite](https://drizzle.zhcndoc.com/docs/get-started/pglite-new)
+- [在现有项目中开始使用 Drizzle 和 PGLite](https://drizzle.zhcndoc.com/docs/get-started/pglite-existing)
+- [使用 Drizzle 和 Nile 开始入门](https://drizzle.zhcndoc.com/docs/get-started/nile-new)
+- [在现有项目中开始使用 Drizzle 和 Nile](https://drizzle.zhcndoc.com/docs/get-started/nile-existing)
+- [使用 Drizzle 和 Vercel Postgres 开始](https://drizzle.zhcndoc.com/docs/get-started/vercel-new)
+- [在现有项目中开始使用 Drizzle 和 Vercel Postgres](https://drizzle.zhcndoc.com/docs/get-started/vercel-existing)
+- [开始使用 Drizzle 和 MySQL](https://drizzle.zhcndoc.com/docs/get-started/mysql-new)
+- [在现有项目中使用 Drizzle 和 MySQL 快速入门](https://drizzle.zhcndoc.com/docs/get-started/mysql-existing)
+- [开始使用 Drizzle 和 PlanetScale](https://drizzle.zhcndoc.com/docs/get-started/planetscale-new)
+- [在现有项目中开始使用 Drizzle 和 PlanetScale](https://drizzle.zhcndoc.com/docs/get-started/planetscale-existing)
+- [开始使用 Drizzle 和 TiDB](https://drizzle.zhcndoc.com/docs/get-started/tidb-new)
+- [在现有项目中开始使用 Drizzle 和 TiDB](https://drizzle.zhcndoc.com/docs/get-started/tidb-existing)
+- [开始使用 Drizzle 和 SQLite](https://drizzle.zhcndoc.com/docs/get-started/sqlite-new)
+- [在现有项目中使用 Drizzle 和 SQLite 开始](https://drizzle.zhcndoc.com/docs/get-started/sqlite-existing)
+- [使用 Drizzle 和 Turso 开始](https://drizzle.zhcndoc.com/docs/get-started/turso-new)
+- [在现有项目中使用 Drizzle 和 Turso 开始](https://drizzle.zhcndoc.com/docs/get-started/turso-existing)
+- [开始使用 Drizzle 和 D1](https://drizzle.zhcndoc.com/docs/get-started/d1-new)
+- [使用 Drizzle 和 SQLite Durable Objects 快速入门](https://drizzle.zhcndoc.com/docs/get-started/do-new)
+- [使用 Drizzle 和 Bun:SQLite 入门](https://drizzle.zhcndoc.com/docs/get-started/bun-sqlite-new)
+- [在现有项目中使用 Drizzle 和 Bun:SQLite 入门](https://drizzle.zhcndoc.com/docs/get-started/bun-sqlite-existing)
+- [开始使用 Drizzle 和 Bun:SQLite](https://drizzle.zhcndoc.com/docs/get-started/bun-sql-new)
+- [在现有项目中开始使用 Drizzle 和 SQLite](https://drizzle.zhcndoc.com/docs/get-started/bun-sql-existing)
+- [开始使用 Drizzle 和 Expo](https://drizzle.zhcndoc.com/docs/get-started/expo-new)
+- [在现有项目中使用 Drizzle 和 Expo 入门](https://drizzle.zhcndoc.com/docs/get-started/expo-existing)
+- [使用 Drizzle 和 OP-SQLite 开始](https://drizzle.zhcndoc.com/docs/get-started/op-sqlite-new)
+- [在现有项目中使用 Drizzle 和 OP-SQLite 开始](https://drizzle.zhcndoc.com/docs/get-started/op-sqlite-existing)
+- [Drizzle ORM](https://drizzle.zhcndoc.com/docs/overview)
+- [Drizzle 注意事项](https://drizzle.zhcndoc.com/docs/gotchas)
+
+## 基础知识
+
+- [Drizzle 模式](https://drizzle.zhcndoc.com/docs/sql-schema-declaration)
+- [与 Drizzle 的数据库连接](https://drizzle.zhcndoc.com/docs/connect-overview)
+- [Drizzle 查询 + CRUD](https://drizzle.zhcndoc.com/docs/data-querying)
+- [Drizzle 迁移基础知识](https://drizzle.zhcndoc.com/docs/migrations)
+
+## 连接
+
+- [Drizzle \<\> PostgreSQL](https://drizzle.zhcndoc.com/docs/get-started-postgresql)
+- [Drizzle \<\> Gel](https://drizzle.zhcndoc.com/docs/get-started-gel)
+- [Drizzle \<\> MySQL](https://drizzle.zhcndoc.com/docs/get-started-mysql)
+- [Drizzle \<\> SQLite](https://drizzle.zhcndoc.com/docs/get-started-sqlite)
+- [Drizzle \<\> SingleStore](https://drizzle.zhcndoc.com/docs/get-started-singlestore)
+- [Drizzle \<\> Neon Postgres](https://drizzle.zhcndoc.com/docs/connect-neon)
+- [Drizzle \<\> Vercel Postgres](https://drizzle.zhcndoc.com/docs/connect-vercel-postgres)
+- [Drizzle \<\> Prisma Postgres](https://drizzle.zhcndoc.com/docs/connect-prisma-postgres)
+- [Drizzle \<\> Supabase](https://drizzle.zhcndoc.com/docs/connect-supabase)
+- [Drizzle \<\> Xata](https://drizzle.zhcndoc.com/docs/connect-xata)
+- [Drizzle \<\> PGlite](https://drizzle.zhcndoc.com/docs/connect-pglite)
+- [Drizzle \<\> Nile](https://drizzle.zhcndoc.com/docs/connect-nile)
+- [Drizzle \<\> Bun SQL](https://drizzle.zhcndoc.com/docs/connect-bun-sql)
+- [Drizzle \<\> PlanetScale](https://drizzle.zhcndoc.com/docs/connect-planetscale)
+- [Drizzle \<\> TiDB Serverless](https://drizzle.zhcndoc.com/docs/connect-tidb)
+- [Drizzle \<\> Turso](https://drizzle.zhcndoc.com/docs/connect-turso)
+- [Drizzle \<\> Cloudflare D1](https://drizzle.zhcndoc.com/docs/connect-cloudflare-d1)
+- [Drizzle \<\> Bun SQLite](https://drizzle.zhcndoc.com/docs/connect-bun-sqlite)
+- [Drizzle \<\> Cloudflare Durable Objects SQLite](https://drizzle.zhcndoc.com/docs/connect-cloudflare-do)
+- [Drizzle \<\> Expo SQLite](https://drizzle.zhcndoc.com/docs/connect-expo-sqlite)
+- [Drizzle \<\> OP SQLite](https://drizzle.zhcndoc.com/docs/connect-op-sqlite)
+- [Drizzle \<\> React Native SQLite](https://drizzle.zhcndoc.com/docs/connect-react-native-sqlite)
+- [Drizzle \<\> AWS 数据 API Postgres](https://drizzle.zhcndoc.com/docs/connect-aws-data-api-pg)
+- [Drizzle \<\> AWS 数据 API MySQL](https://drizzle.zhcndoc.com/docs/connect-aws-data-api-mysql)
+- [Drizzle HTTP 代理](https://drizzle.zhcndoc.com/docs/connect-drizzle-proxy)
+
+## 管理模式
+
+- [PostgreSQL 列类型](https://drizzle.zhcndoc.com/docs/column-types/pg)
+- [MySQL 列类型](https://drizzle.zhcndoc.com/docs/column-types/mysql)
+- [SQLite 列类型](https://drizzle.zhcndoc.com/docs/column-types/sqlite)
+- [SingleStore 列类型](https://drizzle.zhcndoc.com/docs/column-types/singlestore)
+- [索引与约束](https://drizzle.zhcndoc.com/docs/indexes-constraints)
+- [序列](https://drizzle.zhcndoc.com/docs/sequences)
+- [视图](https://drizzle.zhcndoc.com/docs/views)
+- [表结构](https://drizzle.zhcndoc.com/docs/schemas)
+- [行级安全性 (RLS)](https://drizzle.zhcndoc.com/docs/rls)
+- [PostgreSQL 扩展](https://drizzle.zhcndoc.com/docs/extensions/pg)
+- [MySQL 扩展](https://drizzle.zhcndoc.com/docs/extensions/mysql)
+- [SQLite 扩展](https://drizzle.zhcndoc.com/docs/extensions/sqlite)
+- [SingleStore 扩展](https://drizzle.zhcndoc.com/docs/extensions/singlestore)
+- [Drizzle 软关系](https://drizzle.zhcndoc.com/docs/relations)
+
+## 迁移
+
+- [使用 Drizzle Kit 进行迁移](https://drizzle.zhcndoc.com/docs/kit-overview)
+- [`drizzle-kit generate`](https://drizzle.zhcndoc.com/docs/drizzle-kit-generate)
+- [`drizzle-kit migrate`](https://drizzle.zhcndoc.com/docs/drizzle-kit-migrate)
+- [`drizzle-kit push`](https://drizzle.zhcndoc.com/docs/drizzle-kit-push)
+- [`drizzle-kit pull`](https://drizzle.zhcndoc.com/docs/drizzle-kit-pull)
+- [`drizzle-kit export`](https://drizzle.zhcndoc.com/docs/drizzle-kit-export)
+- [`drizzle-kit check`](https://drizzle.zhcndoc.com/docs/drizzle-kit-check)
+- [`drizzle-kit up`](https://drizzle.zhcndoc.com/docs/drizzle-kit-up)
+- [`drizzle-kit studio`](https://drizzle.zhcndoc.com/docs/drizzle-kit-studio)
+- [使用 Drizzle Kit 的迁移](https://drizzle.zhcndoc.com/docs/kit-custom-migrations)
+- [Drizzle 团队的迁移](https://drizzle.zhcndoc.com/docs/kit-migrations-for-teams)
+- [Drizzle 在网页和移动环境中的迁移](https://drizzle.zhcndoc.com/docs/kit-web-mobile)
+- [Drizzle Kit 配置文件](https://drizzle.zhcndoc.com/docs/drizzle-config-file)
+
+## Seeding
+
+- [Drizzle Seed](https://drizzle.zhcndoc.com/docs/seed-overview)
+- [生成器](https://drizzle.zhcndoc.com/docs/seed-functions)
+- [版本控制](https://drizzle.zhcndoc.com/docs/seed-versioning)
+
+## 访问您的数据
+
+- [Drizzle 查询](https://drizzle.zhcndoc.com/docs/rqb)
+- [SQL 选择](https://drizzle.zhcndoc.com/docs/select)
+- [SQL 插入](https://drizzle.zhcndoc.com/docs/insert)
+- [SQL 更新](https://drizzle.zhcndoc.com/docs/update)
+- [SQL 删除](https://drizzle.zhcndoc.com/docs/delete)
+- [过滤器和条件运算符](https://drizzle.zhcndoc.com/docs/operators)
+- [Drizzle 查询工具](https://drizzle.zhcndoc.com/docs/query-utils)
+- [联接 [SQL]](https://drizzle.zhcndoc.com/docs/joins)
+- [神奇的 `sql` 操作符 🪄](https://drizzle.zhcndoc.com/docs/sql)
+
+## 性能
+
+- [查询性能](https://drizzle.zhcndoc.com/docs/perf-queries)
+- [Drizzle 无服务器性能](https://drizzle.zhcndoc.com/docs/perf-serverless)
+
+## 高级
+
+- [集合操作](https://drizzle.zhcndoc.com/docs/set-operations)
+- [生成列](https://drizzle.zhcndoc.com/docs/generated-columns)
+- [事务](https://drizzle.zhcndoc.com/docs/transactions)
+- [批量 API](https://drizzle.zhcndoc.com/docs/batch-api)
+- [缓存](https://drizzle.zhcndoc.com/docs/cache)
+- [动态查询构建](https://drizzle.zhcndoc.com/docs/dynamic-query-building)
+- [阅读副本](https://drizzle.zhcndoc.com/docs/read-replicas)
+- [定义自定义类型的常用方法](https://drizzle.zhcndoc.com/docs/custom-types)
+
+## 扩展
+
+- [Drizzle 扩展用于 Prisma](https://drizzle.zhcndoc.com/docs/prisma)
+- [ESLint Drizzle 插件](https://drizzle.zhcndoc.com/docs/eslint-plugin)
+- [drizzle-zod](https://drizzle.zhcndoc.com/docs/zod)
+- [drizzle-typebox](https://drizzle.zhcndoc.com/docs/typebox)
+- [drizzle-valibot](https://drizzle.zhcndoc.com/docs/valibot)
+- [drizzle-arktype](https://drizzle.zhcndoc.com/docs/arktype)
+- [drizzle-graphql](https://drizzle.zhcndoc.com/docs/graphql)
+
+## Guides
+
+- [Guides](https://drizzle.zhcndoc.com/docs/guides)
+- [查询中的条件过滤器](https://drizzle.zhcndoc.com/docs/guides/conditional-filters-in-query)
+- [SQL 增加值](https://drizzle.zhcndoc.com/docs/guides/incrementing-a-value)
+- [在查询中包含或排除列](https://drizzle.zhcndoc.com/docs/guides/include-or-exclude-columns)
+- [SQL 切换值](https://drizzle.zhcndoc.com/docs/guides/toggling-a-boolean-field)
+- [统计行数](https://drizzle.zhcndoc.com/docs/guides/count-rows)
+- [Upsert 查询](https://drizzle.zhcndoc.com/docs/guides/upsert)
+- [SQL Limit/Offset 分页](https://drizzle.zhcndoc.com/docs/guides/limit-offset-pagination)
+- [SQL 基于游标的分页](https://drizzle.zhcndoc.com/docs/guides/cursor-based-pagination)
+- [SQL 时间戳作为默认值](https://drizzle.zhcndoc.com/docs/guides/timestamp-default-value)
+- [Gel 认证扩展](https://drizzle.zhcndoc.com/docs/guides/gel-ext-auth)
+- [选择至少有一个相关子行的父行](https://drizzle.zhcndoc.com/docs/guides/select-parent-rows-with-at-least-one-related-child-row)
+- [将空数组作为默认值](https://drizzle.zhcndoc.com/docs/guides/empty-array-default-value)
+- [使用不同值更新多个行](https://drizzle.zhcndoc.com/docs/guides/update-many-with-different-value)
+- [唯一且不区分大小写的电子邮件处理](https://drizzle.zhcndoc.com/docs/guides/unique-case-insensitive-email)
+- [使用 pgvector 扩展进行向量相似性搜索](https://drizzle.zhcndoc.com/docs/guides/vector-similarity-search)
+- [PostgreSQL 全文搜索](https://drizzle.zhcndoc.com/docs/guides/postgresql-full-text-search)
+- [Cloudflare D1 HTTP API 与 Drizzle Kit](https://drizzle.zhcndoc.com/docs/guides/d1-http-with-drizzle-kit)
+- [PostgreSQL 中的点数据类型](https://drizzle.zhcndoc.com/docs/guides/point-datatype-psql)
+- [PostGIS 几何点](https://drizzle.zhcndoc.com/docs/guides/postgis-geometry-point)
+- [如何在本地设置 PostgreSQL](https://drizzle.zhcndoc.com/docs/guides/postgresql-local-setup)
+- [如何在本地设置 MySQL](https://drizzle.zhcndoc.com/docs/guides/mysql-local-setup)
+- [用外键为部分暴露的表进行数据填充](https://drizzle.zhcndoc.com/docs/guides/seeding-with-partially-exposed-tables)
+- [使用 'with' 选项进行数据填充](https://drizzle.zhcndoc.com/docs/guides/seeding-using-with-option)
+- [使用生成列进行全文搜索](https://drizzle.zhcndoc.com/docs/guides/full-text-search-with-generated-columns)
+
+## Tutorials
+
+- [Tutorials](https://drizzle.zhcndoc.com/docs/tutorials)
+- [使用 Netlify Edge Functions 和 Neon Postgres 的 Drizzle](https://drizzle.zhcndoc.com/docs/tutorials/drizzle-with-netlify-edge-functions-neon)
+- [使用 Netlify Edge 函数和 Supabase 数据库的 Drizzle](https://drizzle.zhcndoc.com/docs/tutorials/drizzle-with-netlify-edge-functions-supabase)
+- [使用 Supabase Edge Functions 的 Drizzle](https://drizzle.zhcndoc.com/docs/tutorials/drizzle-with-supabase-edge-functions)
+- [使用 Vercel Edge Functions 进行 Drizzle](https://drizzle.zhcndoc.com/docs/tutorials/drizzle-with-vercel-edge-functions)
+- [使用 Drizzle 结合 Neon Postgres](https://drizzle.zhcndoc.com/docs/tutorials/drizzle-with-neon)
+- [使用 Nile 数据库的 Drizzle](https://drizzle.zhcndoc.com/docs/tutorials/drizzle-with-nile)
+- [使用 Supabase 数据库的 Drizzle](https://drizzle.zhcndoc.com/docs/tutorials/drizzle-with-supabase)
+- [与 Turso 一起使用 Drizzle](https://drizzle.zhcndoc.com/docs/tutorials/drizzle-with-turso)
+- [使用 Vercel Postgres 的 Drizzle](https://drizzle.zhcndoc.com/docs/tutorials/drizzle-with-vercel)
+- [使用 Neon Postgres 的 Todo 应用](https://drizzle.zhcndoc.com/docs/tutorials/drizzle-nextjs-neon)
