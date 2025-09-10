@@ -18,11 +18,6 @@ import CodeTabs from "@mdx/CodeTabs.astro";
 
 Drizzle ORM 原生支持 **[`bun sql`](https://bun.sh/docs/api/sql)** 模块，速度非常快 🚀
 
-<Callout type='error'>
-在版本 `1.2.0` 中，Bun 在执行并发语句时存在问题，如果您尝试同时运行多个查询，可能会导致错误。
-我们创建了一个 [github 问题](https://github.com/oven-sh/bun/issues/16774) 供您跟踪。修复后，您应该不再在 Bun 的 SQL 部分遇到此类错误。
-</Callout>
-
 #### 步骤 1 - 安装软件包
 <Npm>
 drizzle-orm

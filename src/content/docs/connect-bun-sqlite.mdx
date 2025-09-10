@@ -18,9 +18,11 @@ import CodeTabs from "@mdx/CodeTabs.astro";
 
 Drizzle ORM 原生支持 **[`bun:sqlite`](https://bun.sh/docs/api/sqlite)** 模块，速度非常快 🚀
 
-我们支持 SQL 方言和特定于方言的驱动和语法，与其他 ORM 不同，
-对于像 `bun:sqlite` 这样的同步驱动，我们提供 **异步** 和 **同步** API，
-并且我们镜像了大多数流行的 SQLite 风格的 `all`、`get`、`values` 和 `run` 查询方法的语法。
+我们支持 SQL 方言以及特定方言的驱动程序和语法，与其他 ORM 不同，
+
+对于像 `bun:sqlite` 这样的同步驱动，我们提供了 **async** 和 **sync** API，并且我们镜像了最流行的
+
+SQLite 类的 `all`、`get`、`values` 和 `run` 查询方法的语法。
 
 #### 步骤 1 - 安装软件包
 <Npm>

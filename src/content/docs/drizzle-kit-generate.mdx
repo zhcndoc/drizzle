@@ -22,7 +22,7 @@ import Dialects from "@mdx/Dialects.mdx"
 
 <br/>
 
-`drizzle-kit generate` 允许您根据 Drizzle 模式在声明时或后续模式更改时生成 SQL 迁移。
+`drizzle-kit generate` 允许您根据r Drizzle 模式在声明时或后续模式更改时生成 SQL 迁移。
 <Callout collapsed="它是如何在后台工作的？">
 Drizzle Kit `generate` 命令触发以下事件序列：
 1. 它将读取您的 Drizzle 模式文件并创建模式的 JSON 快照
@@ -69,7 +69,7 @@ CREATE TABLE "users" (
 
 它旨在覆盖 [代码优先](/docs/migrations) 的 Drizzle 迁移管理方法。
 您可以使用 [`drizzle-kit migrate`](/docs/drizzle-kit-migrate) 应用生成的迁移，也可以使用 drizzle-orm 的 `migrate()`，
-使用外部迁移工具，如 bytebase，或者直接在数据库上执行迁移。
+使用外部迁移工具，如 [bytebase](https://www.bytebase.com/)，或者直接在数据库上执行迁移。
 
 `drizzle-kit generate` 命令要求您提供 `dialect` 和 `schema` 路径选项，
 您可以通过 [drizzle.config.ts](/docs/drizzle-config-file) 配置文件或通过 CLI 选项设置它们。

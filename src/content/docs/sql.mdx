@@ -64,12 +64,12 @@ select * from "users" where "users"."id" = $1; --> [69]
 
 ```typescript
 // 未定义 sql<T> 类型
-const response: { id: unknown }[] = await db.select({
+const response: { lowerName: unknown }[] = await db.select({
     lowerName: sql`lower(${usersTable.id})`
 }).from(usersTable);
 
 // 定义了 sql<T> 类型
-const response: { id: string }[] = await db.select({
+const response: { lowerName: string }[] = await db.select({
     lowerName: sql<string>`lower(${usersTable.id})`
 }).from(usersTable);
 ```

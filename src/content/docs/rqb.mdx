@@ -162,6 +162,7 @@ await db.query.users.findMany(...);
 	export const users = pgTable('users', {
 		id: serial('id').primaryKey(),
 		name: text('name').notNull(),
+		verified: boolean('verified').notNull(),
 		invitedBy: integer('invited_by').references((): AnyPgColumn => users.id),
 	});
 
@@ -186,7 +187,7 @@ await db.query.users.findMany(...);
 		userId: integer('user_id').notNull().references(() => users.id),
 		groupId: integer('group_id').notNull().references(() => groups.id),
 	}, (t) => [
-		primaryKey(t.userId, t.groupId)
+		primaryKey({ columns: [t.userId, t.groupId] })
 	]);
 
 	export const usersToGroupsRelations = relations(usersToGroups, ({ one }) => ({
@@ -638,7 +639,7 @@ const prepared = db.query.users.findMany({
 	where: ((users, { eq }) => eq(users.id, placeholder('id'))),
 	with: {
 		posts: {
-			where: ((users, { eq }) => eq(users.id, 1)),
+			where: ((users, { eq }) => eq(users.id, placeholder('pid'))),
 		},
 	},
 }).prepare('query_name');
@@ -654,7 +655,7 @@ const prepared = db.query.users.findMany({
 	where: ((users, { eq }) => eq(users.id, placeholder('id'))),
 	with: {
 		posts: {
-			where: ((users, { eq }) => eq(users.id, 1)),
+			where: ((users, { eq }) => eq(users.id, placeholder('pid'))),
 		},
 	},
 }).prepare();
@@ -670,7 +671,7 @@ const prepared = db.query.users.findMany({
 	where: ((users, { eq }) => eq(users.id, placeholder('id'))),
 	with: {
 		posts: {
-			where: ((users, { eq }) => eq(users.id, 1)),
+			where: ((users, { eq }) => eq(users.id, placeholder('pid'))),
 		},
 	},
 }).prepare();

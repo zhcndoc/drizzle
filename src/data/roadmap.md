@@ -9,7 +9,7 @@
 - [x] 支持 PostgreSQL 行级安全 (RLS)
 - [x] Drizzle Kit 中支持 `check` 约束
 - [x] Drizzle Kit 暴露用于编程访问的 API
-- [x] Drizzle Kit 支持 `materialised views` （物化视图）
+- [x] Drizzle Kit 支持 `materialized views` （物化视图）
 - [ ] Drizzle Kit 支持从 Prisma、TypeORM 和 Sequelize 导入架构和迁移文件以丰富 Drizzle 迁移流程
 - [ ] Drizzle Studio 针对 Docker 环境的 `mkcert` 修复
 

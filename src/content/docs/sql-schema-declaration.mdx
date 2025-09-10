@@ -92,19 +92,6 @@ export default defineConfig({
           └ 📜 products.ts
 ```
 
-在 `drizzle.config.ts` 文件中，您需要指定模式文件路径。
-通过此配置，Drizzle 将从 `schema.ts` 文件读取并在迁移生成过程中使用此信息。
-有关 `drizzle.config.ts` 文件和使用 Drizzle 进行迁移的更多信息，请查看：[链接](/docs/drizzle-config-file)
-
-```ts
-import { defineConfig } from "drizzle-kit";
-
-export default defineConfig({
-  dialect: 'postgresql', // 'mysql' | 'sqlite' | 'turso'
-  schema: './src/db/schema'
-})
-```
-
 ## 塑造您的数据模式
 
 Drizzle 模式由您正在使用的数据库中的几种模型类型构成。使用 Drizzle，您可以指定：

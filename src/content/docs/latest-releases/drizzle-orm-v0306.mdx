@@ -29,9 +29,3 @@ const db = drizzle(client);
 
 await db.select().from(users);
 ```
----
-目前有 2 个限制，需要在 PGlite 方面修复：
-
-- [尝试刷新一个物化视图时抛出错误](https://github.com/electric-sql/pglite/issues/63)
-
-- [尝试设置时区时抛出错误](https://github.com/electric-sql/pglite/issues/62)

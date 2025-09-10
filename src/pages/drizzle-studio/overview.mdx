@@ -1,9 +1,9 @@
 import CenteredLayout from "@/ui/CenteredLayout.astro";
-import Tab from '@mdx/Tab.astro';
-import Tabs from '@mdx/Tabs.astro';
-import Steps from '@mdx/Steps.astro';
 import Npm from "@mdx/Npm.astro";
 import Npx from "@mdx/Npx.astro";
+import Steps from '@mdx/Steps.astro';
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
 
 <CenteredLayout isStudio={true} customTitle="遇见 Drizzle Studio">
 # 遇见 Drizzle Studio
@@ -21,10 +21,10 @@ Drizzle SQL 模式。它支持显式的 `null` 和 `empty string` 值，`boolean
 #### 安装依赖
 确保先查看我们的[入门指南](/docs/get-started)！
 
-<Npx>
+<Npm>
 drizzle-orm
 -D drizzle-kit
-</Npx>
+</Npm>
 
 #### 准备你的数据库模式
 查看扩展模式声明[文档](/docs/sql-schema-declaration)。
@@ -53,38 +53,19 @@ export default defineConfig({
 });
 ```
 #### 启动 Drizzle Studio
-<Tabs items={["npm", "pnpm", "yarn", "bun"]}>
-<Tab>
-```bash copy
-npx drizzle-kit studio
-```
-</Tab>
-<Tab>
-```bash copy
-pnpm drizzle-kit studio
-```
-</Tab>
-<Tab>
-```bash copy
-yarn drizzle-kit studio
-```
-</Tab>
-<Tab>
-```bash copy
-bunx drizzle-kit studio
-```
-</Tab>
-</Tabs>
+<Npx>
+drizzle-kit studio
+</Npx>
 
-你可以使用 `port` CLI 标志来定制进程端口，以及使用 `verbose` 标志来扩展 SQL 语句的日志记录。
-```bash
-yarn drizzle-kit studio --port 3000 --verbose
-```
+您可以使用 `port` CLI 标志启动工作室以自定义进程端口，并使用 `verbose` 标志进行扩展 SQL 语句日志记录。
+<Npx>
+drizzle-kit studio --port 3000 --verbose
+</Npx>
 
 默认情况下，Drizzle Studio 将会在 `https://local.drizzle.studio` 主机上启动，而 studio 服务器将在 127.0.0.1 主机上启动，但是你可以指定任何你想要的主机。
-```bash
-yarn drizzle-kit studio --host 0.0.0.0
-```
+<Npx>
+drizzle-kit studio --host 0.0.0.0
+</Npx>
 </Steps>
 
 

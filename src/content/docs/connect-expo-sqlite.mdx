@@ -86,14 +86,14 @@ module.exports = config;
 
 确保在Drizzle Kit配置中设置 `dialect: 'sqlite'` 和 `driver: 'expo'`
 ```ts filename="drizzle.config.ts"
-import type { Config } from 'drizzle-kit';
+import { defineConfig } from 'drizzle-kit';
 
-export default {
+export default defineConfig({
 	schema: './db/schema.ts',
 	out: './drizzle',
   dialect: 'sqlite',
 	driver: 'expo', // <--- 非常重要
-} satisfies Config;
+});
 ```
 
 #### 生成迁移
