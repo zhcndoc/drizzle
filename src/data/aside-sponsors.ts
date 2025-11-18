@@ -282,33 +282,6 @@ export const asideSponsors: ISponsor[] = [
     },
     sponsorEntity: {
       __typename: "Organization",
-      login: "driz.link/singlestore",
-      name: "SingleStore",
-      avatarUrl:
-        '<svg width="1200" height="1200" viewBox="0 0 1200 1200" fill="none" xmlns="http://www.w3.org/2000/svg"></svg>',
-    },
-    createdAt: "2023-06-11T13:32:16Z",
-    isActive: true,
-    imageType: ImageType.SVG,
-    darkStyle: {
-      padding: "4px",
-      filter: "brightness(0.3)",
-      background:
-        'url("/svg/single_store_dark.svg") 0% 0% / cover no-repeat content-box',
-    },
-    lightStyle: {
-      padding: "4px",
-      filter: "invert(0.6)",
-      background: 'url("/svg/single_store_light.svg") 0% 0% / cover no-repeat content-box',
-    },
-  },
-  {
-    tier: {
-      name: "$1000 a month",
-      isOneTime: false,
-    },
-    sponsorEntity: {
-      __typename: "Organization",
       login: "driz.link/lokalise",
       name: "Lokalise",
       avatarUrl:
@@ -437,6 +410,85 @@ export const asideSponsors: ISponsor[] = [
         'url("/svg/gibsonai-light.svg") 0% 0% / contain no-repeat content-box',
     },
   },
+  {
+    tier: {
+      name: "$1000 a month",
+      isOneTime: false,
+    },
+    sponsorEntity: {
+      __typename: "Organization",
+      login: "clerk.com",
+      name: "Clerk",
+      avatarUrl:
+        '<svg width="1200" height="1200" viewBox="0 0 1200 1200" fill="none" xmlns="http://www.w3.org/2000/svg"></svg>',
+    },
+    createdAt: "2025-11-07T00:00:00Z",
+    isActive: true,
+    imageType: ImageType.SVG,
+    lightStyle: {
+      filter: "invert(0.6)",
+      background:
+        'url("/svg/clerk-light.svg") center / contain no-repeat content-box',
+    },
+    darkStyle: {
+      filter: "brightness(0.3)",
+      background:
+        'url("/svg/clerk-dark.svg") center / contain no-repeat content-box',
+    },
+  },
+  {
+    tier: {
+      name: "$1000 a month",
+      isOneTime: false,
+    },
+    sponsorEntity: {
+      __typename: "Organization",
+      login: "driz.link/warp",
+      name: "Warp",
+      avatarUrl:
+        '<svg width="1200" height="1200" viewBox="0 0 1200 1200" fill="none" xmlns="http://www.w3.org/2000/svg"></svg>',
+    },
+    createdAt: "2025-11-07T00:00:00Z",
+    isActive: true,
+    imageType: ImageType.SVG,
+    lightStyle: {
+      filter: "invert(0.6)",
+      background:
+        'url("/svg/warp-light.svg") center / contain no-repeat content-box',
+    },
+    darkStyle: {
+      filter: "brightness(0.3)",
+      background:
+        'url("/svg/warp-dark.svg") center / contain no-repeat content-box',
+    },
+  },
+  {
+    tier: {
+      name: "$1000 a month",
+      isOneTime: false,
+    },
+    sponsorEntity: {
+      __typename: "Organization",
+      login: "vercel.com",
+      name: "Vercel",
+      avatarUrl:
+        '<svg width="1200" height="1200" viewBox="0 0 1200 1200" fill="none" xmlns="http://www.w3.org/2000/svg"></svg>',
+    },
+    createdAt: "2025-11-07T00:00:00Z",
+    isActive: true,
+    imageType: ImageType.SVG,
+    lightStyle: {
+      filter: "invert(0.6)",
+      background:
+        'url("/svg/vercel-light.svg") center / contain no-repeat content-box',
+    },
+    darkStyle: {
+      filter: "brightness(0.3)",
+      background:
+        'url("/svg/vercel-dark.svg") center / contain no-repeat content-box',
+    },
+  },
+  // Placeholder
   {
     tier: {
       name: "$1000 a month",
