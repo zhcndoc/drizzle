@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://drizzle.zhcndoc.com/sitemap-index.xml
