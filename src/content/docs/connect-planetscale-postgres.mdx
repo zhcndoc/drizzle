@@ -1,0 +1,152 @@
+import Npm from "@mdx/Npm.astro";
+import Callout from "@mdx/Callout.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Section from "@mdx/Section.astro";
+import Prerequisites from "@mdx/Prerequisites.astro";
+import WhatsNextPostgres from "@mdx/WhatsNextPostgres.astro";
+
+# Drizzle \<\> PlanetScale Postgres
+
+<Prerequisites>
+
+- 使用 Drizzle 的数据库[连接基础](/docs/connect-overview)
+- PlanetScale Postgres 数据库 - [文档](https://planetscale.com/docs/postgres)
+- Drizzle PostgreSQL 驱动 - [文档](/docs/get-started-postgresql)
+
+</Prerequisites>
+
+PlanetScale 同时提供 MySQL（Vitess）和 PostgreSQL 数据库。本页介绍如何连接到 PlanetScale Postgres。
+
+对于 PlanetScale MySQL，请参见[PlanetScale MySQL 连接指南](/docs/connect-planetscale)。
+
+使用 Drizzle ORM，您可以通过以下方式连接 PlanetScale Postgres：
+
+- 标准的 `node-postgres` 驱动
+- 用于无服务器环境的 `@neondatabase/serverless` 驱动
+
+有关创建 PlanetScale Postgres 数据库及获取凭据的详细说明，请参阅[PlanetScale Postgres 文档](https://planetscale.com/docs/postgres/tutorials/planetscale-postgres-drizzle)。
+
+## node-postgres
+
+#### 第 1 步 - 安装依赖包
+
+<Npm>drizzle-orm pg -D drizzle-kit @types/pg</Npm>
+
+#### 第 2 步 - 初始化驱动并执行查询
+
+<CodeTabs items={["连接 URL", "使用配置", "使用已存在客户端"]}>
+```typescript copy
+import { drizzle } from 'drizzle-orm/node-postgres';
+
+const db = drizzle(process.env.DATABASE_URL);
+
+const result = await db.execute('select 1');
+
+```
+```typescript copy
+import { drizzle } from 'drizzle-orm/node-postgres';
+
+const db = drizzle({
+  connection: {
+    connectionString: process.env.DATABASE_URL,
+    ssl: true
+  }
+});
+
+const result = await db.execute('select 1');
+```
+
+```typescript copy
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+const db = drizzle({ client: pool });
+
+const result = await db.execute("select 1");
+```
+
+</CodeTabs>
+
+## Neon 无服务器驱动
+
+PlanetScale Postgres 也支持通过[Neon 无服务器驱动](https://planetscale.com/docs/postgres/connecting/neon-serverless-driver)连接。这是针对 Vercel Functions、Cloudflare Workers 或 AWS Lambda 等无服务器环境的不错选择。
+
+该驱动支持两种模式：
+
+- **HTTP 模式** — 对单条查询和非交互式事务更快
+- **WebSocket 模式** — 适用于交互式事务或基于会话的功能
+
+#### 第 1 步 - 安装依赖包
+
+<Npm>drizzle-orm @neondatabase/serverless -D drizzle-kit</Npm>
+
+#### 第 2 步 - 初始化驱动并执行查询
+
+<CodeTabs items={["Neon HTTP", "Neon WebSockets"]}>
+```typescript copy
+import { neon, neonConfig } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-http';
+
+// PlanetScale Postgres 连接所需
+neonConfig.fetchEndpoint = (host) => `https://${host}/sql`;
+
+const sql = neon(process.env.DATABASE_URL!);
+const db = drizzle({ client: sql });
+
+const result = await db.execute('select 1');
+
+```
+<Section>
+```typescript copy
+import { Pool, neonConfig } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-serverless';
+
+// PlanetScale Postgres 连接所需
+neonConfig.pipelineConnect = false;
+neonConfig.wsProxy = (host, port) => `${host}/v2?address=${host}:${port}`;
+
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const db = drizzle({ client: pool });
+
+const result = await db.execute('select 1');
+```
+
+```typescript copy
+// 适用于 Node.js 环境 - 需安装 'ws' 包
+import ws from "ws";
+import { Pool, neonConfig } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/neon-serverless";
+
+neonConfig.webSocketConstructor = ws;
+// PlanetScale Postgres 连接所需
+neonConfig.pipelineConnect = false;
+neonConfig.wsProxy = (host, port) => `${host}/v2?address=${host}:${port}`;
+
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const db = drizzle({ client: pool });
+
+const result = await db.execute("select 1");
+```
+
+</Section>
+</CodeTabs>
+
+<Callout title="连接 URL 格式">
+  {`postgresql://{用户名}:{密码}@{主机}:{端口}/postgres?sslmode=verify-full`}
+</Callout>
+
+<Callout title="连接端口" type="info">
+  PlanetScale Postgres 支持两个连接端口：
+
+`5432`：直接连接到 PostgreSQL。连接总数受您的集群 `max_connections` 设置限制。
+
+`6432`：通过 PgBouncer 连接以实现连接池。推荐在存在大量并发连接时使用。
+
+</Callout>
+
+#### 接下来？
+
+<WhatsNextPostgres />

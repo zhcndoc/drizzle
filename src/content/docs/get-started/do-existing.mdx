@@ -1,0 +1,332 @@
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
+import Npm from "@mdx/Npm.astro";
+import Callout from '@mdx/Callout.astro';
+import Steps from '@mdx/Steps.astro';
+import AnchorCards from '@mdx/AnchorCards.astro';
+import Breadcrumbs from '@mdx/Breadcrumbs.astro';
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Prerequisites from "@mdx/Prerequisites.astro";
+import IntrospectSQLite from '@mdx/get-started/sqlite/IntrospectSqlite.mdx';
+import FileStructure from '@mdx/get-started/FileStructure.mdx';
+import InstallPackages from '@mdx/get-started/InstallPackages.mdx';
+import SetupConfig from '@mdx/get-started/SetupConfig.mdx';
+import SetupEnv from '@mdx/get-started/SetupEnv.mdx';
+import TransferCode from '@mdx/get-started/TransferCode.mdx';
+import ApplyChanges from '@mdx/get-started/ApplyChanges.mdx';
+import RunFile from '@mdx/get-started/RunFile.mdx';
+import ConnectSQLiteCloud from '@mdx/get-started/sqlite/ConnectSQLiteCloud.mdx';
+import QueryDatabase from '@mdx/get-started/QueryDatabase.mdx';
+import QueryDatabaseUpdated from '@mdx/get-started/QueryDatabaseUpdated.mdx';
+import UpdateSchema from '@mdx/get-started/sqlite/UpdateSchema.mdx';
+
+<Breadcrumbs/>
+
+# 在现有项目中使用 Drizzle 和 SQLite Durable Objects 快速开始
+
+<Prerequisites>
+  - **dotenv** - 管理环境变量的包 - [点击阅读](https://www.npmjs.com/package/dotenv)
+  - **tsx** - 运行 TypeScript 文件的包 - [点击阅读](https://tsx.is/)
+  - **Cloudflare SQLite Durable Objects** - 嵌入在 Durable Object 内的 SQLite 数据库 - [点击阅读](https://developers.cloudflare.com/durable-objects/api/sql-storage/)
+  - **wrangler** - Cloudflare 开发者平台命令行工具 - [点击阅读](https://developers.cloudflare.com/workers/wrangler)
+</Prerequisites>
+
+<FileStructure/>
+
+#### 第1步 - 安装所需包
+<InstallPackages lib=''/>
+
+#### 第2步 - 配置 wrangler.toml
+
+你需要一个配置 D1 数据库的 `wrangler.toml` 文件，内容大致如下：
+```toml
+#:schema node_modules/wrangler/config-schema.json
+name = "sqlite-durable-objects"
+main = "src/index.ts"
+compatibility_date = "2024-11-12"
+compatibility_flags = [ "nodejs_compat" ]
+
+# 绑定 Durable Object。Durable Object 是基于演员模型的按需扩缩计算原语。
+# Durable Objects 可以长期存在。用于需要长时间运行“服务器”的场景，例如实时应用。
+# 文档：https://developers.cloudflare.com/workers/wrangler/configuration/#durable-objects
+[[durable_objects.bindings]]
+name = "MY_DURABLE_OBJECT"
+class_name = "MyDurableObject"
+
+# Durable Object 迁移配置
+# 文档：https://developers.cloudflare.com/workers/wrangler/configuration/#migrations
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["MyDurableObject"]
+
+# 规则配置，便于后续步骤中导入迁移文件
+[[rules]] 
+type = "Text"
+globs = ["**/*.sql"]
+fallthrough = true
+```
+
+#### 第3步 - 配置 Drizzle 配置文件
+
+**Drizzle 配置** - 由 [Drizzle Kit](/docs/kit-overview) 使用的配置文件，包含数据库连接、迁移文件夹和模式文件等信息。
+
+在项目根目录创建 `drizzle.config.ts` 文件，内容如下：
+
+```typescript copy filename="drizzle.config.ts"
+import 'dotenv/config';
+import { defineConfig } from 'drizzle-kit';
+
+export default defineConfig({
+  out: './drizzle',
+  schema: './src/db/schema.ts',
+  dialect: 'sqlite',
+  driver: 'durable-sqlite',
+});
+```
+<Callout title='提示'>
+你可以查看[我们的教程](/docs/guides/d1-http-with-drizzle-kit)了解如何从 Cloudflare 获取环境变量
+</Callout>
+
+#### 第4步 - 反向分析数据库模式
+
+<IntrospectSQLite/>
+
+#### 第5步 - 把代码转移到你的实际 schema 文件
+
+<TransferCode/>
+
+#### 第6步 - 连接 Drizzle ORM 到数据库
+
+```typescript copy
+import { drizzle, type DrizzleSqliteDODatabase } from 'drizzle-orm/durable-sqlite';
+import { DurableObject } from 'cloudflare:workers'
+
+export class MyDurableObject extends DurableObject {
+	storage: DurableObjectStorage;
+	db: DrizzleSqliteDODatabase;
+
+	constructor(ctx: DurableObjectState, env: Env) {
+		super(ctx, env);
+		this.storage = ctx.storage;
+		this.db = drizzle(this.storage, { logger: false });
+	}
+}
+```
+
+#### 第7步 - 查询数据库
+
+```typescript copy
+import { drizzle, DrizzleSqliteDODatabase } from 'drizzle-orm/durable-sqlite';
+import { DurableObject } from 'cloudflare:workers'
+import { migrate } from 'drizzle-orm/durable-sqlite/migrator';
+import migrations from '../drizzle/migrations';
+import { usersTable } from './db/schema';
+
+export class MyDurableObject extends DurableObject {
+  storage: DurableObjectStorage;
+  db: DrizzleSqliteDODatabase<any>;
+
+  constructor(ctx: DurableObjectState, env: Env) {
+    super(ctx, env);
+    this.storage = ctx.storage;
+    this.db = drizzle(this.storage, { logger: false });
+
+    // 保证所有迁移完成后再接受查询请求。
+    // 否则你需要在访问 Drizzle 数据库 this.db 的函数中调用 this.migrate()。
+    ctx.blockConcurrencyWhile(async () => {
+      await this._migrate();
+    });
+  }
+
+  async insertAndList(user: typeof usersTable.$inferInsert) {
+    await this.insert(user);
+    return this.select();
+  }
+
+  async insert(user: typeof usersTable.$inferInsert) {
+    await this.db.insert(usersTable).values(user);
+  }
+
+  async select() {
+    return this.db.select().from(usersTable);
+  }
+
+  async _migrate() {
+    migrate(this.db, migrations);
+  }
+}
+
+export default {
+  /**
+   * 这是 Cloudflare Worker 的标准 fetch 处理函数
+   *
+   * @param request - 从客户端发送到 Worker 的请求
+   * @param env - 引用 wrangler.toml 中声明的绑定接口
+   * @param ctx - Worker 的执行上下文
+   * @returns 返回给客户端的响应
+   */
+  async fetch(request: Request, env: Env): Promise<Response> {
+    const id: DurableObjectId = env.MY_DURABLE_OBJECT.idFromName('durable-object');
+    const stub = env.MY_DURABLE_OBJECT.get(id);
+
+    // 方案 A - 性能最佳。
+    // 推荐将所有数据库交互打包成单个 Durable Object 调用，
+    // 因为在 DO 内数据库访问速度非常快。
+    const usersAll = await stub.insertAndList({
+      name: 'John',
+      age: 30,
+      email: 'john@example.com',
+    });
+    console.log('新增用户，获取数据库中的所有用户: ', users);
+    /*
+    const users: {
+      id: number;
+      name: string;
+      age: number;
+      email: string;
+      phone: string | null;
+    }[]
+    */
+
+    // 方案 B - 较慢，但有时适用于调试。
+    // 也可以直接调用单个公开的 Drizzle 查询，
+    // 但每个查询都是一次 Durable Object 实例的往返请求。
+    await stub.insert({
+      name: 'John',
+      age: 30,
+      email: 'john@example.com',
+    });
+    console.log('新增用户！');
+
+    const users = await stub.select();
+    console.log('获取数据库中的所有用户: ', users);
+    /*
+    const users: {
+      id: number;
+      name: string;
+      age: number;
+      email: string;
+      phone: string | null;
+    }[]
+    */
+
+    return Response.json(users);
+  }
+}
+```
+
+#### 第8步 - 运行 index.ts 文件
+
+<RunFile/>
+
+#### 第9步 - 更新你的表结构（可选）
+
+<UpdateSchema/>
+
+#### 第10步 - 将更改应用到数据库（可选）
+
+<ApplyChanges />
+
+#### 第11步 - 使用新字段查询数据库（可选）
+
+```typescript copy filename="src/index.ts"
+import { drizzle, DrizzleSqliteDODatabase } from 'drizzle-orm/durable-sqlite';
+import { DurableObject } from 'cloudflare:workers'
+import { migrate } from 'drizzle-orm/durable-sqlite/migrator';
+import migrations from '../drizzle/migrations';
+import { usersTable } from './db/schema';
+
+export class MyDurableObject extends DurableObject {
+  storage: DurableObjectStorage;
+  db: DrizzleSqliteDODatabase<any>;
+
+  constructor(ctx: DurableObjectState, env: Env) {
+    super(ctx, env);
+    this.storage = ctx.storage;
+    this.db = drizzle(this.storage, { logger: false });
+
+    // 保证所有迁移完成后再接受查询请求。
+    // 否则你需要在访问 Drizzle 数据库 this.db 的函数中调用 this.migrate()。
+    ctx.blockConcurrencyWhile(async () => {
+      await this._migrate();
+    });
+  }
+
+  async insertAndList(user: typeof usersTable.$inferInsert) {
+    await this.insert(user);
+    return this.select();
+  }
+
+  async insert(user: typeof usersTable.$inferInsert) {
+    await this.db.insert(usersTable).values(user);
+  }
+
+  async select() {
+    return this.db.select().from(usersTable);
+  }
+
+  async _migrate() {
+    migrate(this.db, migrations);
+  }
+}
+
+export default {
+  /**
+   * 这是 Cloudflare Worker 的标准 fetch 处理函数
+   *
+   * @param request - 从客户端发送到 Worker 的请求
+   * @param env - 引用 wrangler.toml 中声明的绑定接口
+   * @param ctx - Worker 的执行上下文
+   * @returns 返回给客户端的响应
+   */
+  async fetch(request: Request, env: Env): Promise<Response> {
+    const id: DurableObjectId = env.MY_DURABLE_OBJECT.idFromName('durable-object');
+    const stub = env.MY_DURABLE_OBJECT.get(id);
+
+    // 方案 A - 性能最佳。
+    // 推荐将所有数据库交互打包成单个 Durable Object 调用，
+    // 因为在 DO 内数据库访问速度非常快。
+    const usersAll = await stub.insertAndList({
+      name: 'John',
+      age: 30,
+      email: 'john@example.com',
+      phone: '123-456-7890',
+    });
+    console.log('新增用户，获取数据库中的所有用户: ', users);
+    /*
+    const users: {
+      id: number;
+      name: string;
+      age: number;
+      email: string;
+      phone: string | null;
+    }[]
+    */
+
+    // 方案 B - 较慢，但有时适用于调试。
+    // 也可以直接调用单个公开的 Drizzle 查询，
+    // 但每个查询都是一次 Durable Object 实例的往返请求。
+    await stub.insert({
+      name: 'John',
+      age: 30,
+      email: 'john@example.com',
+      phone: '123-456-7890',
+    });
+    console.log('新增用户！');
+
+    const users = await stub.select();
+    console.log('获取数据库中的所有用户: ', users);
+    /*
+    const users: {
+      id: number;
+      name: string;
+      age: number;
+      email: string;
+      phone: string | null;
+    }[]
+    */
+
+    return Response.json(users);
+  }
+}
+```

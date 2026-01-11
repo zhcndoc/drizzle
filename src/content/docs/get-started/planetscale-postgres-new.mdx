@@ -1,0 +1,78 @@
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
+import Npm from "@mdx/Npm.astro";
+import Callout from '@mdx/Callout.astro';
+import Steps from '@mdx/Steps.astro';
+import AnchorCards from '@mdx/AnchorCards.astro';
+import Breadcrumbs from '@mdx/Breadcrumbs.astro';
+import Prerequisites from "@mdx/Prerequisites.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+import FileStructure from '@mdx/get-started/FileStructure.mdx';
+import InstallPackages from '@mdx/get-started/InstallPackages.mdx';
+import ConnectPlanetScalePostgres from '@mdx/get-started/postgresql/ConnectPlanetScalePostgres.mdx'
+import CreateTable from '@mdx/get-started/postgresql/CreateTable.mdx'
+import SetupConfig from '@mdx/get-started/SetupConfig.mdx';
+import ApplyChanges from '@mdx/get-started/ApplyChanges.mdx';
+import RunFile from '@mdx/get-started/RunFile.mdx';
+import QueryDatabase from '@mdx/get-started/QueryDatabase.mdx';
+import SetupEnv from '@mdx/get-started/SetupEnv.mdx';
+
+<Breadcrumbs/>
+
+# 开始使用 Drizzle 和 PlanetScale Postgres
+
+<Prerequisites>
+  - **dotenv** - 管理环境变量的包 - [查看这里](https://www.npmjs.com/package/dotenv)
+  - **tsx** - 运行 TypeScript 文件的包 - [查看这里](https://tsx.is/)
+  - **PlanetScale Postgres** - PostgreSQL 数据库平台 - [查看这里](https://planetscale.com/docs/postgres)
+  - **node-postgres** - 用于查询 PostgreSQL 数据库的包 - [查看这里](https://node-postgres.com/)
+</Prerequisites>
+
+<Callout title='PlanetScale 同时支持 MySQL' type='info'>
+在找 MySQL 吗？查看我们的[PlanetScale MySQL 指南](/docs/get-started/planetscale-new)
+</Callout>
+
+PlanetScale 同时提供 MySQL（Vitess）和 PostgreSQL 数据库。本指南涵盖如何使用标准的 `node-postgres` 驱动连接 PlanetScale Postgres。
+
+关于如何创建 PlanetScale Postgres 数据库和获取凭证的详细说明，请参阅[PlanetScale Postgres 文档](https://planetscale.com/docs/postgres/tutorials/planetscale-postgres-drizzle)。
+
+<FileStructure/>
+
+#### 步骤 1 - 安装 **node-postgres** 包
+<InstallPackages lib='pg' devlib=' @types/pg'/>
+
+#### 步骤 2 - 配置连接变量
+
+在项目根目录下创建 `.env` 文件，并添加数据库连接变量：
+
+```plaintext copy
+DATABASE_URL=postgresql://{username}:{password}@{host}:{port}/postgres?sslmode=verify-full
+```
+
+<Callout title='提示'>
+你可以通过访问 PlanetScale 仪表板，进入你的数据库，点击 **“Connect”** 并创建 **“Default role”** 来获取连接凭证。详细步骤请参阅[PlanetScale 连接指南](https://planetscale.com/docs/postgres/tutorials/planetscale-postgres-drizzle#create-credentials-and-connect)。
+</Callout>
+
+#### 步骤 3 - 连接 Drizzle ORM 到数据库
+
+<ConnectPlanetScalePostgres/>
+
+#### 步骤 4 - 创建数据表
+
+<CreateTable />
+
+#### 步骤 5 - 配置 Drizzle 配置文件
+
+<SetupConfig dialect='postgresql' env_variable='DATABASE_URL'/>
+
+#### 步骤 6 - 应用数据库变更
+
+<ApplyChanges />
+
+#### 步骤 7 - 数据库种子和查询
+
+<QueryDatabase dialect='node-postgres' env_variable='DATABASE_URL'/>
+
+#### 步骤 8 - 运行 index.ts 文件
+
+<RunFile/>

@@ -1,0 +1,30 @@
+import CodeTabs from "@mdx/CodeTabs.astro";
+
+在 `src` 目录下创建一个 `index.ts` 文件并初始化连接：
+
+<CodeTabs items={["Turso 数据库", "带配置的 Turso 数据库"]}>
+```typescript copy
+import 'dotenv/config';
+import { drizzle } from 'drizzle-orm/tursodatabase/database';
+
+const db = drizzle(process.env.DB_FILE_NAME!);
+```
+```typescript copy
+import 'dotenv/config';
+import { drizzle } from 'drizzle-orm/tursodatabase/database';
+
+// 你可以指定 turso 连接选项中的任意属性
+const db = drizzle({ connection: { path: process.env.DB_FILE_NAME! }});
+```
+</CodeTabs>
+
+如果你需要提供已有的驱动：
+
+```typescript copy
+import 'dotenv/config';
+import { Database } from '@tursodatabase/database';
+import { drizzle } from 'drizzle-orm/tursodatabase/database';
+
+const client = new Database(process.env.DB_FILE_NAME!);
+const db = drizzle({ client });
+```

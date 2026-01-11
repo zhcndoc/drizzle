@@ -40,7 +40,7 @@ K6基准测试实例运行在 MacBook Ai r上，通过 1GB 以太网向配备 In
 ...
 }
 
-const desiredPostgresPort = 5432; // change here
+const desiredPostgresPort = 5432; // 这里更改
 main();
 ```
 2. 在 .env 文件中使用分配的数据库端口更新 `DATABASE_URL`。
@@ -74,4 +74,5 @@ pnpm start:prisma
 const host = `http://192.168.31.144:3001`; // prisma
 ```
 4. 使用 `k6 run bench.js` 运行测试 🚀
+
 </CenteredLayout>

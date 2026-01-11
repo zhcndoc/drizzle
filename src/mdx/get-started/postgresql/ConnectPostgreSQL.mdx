@@ -1,8 +1,8 @@
 import CodeTabs from "@mdx/CodeTabs.astro";
 
-Create a `index.ts` file in the `src` directory and initialize the connection:
+在 `src` 目录下创建一个 `index.ts` 文件并初始化连接：
 
-<CodeTabs items={["node-postgres", "node-postgres with config", "your node-postgres driver"]}>
+<CodeTabs items={["node-postgres", "带配置的 node-postgres", "你的 node-postgres 驱动"]}>
 ```typescript copy
 import 'dotenv/config';
 import { drizzle } from 'drizzle-orm/node-postgres';
@@ -13,7 +13,7 @@ const db = drizzle(process.env.DATABASE_URL!);
 import 'dotenv/config';
 import { drizzle } from 'drizzle-orm/node-postgres';
 
-// You can specify any property from the node-postgres connection options
+// 你可以指定 node-postgres 连接选项中的任意属性
 const db = drizzle({ 
   connection: { 
     connectionString: process.env.DATABASE_URL!,

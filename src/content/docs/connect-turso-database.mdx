@@ -1,0 +1,51 @@
+import Npm from "@mdx/Npm.astro";
+import Callout from '@mdx/Callout.astro';
+import AnchorCards from '@mdx/AnchorCards.astro';
+import Steps from '@mdx/Steps.astro';
+import WhatsNextPostgres from "@mdx/WhatsNextPostgres.astro";
+import Prerequisites from "@mdx/Prerequisites.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+import LibsqlTable from "@mdx/LibsqlTable.mdx";
+import LibsqlTabs from "@mdx/LibsqlTabs.mdx";
+
+# Drizzle \<\> Turso 数据库
+
+<Prerequisites>
+- 使用 Drizzle 的数据库[连接基础](/docs/connect-overview)
+- Turso 数据库 - [官网](https://docs.turso.tech/introduction)
+- Turso 数据库驱动 - [官网](https://docs.turso.tech/connect/javascript) & [GitHub](https://github.com/tursodatabase/turso/tree/main/bindings/javascript)
+</Prerequisites>
+
+根据**[官网](https://docs.turso.tech/introduction)**，  
+Turso 是在 AI 时代助力你实现伟大梦想的小型数据库。
+
+#### 第一步 - 安装包
+<Npm>
+drizzle-orm@beta @tursodatabase/database
+-D drizzle-kit@beta
+</Npm>
+
+#### 第二步 - 初始化驱动并进行查询
+```typescript
+import { drizzle } from 'drizzle-orm/tursodatabase/database';
+
+const db = drizzle('sqlite.db');
+
+const result = await db.execute('select 1');
+```
+
+如果你需要提供你已有的驱动：
+
+```typescript
+import { Database } from '@tursodatabase/drivers';
+import { drizzle } from 'drizzle-orm/tursodatabase/database';
+
+const client = new Database('sqlite.db');
+const db = drizzle({ client });
+
+const result = await db.execute('select 1');
+```
+
+#### 下一步？
+
+<WhatsNextPostgres/>

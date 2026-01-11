@@ -1,0 +1,12 @@
+在 `src/db` 目录下创建一个 `schema.ts` 文件并声明你的表：
+
+```typescript copy filename="src/db/schema.ts"
+import { int, mssqlTable, varchar } from "drizzle-orm/mssql-core";
+
+export const usersTable = mssqlTable("users", {
+  id: int().primaryKey(),
+  name: varchar({ length: 255 }).notNull(),
+  age: int().notNull(),
+  email: varchar({ length: 255 }).notNull().unique(),
+});
+```

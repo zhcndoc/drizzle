@@ -14,7 +14,7 @@ await db.delete(users).where(eq(users.name, 'Dan'));
 
 ### 限制
 
-<IsSupportedChipGroup chips={{ 'PostgreSQL': false, 'MySQL': true, 'SQLite': true, 'SingleStore': true }} />
+<IsSupportedChipGroup chips={{ 'PostgreSQL': false, 'MySQL': true, 'SQLite': true, 'SingleStore': true, 'MSSQL': false, 'CockroachDB': false }} />
 
 使用 `.limit()` 向查询添加 `limit` 子句 - 例如：
 <Section>
@@ -35,7 +35,7 @@ import { asc, desc } from 'drizzle-orm';
 await db.delete(users).where(eq(users.name, 'Dan')).orderBy(users.name);
 await db.delete(users).where(eq(users.name, 'Dan')).orderBy(desc(users.name));
 
-// order by multiple fields
+// 按多个字段排序
 await db.delete(users).where(eq(users.name, 'Dan')).orderBy(users.name, users.name2);
 await db.delete(users).where(eq(users.name, 'Dan')).orderBy(asc(users.name), desc(users.name2));
 ```
@@ -49,7 +49,7 @@ delete from "users" where "users"."name" = $1 order by "name" asc, "name2" desc;
 </Section>
 
 ### 带返回值的删除
-<IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'SQLite': true, 'MySQL': false, 'SingleStore': false}} />
+<IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'SQLite': true, 'MySQL': false, 'SingleStore': false, 'MSSQL': false, 'CockroachDB': true }} />
 您可以在 PostgreSQL 和 SQLite 中删除一行并获取返回值：
 ```typescript copy
 const deletedUser = await db.delete(users)
@@ -60,6 +60,16 @@ const deletedUser = await db.delete(users)
 const deletedUserIds: { deletedId: number }[] = await db.delete(users)
   .where(eq(users.name, 'Dan'))
   .returning({ deletedId: users.id });
+```
+
+## 输出
+<IsSupportedChipGroup chips={{ 'MSSQL': true }} />
+您也可以在 PostgreSQL 和 SQLite 中插入一行并获取返回值，如下所示：
+```typescript copy
+await db.insert(users).values({ name: "Dan" }).output();
+
+// 部分返回
+await db.insert(users).values({ name: "Partial Dan" }).output({ insertedId: users.id });
 ```
 
 ## 使用 WITH DELETE 子句

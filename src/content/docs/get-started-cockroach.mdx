@@ -1,0 +1,75 @@
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
+import Npm from "@mdx/Npm.astro";
+import Callout from '@mdx/Callout.astro';
+import Steps from '@mdx/Steps.astro';
+import AnchorCards from '@mdx/AnchorCards.astro';
+import Prerequisites from "@mdx/Prerequisites.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+import WhatsNextPostgres from "@mdx/WhatsNextPostgres.astro";
+
+# Drizzle \<\> PostgreSQL
+
+<Callout type='error'>
+本页面介绍的概念适用于 Drizzle 版本 `1.0.0-beta.2` 及以上。
+</Callout>
+
+<br/>
+
+<Prerequisites>
+- 使用 Drizzle 的数据库[连接基础](/docs/connect-overview)
+- node-postgres 的[基础知识](https://node-postgres.com/)
+</Prerequisites>
+
+Drizzle 原生支持使用 `node-postgres` 驱动的 PostgreSQL 连接。
+
+#### 第一步 - 安装包
+<Npm>
+drizzle-orm@beta pg
+-D drizzle-kit@beta @types/pg
+</Npm>
+
+#### 第二步 - 初始化驱动并执行查询
+<CodeTabs items={["node-postgres", "带配置的 node-postgres"]}>
+```typescript copy
+// 请确保安装了 'pg' 包 
+import { drizzle } from 'drizzle-orm/cockroach';
+
+const db = drizzle(process.env.DATABASE_URL);
+ 
+const result = await db.execute('select 1');
+```
+```typescript copy
+// 请确保安装了 'pg' 包 
+import { drizzle } from 'drizzle-orm/cockroach';
+
+// 你可以指定 node-postgres 连接选项中的任意属性
+const db = drizzle({ 
+  connection: { 
+    connectionString: process.env.DATABASE_URL,
+    ssl: true
+  }
+});
+ 
+const result = await db.execute('select 1');
+```
+</CodeTabs>
+
+如果你需要传入已有的驱动：
+
+```typescript copy
+// 请确保安装了 'pg' 包 
+import { drizzle } from "drizzle-orm/cockroach";
+import { Pool } from "pg";
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+const db = drizzle({ client: pool });
+ 
+const result = await db.execute('select 1');
+```
+
+#### 接下来怎么做？
+
+<WhatsNextPostgres/>

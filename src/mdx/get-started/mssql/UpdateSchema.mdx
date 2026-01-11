@@ -1,0 +1,16 @@
+如果你想更新表的 schema，可以在 `schema.ts` 文件中进行。例如，我们给 `users_table` 添加一个新的列 `phone`：
+
+```typescript copy filename="src/db/schema.ts" {8}
+import { mssqlTable, int, varchar, unique, primaryKey } from "drizzle-orm/mssql-core"
+
+export const users = mssqlTable("users", {
+ id: int(),
+ name: varchar({ length: 255 }).notNull(),
+ age: int().notNull(),
+ email: varchar({ length: 255 }).notNull(),
+ phone: varchar({ length: 255 })
+}, (table) => [
+ primaryKey({ columns: [table.id], name: "users_pkey"}),
+ unique("users_email_key").on(table.email)
+]);
+```

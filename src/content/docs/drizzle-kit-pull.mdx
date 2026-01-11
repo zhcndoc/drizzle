@@ -162,6 +162,26 @@ export default defineConfig({
 ```
 </CodeTabs>
 
+### Initial pull
+
+<Callout type='error'>
+该功能仅在 `1.0.0-beta.2` 及更高版本可用。
+</Callout>
+
+<Npm>
+drizzle-orm@beta
+drizzle-kit@beta -D
+</Npm>
+
+<br/>
+
+您可以使用 `--init` 标志将拉取的模式标记为数据库中的已应用迁移，
+这样所有后续迁移都会基于该初始迁移进行差异化。
+
+```shell
+npx drizzle-kit push --init
+```
+
 ### 包含表、模式和扩展
 `drizzle-kit push` 默认会管理 `public` 模式中的所有表。
 您可以通过 `tablesFilters`、`schemaFilter` 和 `extensionFilters` 选项配置表、模式和扩展的列表。
@@ -169,12 +189,12 @@ export default defineConfig({
 |                     |                                                                                               |
 | :------------------ | :-------------------------------------------------------------------------------------------- |
 | `tablesFilter`      | 基于 `glob` 的表名过滤器，例如 `["users", "user_info"]` 或 `"user*"`。默认为 `"*"` |
-| `schemaFilter`      | 模式名过滤器，例如 `["public", "drizzle"]`。默认为 `["public"]`                    |
+| `schemaFilter`      | 基于 `glob` 的模式名过滤器，例如 `["public", "drizzle"]` 或 `"drizzle*"`。默认为 `"*"` |
 | `extensionsFilters` | 已安装的数据库扩展列表，例如 `["postgis"]`。默认为 `[]`                    |
 <br/>
 
 让我们配置 drizzle-kit 只操作 **public** 模式中的 **所有表**，
-并告知 drizzle-kit 已安装了 **postgis** 扩展， 
+并告知 drizzle-kit 已安装了 **postgis** 扩展，
 以使其可以忽略在公共模式中创建自己的表。
 
 <Section>

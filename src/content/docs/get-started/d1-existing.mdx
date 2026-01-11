@@ -1,0 +1,213 @@
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
+import Npm from "@mdx/Npm.astro";
+import Callout from '@mdx/Callout.astro';
+import Steps from '@mdx/Steps.astro';
+import AnchorCards from '@mdx/AnchorCards.astro';
+import Breadcrumbs from '@mdx/Breadcrumbs.astro';
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Prerequisites from "@mdx/Prerequisites.astro";
+import IntrospectSQLite from '@mdx/get-started/sqlite/IntrospectSqlite.mdx';
+import FileStructure from '@mdx/get-started/FileStructure.mdx';
+import InstallPackages from '@mdx/get-started/InstallPackages.mdx';
+import SetupConfig from '@mdx/get-started/SetupConfig.mdx';
+import SetupEnv from '@mdx/get-started/SetupEnv.mdx';
+import TransferCode from '@mdx/get-started/TransferCode.mdx';
+import ApplyChanges from '@mdx/get-started/ApplyChanges.mdx';
+import RunFile from '@mdx/get-started/RunFile.mdx';
+import ConnectSQLiteCloud from '@mdx/get-started/sqlite/ConnectSQLiteCloud.mdx';
+import QueryDatabase from '@mdx/get-started/QueryDatabase.mdx';
+import QueryDatabaseUpdated from '@mdx/get-started/QueryDatabaseUpdated.mdx';
+import UpdateSchema from '@mdx/get-started/sqlite/UpdateSchema.mdx';
+
+<Breadcrumbs/>
+
+# 在已有项目中使用 Drizzle 和 D1 快速入门
+
+<Prerequisites>
+  - **dotenv** - 管理环境变量的包 - [查看这里](https://www.npmjs.com/package/dotenv)
+  - **tsx** - 运行 TypeScript 文件的包 - [查看这里](https://tsx.is/)
+  - **Cloudflare D1** - Serverless SQL 数据库，可供您的 Workers 和 Pages 项目查询 - [查看这里](https://developers.cloudflare.com/d1/)
+  - **wrangler** - Cloudflare 开发者平台命令行工具 - [查看这里](https://developers.cloudflare.com/workers/wrangler)
+</Prerequisites>
+
+<FileStructure/>
+
+#### 第 1 步 - 安装必需的包
+<InstallPackages lib=''/>
+
+#### 第 2 步 - 配置 wrangler.toml
+
+您需要为 D1 数据库创建 `wrangler.toml` 文件，内容大致如下：
+
+```toml
+name = "YOUR PROJECT NAME"
+main = "src/index.ts"
+compatibility_date = "2022-11-07"
+node_compat = true
+
+[[ d1_databases ]]
+binding = "DB"
+database_name = "YOUR DB NAME"
+database_id = "YOUR DB ID"
+migrations_dir = "drizzle"
+```
+
+#### 第 3 步 - 设置 Drizzle 配置文件
+
+**Drizzle 配置** 是由 [Drizzle Kit](/docs/kit-overview) 使用的配置文件，包含有关数据库连接、迁移文件夹和模式文件的所有信息。
+
+在项目根目录创建 `drizzle.config.ts` 文件，并添加以下内容：
+
+```typescript copy filename="drizzle.config.ts"
+import 'dotenv/config';
+import { defineConfig } from 'drizzle-kit';
+
+export default defineConfig({
+  out: './drizzle',
+  schema: './src/db/schema.ts',
+  dialect: 'sqlite',
+  driver: 'd1-http',
+  dbCredentials: {
+    accountId: process.env.CLOUDFLARE_ACCOUNT_ID!,
+    databaseId: process.env.CLOUDFLARE_DATABASE_ID!,
+    token: process.env.CLOUDFLARE_D1_TOKEN!,
+  },
+});
+```
+<Callout title='提示'>
+您可以查看[我们的教程](/docs/guides/d1-http-with-drizzle-kit)，了解如何从 Cloudflare 获取环境变量
+</Callout>
+
+#### 第 4 步 - 反向解析数据库
+
+<IntrospectSQLite/>
+
+#### 第 5 步 - 将代码迁移到实际的 schema 文件
+
+<TransferCode/>
+
+#### 第 6 步 - 将 Drizzle ORM 连接到数据库
+
+```typescript copy
+import { drizzle } from 'drizzle-orm/d1';
+
+export interface Env {
+  <BINDING_NAME>: D1Database;
+}
+export default {
+  async fetch(request: Request, env: Env) {
+    const db = drizzle(env.<BINDING_NAME>);
+  },
+};
+```
+
+#### 第 7 步 - 查询数据库
+
+```typescript copy
+import { drizzle } from 'drizzle-orm/d1';
+
+export interface Env {
+  <BINDING_NAME>: D1Database;
+}
+export default {
+  async fetch(request: Request, env: Env) {
+    const db = drizzle(env.<BINDING_NAME>);
+
+    const user: typeof usersTable.$inferInsert = {
+      name: 'John',
+      age: 30,
+      email: 'john@example.com',
+    };
+
+    await db.insert(usersTable).values(user);
+    console.log('新用户已创建！');
+
+    const users = await db.select().from(usersTable);
+    console.log('从数据库获取所有用户: ', users);
+    /*
+    const users: {
+      id: number;
+      name: string;
+      age: number;
+      email: string;
+    }[]
+    */
+
+    await db
+      .update(usersTable)
+      .set({
+        age: 31,
+      })
+      .where(eq(usersTable.email, user.email));
+    console.log('用户信息已更新！');
+
+    await db.delete(usersTable).where(eq(usersTable.email, user.email));
+    console.log('用户已删除！');
+
+    return Response.json(users);
+  },
+};
+```
+
+#### 第 8 步 - 运行 index.ts 文件
+
+<RunFile/>
+
+#### 第 9 步 - 更新表结构（可选）
+
+<UpdateSchema/>
+
+#### 第 10 步 - 应用数据库变更（可选）
+
+<ApplyChanges />
+
+#### 第 11 步 - 使用新字段查询数据库（可选）
+
+```typescript copy filename="src/index.ts"
+import 'dotenv/config';
+import { eq } from 'drizzle-orm';
+import { drizzle } from 'drizzle-orm/sqlite-cloud';
+import { usersTable } from './db/schema';
+
+async function main() {
+  const db = drizzle(env.<BINDING_NAME>);
+
+  const user: typeof usersTable.$inferInsert = {
+    name: 'John',
+    age: 30,
+    email: 'john@example.com',
+    phone: '123-456-7890',
+  };
+
+  await db.insert(usersTable).values(user);
+  console.log('新用户已创建！');
+
+  const users = await db.select().from(usersTable);
+  console.log('从数据库获取所有用户: ', users);
+  /*
+  const users: {
+    id: number;
+    name: string;
+    age: number;
+    email: string;
+    phone: string | null;
+  }[]
+  */
+
+  await db
+    .update(usersTable)
+    .set({
+      age: 31,
+    })
+    .where(eq(usersTable.email, user.email));
+  console.log('用户信息已更新！');
+
+  await db.delete(usersTable).where(eq(usersTable.email, user.email));
+  console.log('用户已删除！');
+
+  return Response.json(users);
+}
+
+main();
+```

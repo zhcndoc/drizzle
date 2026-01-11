@@ -1,0 +1,50 @@
+import Npm from "@mdx/Npm.astro";
+import Npx from "@mdx/Npx.astro";
+import Prerequisites from "@mdx/Prerequisites.astro";
+
+# 升级到 Drizzle v1 RC
+
+<Prerequisites>
+  - **beta.1** 版本发布说明 —— 介于 `latest` 和 `beta` 版本之间的一组变更 —— [点击这里阅读](https://github.com/drizzle-team/drizzle-orm/blob/beta/changelogs/drizzle-orm/1.0.0-beta.1.md)
+  - **beta.2** 版本发布说明 —— 介于 `latest` 和 `beta` 版本之间的额外变更 —— [点击这里阅读](https://github.com/drizzle-team/drizzle-orm/releases/tag/v1.0.0-beta.2)
+  - 理想情况下，阅读所有其他 `beta.X` 版本的变更，以熟悉所有修复和更改内容
+</Prerequisites>
+
+Drizzle 发布候选版本托管在 drizzle 仓库的 [`beta` 分支](https://github.com/drizzle-team/drizzle-orm/tree/beta) 和 npm 上的 `beta` 标签下。要安装它，需要运行：
+
+<Npm>
+drizzle-orm@beta
+-D drizzle-kit@beta
+</Npm>
+
+它遵循 `1.0.0-beta.x` 的版本模式，因此你会看到诸如 `1.0.0-beta.7`、`1.0.0-beta.8` 等版本。每个 beta 更新的发布说明可在 [GitHub releases](https://github.com/drizzle-team/drizzle-orm/tags) 获取。
+
+#### 步骤 1 - 运行 `drizzle-kit up`
+
+> 相关讨论：https://github.com/drizzle-team/drizzle-orm/discussions/2832
+
+我们更新了迁移文件夹的结构，具体包括：
+- 移除 `journal.json`
+- 将 SQL 文件和快照文件分组放入单独的迁移文件夹
+- 移除 `drizzle-kit drop` 命令
+
+这些更改消除了 journal 文件可能引起的 Git 冲突，并简化了删除或修复冲突迁移的过程。
+
+在即将发布的 `beta` 版本中，我们将引入交换律检查，帮助你应对团队协作中迁移冲突问题，检测潜在碰撞并提供解决建议。
+> 交换律讨论：https://github.com/drizzle-team/drizzle-orm/discussions/5005
+
+要将之前的文件夹迁移到新格式，需要运行
+
+<Npx>
+drizzle-kit up
+</Npx>
+
+#### 步骤 2 - 更新关系查询到 v2
+
+我们详细解释了所有 RQBv2 的变更，以及更新代码库的方案：
+
+- [如何将关系定义从 v1 迁移到 v2](/docs/relations-v1-v2#how-to-migrate-relations-schema-definition-from-v1-to-v2)  
+- [如何将查询从 v1 迁移到 v2](/docs/relations-v1-v2#how-to-migrate-queries-from-v1-to-v2)  
+- [部分升级，或如何在升级后仍保留 v1 使用？](/docs/relations-v1-v2#partial-upgrade-or-how-to-stay-on-rqb-v1-even-after-an-upgrade)  
+
+#### 步骤 3 - 完成 ✅

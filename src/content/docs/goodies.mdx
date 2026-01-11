@@ -1,4 +1,3 @@
-
 import Tab from '@mdx/Tab.astro';
 import Tabs from '@mdx/Tabs.astro';
 import Callout from '@mdx/Callout.astro';
@@ -8,7 +7,7 @@ import CodeTabs from '@mdx/CodeTabs.astro';
 ## 类型 API
 要从你的表架构中检索 `select` 和 `insert` 查询的类型，可以使用我们的类型辅助工具。
 
-<Tabs items={["PostgreSQL", "MySQL", "SQLite", "SingleStore"]}>
+<Tabs items={["PostgreSQL", "MySQL", "SQLite", "SingleStore", "MSSQL", "CockroachDB"]}>
 <Tab>
 ```ts
 import { serial, text, pgTable } from 'drizzle-orm/pg-core';
@@ -109,6 +108,46 @@ type SelectUser = InferSelectModel<typeof users>;
 type InsertUser = InferInsertModel<typeof users>;
 ```
 </Tab>
+<Tab>
+```ts
+import { int, text, mssqlTable } from 'drizzle-orm/mssql-core';
+import { type InferSelectModel, type InferInsertModel } from 'drizzle-orm'
+
+const users = mssqlTable('users', {
+  id: int().primaryKey(),
+  name: text().notNull(),
+});
+
+type SelectUser = typeof users.$inferSelect;
+type InsertUser = typeof users.$inferInsert;
+// or
+type SelectUser = typeof users._.$inferSelect;
+type InsertUser = typeof users._.$inferInsert;
+// or
+type SelectUser = InferSelectModel<typeof users>;
+type InsertUser = InferInsertModel<typeof users>;
+```
+</Tab>
+<Tab>
+```ts
+import { int4, text, cockroachTable } from 'drizzle-orm/cockroach-core';
+import { type InferSelectModel, type InferInsertModel } from 'drizzle-orm'
+
+const users = cockroachTable('users', {
+  id: int4().primaryKey(),
+  name: text().notNull(),
+});
+
+type SelectUser = typeof users.$inferSelect;
+type InsertUser = typeof users.$inferInsert;
+// or
+type SelectUser = typeof users._.$inferSelect;
+type InsertUser = typeof users._.$inferInsert;
+// or
+type SelectUser = InferSelectModel<typeof users>;
+type InsertUser = InferInsertModel<typeof users>;
+```
+</Tab>
 </Tabs>
 
 
@@ -154,7 +193,7 @@ const db = drizzle({ logger: new MyLogger() });
 **表创建者** API 让你定义自定义表名。  
 当你需要将不同项目的架构保存在同一个数据库中时，它非常有用。
 
-<CodeTabs items={["PostgreSQL","MySQL","SQLite", "SingleStore"]}>
+<CodeTabs items={["PostgreSQL", "MySQL", "SQLite", "SingleStore", "MSSQL", "CockroachDB"]}>
 ```ts {3}
 import { serial, text, pgTableCreator } from 'drizzle-orm/pg-core';
 
@@ -188,11 +227,31 @@ const users = sqliteTable('users', {
 ```ts {3}
 import { int, text, singlestoreTableCreator } from 'drizzle-orm/singlestore-core';
 
-const mysqlTable = singlestoreTableCreator((name) => `project1_${name}`);
+const singlestoreTable = singlestoreTableCreator((name) => `project1_${name}`);
 
 const users = singlestoreTable('users', {
   id: int('id').primaryKey(),
   name: text('name').notNull(),
+});
+```
+```ts {3}
+import { int, text, mssqlTableCreator } from 'drizzle-orm/mssql-core';
+
+const mssqlTable = mssqlTableCreator((name) => `project1_${name}`);
+
+const users = mssqlTable('users', {
+  id: int().primaryKey(),
+  name: text().notNull(),
+});
+```
+```ts {3}
+import { int4, text, cockroachTableCreator } from 'drizzle-orm/cockroach-core';
+
+const pgTable = cockroachTableCreator((name) => `project1_${name}`);
+
+const users = pgTable('users', {
+  id: int4().primaryKey(),
+  name: text().notNull(),
 });
 ```
 </CodeTabs>
@@ -235,7 +294,7 @@ const query = db
 如果你有一些复杂的查询需要执行，而 `drizzle-orm` 目前无法处理，
 你可以使用 `db.execute` 方法执行原始的 `parametrized` 查询。
 
-<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', 'SingleStore']}>
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', 'SingleStore', 'MSSQL', 'CockroachDB']}>
     <Tab>
     ```ts
     const statement = sql`select * from ${users} where ${users.id} = ${userId}`;
@@ -268,13 +327,27 @@ const query = db
     const res: SingleStoreRawQueryResult = await db.execute(statement);
     ```
     </Tab>
+        <Tab>
+    ```typescript copy
+    import { sql } from "drizzle-orm";
+
+    const statement = sql`select * from ${users} where ${users.id} = ${userId}`;
+    const res = await db.execute(statement);
+    ```
+    </Tab>
+    <Tab>
+    ```ts
+    const statement = sql`select * from ${users} where ${users.id} = ${userId}`;
+    const res = await db.execute(statement)
+    ```
+    </Tab>
 </Tabs>
 
 
 ## 独立查询构建器
 Drizzle ORM 提供了一个独立的查询构建器，
 允许你在不创建数据库实例的情况下构建查询并获取生成的 SQL。
-<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', "SingleStore"]}>
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', "SingleStore", "MSSQL", "CockroachDB"]}>
     <Tab>
         ```typescript copy
         import { QueryBuilder } from 'drizzle-orm/pg-core';
@@ -315,20 +388,47 @@ Drizzle ORM 提供了一个独立的查询构建器，
         const { sql, params } = query.toSQL();
         ```
     </Tab>
+    <Tab>
+        ```typescript copy
+        import { QueryBuilder } from 'drizzle-orm/mssql-core';
+
+        const qb = new QueryBuilder();
+
+        const query = qb.select().from(users).where(eq(users.name, 'Dan'));
+        const { sql, params } = query.toSQL();
+        ```
+    </Tab>
+    <Tab>
+        ```typescript copy
+        import { QueryBuilder } from 'drizzle-orm/cockroach-core';
+
+        const qb = new QueryBuilder();
+
+        const query = qb.select().from(users).where(eq(users.name, 'Dan'));
+        const { sql, params } = query.toSQL();
+        ```
+    </Tab>
 </Tabs>
 
 ## 获取类型化表字段
 你可以获取一个类型化的表字段映射，
 当你需要在选择时省略某些字段时非常有用。
+<Callout type='warning'>
+`getColumns` 从 `drizzle-orm@1.0.0-beta.2` 开始可用（详情见 [此处](/docs/upgrade-v1)）
 
-<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', "SingleStore"]}>
+如果你使用的是 1.0 之前的版本（如 `0.45.1`），则使用 `getTableColumns`
+</Callout>
+
+<br/>
+
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', "SingleStore", "MSSQL", "CockroachDB"]}>
   <Tab>
       <CodeTabs items={["index.ts", "schema.ts"]}>
         ```ts
-        import { getTableColumns } from "drizzle-orm";
+        import { getColumns } from "drizzle-orm";
         import { user } from "./schema";
 
-        const { password, role, ...rest } = getTableColumns(user);
+        const { password, role, ...rest } = getColumns(user);
 
         await db.select({ ...rest }).from(users);
         ```
@@ -348,10 +448,10 @@ Drizzle ORM 提供了一个独立的查询构建器，
   <Tab>
       <CodeTabs items={["index.ts", "schema.ts"]}>
         ```ts
-        import { getTableColumns } from "drizzle-orm";
+        import { getColumns } from "drizzle-orm";
         import { user } from "./schema";
 
-        const { password, role, ...rest } = getTableColumns(user);
+        const { password, role, ...rest } = getColumns(user);
 
         await db.select({ ...rest }).from(users);
         ```
@@ -371,10 +471,10 @@ Drizzle ORM 提供了一个独立的查询构建器，
   <Tab>
       <CodeTabs items={["index.ts", "schema.ts"]}>
         ```ts
-        import { getTableColumns } from "drizzle-orm";
+        import { getColumns } from "drizzle-orm";
         import { user } from "./schema";
 
-        const { password, role, ...rest } = getTableColumns(user);
+        const { password, role, ...rest } = getColumns(user);
 
         await db.select({ ...rest }).from(users);
         ```
@@ -394,15 +494,15 @@ Drizzle ORM 提供了一个独立的查询构建器，
   <Tab>
       <CodeTabs items={["index.ts", "schema.ts"]}>
         ```ts
-        import { getTableColumns } from "drizzle-orm";
+        import { getColumns } from "drizzle-orm";
         import { user } from "./schema";
 
-        const { password, role, ...rest } = getTableColumns(user);
+        const { password, role, ...rest } = getColumns(user);
 
         await db.select({ ...rest }).from(users);
         ```
         ```ts
-        import { int, text, mysqlTable } from "drizzle-orm/singlestore-core";
+        import { int, text, singlestoreTable } from "drizzle-orm/singlestore-core";
 
         export const user = singlestoreTable("user", {
           id: int("id").primaryKey().autoincrement(),
@@ -414,10 +514,56 @@ Drizzle ORM 提供了一个独立的查询构建器，
         ```
       </CodeTabs>
   </Tab>
+  <Tab>
+      <CodeTabs items={["index.ts", "schema.ts"]}>
+        ```ts
+        import { getColumns } from "drizzle-orm";
+        import { user } from "./schema";
+
+        const { password, role, ...rest } = getColumns(user);
+
+        await db.select({ ...rest }).from(users);
+        ```
+        ```ts
+        import { int, text, mssqlTable } from "drizzle-orm/mssql-core";
+
+        export const user = mssqlTable("user", {
+          id: int().primaryKey(),
+          name: text(),
+          email: text(),
+          password: text(),
+          role: text().$type<"admin" | "customer">(),
+        });
+        ```
+      </CodeTabs>
+  </Tab>
+  <Tab>
+      <CodeTabs items={["index.ts", "schema.ts"]}>
+        ```ts
+        import { getColumns } from "drizzle-orm";
+        import { user } from "./schema";
+
+        const { password, role, ...rest } = getColumns(user);
+
+        await db.select({ ...rest }).from(users);
+        ```
+        ```ts
+        import { int4, text, pgTable } from "drizzle-orm/cockroach-core";
+
+        export const user = pgTable("user", {
+          id: int4().primaryKey(),
+          name: text(),
+          email: text(),
+          password: text(),
+          role: text().$type<"admin" | "customer">(),
+        });
+        ```
+      </CodeTabs>
+  </Tab>
 </Tabs>
 
 ## 获取表信息
-<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', "SingleStore"]}>
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', "SingleStore", "MSSQL", "CockroachDB"]}>
   <Tab>
     ```ts copy
     import { getTableConfig, pgTable } from 'drizzle-orm/pg-core';
@@ -485,6 +631,39 @@ Drizzle ORM 提供了一个独立的查询构建器，
   } = getTableConfig(table);
   ```
   </Tab>
+  <Tab>
+  ```ts copy
+  import { getTableConfig, mssqlTable } from 'drizzle-orm/mssql-core';
+
+  export const table = mssqlTable(...);
+
+  const {
+    columns,
+    indexes,
+    checks,
+    primaryKeys,
+    name,
+    schema,
+  } = getTableConfig(table);
+  ```
+  </Tab>
+  <Tab>
+    ```ts copy
+    import { getTableConfig, cockroachTable } from 'drizzle-orm/cockroach-core';
+
+    export const table = cockroachTable(...);
+
+    const {
+      columns,
+      indexes,
+      foreignKeys,
+      checks,
+      primaryKeys,
+      name,
+      schema,
+    } = getTableConfig(table);
+    ```
+  </Tab>
 </Tabs>
 
 ## 比较对象类型（`instanceof` 的替代方案）
@@ -510,14 +689,14 @@ if (is(value, Column)) {
 
 我们决定构建并公开一个适当的 API，现在每个 `drizzle` 驱动程序都有 `drizzle.mock()`：
 ```ts
-import { drizzle } from "drizzle-orm/node-postgres";
+import { drizzle } from "drizzle-orm/...";
 
 const db = drizzle.mock();
 ```
 
 如果需要，您可以提供类型的架构。
 ```ts
-import { drizzle } from "drizzle-orm/node-postgres";
+import { drizzle } from "drizzle-orm/...";
 import * as schema from "./schema"
 
 const db = drizzle.mock({ schema });

@@ -22,7 +22,7 @@ await db.update(users)
 
 ### 限制
 
-<IsSupportedChipGroup chips={{ 'PostgreSQL': false, 'MySQL': true, 'SQLite': true, 'SingleStore': true }} />
+<IsSupportedChipGroup chips={{ 'PostgreSQL': false, 'MySQL': true, 'SQLite': true, 'SingleStore': true, 'MSSQL': false, 'CockroachDB': false }} />
 
 使用 `.limit()` 将 `limit` 子句添加到查询中 - 例如：
 <Section>
@@ -43,7 +43,7 @@ import { asc, desc } from 'drizzle-orm';
 await db.update(usersTable).set({ verified: true }).orderBy(usersTable.name);
 await db.update(usersTable).set({ verified: true }).orderBy(desc(usersTable.name));
 
-// order by multiple fields
+// 根据多个字段排序
 await db.update(usersTable).set({ verified: true }).orderBy(usersTable.name, usersTable.name2);
 await db.update(usersTable).set({ verified: true }).orderBy(asc(usersTable.name), desc(usersTable.name2));
 ```
@@ -57,13 +57,57 @@ update "users" set "verified" = $1 order by "name" asc, "name2" desc;
 </Section>
 
 ### 带返回值的更新
-<IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'SQLite': true, 'MySQL': false , 'SingleStore': false}} />
+<IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'SQLite': true, 'MySQL': false , 'SingleStore': false, 'MSSQL': false, 'CockroachDB': true }} />
 您可以在 PostgreSQL 和 SQLite 中更新行并返回它：
 ```typescript copy
 const updatedUserId: { updatedId: number }[] = await db.update(users)
   .set({ name: 'Mr. Dan' })
   .where(eq(users.name, 'Dan'))
   .returning({ updatedId: users.id });
+```
+
+### 输出
+<IsSupportedChipGroup chips={{ 'MSSQL': true }} />
+您可以更新行并同时获取更新前和更新后的数据：
+
+```typescript copy
+type User = typeof users.$inferSelect;
+
+const updatedUserId: User[] = await db.update(users)
+  .set({ name: 'Mr. Dan' })
+  .where(eq(users.name, 'Dan'))
+  .output();
+```
+
+返回更新后的部分用户字段：
+
+```ts
+const updatedUserId: { inserted: { updatedId: number }}[] = await db.update(users)
+  .set({ name: 'Mr. Dan' })
+  .where(eq(users.name, 'Dan'))
+  .output({ inserted: { updatedId: users.id }});
+```
+
+返回更新前数据库中的行：
+
+```ts
+type User = typeof users.$inferSelect;
+
+const updatedUserId: { deleted: User }[] = await db.update(users)
+  .set({ name: 'Mr. Dan' })
+  .where(eq(users.name, 'Dan'))
+  .output({ deleted: true });
+```
+
+同时返回更新前和更新后的数据：
+
+```ts
+type User = typeof users.$inferSelect;
+
+const updatedUserId: { deleted: User, inserted: User }[] = await db.update(users)
+  .set({ name: 'Mr. Dan' })
+  .where(eq(users.name, 'Dan'))
+  .output({ deleted: true, inserted: true });
 ```
 
 ## `with update`子句
@@ -99,20 +143,20 @@ returning "id"
 
 ## Update ... from
 
-<IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': false, 'SQLite': true, 'SingleStore': false }} />
+<IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': false, 'SQLite': true, 'SingleStore': false, 'MSSQL': false, 'CockroachDB': true }} />
 
-As the SQLite documentation mentions:
+正如 SQLite 文档所述：
 
-> The UPDATE-FROM idea is an extension to SQL that allows an UPDATE statement to be driven by other tables in the database. 
-The "target" table is the specific table that is being updated. With UPDATE-FROM you can join the target table 
-against other tables in the database in order to help compute which rows need updating and what 
-the new values should be on those rows
+> UPDATE-FROM 是 SQL 的一个扩展，允许更新语句通过数据库中的其他表来驱动。
+“目标”表是被更新的特定表。使用 UPDATE-FROM，您可以在目标表
+和数据库中的其他表之间进行连接，以帮助计算哪些行需要更新以及
+这些行的新值应该是什么。
 
-Similarly, the PostgreSQL documentation states:
+PostgreSQL 文档同样指出：
 
-> A table expression allowing columns from other tables to appear in the WHERE condition and update expressions
+> 允许在 WHERE 条件和更新表达式中出现其他表的列的表表达式。
 
-Drizzle also supports this feature starting from version `drizzle-orm@0.36.3`
+Drizzle 从版本 `drizzle-orm@0.36.3` 起也支持此功能。
 
 <Section>
 ```ts
@@ -131,7 +175,7 @@ where ("cities"."name" = $1 and "users"."name" = $2)
 ```
 </Section>
 
-You can also alias tables that are joined (in PG, you can also alias the updating table too).
+您还可以为连接的表指定别名（在 PostgreSQL 中，也可以为更新的表指定别名）。
 <Section>
 ```ts
 const c = alias(cities, 'c');
@@ -146,9 +190,9 @@ from "cities" "c"
 ```
 </Section>
 
-<IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': false, 'SQLite': false, 'SingleStore': false }} />
+<IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': false, 'SQLite': false, 'SingleStore': false, 'MSSQL': false, 'CockroachDB': true }} />
 
-In Postgres, you can also return columns from the joined tables.
+在 PostgreSQL 中，您还可以返回连接表中的列。
 <Section>
 ```ts
 const updatedUsers = await db

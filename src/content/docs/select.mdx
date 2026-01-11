@@ -12,7 +12,7 @@ Drizzle 为您提供了从数据库中获取数据的最 SQL 风格的方法，�
 而其尚不支持的功能，可以通过强大的 [`sql`](/docs/sql) 操作符由用户添加。
 
 假设您有一个如下面定义的 `users` 表：
-<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', 'SingleStore']}>
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', 'SingleStore', 'MSSQL', 'CockroachDB']}>
 <Tab>
 ```typescript
 import { pgTable, serial, text } from 'drizzle-orm/pg-core';
@@ -54,6 +54,28 @@ export const users = singlestoreTable('users', {
   id: int('id').primaryKey(),
   name: text('name').notNull(),
   age: int('age'),
+});
+```
+</Tab>
+<Tab>
+```typescript
+import { mssqlTable, int, text } from 'drizzle-orm/mssql-core';
+
+export const users = pgTable('users', {
+  id: int().primaryKey(),
+  name: text().notNull(),
+  age: int(),
+});
+```
+</Tab>
+<Tab>
+```typescript
+import { cockroachTable, int4, text } from 'drizzle-orm/cockroach-core';
+
+export const users = pgTable('users', {
+  id: int4().primaryKey(),
+  name: text().notNull(),
+  age: int4(),
 });
 ```
 </Tab>
@@ -124,8 +146,18 @@ Drizzle 不能根据提供的类型泛型执行任何类型转换，因为该信
 如果您需要对返回值应用运行时转换，您可以使用 [`.mapWith()`](/docs/sql#sqlmapwith) 方法。
 </Callout>
 
-### 条件选择
+<Callout title='信息'>
+从 `v1.0.0-beta.1` 开始，您可以使用 `.as()` 为列命名：
 
+```ts
+const result = await db.select({
+  id: users.id,
+  lowerName: users.name.as("lower"),
+}).from(users);
+```
+</Callout>
+
+### 条件选择
 您可以基于某个条件拥有动态选择对象：
 
 ```typescript
@@ -178,19 +210,28 @@ select distinct on ("name") "name" from "users" order by "name";
 借助 TypeScript，Drizzle API 让您以各种灵活的方式构建选择查询。
 
 高级部分选择的预览，更多详细的高级用法示例请参阅我们[专门的指南](/docs/guides/include-or-exclude-columns)。
+
+<Callout type='warning'>
+`getColumns` 从 `drizzle-orm@1.0.0-beta.2` 开始可用（更多信息请参见 [这里](/docs/upgrade-v1)）
+
+如果您使用的是早于 1.0 版本（例如 `0.45.1`），请使用 `getTableColumns`
+</Callout>
+
+<br/>
+
 <CodeTabs items={["示例 1", "示例 2", "示例 3", "示例 4"]}>
 ```ts
-import { getTableColumns, sql } from 'drizzle-orm';
+import { getColumns, sql } from 'drizzle-orm';
 
 await db.select({
-    ...getTableColumns(posts),
+    ...getColumns(posts),
     titleLength: sql<number>`length(${posts.title})`,
   }).from(posts);
 ```
 ```ts
-import { getTableColumns } from 'drizzle-orm';
+import { getColumns } from 'drizzle-orm';
 
-const { content, ...rest } = getTableColumns(posts); // 排除 "content" 列
+const { content, ...rest } = getColumns(posts); // 排除 "content" 列
 await db.select({ ...rest }).from(posts); // 选择所有其他列
 ```
 ```ts
@@ -364,6 +405,8 @@ await searchPosts(filters);
 ## ---
 
 ### 限制与偏移
+<IsSupportedChipGroup chips={{ 'MSSQL': false }} />
+
 使用 `.limit()` 和 `.offset()` 向查询添加 `limit` 和 `offset` 子句 - 例如，实现分页：
 <Section>
 ```typescript
@@ -373,6 +416,40 @@ await db.select().from(users).limit(10).offset(10);
 ```sql
 select "id", "name", "age" from "users" limit 10;
 select "id", "name", "age" from "users" limit 10 offset 10;
+```
+</Section>
+
+### Fetch & offset
+
+<IsSupportedChipGroup chips={{ 'MSSQL': true }} />
+
+<Callout>
+在 MSSQL 中，`FETCH` 和 `OFFSET` 是 `ORDER BY` 子句的一部分，因此它们只能在 `.orderBy()` 函数之后使用
+</Callout>
+
+<Section>
+```typescript
+await db.select().from(users).orderBy(asc(users.id)).offset(5);
+await db.select().from(users).orderBy(asc(users.id)).offset(5).fetch(10);
+```
+```sql
+select [id], [name], [age] from [users] offset 5 rows;
+select [id], [name], [age] from [users] offset 5 rows fetch next 10 rows;
+```
+</Section>
+
+### Top
+
+<IsSupportedChipGroup chips={{ 'MSSQL': true }} />
+
+限制查询结果集中返回的行数为指定数量
+
+<Section>
+```typescript
+await db.select().from(users).top(10);
+```
+```sql
+select top (10) [id], [name], [age] from [users];
 ```
 </Section>
 
@@ -829,7 +906,7 @@ db
 
 ### 迭代器
 
-<IsSupportedChipGroup chips={{ 'MySQL': true, 'PostgreSQL[WIP]': false, 'SQLite[WIP]': false, 'SingleStore[WIP]': false }} />
+<IsSupportedChipGroup chips={{ 'MySQL': true, 'PostgreSQL[WIP]': false, 'SQLite[WIP]': false, 'SingleStore[WIP]': false, 'MSSQL': true, 'CockroachDB[WIP]': false }} />
 
 如果您需要从查询中返回大量行而不希望将它们全部加载到内存中，可以使用 `.iterator()` 将查询转换为异步迭代器：
 
@@ -858,7 +935,7 @@ for await (const row of iterator) {
 
 `USE INDEX` 提示告诉优化器在处理查询时考虑哪些索引。优化器不会强制使用这些索引，但如果它们合适，会优先使用它们。
 
-<IsSupportedChipGroup chips={{ 'MySQL': true, 'PostgreSQL': false, 'SQLite': false, 'SingleStore': false }} />
+<IsSupportedChipGroup chips={{ 'MySQL': true, 'PostgreSQL': false, 'SQLite': false, 'SingleStore': false, 'MSSQL': false, 'CockroachDB': false }} />
 
 ```ts copy
 export const users = mysqlTable('users', {
@@ -886,7 +963,7 @@ await db.select()
 
 `IGNORE INDEX` 提示告诉优化器避免使用特定的索引来处理查询。MySQL 将考虑所有其他索引（如果有的话），或在必要时执行全表扫描。
 
-<IsSupportedChipGroup chips={{ 'MySQL': true, 'PostgreSQL': false, 'SQLite': false, 'SingleStore': false }} />
+<IsSupportedChipGroup chips={{ 'MySQL': true, 'PostgreSQL': false, 'SQLite': false, 'SingleStore': false, 'MSSQL': false, 'CockroachDB': false }} />
 
 ```ts copy
 export const users = mysqlTable('users', {
@@ -910,12 +987,11 @@ await db.select()
   .where(eq(users.name, 'David'));
 ```
 
-
 ### 强制索引
 
 `FORCE INDEX`提示强制优化器使用指定的索引进行查询。如果指定的索引无法使用，MySQL不会回退到其他索引；它可能会改为进行全表扫描。
 
-<IsSupportedChipGroup chips={{ 'MySQL': true, 'PostgreSQL': false, 'SQLite': false, 'SingleStore': false }} />
+<IsSupportedChipGroup chips={{ 'MySQL': true, 'PostgreSQL': false, 'SQLite': false, 'SingleStore': false, 'MSSQL': false, 'CockroachDB': false }} />
 
 ```ts copy
 export const users = mysqlTable('users', {

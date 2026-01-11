@@ -1,0 +1,41 @@
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Callout from '@mdx/Callout.astro';
+
+在 `src` 目录下创建一个 `index.ts` 文件并初始化连接：
+
+<CodeTabs items={["node-postgres", "使用配置的 node-postgres", "你的 node-postgres 驱动"]}>
+```typescript copy
+import 'dotenv/config';
+import { drizzle } from 'drizzle-orm/node-postgres';
+
+const db = drizzle(process.env.DATABASE_URL!);
+```
+```typescript copy
+import 'dotenv/config';
+import { drizzle } from 'drizzle-orm/node-postgres';
+
+// 你可以指定 node-postgres 连接选项中的任意属性
+const db = drizzle({ 
+  connection: { 
+    connectionString: process.env.DATABASE_URL!,
+    ssl: true
+  }
+});
+```
+```typescript copy
+import 'dotenv/config';
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL!,
+});
+const db = drizzle({ client: pool });
+```
+</CodeTabs>
+
+<Callout title='连接端口' type='info'>
+PlanetScale Postgres 支持两个连接端口：
+- **端口 5432** — 直接连接到 PostgreSQL。总连接数受你的集群 `max_connections` 设置限制。
+- **端口 6432** — 通过 PgBouncer 进行连接池连接。当有大量并发连接时推荐使用。
+</Callout>

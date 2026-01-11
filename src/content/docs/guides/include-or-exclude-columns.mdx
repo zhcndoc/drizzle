@@ -8,6 +8,7 @@ import IsSupportedChipGroup from "@mdx/IsSupportedChipGroup.astro";
 import Prerequisites from "@mdx/Prerequisites.astro";
 import CodeTabs from '@mdx/CodeTabs.astro';
 import CodeTab from '@mdx/CodeTab.astro';
+import Callout from '@mdx/Callout.astro';
 
 <IsSupportedChipGroup chips={{PostgreSQL: true, MySQL: true, SQLite: true}}/>
 
@@ -43,7 +44,7 @@ Drizzle 提供了灵活的 API 用于在查询中包含或排除列。要包含�
     ```
   </CodeTab>
 
-  ```ts copy
+  ```ts
   import { integer, pgTable, serial, text } from 'drizzle-orm/pg-core';
 
   export const posts = pgTable('posts', {
@@ -70,15 +71,21 @@ Drizzle 提供了灵活的 API 用于在查询中包含或排除列。要包含�
   ```
 </Section>
 
-要包含所有列并添加额外列，可以使用 `getTableColumns()` 工具函数，如下所示：
+要包含所有列并添加额外列，可以使用 `getColumns()` 工具函数，如下所示：
+
+<Callout type='warning'>
+`getColumns` 从 `drizzle-orm@1.0.0-beta.2` 开始提供（详细信息请参见 [这里](/docs/upgrade-v1)）
+
+如果你使用的是 1 版本之前（比如 `0.45.1`），请使用 `getTableColumns`
+</Callout>
 
 <Section>
   ```ts copy {5,6}
-  import { getTableColumns, sql } from 'drizzle-orm';
+  import { getColumns, sql } from 'drizzle-orm';
 
   await db
     .select({
-      ...getTableColumns(posts),
+      ...getColumns(posts),
       titleLength: sql<number>`length(${posts.title})`,
     })
     .from(posts);
@@ -96,13 +103,19 @@ Drizzle 提供了灵活的 API 用于在查询中包含或排除列。要包含�
   ```
 </Section>
 
-要排除列，可以使用 `getTableColumns()` 工具函数，如下所示：
+要排除列，可以使用 `getColumns()` 工具函数，如下所示：
+
+<Callout type='warning'>
+`getColumns` 从 `drizzle-orm@1.0.0-beta.2` 开始提供（详细信息请参见 [这里](/docs/upgrade-v1)）
+
+如果你使用的是 1 版本之前（比如 `0.45.1`），请使用 `getTableColumns`
+</Callout>
 
 <Section>
   ```ts copy {3,5}
-  import { getTableColumns } from 'drizzle-orm';
+  import { getColumns } from 'drizzle-orm';
 
-  const { content, ...rest } = getTableColumns(posts); // 排除 "content" 列
+  const { content, ...rest } = getColumns(posts); // 排除 "content" 列
 
   await db.select({ ...rest }).from(posts); // 选择所有其他列
   ```
@@ -122,17 +135,17 @@ Drizzle 提供了灵活的 API 用于在查询中包含或排除列。要包含�
 <CodeTabs items={["index.ts", "schema.ts"]}>
   <CodeTab>
     ```ts copy {5,9,10,11}
-    import { eq, getTableColumns } from 'drizzle-orm';
+    import { eq, getColumns } from 'drizzle-orm';
     import { comments, posts, users } from './db/schema';
 
     // 从 "comments" 中排除 "userId" 和 "postId" 列
-    const { userId, postId, ...rest } = getTableColumns(comments);
+    const { userId, postId, ...rest } = getColumns(comments);
 
     await db
       .select({
         postId: posts.id, // 包含 "posts" 中的 "id" 列
         comment: { ...rest }, // 包含所有其他列
-        user: users, // 等同于 getTableColumns(users)
+        user: users, // 等同于 getColumns(users)
       })
       .from(posts)
       .leftJoin(comments, eq(posts.id, comments.postId))

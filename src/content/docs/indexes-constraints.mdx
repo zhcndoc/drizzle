@@ -20,7 +20,7 @@ SQL 约束是对表列施加的规则。它们用于防止无效数据被输入�
 显式的 `DEFAULT` 子句可以指定默认值为 `NULL`、
 字符串常量、BLOB 常量、带符号数字或任何用括号括起来的常量表达式。
 
-<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', 'SingleStore']}>
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', 'SingleStore', 'MSSQL', 'CockroachDB']}>
   <Tab>
     <Section>
     ```typescript
@@ -36,7 +36,7 @@ SQL 约束是对表列施加的规则。它们用于防止无效数据被输入�
     ```
 
     ```sql
-    CREATE TABLE IF NOT EXISTS "table" (
+    CREATE TABLE "table" (
       "integer1" integer DEFAULT 42,
       "integer2" integer DEFAULT '42'::integer,
       "uuid1" uuid DEFAULT gen_random_uuid(),
@@ -105,6 +105,50 @@ SQL 约束是对表列施加的规则。它们用于防止无效数据被输入�
     ```
     </Section>
   </Tab>
+  <Tab>
+    <Section>
+    ```typescript
+    import { sql } from "drizzle-orm";
+    import { int, time, mssqlTable } from "drizzle-orm/mssql-core";
+    
+    const table = mssqlTable("table", {
+      int: int().default(42),
+      description: text().default(`This is your dashboard!`),
+    });
+    ```
+    ```sql
+    CREATE TABLE [table] (
+      [int] int DEFAULT 42,
+      [description] text DEFAULT 'This is your dashboard!'
+    );
+    ```
+    </Section>
+  </Tab>
+  <Tab>
+    <Section>
+    ```typescript
+    import { sql } from "drizzle-orm";
+    import { int4, uuid, cockroachTable } from "drizzle-orm/cockroach-core";
+
+    const table = cockroachTable('table', {
+      integer1: int4().default(42),
+      integer2: int4().default(sql`'42'::int4`),
+      uuid1: uuid().defaultRandom(),
+      uuid2: uuid().default(sql`gen_random_uuid()`),
+    });
+    ```
+
+    ```sql
+    CREATE TABLE "table" (
+      "integer1" int4 DEFAULT 42,
+      "integer2" int4 DEFAULT '42'::integer,
+      "uuid1" uuid DEFAULT gen_random_uuid(),
+      "uuid2" uuid DEFAULT gen_random_uuid()
+    );
+    ```
+    </Section>
+
+  </Tab> 
 </Tabs>
 
 ### 非空
@@ -114,7 +158,7 @@ SQL 约束是对表列施加的规则。它们用于防止无效数据被输入�
 这强制字段始终包含一个值，这意味着您不能插入新记录，
 或在不向该字段添加值的情况下更新记录。
 
-<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', 'SingleStore']}>
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', 'SingleStore', 'MSSQL', 'CockroachDB']}>
   <Tab>
     <Section>
       ```typescript copy
@@ -126,7 +170,7 @@ SQL 约束是对表列施加的规则。它们用于防止无效数据被输入�
       ```
 
       ```sql
-      CREATE TABLE IF NOT EXISTS "table" (
+      CREATE TABLE "table" (
         "integer" integer NOT NULL
       );
       ```
@@ -167,7 +211,7 @@ SQL 约束是对表列施加的规则。它们用于防止无效数据被输入�
     </Section>
 
   </Tab>
-    <Tab>
+  <Tab>
     <Section>
       ```typescript
       import { int, singlestoreTable } from "drizzle-orm/singlestore-core";
@@ -183,8 +227,41 @@ SQL 约束是对表列施加的规则。它们用于防止无效数据被输入�
       );
       ```
     </Section>
-
   </Tab>
+  <Tab>
+    <Section>
+      ```typescript
+      import { int, mssqlTable } from "drizzle-orm/mssql-core";
+
+      const table = mssqlTable('table', {
+        int: int().notNull(),
+      });
+      ```
+
+      ```sql
+      CREATE TABLE [table] (
+        [int] int NOT NULL
+      );
+      ```
+    </Section>
+  </Tab>
+    <Tab>
+    <Section>
+      ```typescript copy
+      import { int4, cockroachTable } from "drizzle-orm/cockroach-core";
+
+      const table = cockroachTable('table', {
+        integer: int4().notNull(),
+      });
+      ```
+
+      ```sql
+      CREATE TABLE "table" (
+        "integer" int4 NOT NULL
+      );
+      ```
+    </Section>
+  </Tab> 
 </Tabs>
 
 ### 唯一
@@ -199,7 +276,7 @@ SQL 约束是对表列施加的规则。它们用于防止无效数据被输入�
   每个表可以有多个 `UNIQUE` 约束，但每个表只能有一个 `PRIMARY KEY` 约束。
 </Callout>
 
-<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', 'SingleStore']}>
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', 'SingleStore', 'MSSQL', 'CockroachDB']}>
   <Tab>
     <Section>
       ```typescript copy
@@ -221,8 +298,8 @@ SQL 约束是对表列施加的规则。它们用于防止无效数据被输入�
         unique('custom_name').on(t.id, t.name)
       ]);
 
-      // In Postgres 15.0+ NULLS NOT DISTINCT is available
-      // This example demonstrates both available usages
+      // 在 Postgres 15.0+ 中，支持 NULLS NOT DISTINCT
+      // 此示例演示了两种可用用法
       export const userNulls = pgTable('user_nulls_example', {
         id: integer('id').unique("custom_name", { nulls: 'not distinct' }),
       }, (t) => [
@@ -231,24 +308,24 @@ SQL 约束是对表列施加的规则。它们用于防止无效数据被输入�
       ```
 
       ```sql
-      CREATE TABLE IF NOT EXISTS "composite_example" (
+      CREATE TABLE "composite_example" (
 	      "id" integer,
         "name" text,
         CONSTRAINT "composite_example_id_name_unique" UNIQUE("id","name"),
         CONSTRAINT "custom_name" UNIQUE("id","name")
       );
 
-      CREATE TABLE IF NOT EXISTS "table" (
+      CREATE TABLE "table" (
       	"id" integer,
       	CONSTRAINT "custom_name" UNIQUE("id")
       );
 
-      CREATE TABLE IF NOT EXISTS "user" (
+      CREATE TABLE "user" (
       	"id" integer,
       	CONSTRAINT "user_id_unique" UNIQUE("id")
       );
 
-      CREATE TABLE IF NOT EXISTS "user_nulls_example" (
+      CREATE TABLE "user_nulls_example" (
         "id" integer,
         CONSTRAINT "custom_name" UNIQUE NULLS NOT DISTINCT("id"),
         CONSTRAINT "user_nulls_example_id_unique" UNIQUE NULLS NOT DISTINCT("id")
@@ -387,6 +464,93 @@ SQL 约束是对表列施加的规则。它们用于防止无效数据被输入�
     </Section>
 
   </Tab>
+  <Tab>
+    <Callout type='warning'>
+    在 MSSQL 中，无法对 `text`、`ntext`、`varchar(max)`、`nvarchar(max)` 创建唯一约束
+    </Callout>
+    <Section>
+      ```typescript
+      import { int, varchar, unique, mssqlTable } from "drizzle-orm/mssql-core";
+
+      export const user = mssqlTable('user', {
+        id: int().unique(),
+      });
+
+      export const table = mssqlTable('table', {
+        id: int().unique('custom_name'),
+      });
+
+      export const composite = mssqlTable('composite_example', {
+        id: int(),
+        name: varchar({ length: 256 }),
+      }, (t) => [
+        unique().on(t.id, t.name),
+        unique('custom_name').on(t.id, t.name)
+      ]);
+      ```
+
+      ```sql
+      CREATE TABLE [user] (
+      	[id] int,
+      	CONSTRAINT [user_id_key] UNIQUE([id])
+      );
+
+      CREATE TABLE [table] (
+      	[id] int,
+      	CONSTRAINT [custom_name] UNIQUE([id])
+      );
+
+      CREATE TABLE [composite_example] (
+        [id] int,
+        [name] varchar(256),
+        CONSTRAINT [composite_example_id_name_key] UNIQUE([id],[name]),
+        CONSTRAINT [custom_name] UNIQUE([id],[name])
+      );
+      ```
+    </Section>
+
+  </Tab>
+  <Tab>
+    <Section>
+      ```typescript copy
+      import { int4, text, unique, cockroachTable } from "drizzle-orm/cockroach-core";
+
+      export const user = cockroachTable('user', {
+        id: int4().unique(),
+      });
+
+      export const table = cockroachTable('table', {
+        id: int4().unique('custom_name'),
+      });
+
+      export const composite = cockroachTable('composite_example', {
+        id: int4(),
+        name: text(),
+      }, (t) => [
+        unique().on(t.id, t.name),
+        unique('custom_name').on(t.id, t.name)
+      ]);
+      ```
+      ```sql
+      CREATE TABLE "user" (
+      	"id" integer,
+      	CONSTRAINT "user_id_unique" UNIQUE("id")
+      );
+
+      CREATE TABLE "table" (
+      	"id" integer,
+      	CONSTRAINT "custom_name" UNIQUE("id")
+      );
+
+      CREATE TABLE "composite_example" (
+	      "id" integer,
+        "name" text,
+        CONSTRAINT "composite_example_id_name_unique" UNIQUE("id","name"),
+        CONSTRAINT "custom_name" UNIQUE("id","name")
+      );
+      ```
+    </Section>
+  </Tab> 
 </Tabs>
 
 ### 检查
@@ -397,7 +561,7 @@ SQL 约束是对表列施加的规则。它们用于防止无效数据被输入�
 
 如果您在表上定义 `CHECK` 约束，它可以根据行中其他列的值限制某些列的值。
 
-<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', 'SingleStore']}>
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', 'SingleStore', 'MSSQL', 'CockroachDB']}>
   <Tab>
     <Section>
       ```typescript copy
@@ -417,7 +581,7 @@ SQL 约束是对表列施加的规则。它们用于防止无效数据被输入�
       );
       ```
       ```sql
-      CREATE TABLE IF NOT EXISTS "users" (
+      CREATE TABLE "users" (
 	      "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	      "username" text NOT NULL,
 	      "age" integer,
@@ -486,8 +650,66 @@ SQL 约束是对表列施加的规则。它们用于防止无效数据被输入�
 
   </Tab>
   <Tab>
-    Currently not supported in SingleStore
+    当前不支持 SingleStore
   </Tab>
+<Tab>
+    <Section>
+      ```typescript copy
+      import { sql } from "drizzle-orm";
+      import { check, int, mssqlTable, text } from "drizzle-orm/mssql-core";
+
+      export const users = mssqlTable(
+        "users",
+        {
+          id: int().primaryKey(),
+          username: text().notNull(),
+          age: integer(),
+        },
+        (table) => [
+          check("age_check1", sql`${table.age} > 21`),
+        ]
+      );
+      ```
+      ```sql
+      CREATE TABLE [users] (
+	      [id] int PRIMARY KEY,
+	      [username] text NOT NULL,
+	      [age] integer,
+	      CONSTRAINT [age_check1] CHECK ([users].[age] > 21)
+      );
+      ```
+    </Section>
+
+  </Tab> 
+  <Tab>
+    <Section>
+      ```typescript copy
+      import { sql } from "drizzle-orm";
+      import { check, int4, cockroachTable, text, uuid } from "drizzle-orm/cockroach-core";
+
+      export const users = cockroachTable(
+        "users",
+        {
+          id: uuid().defaultRandom().primaryKey(),
+          username: text().notNull(),
+          age: int4(),
+        },
+        (table) => [
+          check("age_check1", sql`${table.age} > 21`),
+        ]
+      );
+      ```
+      ```sql
+      CREATE TABLE "users" (
+	      "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	      "username" text NOT NULL,
+	      "age" int4,
+	      CONSTRAINT "age_check1" CHECK ("users"."age" > 21)
+      );
+      ```
+    </Section>
+
+  </Tab> 
 </Tabs>
 
 ### 主键
@@ -497,7 +719,7 @@ SQL 约束是对表列施加的规则。它们用于防止无效数据被输入�
 
 一个表只能有 **一个** 主键；在该表中，这个主键可以由单个或多个列（字段）组成。
 
-<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', 'SingleStore']}>
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', 'SingleStore', 'MSSQL', 'CockroachDB']}>
   <Tab>
     <Section>
       ```typescript copy
@@ -513,11 +735,11 @@ SQL 约束是对表列施加的规则。它们用于防止无效数据被输入�
       ```
 
       ```sql
-      CREATE TABLE IF NOT EXISTS "user" (
+      CREATE TABLE "user" (
         "id" serial PRIMARY KEY
       );
 
-      CREATE TABLE IF NOT EXISTS "table" (
+      CREATE TABLE "table" (
         "cuid" text PRIMARY KEY
       );
       ```
@@ -602,6 +824,51 @@ SQL 约束是对表列施加的规则。它们用于防止无效数据被输入�
     </Section>
 
   </Tab>
+  <Tab>
+    <Section>
+      ```typescript
+      import { int, text, mssqlTable } from "drizzle-orm/mssql-core";
+
+      export const user = mssqlTable("user", {
+        id: int().primaryKey(),
+      })
+      ```
+
+      ```sql
+      CREATE TABLE [user] (
+        [id] int,
+        CONSTRAINT [user_pkey] PRIMARY KEY [id]
+      );
+      ```
+    </Section>
+
+  </Tab>
+  <Tab>
+    <Section>
+      ```typescript copy
+      import { int4, text, cockroachTable } from "drizzle-orm/cockroach-core";
+
+      const user = cockroachTable('user', {
+        id: int4().primaryKey(),
+      });
+
+      const table = cockroachTable('table', {
+        id: text().primaryKey(),
+      });
+      ```
+
+      ```sql
+      CREATE TABLE "user" (
+        "id" int4 PRIMARY KEY
+      );
+
+      CREATE TABLE "table" (
+        "cuid" text PRIMARY KEY
+      );
+      ```
+    </Section>
+
+  </Tab> 
 </Tabs>
 
 ### 复合主键
@@ -609,7 +876,7 @@ SQL 约束是对表列施加的规则。它们用于防止无效数据被输入�
 就像 `PRIMARY KEY`，复合主键通过多个字段唯一标识表中的每条记录。
 
 Drizzle ORM 提供了一个独立的 `primaryKey` 操作符来实现这一点：
-<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', 'SingleStore']}>
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', 'SingleStore', 'MSSQL', 'CockroachDB']}>
   <Tab>
     <Section>
       ```typescript copy {18, 19}
@@ -630,7 +897,7 @@ Drizzle ORM 提供了一个独立的 `primaryKey` 操作符来实现这一点：
         bookId: integer("book_id"),
       }, (table) => [
         primaryKey({ columns: [table.bookId, table.authorId] }),
-        // Or PK with custom name
+        // 或者带自定义名称的主键
         primaryKey({ name: 'custom_name', columns: [table.bookId, table.authorId] }),
       ]);
       ```
@@ -638,7 +905,7 @@ Drizzle ORM 提供了一个独立的 `primaryKey` 操作符来实现这一点：
       ```sql {6, 9}
       ...
 
-      CREATE TABLE IF NOT EXISTS "books_to_authors" (
+      CREATE TABLE "books_to_authors" (
         "author_id" integer,
         "book_id" integer,
         PRIMARY KEY("book_id","author_id")
@@ -669,7 +936,7 @@ Drizzle ORM 提供了一个独立的 `primaryKey` 操作符来实现这一点：
         bookId: int("book_id"),
       }, (table) => [
         primaryKey({ columns: [table.bookId, table.authorId] }),
-        // Or PK with custom name
+        // 或者带自定义名称的主键
         primaryKey({ name: 'custom_name', columns: [table.bookId, table.authorId] })
       ]);
       ```
@@ -706,7 +973,7 @@ Drizzle ORM 提供了一个独立的 `primaryKey` 操作符来实现这一点：
         bookId: integer("book_id"),
       }, (table) => [
         primaryKey({ columns: [table.bookId, table.authorId] }),
-        // Or PK with custom name
+        // 或者带自定义名称的主键
         primaryKey({ name: 'custom_name', columns: [table.bookId, table.authorId] })
       ]);
       ```
@@ -742,7 +1009,7 @@ Drizzle ORM 提供了一个独立的 `primaryKey` 操作符来实现这一点：
         bookId: int("book_id"),
       }, (table) => [
         primaryKey({ columns: [table.bookId, table.authorId] }),
-        // Or PK with custom name
+        // 或者带自定义名称的主键
         primaryKey({ name: 'custom_name', columns: [table.bookId, table.authorId] }),
       ]);
       ```
@@ -759,6 +1026,81 @@ Drizzle ORM 提供了一个独立的 `primaryKey` 操作符来实现这一点：
     </Section>
 
   </Tab>
+  <Tab>
+    <Section>
+      ```typescript {18, 19}
+      import { int, text, primaryKey, mssqlTable } from "drizzle-orm/mssql-core";
+
+      export const user = mssqlTable("user", {
+        id: int().primaryKey(),
+        name: text(),
+      });
+
+      export const book = mssqlTable("book", {
+        id: int().primaryKey(),
+        name: text(),
+      });
+
+      export const booksToAuthors = mssqlTable("books_to_authors", {
+        authorId: int("author_id"),
+        bookId: int("book_id"),
+      }, (table) => [
+        primaryKey({ columns: [table.bookId, table.authorId] }),
+        // 或者带自定义名称的主键
+        primaryKey({ name: 'custom_name', columns: [table.bookId, table.authorId] }),
+      ]);
+      ```
+
+      ```sql {6}
+      ...
+
+      CREATE TABLE [books_to_authors] (
+        [author_id] int,
+        [book_id] int,
+        CONSTRAINT [custom_name] PRIMARY KEY([book_id], [author_id])
+      );
+      ```
+    </Section>
+
+  </Tab>
+  <Tab>
+    <Section>
+      ```typescript copy {18, 19}
+      import { int4, text, primaryKey, cockroachTable } from "drizzle-orm/cockroach-core";
+
+      export const user = cockroachTable("user", {
+        id: int4().primaryKey(),
+        name: text(),
+      });
+
+      export const book = cockroachTable("book", {
+        id: int4("id").primaryKey(),
+        name: text("name"),
+      });
+
+      export const booksToAuthors = cockroachTable("books_to_authors", {
+        authorId: int4("author_id"),
+        bookId: int4("book_id"),
+      }, (table) => [
+        primaryKey({ columns: [table.bookId, table.authorId] }),
+        // 或者带自定义名称的主键
+        primaryKey({ name: 'custom_name', columns: [table.bookId, table.authorId] }),
+      ]);
+      ```
+
+      ```sql {6, 9}
+      ...
+
+      CREATE TABLE "books_to_authors" (
+        "author_id" int4,
+        "book_id" int4,
+        PRIMARY KEY("book_id","author_id")
+      );
+
+      ALTER TABLE "books_to_authors" ADD CONSTRAINT "custom_name" PRIMARY KEY("book_id","author_id");
+      ```
+    </Section>
+  </Tab> 
 </Tabs>
 
 ### 外键
@@ -770,7 +1112,7 @@ Drizzle ORM 提供了一个独立的 `primaryKey` 操作符来实现这一点：
 Drizzle ORM 提供了几种声明外键的方法。
 您可以在列声明语句中声明它们：
 
-<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', 'SingleStore']}>
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', 'SingleStore', 'MSSQL', 'CockroachDB']}>
   <Tab>
     ```typescript copy {11}
     import { serial, text, integer, pgTable } from "drizzle-orm/pg-core";
@@ -825,11 +1167,44 @@ Drizzle ORM 提供了几种声明外键的方法。
   <Tab>
     当前在 SingleStore 中不支持
   </Tab>
+  <Tab>
+    ```typescript {11}
+    import { int, text, mssqlTable } from "drizzle-orm/mssql-core";
+
+    export const user = mssqlTable("user", {
+      id: int().primaryKey(),
+      name: text(),
+    });
+
+    export const book = mssqlTable("book", {
+      id: int().primaryKey(),
+      name: text(),
+      authorId: int("author_id").references(() => user.id)
+    });
+    ```
+
+  </Tab>
+    <Tab>
+    ```typescript copy {11}
+    import { int4, text, cockroachTable } from "drizzle-orm/cockroach-core";
+
+    export const user = cockroachTable("user", {
+      id: int4().primaryKey(),
+      name: text(),
+    });
+
+    export const book = cockroachTable("book", {
+      id: int4().primaryKey(),
+      name: text(),
+      authorId: int4("author_id").references(() => user.id)
+    });
+    ```
+  </Tab>
 </Tabs>
 
 如果您想进行自引用，由于 TypeScript 的限制，您必须显式设置引用回调的返回类型或使用独立的 `foreignKey` 操作符。
 
-<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', 'SingleStore']}>
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', 'SingleStore', 'MSSQL', 'CockroachDB']}>
   <Tab>
     ```typescript copy {6,16-19}
     import { serial, text, integer, foreignKey, pgTable, AnyPgColumn } from "drizzle-orm/pg-core";
@@ -840,7 +1215,7 @@ Drizzle ORM 提供了几种声明外键的方法。
       parentId: integer("parent_id").references((): AnyPgColumn => user.id)
     });
 
-    // or
+    // 或者
     export const user = pgTable("user", {
       id: serial("id"),
       name: text("name"),
@@ -865,7 +1240,7 @@ Drizzle ORM 提供了几种声明外键的方法。
       parentId: int("parent_id").references((): AnyMySqlColumn => user.id),
     });
 
-    // or
+    // 或者
     export const user = mysqlTable("user", {
       id: int("id").primaryKey().autoincrement(),
       name: text("name"),
@@ -890,7 +1265,7 @@ Drizzle ORM 提供了几种声明外键的方法。
       parentId: integer("parent_id").references((): AnySQLiteColumn => user.id)
     });
 
-    //or
+    //或者
     export const user = sqliteTable("user", {
       id: integer("id").primaryKey({ autoIncrement: true }),
       name: text("name"),
@@ -908,9 +1283,58 @@ Drizzle ORM 提供了几种声明外键的方法。
   <Tab>
     当前在 SingleStore 中不支持
   </Tab>
+    <Tab>
+    ```typescript {6,16-19}
+    import { int, text, foreignKey, mssqlTable, AnyMsSQLColumn } from "drizzle-orm/mssql-core";
+
+    export const user = mssqlTable("user", {
+      id: int().primaryKey(),
+      name: text(),
+      parentId: int("parent_id").references((): AnyMsSQLColumn => user.id)
+    });
+
+    //或者
+    export const user = mssqlTable("user", {
+      id: int().primaryKey(),
+      name: text(),
+      parentId: int("parent_id"),
+    }, (table) => [
+      foreignKey({
+        columns: [table.parentId],
+        foreignColumns: [table.id],
+        name: "custom_fk"
+      })
+    ]);
+    ```
+  </Tab>
+  <Tab>
+    ```typescript copy {6,16-19}
+    import { int4, text, foreignKey, cockroachTable, AnyCockroachColumn } from "drizzle-orm/cockroach-core";
+
+    export const user = cockroachTable("user", {
+      id: int4().primaryKey(),
+      name: text(),
+      parentId: int4("parent_id").references((): AnyCockroachColumn => user.id)
+    });
+
+    // 或者
+    export const user = cockroachTable("user", {
+      id: int4().primaryKey(),
+      name: text(),
+      parentId: int4("parent_id"),
+    }, (table) => [
+      foreignKey({
+        columns: [table.parentId],
+        foreignColumns: [table.id],
+        name: "custom_fk"
+      })
+    ]);
+    ```
+
+  </Tab>
 </Tabs>
 要声明多列外键，可以使用专用的 `foreignKey` 操作符：
-<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', 'SingleStore']}>
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', 'SingleStore', 'MSSQL', 'CockroachDB']}>
   <Tab>
     ```typescript copy {4-5,14-15,18-21}
     import { serial, text, foreignKey, pgTable, AnyPgColumn } from "drizzle-orm/pg-core";
@@ -989,13 +1413,62 @@ Drizzle ORM 提供了几种声明外键的方法。
   <Tab>
     当前在 SingleStore 中不支持
   </Tab>
+  <Tab>
+    ```typescript copy {4-5,14-15,18-21}
+    import { int, text, primaryKey, foreignKey, mssqlTable, AnyMsSqlColumn } from "drizzle-orm/mssql-core";
+
+    export const user = mssqlTable("user", {
+      firstName: text(),
+      lastName: text(),
+    }, (table) => [
+      primaryKey({ columns: [table.firstName, table.lastName]})
+    ]);
+
+    export const profile = mssqlTable("profile", {
+      id: int().primaryKey(),
+      userFirstName: text("user_first_name"),
+      userLastName: text("user_last_name"),
+    }, (table) => [
+      foreignKey({
+        columns: [table.userFirstName, table.userLastName],
+        foreignColumns: [user.firstName, user.lastName],
+        name: "custom_name"
+      })
+    ]);
+    ```
+
+  </Tab>
+    <Tab>
+    ```typescript copy {4-5,14-15,18-21}
+    import { int4, text, foreignKey, cockroachTable, AnyCockroachColumn } from "drizzle-orm/cockroach-core";
+
+    export const user = cockroachTable("user", {
+      firstName: text(),
+      lastName: text(),
+    }, (table) => [
+      primaryKey({ columns: [table.firstName, table.lastName]})
+    ]);
+
+    export const profile = cockroachTable("profile", {
+      id: int4().primaryKey(),
+      userFirstName: text("user_first_name"),
+      userLastName: text("user_last_name"),
+    }, (table) => [
+      foreignKey({
+        columns: [table.userFirstName, table.userLastName],
+        foreignColumns: [user.firstName, user.lastName],
+        name: "custom_fk"
+      })
+    ])
+    ```
+  </Tab>
 </Tabs>
 
 ## 索引
 
 Drizzle ORM 提供了 `index` 和 `unique index` 声明的 API：
 
-<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', 'SingleStore']}>
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', 'SingleStore', 'MSSQL', 'CockroachDB']}>
   <Tab>
     <Section>
     ```typescript copy {9-10}
@@ -1029,17 +1502,17 @@ Drizzle ORM 提供了 `index` 和 `unique index` 声明的 API：
     从 0.31.0 开始，Drizzle ORM 的新索引 API 提供了用于索引创建的所有参数的集合：
 
 ```ts
-// First example, with `.on()`
+// 第一个例子，使用 `.on()`
 index('name')
-  .on(table.column1.asc(), table.column2.nullsFirst(), ...) or .onOnly(table.column1.desc().nullsLast(), table.column2, ...)
+  .on(table.column1.asc(), table.column2.nullsFirst(), ...) 或 .onOnly(table.column1.desc().nullsLast(), table.column2, ...)
   .concurrently()
   .where(sql``)
   .with({ fillfactor: '70' })
 
-// Second Example, with `.using()`
+// 第二个例子，使用 `.using()`
 index('name')
   .using('btree', table.column1.asc(), sql`lower(${table.column2})`, table.column1.op('text_ops'))
-  .where(sql``) // sql expression
+  .where(sql``) // sql 表达式
   .with({ fillfactor: '70' })
 ```
 
@@ -1074,7 +1547,7 @@ index('name')
      Drizzle ORM 提供了用于索引创建的所有参数集合：
 
     ```typescript
-    // Index declaration reference
+    // 索引声明参考
     index("name")
       .on(table.name)
       .algorythm("default") // "default" | "copy" | "inplace"
@@ -1109,7 +1582,7 @@ index('name')
      Drizzle ORM 提供了用于索引创建的所有参数集合：
      
     ```typescript
-    // Index declaration reference
+    // 索引声明参考
     index("name")
       .on(table.name)
       .where(sql`...`)
@@ -1138,5 +1611,77 @@ index('name')
     CREATE UNIQUE INDEX `email_idx` ON `user` (`email`);
     ```
     </Section>
+  </Tab>
+  <Tab>
+    <Section>
+    ```typescript copy {8-9}
+    import { int, text, index, uniqueIndex, mssqlTable } from "drizzle-orm/mssql-core";
+
+    export const user = mysqlTable("user", {
+      id: int().primaryKey(),
+      name: text(),
+      email: text(),
+    }, (table) => [
+      index("name_idx").on(table.name),
+      uniqueIndex("email_idx").on(table.email),
+    ]);
+    ```
+    ```sql {5-6}
+    CREATE TABLE [user] (
+      ...
+    );
+
+    CREATE INDEX [name_idx] ON [user] ([name]);
+    CREATE UNIQUE INDEX [email_idx] ON [user] ([email]);
+    ```
+    </Section>
+
+    <Callout type='warning'>
+    在 MSSQL 中，无法对 `text`、`ntext`、`varchar(max)`、`nvarchar(max)` 创建唯一索引
+    </Callout>
+
+    Drizzle ORM 提供索引创建的参数集合：
+
+    ```typescript
+    // 索引声明参考
+    index("name")
+      .on(table.name)
+      .where(sql``)
+    ```
+  </Tab>
+    <Tab>
+    <Section>
+    ```typescript copy {9-10}
+    import { int4, text, index, uniqueIndex, cockroachTable } from "drizzle-orm/cockroach-core";
+
+    export const user = cockroachTable("user", {
+      id: int4().primaryKey(),
+      name: text(),
+      email: text(),
+    }, (table) => [
+      index("name_idx").on(table.name),
+      uniqueIndex("email_idx").on(table.email)
+    ]);
+    ```
+    ```sql {5-6}
+    CREATE TABLE "user" (
+      ...
+    );
+
+    CREATE INDEX "name_idx" ON "user" ("name");
+    CREATE UNIQUE INDEX "email_idx" ON "user" ("email");
+    ```
+    </Section>
+    ```ts
+    // 第一个例子，使用 `.on()`
+    index('name')
+      .on(table.column1.asc(), table.column2) 或 .onOnly(table.column1.desc(), table.column2, ...)
+      .where(sql``)
+
+    // 第二个例子，使用 `.using()`
+    index('name')
+      .using('btree', table.column1.asc(), sql`lower(${table.column2})`)
+      .where(sql``) // sql 表达式
+    ```
   </Tab>
 </Tabs>

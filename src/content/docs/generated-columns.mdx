@@ -15,7 +15,6 @@ SQL 中的生成列是一项功能，允许您在表中创建列，其值基于�
 生成列有两种类型：
 
 1. 虚拟（或非持久性）生成列：这些列在查询时动态计算。它们在数据库中不占用存储空间。
-
 2. 存储（或持久性）生成列：这些列在插入或更新行时计算，并将其值存储在数据库中。这使它们可以被索引，并且可以提高查询性能，因为值不需要在每个查询中重新计算。
 
 生成列对于以下情况特别有用：
@@ -29,7 +28,7 @@ SQL 中的生成列是一项功能，允许您在表中创建列，其值基于�
     生成列的实现和使用在不同的 SQL 数据库中可能有显著差异。PostgreSQL、MySQL 和 SQLite 在生成列方面各自有独特的特性、能力和限制。在这一部分中，我们将详细探讨这些差异，以帮助您了解如何在每个数据库系统中最好地利用生成列。
 </Callout>
 
-<Tabs items={["PostgreSQL", "MySQL", "SQLite", "SingleStore(WIP)"]}>
+<Tabs items={["PostgreSQL", "MySQL", "SQLite", "SingleStore(WIP)", "MSSQL", "CockroachDB"]}>
   <Tab>
     #### 数据库端
     **类型**: `STORED` 仅
@@ -346,6 +345,164 @@ SQL 中的生成列是一项功能，允许您在表中创建列，其值基于�
   </CodeTabs>
   </Tab> 
   <Tab>
-  Work in Progress
+  进行中
   </Tab>
+<Tab>
+    #### 数据库端
+    **类型**: `PERSISTED`, `VIRTUAL`
+
+    **工作原理**
+    - 通过表架构中的表达式定义。
+    - 虚拟列在读取操作时计算。
+    - 持久列在写入操作时计算并存储。
+
+    欲了解更多信息，请参阅 [MSSQL](https://learn.microsoft.com/en-us/sql/relational-databases/tables/specify-computed-columns-in-a-table?view=sql-server-ver17) 文档
+
+    #### Drizzle 端
+
+    #### 特性 
+
+    **`string`**
+    <CodeTab>
+    ```ts
+    export const test = mssqlTable("test", {
+        generatedName: text("gen_name").generatedAlwaysAs(`hello world!`),
+    });
+    ```
+    ```sql
+    CREATE TABLE [test] (
+	    [gen_name] AS ('hello world!') VIRTUAL
+    );
+    ```
+    </CodeTab>
+
+    **`sql`** 标签 - 如果您希望 Drizzle 为您转义一些值
+
+    <CodeTab>
+    ```ts
+    export const test = mssqlTable("test", {
+        generatedName: text("gen_name").generatedAlwaysAs(sql`hello "world"!`),
+    });
+    ```
+    ```sql
+    CREATE TABLE [test] (
+	    [gen_name] AS ('hello "world"!') VIRTUAL
+    );
+    ```
+    </CodeTab>
+
+    **`callback`** - 如果您需要引用表中的列
+
+    <CodeTab>
+    ```ts
+    export const test = mssqlTable("test", {
+        name: text("first_name"),
+        generatedName: text("gen_name").generatedAlwaysAs(
+          (): SQL => sql`hi, ${test.name}!`
+        ),
+    });
+    ```
+    ```sql
+    CREATE TABLE [test] (
+    	[first_name] text,
+    	[gen_name] AS ('hi, [test].[first_name]!') VIRTUAL
+    );
+    ```
+    </CodeTab>
+  </Tab>
+  <Tab>
+    在 Drizzle 中，你可以在任何列类型上指定 `.generatedAlwaysAs()` 函数，并添加一个支持的 SQL 查询，
+    这将为你生成该列的数据。
+
+    #### 特性 
+    此函数可以以三种方式接受生成表达式：
+
+    **`string`**
+    <CodeTab>
+    ```ts
+    export const test = cockroachTable("test", {
+        generatedName: text("gen_name").generatedAlwaysAs(`hello world!`),
+    });
+    ```
+    ```sql
+    CREATE TABLE "test" (
+	    "gen_name" text GENERATED ALWAYS AS (hello world!) STORED
+    );
+    ```
+    </CodeTab>
+
+    **`sql`** 标签 - 如果您希望 Drizzle 为您转义一些值
+
+    <CodeTab>
+    ```ts
+    export const test = cockroachTable("test", {
+        generatedName: text("gen_name").generatedAlwaysAs(sql`hello "world"!`),
+    });
+    ```
+    ```sql
+    CREATE TABLE "test" (
+	    "gen_name" text GENERATED ALWAYS AS (hello "world"!) STORED
+    );
+    ```
+    </CodeTab>
+
+    **`callback`** - 如果您需要引用表中的列
+    <CodeTab>
+    ```ts
+    export const test = cockroachTable("test", {
+        name: text("first_name"),
+        generatedName: text("gen_name").generatedAlwaysAs(
+          (): SQL => sql`hi, ${test.name}!`
+        ),
+    });
+    ```
+    ```sql
+    CREATE TABLE "test" (
+	    "first_name" text,
+	    "gen_name" text GENERATED ALWAYS AS (hi, "test"."first_name"!) STORED
+    );
+    ```
+    </CodeTab>
+
+    **示例** 生成列与全文搜索
+   <CodeTabs items={["schema.ts"]}>
+	<CodeTab>
+	```typescript copy {17-19}
+    import { SQL, sql } from "drizzle-orm";
+    import { customType, index, int4, cockroachTable, text } from "drizzle-orm/cockroach-core";
+
+    const tsVector = customType<{ data: string }>({
+      dataType() {
+        return "tsvector";
+      },
+    });
+
+    export const test = cockroachTable(
+      "test",
+      {
+        id: int4().primaryKey().generatedAlwaysAsIdentity(),
+        content: text("content"),
+        contentSearch: tsVector("content_search", {
+          dimensions: 3,
+        }).generatedAlwaysAs(
+          (): SQL => sql`to_tsvector('english', ${test.content})`
+        ),
+      },
+      (t) => [
+        index("idx_content_search").using("gin", t.contentSearch)
+      ]
+    );
+    ```
+    ```sql {4}
+    CREATE TABLE "test" (
+    	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "test_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+    	"content" text,
+    	"content_search" "tsvector" GENERATED ALWAYS AS (to_tsvector('english', "test"."content")) STORED
+    );
+    --> statement-breakpoint
+    CREATE INDEX "idx_content_search" ON "test" USING gin ("content_search");
+    ```
+    </CodeTab>
+   </CodeTabs>
+  </Tab> 
 </Tabs>

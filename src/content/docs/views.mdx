@@ -6,8 +6,8 @@ import Section from '@mdx/Section.astro';
 
 # 视图
 
-<IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'SQLite': true, 'MySQL': true, 'SingleStore': false }} />
-您可以通过多种方式在 Drizzle ORM 中声明视图。
+<IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'SQLite': true, 'MySQL': true, 'SingleStore': false, 'MSSQL': true, 'CockroachDB': true }} />
+你可以通过多种方式在 Drizzle ORM 中声明视图。
 
 你可以声明需要创建的视图，或者声明已存在于数据库中的视图。
 
@@ -17,7 +17,7 @@ import Section from '@mdx/Section.astro';
 但如果使用 `sql`，则必须显式声明视图列的架构。
 
 ### 声明视图
-<Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', 'MSSQL', 'CockroachDB']}>
   <Tab>
     <Section>
       ```ts filename="schema.ts" copy {13-14}
@@ -90,12 +90,33 @@ import Section from '@mdx/Section.astro';
       ```
     </Section>
   </Tab>
-</Tabs>
+    <Tab>
+    <Section>
+      ```ts filename="schema.ts" copy {13-14}
+      import { mssqlTable, mssqlView, int, text, timestamp } from "drizzle-orm/mssql-core";
 
-如果你需要一个列的子集，你可以在查询构建器中使用 `.select({ ... })` 方法，如下所示：
+      export const user = mssqlTable("user", {
+        id: int(),
+        name: text(),
+        email: text(),
+        password: text(),
+        role: text().$type<"admin" | "customer">(),
+        createdAt: timestamp("created_at"),
+        updatedAt: timestamp("updated_at"),
+      });
+
+      export const userView = mssqlView("user_view").as((qb) => qb.select().from(user));
+      export const customersView = mssqlView("customers_view").as((qb) => qb.select().from(user).where(eq(user.role, "customer")));
+      ```
+      ```sql
+      CREATE VIEW [user_view] AS (SELECT * FROM "user");
+      CREATE VIEW [customers_view] AS (SELECT * FROM "user" WHERE "role" = 'customer');
+      ```
+    </Section>
+    如果你需要一个列的子集，你可以在查询构建器中使用 `.select({ ... })` 方法，如下所示：
 <Section>
   ```ts {4-6}
-  export const customersView = pgView("customers_view").as((qb) => {
+  export const customersView = mssqlView("customers_view").as((qb) => {
     return qb
       .select({
         id: user.id,
@@ -106,12 +127,38 @@ import Section from '@mdx/Section.astro';
   });
   ```
   ```sql
-  CREATE VIEW "customers_view" AS SELECT "id", "name", "email" FROM "user" WHERE "role" = 'customer';
+  CREATE VIEW [customers_view] AS (SELECT "id", "name", "email" FROM "user" WHERE "role" = 'customer');
   ```
 </Section>
+  </Tab>
+  <Tab>
+    <Section>
+      ```ts filename="schema.ts" copy {13-14}
+      import { cockroachTable, cockroachView, int4, text, timestamp } from "drizzle-orm/cockroach-core";
+
+      export const user = cockroachTable("user", {
+        id: int4(),
+        name: text(),
+        email: text(),
+        password: text(),
+        role: text().$type<"admin" | "customer">(),
+        createdAt: timestamp("created_at"),
+        updatedAt: timestamp("updated_at"),
+      });
+
+      export const userView = cockroachView("user_view").as((qb) => qb.select().from(user));
+      export const customersView = cockroachView("customers_view").as((qb) => qb.select().from(user).where(eq(user.role, "customer")));
+      ```
+      ```sql
+      CREATE VIEW "user_view" AS SELECT * FROM "user";
+      CREATE VIEW "customers_view" AS SELECT * FROM "user" WHERE "role" = 'customer';
+      ```
+    </Section>
+  </Tab>
+</Tabs>
 
 你也可以使用 `独立的查询构建器` 声明视图，它的工作方式完全相同：
-<Tabs items={['PostgreSQL', 'MySQL', 'SQLite']}>
+<Tabs items={['PostgreSQL', 'MySQL', 'SQLite', 'MSSQL', 'CockroachDB']}>
   <Tab>
     <Section>
       ```ts filename="schema.ts" copy {3, 15-16}
@@ -190,6 +237,58 @@ import Section from '@mdx/Section.astro';
       ```
     </Section>
   </Tab>
+  <Tab>
+    <Section>
+      ```ts filename="schema.ts" copy {3, 15-16}
+      import { int, text, mssqlView, mssqlTable, QueryBuilder } from "drizzle-orm/mssql-core";
+
+      const qb = new QueryBuilder();
+
+      export const user = mssqlTable("user", {
+        id: integer().primaryKey(),
+        name: text(),
+        email: text(),
+        password: text(),
+        role: text().$type<"admin" | "customer">(),
+        createdAt: integer("created_at"),
+        updatedAt: integer("updated_at"),
+      });
+
+      export const userView = mssqlView("user_view").as((qb) => qb.select().from(user));
+      export const customerView = mssqlView("customers_view").as((qb) => qb.select().from(user).where(eq(user.role, "customer")));
+      ```
+      ```sql
+      CREATE VIEW [user_view] AS (SELECT * FROM "user");
+      CREATE VIEW [customers_view] AS (SELECT * FROM "user" WHERE "role" = 'customer');
+      ```
+    </Section>
+  </Tab>
+  <Tab>
+    <Section>
+      ```ts filename="schema.ts" copy {3, 15-16}
+      import { cockroachTable, cockroachView, int4, text, timestamp, QueryBuilder} from "drizzle-orm/cockroach-core";
+      
+      const qb = new QueryBuilder();
+
+      export const user = cockroachTable("user", {
+        id: int4(),
+        name: text(),
+        email: text(),
+        password: text(),
+        role: text().$type<"admin" | "customer">(),
+        createdAt: timestamp("created_at"),
+        updatedAt: timestamp("updated_at"),
+      });
+
+      export const userView = cockroachView("user_view").as(qb.select().from(user));
+      export const customersView = cockroachView("customers_view").as(qb.select().from(user).where(eq(user.role, "customer")));
+      ```
+      ```sql
+      CREATE VIEW "user_view" AS SELECT * FROM "user";
+      CREATE VIEW "customers_view" AS SELECT * FROM "user" WHERE "role" = 'customer';
+      ```
+    </Section>
+  </Tab>
 </Tabs>
 
 ### 使用原始 SQL 声明视图
@@ -242,17 +341,17 @@ export const trimmedUser = pgMaterializedView("trimmed_user", {
 ```
 
 ### 物化视图
-<IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': false, 'SQLite': false }} />
+<IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': false, 'SQLite': false, 'MSSQL': false, 'Cockroach': true }} />
 
-根据官方文档，PostgreSQL 具有 **[`常规`](https://www.postgresql.org/docs/current/sql-createview.html)**
+根据官方文档，PostgreSQL 和 CockroachDB 具有 **[`常规`](https://www.postgresql.org/docs/current/sql-createview.html)**
 和 **[`物化`](https://www.postgresql.org/docs/current/sql-creatematerializedview.html)** 视图。
-
-PostgreSQL 中的物化视图像视图一样使用规则系统，但以表格形式持久化结果。
+  
+PostgreSQL 和 CockroachDB 中的物化视图像视图一样使用规则系统，但以表格形式持久化结果。
 {/* 这意味着，当对物化视图执行查询时，结果直接来自物化视图，
 像来自表格一样，而不是通过在构成视图的基础表上执行查询来重建。 */}
 
-Drizzle ORM 原生支持 PostgreSQL 物化视图：
-
+<Tabs items={['PostgreSQL', 'CockroachDB']}>
+<Tab>
 <Section>
 ```ts filename="schema.ts" copy
 const newYorkers = pgMaterializedView('new_yorkers').as((qb) => qb.select().from(users).where(eq(users.cityId, 1)));
@@ -270,12 +369,35 @@ await db.refreshMaterializedView(newYorkers).concurrently();
 
 await db.refreshMaterializedView(newYorkers).withNoData();
 ```
+</Tab>
+<Tab>
+<Section>
+```ts filename="schema.ts" copy
+const newYorkers = cockroachMaterializedView('new_yorkers').as((qb) => qb.select().from(users).where(eq(users.cityId, 1)));
+```
+```sql
+CREATE MATERIALIZED VIEW "new_yorkers" AS SELECT * FROM "users";
+```
+</Section>
+
+你可以在应用程序运行时刷新物化视图：
+```ts copy
+await db.refreshMaterializedView(newYorkers);
+
+await db.refreshMaterializedView(newYorkers).concurrently();
+
+await db.refreshMaterializedView(newYorkers).withNoData();
+```
+</Tab>
+</Tabs>
 
 ### 扩展示例
 <Callout type="info" emoji="ℹ️">
 查询中的所有参数将被内联，而不是替换为 `$1`、`$2` 等。
 </Callout>
 
+<Tabs items={['PostgreSQL', 'CockroachDB']}>
+<Tab>
 ```ts copy
 // 常规视图
 const newYorkers = pgView('new_yorkers')
@@ -319,3 +441,37 @@ const newYorkers2 = pgMaterializedView('new_yorkers')
     return qb.with(sq).select().from(sq).where(sql`${users.homeCity} = 1`);
   });
 ```
+</Tab>
+<Tab>
+```ts copy
+// 常规视图
+const newYorkers = cockroachView('new_yorkers')
+  .as((qb) => {
+    const sq = qb
+      .$with('sq')
+      .as(
+        qb.select({ userId: users.id, cityId: cities.id })
+          .from(users)
+          .leftJoin(cities, eq(cities.id, users.homeCity))
+          .where(sql`${users.age1} > 18`),
+      );
+    return qb.with(sq).select().from(sq).where(sql`${users.homeCity} = 1`);
+  });
+
+// 物化视图
+const newYorkers2 = cockroachMaterializedView('new_yorkers')
+  .withNoData()
+  .as((qb) => {
+    const sq = qb
+      .$with('sq')
+      .as(
+        qb.select({ userId: users.id, cityId: cities.id })
+          .from(users)
+          .leftJoin(cities, eq(cities.id, users.homeCity))
+          .where(sql`${users.age1} > 18`),
+      );
+    return qb.with(sq).select().from(sq).where(sql`${users.homeCity} = 1`);
+  });
+```
+</Tab>
+</Tabs>

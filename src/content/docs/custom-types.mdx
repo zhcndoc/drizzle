@@ -1,31 +1,44 @@
 import Tab from '@mdx/Tab.astro';
 import Tabs from '@mdx/Tabs.astro';
+import Callout from '@mdx/Callout.astro'
 
 # 定义自定义类型的常用方法
 
 ## 示例
 
-查看 `customType` 定义如何工作的最佳方法是检查如何使用 Drizzle ORM 中的 `customType` 函数定义 postgres 和 mysql 中现有的数据类型。
+查看 `customType` 定义如何工作的最佳方法是检查如何使用 Drizzle ORM 中的 `customType` 函数定义现有的数据类型。
 
 
-<Tabs items={['Postgres 数据类型', 'MySql 数据类型']}>
-  <Tab>
+<Callout title='info'>
+每个方言都暴露了 `customType` 函数
 
-**Serial**
+```ts
+import { customType } from 'drizzle-orm/pg-core';
+...
+import { customType } from 'drizzle-orm/mysql-core';
+...
+import { customType } from 'drizzle-orm/sqlite-core';
+...
+import { customType } from 'drizzle-orm/gel-core';
+...
+import { customType } from 'drizzle-orm/singlestore-core';
+```
+</Callout>
 
+**整数（Integer）**
 ```typescript copy
 import { customType } from 'drizzle-orm/pg-core';
 
-const customSerial = customType<{ data: number; notNull: true; default: true }>(
+const customSerial = customType<{ data: number; }>(
   {
     dataType() {
-      return 'serial';
+      return 'integer';
     },
   },
 );
 ```
 
-**Text**
+**文本（Text）**
 
 ```typescript copy
 import { customType } from 'drizzle-orm/pg-core';
@@ -37,7 +50,7 @@ const customText = customType<{ data: string }>({
 });
 ```
 
-**Boolean**
+**布尔值（Boolean）**
 
 ```typescript copy
 import { customType } from 'drizzle-orm/pg-core';
@@ -65,7 +78,7 @@ const customJsonb = <TData>(name: string) =>
   })(name);
 ```
 
-**Timestamp**
+**时间戳（Timestamp）**
 
 ```typescript copy
 import { customType } from 'drizzle-orm/pg-core';
@@ -103,112 +116,15 @@ const usersTable = pgTable('users', {
     .default(sql`now()`),
 });
 ```
-  </Tab>
-  <Tab>
 
-**Serial**
 
-```typescript copy
-import { customType } from 'drizzle-orm/mysql-core';
-
-const customInt = customType<{ data: number; notNull: false; default: false }>(
-  {
-    dataType() {
-      return 'int';
-    },
-  },
-);
-```
-
-**Text**
-
-```typescript copy
-import { customType } from 'drizzle-orm/mysql-core';
-
-const customText = customType<{ data: string }>({
-  dataType() {
-    return 'text';
-  },
-});
-```
-
-**Boolean**
-
-```typescript copy
-import { customType } from 'drizzle-orm/mysql-core';
-
-const customBoolean = customType<{ data: boolean }>({
-  dataType() {
-    return 'boolean';
-  },
-  fromDriver(value) {
-    if (typeof value === 'boolean') {
-      return value;
-    }
-    return value === 1;
-  },
-});
-```
-
-**Json**
-
-```typescript copy
-import { customType } from 'drizzle-orm/mysql-core';
-
-const customJson = <TData>(name: string) =>
-  customType<{ data: TData; driverData: string }>({
-    dataType() {
-      return 'json';
-    },
-    toDriver(value: TData): string {
-      return JSON.stringify(value);
-    },
-  })(name);
-```
-
-**Timestamp**
-
-```typescript copy
-import { customType } from 'drizzle-orm/mysql-core';
-
-const customTimestamp = customType<
-  { data: Date; driverData: string; config: { fsp: number } }
->({
-  dataType(config) {
-    const precision = typeof config.fsp !== 'undefined'
-      ? ` (${config.fsp})`
-      : '';
-    return `timestamp${precision}`;
-  },
-  fromDriver(value: string): Date {
-    return new Date(value);
-  },
-});
-```
-
-所有类型的用法与 Drizzle ORM 中定义的函数相同。例如：
-
-```typescript copy
-const usersTable = mysqlTable('userstest', {
-  id: customInt('id').primaryKey(),
-  name: customText('name').notNull(),
-  verified: customBoolean('verified').notNull().default(false),
-  jsonb: customJson<string[]>('jsonb'),
-  createdAt: customTimestamp('created_at', { fsp: 2 }).notNull().default(
-    sql`now()`,
-  ),
-});
-```
-
-  </Tab>
-</Tabs>
 
 ## 自定义类型定义的 TS 文档
 
 您可以查看 `types` 和 `param` 定义的 ts-doc。
 
 ```typescript
-export type CustomTypeValues = {
+export interface CustomTypeValues = {
   /**
    * 自定义列所需的类型，将推断适当的类型模型
    *
@@ -221,9 +137,23 @@ export type CustomTypeValues = {
   data: unknown;
 
   /**
+ 	 * 类型助手，表示数据库驱动程序针对特定数据库数据类型返回的数据类型
+ 	 *
+ 	 * 仅在驱动程序的输出和输入类型不同的情况下需要
+ 	 *
+ 	 * 默认为 {@link driverData}
+ 	 */
+ 	driverOutput?: unknown;
+
+  /**
    * 类型助手，表示数据库驱动程序接受特定数据库数据类型的类型
    */
   driverData?: unknown;
+
+  /**
+ 	 * 类型助手，表示关系查询聚合为 JSON 后字段返回的类型
+ 	 */
+ 	jsonData?: unknown;
 
   /**
    * {@link CustomTypeParams} `dataType` 生成应使用什么配置类型
@@ -308,7 +238,104 @@ export interface CustomTypeParams<T extends CustomTypeValues> {
    *  return new Date(value);
    * },
    * ```
+   * 
+   * 这会将返回的数据从：
+ 	 * ```
+ 	 * {
+ 	 * 	customField: "2025-04-07T03:25:16.635Z";
+ 	 * }
+ 	 * ```
+ 	 * 改变为：
+ 	 * ```
+ 	 * {
+ 	 * 	customField: new Date("2025-04-07T03:25:16.635Z");
+ 	 * }
+ 	 * ```
    */
   fromDriver?: (value: T['driverData']) => T['data'];
+
+  /**
+ 	 * 可选的映射函数，用于将数据库中以 JSON 形式返回的数据转换为期望的格式
+ 	 *
+ 	 * 用于[关系查询](https://orm.drizzle.team/docs/rqb-v2)
+ 	 *
+ 	 * 默认为 {@link fromDriver} 函数
+ 	 * @example
+ 	 * 例如，当通过 [RQB](https://orm.drizzle.team/docs/rqb-v2) 或 [JSON 函数](https://orm.drizzle.team/docs/json-functions) 查询 bigint 列时，结果字段会以字符串形式返回，而不是常规查询的 bigint 类型
+ 	 * 针对这种情况，我们需要一个单独的函数来处理字段映射：
+ 	 * ```
+ 	 * fromJson(value: string): bigint {
+ 	 * 	return BigInt(value);
+ 	 * },
+ 	 * ```
+ 	 *
+ 	 * 这会将返回的数据从：
+ 	 * ```
+ 	 * {
+ 	 * 	customField: "5044565289845416380";
+ 	 * }
+ 	 * ```
+ 	 * 改变为：
+ 	 * ```
+ 	 * {
+ 	 * 	customField: 5044565289845416380n;
+ 	 * }
+ 	 * ```
+ 	 */
+ 	fromJson?: (value: T['jsonData']) => T['data'];
+
+  /**
+ 	 * 可选的选择器修改函数，用于修改 [JSON 函数](https://orm.drizzle.team/docs/json-functions) 中列的选择
+ 	 *
+ 	 * 额外的映射需求可通过 {@link fromJson} 函数处理
+ 	 *
+ 	 * 用于[关系查询](https://orm.drizzle.team/docs/rqb-v2)
+ 	 * @example
+ 	 * 例如，使用 bigint 时需要将字段转换为文本以保持数据完整性
+ 	 * ```
+ 	 * forJsonSelect(identifier: SQL, sql: SQLGenerator, arrayDimensions?: number): SQL {
+ 	 * 	return sql`${identifier}::text`
+ 	 * },
+ 	 * ```
+ 	 *
+ 	 * 这会将查询从：
+ 	 * ```
+ 	 * SELECT
+ 	 * 	row_to_json("t".*)
+ 	 * 	FROM
+ 	 * 	(
+ 	 * 		SELECT
+ 	 * 		"table"."custom_bigint" AS "bigint"
+ 	 * 		FROM
+ 	 * 		"table"
+ 	 * 	) AS "t"
+ 	 * ```
+ 	 * 改变为：
+ 	 * ```
+ 	 * SELECT
+ 	 * 	row_to_json("t".*)
+ 	 * 	FROM
+ 	 * 	(
+ 	 * 		SELECT
+ 	 * 		"table"."custom_bigint"::text AS "bigint"
+ 	 * 		FROM
+ 	 * 		"table"
+ 	 * 	) AS "t"
+ 	 * ```
+ 	 *
+ 	 * 查询对象返回的数据会从：
+ 	 * ```
+ 	 * {
+ 	 * 	bigint: 5044565289845416000; // 由于直接转换为 JSON 格式导致部分数据丢失
+ 	 * }
+ 	 * ```
+ 	 * 改变为：
+ 	 * ```
+ 	 * {
+ 	 * 	bigint: "5044565289845416380"; // 由于转换字段为文本再进行 JSON 化，数据得到保留
+ 	 * }
+ 	 * ```
+ 	 */
+ 	forJsonSelect?: (identifier: SQL, sql: SQLGenerator, arrayDimensions?: number) => SQL;
 }
 ```

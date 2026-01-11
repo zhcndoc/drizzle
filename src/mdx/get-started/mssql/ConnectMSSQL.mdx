@@ -1,0 +1,33 @@
+import CodeTabs from "@mdx/CodeTabs.astro";
+
+在 `src/db` 目录下创建一个 `index.ts` 文件并初始化连接：
+
+<CodeTabs items={["node-mssql", "node-mssql 带配置", "你的 node-mssql 驱动"]}>
+```typescript copy
+import 'dotenv/config';
+import { drizzle } from 'drizzle-orm/node-mssql';
+
+const db = drizzle(process.env.DATABASE_URL!);
+```
+```typescript copy
+import 'dotenv/config';
+import { drizzle } from 'drizzle-orm/node-mssql';
+
+// 你可以指定 node-mssql 连接选项中的任意属性
+const db = drizzle({ 
+  connection: { 
+    connectionString: process.env.DATABASE_URL!,
+    ssl: true
+  }
+});
+```
+```typescript copy
+import { drizzle } from "drizzle-orm/node-mssql";
+import type { ConnectionPool } from 'mssql';
+
+const pool = await mssql.connect(connectionString);
+const db = drizzle({ client: pool });
+ 
+const result = await db.execute('select 1');
+```
+</CodeTabs>

@@ -1,0 +1,63 @@
+<Breadcrumbs/>
+
+# 在现有项目中使用 Drizzle 和 MSSQL 快速开始
+
+<Callout type='error'>
+本页内容适用于 drizzle 版本 `1.0.0-beta.2` 及以上。
+</Callout>
+
+<br/>
+
+<Prerequisites>
+  - **dotenv** - 管理环境变量的包 - [查看这里](https://www.npmjs.com/package/dotenv)
+  - **tsx** - 运行 TypeScript 文件的包 - [查看这里](https://tsx.is/)
+  - **node-mssql** - 用于查询 MSSQL 数据库的包 - [查看这里](https://github.com/tediousjs/node-mssql)
+</Prerequisites>
+
+<FileStructure/>
+
+#### 步骤 1 - 安装 **mssql** 包
+<Npm>
+  drizzle-orm@beta mssql dotenv
+  -D drizzle-kit@beta tsx
+</Npm>
+
+#### 步骤 2 - 设置连接变量
+
+<SetupEnv env_variable='DATABASE_URL' />
+
+#### 步骤 3 - 设置 Drizzle 配置文件
+
+<SetupConfig dialect='mssql' env_variable='DATABASE_URL'/>
+
+#### 步骤 4 - 自动检测数据库结构
+
+<IntrospectMSSQL/>
+
+#### 步骤 5 - 将代码转移到实际的 schema 文件中
+
+<TransferCode/>
+
+#### 步骤 6 - 将 Drizzle ORM 连接到数据库
+
+<ConnectMSSQL/>
+
+#### 步骤 7 - 查询数据库
+
+<QueryDatabase dialect='node-mssql' env_variable='DATABASE_URL'/>
+
+#### 步骤 8 - 运行 index.ts 文件
+
+<RunFile/>
+
+#### 步骤 9 - 更新表结构（可选）
+
+<UpdateSchema/>
+
+#### 步骤 10 - 将更改应用到数据库（可选）
+
+<ApplyChanges />
+
+#### 步骤 11 - 使用新字段查询数据库（可选）
+
+<QueryDatabaseUpdated dialect='node-mssql' env_variable='DATABASE_URL' />

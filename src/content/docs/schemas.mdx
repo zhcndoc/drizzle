@@ -6,14 +6,12 @@ import Callout from '@mdx/Callout.astro';
 
 # 表结构
 
-<IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': true, 'SQLite': false, 'SingleStore': true }} />
-
-Drizzle ORM 为 PostgreSQL 和 MySQL 方言提供了一个用于声明 SQL 架构的 API。
+<IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'MySQL': true, 'SQLite': false, 'SingleStore': true, 'MSSQL': true, 'CockroachDB': true }} />
 
 如果在架构中声明了一个实体，查询构建器会在查询中添加架构名称：<br/>
 `select * from "schema"."users"`
 
-<Tabs items={['PostgreSQL', 'MySQL', "SQLite", "SingleStore"]}>
+<Tabs items={['PostgreSQL', 'MySQL', "SQLite", "SingleStore", 'MSSQL', 'CockroachDB']}>
   <Tab>
     <Section>
     ```ts copy {3,5,7}
@@ -87,6 +85,58 @@ Drizzle ORM 为 PostgreSQL 和 MySQL 方言提供了一个用于声明 SQL 架�
     CREATE TABLE "my_schema"."users" (
       "id" serial PRIMARY KEY,
       "name" text
+    );
+    ```
+    </Section>
+  </Tab>
+  <Tab>
+    <Section>
+    ```ts {3,5}
+    import { int, text, mssqlSchema } from "drizzle-orm/mssql-core";
+
+    export const mySchema = mssqlSchema("my_schema")
+
+    export const mySchemaUsers = mySchema.table("users", {
+      id: int().primaryKey(),
+      name: text(),
+    });
+    ```
+    ```sql
+    CREATE SCHEMA [my_schema];
+
+    CREATE TABLE [my_schema].[users] (
+      [id] int PRIMARY KEY,
+      [name] text
+    );
+    ```
+    </Section>
+  </Tab>
+  <Tab>
+    <Section>
+    ```ts copy {3,5,7}
+    import { int4, text, cockroachSchema } from "drizzle-orm/cockroach-core";
+
+    export const mySchema = cockroachSchema("my_schema");
+
+    export const colors = mySchema.enum('colors', ['red', 'green', 'blue']);
+
+    export const mySchemaUsers = mySchema.table('users', {
+      id: int4().primaryKey(),
+      name: text(),
+      color: colors().default('red'),
+    });
+
+    
+    ```
+    ```sql
+    CREATE SCHEMA "my_schema";
+
+    CREATE TYPE "my_schema"."colors" AS ENUM ('red', 'green', 'blue');
+
+    CREATE TABLE "my_schema"."users" (
+      "id" serial PRIMARY KEY,
+      "name" text,
+      "color" "my_schema"."colors" DEFAULT 'red'
     );
     ```
     </Section>

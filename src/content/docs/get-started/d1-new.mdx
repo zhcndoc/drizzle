@@ -31,7 +31,7 @@ import ConnectLibsql from '@mdx/get-started/sqlite/ConnectLibsql.mdx';
 <FileStructure />
 
 #### 第一步 - 安装所需的包
-<InstallPackages lib=''/>
+<InstallPackages lib='wrangler'/>
 
 #### 第二步 - 设置 wrangler.toml
 
@@ -64,11 +64,21 @@ export default {
 };
 ```
 
-#### 第四步 - 创建一个表
+#### 第四步 - 生成 wrangler 类型定义
+
+<Npx>
+wrangler types
+</Npx>
+
+<Callout>
+该命令的输出将是一个 `worker-configuration.d.ts` 文件。
+</Callout>
+
+#### 第五步 - 创建一个表
 
 <CreateTable/>
 
-#### 第五步 - 设置 Drizzle 配置文件
+#### 第六步 - 设置 Drizzle 配置文件
 
 **Drizzle 配置** - 一个供 [Drizzle Kit](/docs/kit-overview) 使用的配置文件，包含有关您的数据库连接、迁移文件夹和模式文件的所有信息。
 
@@ -94,11 +104,11 @@ export default defineConfig({
 您可以查看 [我们的教程](/docs/guides/d1-http-with-drizzle-kit)，了解如何从 CloudFlare 获取环境变量
 </Callout>
 
-#### 第六步 - 将更改应用于数据库
+#### 第七步 - 将更改应用于数据库
 
 <ApplyChanges />
 
-#### 第七步 - 初始化并查询数据库
+#### 第八步 - 初始化并查询数据库
 
 ```typescript copy
 import { drizzle } from 'drizzle-orm/d1';
@@ -115,6 +125,6 @@ export default {
 };
 ```
 
-#### 第八步 - 运行 index.ts 文件
+#### 第九步 - 运行 index.ts 文件
 
 <RunFile/>

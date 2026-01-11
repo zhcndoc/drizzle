@@ -8,7 +8,7 @@ import IsSupportedChipGroup from '@mdx/IsSupportedChipGroup.astro';
 
 # Drizzle 查询
 
-<IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'SQLite': true, 'MySQL': true, 'SingleStore': false }} />
+<IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'SQLite': true, 'MySQL': true, 'SingleStore': true }} />
 
 Drizzle ORM 旨在成为 SQL 之上的一个薄型类型层。  
 我们真心相信我们设计了从 TypeScript 操作 SQL 数据库的最佳方法，现在是时候使其更出色了。  
@@ -28,7 +28,7 @@ Drizzle ORM 旨在成为 SQL 之上的一个薄型类型层。
 
 	const db = drizzle({ schema });
 
-	const result = await db.query.users.findMany({
+	const result = await db._query.users.findMany({
 		with: {
 			posts: true			
 		},
@@ -89,7 +89,7 @@ Drizzle ORM 旨在成为 SQL 之上的一个薄型类型层。
 
 	const db = drizzle({ schema: { ...schema1, ...schema2 } });
 
-	const result = await db.query.users.findMany({
+	const result = await db._query.users.findMany({
 		with: {
 			posts: true			
 		},
@@ -129,7 +129,7 @@ const db = drizzle({ client: connection, schema, mode: 'planetscale' });
 ## 查询
 关系查询是 Drizzle 原始 **[查询构建器](/docs/select)** 的一个扩展。  
 您需要在 `drizzle()` 初始化时提供来自您的模式文件/文件的所有 `tables` 和 `relations` ，
-然后只需使用 `db.query` API。  
+然后只需使用 `db._query` API。  
 <Callout type="info" emoji="ℹ️">  
 	`drizzle` 的导入路径取决于您使用的 **[数据库驱动程序](/docs/connect-overview)**。  
 </Callout>  
@@ -141,7 +141,7 @@ import { drizzle } from 'drizzle-orm/...';
 
 const db = drizzle({ schema });
 
-await db.query.users.findMany(...);
+await db._query.users.findMany(...);
 ```
 ```ts
 // 如果您在多个文件中有模式
@@ -151,7 +151,7 @@ import { drizzle } from 'drizzle-orm/...';
 
 const db = drizzle({ schema: { ...schema1, ...schema2 } });
 
-await db.query.users.findMany(...);
+await db._query.users.findMany(...);
 ```
 </CodeTab>
 ```typescript copy
@@ -239,7 +239,7 @@ Drizzle 提供 `.findMany()` 和 `.findFirst()` API。
 ### 查找多个
 <Section>
 ```typescript copy
-const users = await db.query.users.findMany();
+const users = await db._query.users.findMany();
 ```
 ```ts
 // 结果类型
@@ -258,7 +258,7 @@ const result: {
 </Callout>
 <Section>
 ```typescript copy
-const user = await db.query.users.findFirst();
+const user = await db._query.users.findFirst();
 ```
 ```ts
 // 结果类型
@@ -277,7 +277,7 @@ const result: {
 
 **获取所有带评论的帖子：**
 ```typescript copy
-const posts = await db.query.posts.findMany({
+const posts = await db._query.posts.findMany({
 	with: {
 		comments: true,
 	},
@@ -286,7 +286,7 @@ const posts = await db.query.posts.findMany({
 
 **获取第一个带评论的帖子：**
 ```typescript copy
-const post = await db.query.posts.findFirst({
+const post = await db._query.posts.findFirst({
 	with: {
 		comments: true,
 	},
@@ -298,7 +298,7 @@ const post = await db.query.posts.findFirst({
   
 **获取所有用户及其帖子。每个帖子应包含评论列表：**
 ```typescript copy
-const users = await db.query.users.findMany({
+const users = await db._query.users.findMany({
 	with: {
 		posts: {
 			with: {
@@ -320,7 +320,7 @@ const users = await db.query.users.findMany({
 
 **仅获取带有 `id`、`content` 的所有帖子，并包括 `comments`：**
 ```typescript copy
-const posts = await db.query.posts.findMany({
+const posts = await db._query.posts.findMany({
 	columns: {
 		id: true,
 		content: true,
@@ -333,7 +333,7 @@ const posts = await db.query.posts.findMany({
 
 **获取没有 `content` 的所有帖子：**
 ```typescript copy
-const posts = await db.query.posts.findMany({
+const posts = await db._query.posts.findMany({
 	columns: {
 		content: false,
 	},
@@ -350,7 +350,7 @@ const posts = await db.query.posts.findMany({
 **在同一查询中排除和包含字段：**
 <Section>
 ```typescript copy
-const users = await db.query.users.findMany({
+const users = await db._query.users.findMany({
 	columns: {
 		name: true,
 		id: false //被忽略
@@ -368,7 +368,7 @@ const users: {
 **仅包含来自嵌套关系的列：**
 <Section>
 ```typescript copy
-const res = await db.query.users.findMany({
+const res = await db._query.users.findMany({
 	columns: {},
 	with: {
 		posts: true
@@ -389,7 +389,7 @@ const res: {
 ### 嵌套部分字段选择
 就像 **[`部分选择`](#partial-select)** 一样，您可以包含或排除嵌套关系的列：
 ```typescript copy
-const posts = await db.query.posts.findMany({
+const posts = await db._query.posts.findMany({
 	columns: {
 		id: true,
 		content: true,
@@ -413,12 +413,12 @@ const posts = await db.query.posts.findMany({
 ```typescript copy
 import { eq } from 'drizzle-orm';
 
-const users = await db.query.users.findMany({
+const users = await db._query.users.findMany({
 	where: eq(users.id, 1)
 })
 ```
 ```ts copy
-const users = await db.query.users.findMany({
+const users = await db._query.users.findMany({
 	where: (users, { eq }) => eq(users.id, 1),
 })
 ```
@@ -426,7 +426,7 @@ const users = await db.query.users.findMany({
 
 寻找 `id=1` 并且在特定日期之前创建的评论的帖子：
 ```typescript copy
-await db.query.posts.findMany({
+await db._query.posts.findMany({
 	where: (posts, { eq }) => (eq(posts.id, 1)),
 	with: {
 		comments: {
@@ -441,14 +441,14 @@ Drizzle ORM 为查询和嵌套实体提供 `limit` 和 `offset` API。
   
 **寻找 5 个帖子：**
 ```typescript copy
-await db.query.posts.findMany({
+await db._query.posts.findMany({
 	limit: 5,
 });
 ```
 
 **查找帖子并最多获取 3 条评论：**
 ```typescript copy
-await db.query.posts.findMany({
+await db._query.posts.findMany({
 	with: {
 		comments: {
 			limit: 3,
@@ -461,7 +461,7 @@ await db.query.posts.findMany({
   `offset` 仅适用于顶层查询。
 </Callout>
 ```typescript 
-await db.query.posts.findMany({
+await db._query.posts.findMany({
 	limit: 5,
 	offset: 2, // 正确 ✅
 	with: {
@@ -475,7 +475,7 @@ await db.query.posts.findMany({
 
 查找帖子并获取第 5 到第 10 个帖子的评论：
 ```typescript copy
-await db.query.posts.findMany({
+await db._query.posts.findMany({
 	limit: 5,
     offset: 5,
 	with: {
@@ -494,12 +494,12 @@ Drizzle 为关系查询构建器提供了排序 API。
 ```typescript copy
 import { desc, asc } from 'drizzle-orm';
 
-await db.query.posts.findMany({
+await db._query.posts.findMany({
 	orderBy: [asc(posts.id)],
 });
 ```
 ```typescript copy
-await db.query.posts.findMany({
+await db._query.posts.findMany({
 	orderBy: (posts, { asc }) => [asc(posts.id)],
 });
 ```
@@ -507,7 +507,7 @@ await db.query.posts.findMany({
 
 **按 `asc` + `desc` 排序：**
 ```typescript copy
-await db.query.posts.findMany({
+await db._query.posts.findMany({
 	orderBy: (posts, { asc }) => [asc(posts.id)],
 	with: {
 		comments: {
@@ -528,14 +528,14 @@ await db.query.posts.findMany({
 ```typescript copy {5}
 import { sql } from 'drizzle-orm';
 
-await db.query.users.findMany({
+await db._query.users.findMany({
 	extras: {
 		loweredName: sql`lower(${users.name})`.as('lowered_name'),
 	},
 })
 ```
 ```typescript copy {3}
-await db.query.users.findMany({
+await db._query.users.findMany({
 	extras: {
 		loweredName: (users, { sql }) => sql`lower(${users.name})`.as('lowered_name'),
 	},
@@ -554,7 +554,7 @@ await db.query.users.findMany({
 
 <Section>
 ```typescript copy
-const res = await db.query.users.findMany({
+const res = await db._query.users.findMany({
 	extras: {
 		fullName: sql<string>`concat(${users.name}, " ", ${users.name})`.as('full_name'),
 	},
@@ -591,7 +591,7 @@ const res: {
 要检索所有带评论的帖子并添加一个额外字段以计算帖子内容和每条评论内容的大小：
 <Section>
 ```typescript copy
-const res = await db.query.posts.findMany({
+const res = await db._query.posts.findMany({
 	extras: (table, { sql }) => ({
 		contentLength: (sql<number>`length(${table.content})`).as('content_length'),
 	}),
@@ -635,7 +635,7 @@ Drizzle 关系查询构建器执行预编译语句。
 <Tab>
 <Section>
 ```ts copy
-const prepared = db.query.users.findMany({
+const prepared = db._query.users.findMany({
 	where: ((users, { eq }) => eq(users.id, placeholder('id'))),
 	with: {
 		posts: {
@@ -651,7 +651,7 @@ const usersWithPosts = await prepared.execute({ id: 1 });
 <Tab>
 <Section>
 ```ts copy
-const prepared = db.query.users.findMany({
+const prepared = db._query.users.findMany({
 	where: ((users, { eq }) => eq(users.id, placeholder('id'))),
 	with: {
 		posts: {
@@ -667,7 +667,7 @@ const usersWithPosts = await prepared.execute({ id: 1 });
 <Tab>
 <Section>
 ```ts copy
-const prepared = db.query.users.findMany({
+const prepared = db._query.users.findMany({
 	where: ((users, { eq }) => eq(users.id, placeholder('id'))),
 	with: {
 		posts: {
@@ -688,7 +688,7 @@ const usersWithPosts = await prepared.execute({ id: 1 });
 <Tab>
 <Section>
 ```ts copy
-const prepared = db.query.users.findMany({
+const prepared = db._query.users.findMany({
 	with: {
 		posts: {
 			limit: placeholder('limit'),
@@ -703,7 +703,7 @@ const usersWithPosts = await prepared.execute({ limit: 1 });
 <Tab>
 <Section>
 ```ts copy
-const prepared = db.query.users.findMany({
+const prepared = db._query.users.findMany({
 	with: {
 		posts: {
 			limit: placeholder('limit'),
@@ -718,7 +718,7 @@ const usersWithPosts = await prepared.execute({ limit: 1 });
 <Tab>
 <Section>
 ```ts copy
-const prepared = db.query.users.findMany({
+const prepared = db._query.users.findMany({
 	with: {
 		posts: {
 			limit: placeholder('limit'),
@@ -738,7 +738,7 @@ const usersWithPosts = await prepared.execute({ limit: 1 });
 <Tab>
 <Section>
 ```ts copy
-const prepared = db.query.users.findMany({
+const prepared = db._query.users.findMany({
 	offset: placeholder('offset'),
 	with: {
 		posts: true,
@@ -752,7 +752,7 @@ const usersWithPosts = await prepared.execute({ offset: 1 });
 <Tab>
 <Section>
 ```ts copy
-const prepared = db.query.users.findMany({
+const prepared = db._query.users.findMany({
 	offset: placeholder('offset'),
 	with: {
 		posts: true,
@@ -766,7 +766,7 @@ const usersWithPosts = await prepared.execute({ offset: 1 });
 <Tab>
 <Section>
 ```ts copy
-const prepared = db.query.users.findMany({
+const prepared = db._query.users.findMany({
 	offset: placeholder('offset'),
 	with: {
 		posts: true,
@@ -784,7 +784,7 @@ const usersWithPosts = await prepared.execute({ offset: 1 });
 <Tab>
 <Section>
 ```ts copy
-const prepared = db.query.users.findMany({
+const prepared = db._query.users.findMany({
 	limit: placeholder('uLimit'),
 	offset: placeholder('uOffset'),
 	where: ((users, { eq, or }) => or(eq(users.id, placeholder('id')), eq(users.id, 3))),
@@ -803,7 +803,7 @@ const usersWithPosts = await prepared.execute({ pLimit: 1, uLimit: 3, uOffset: 1
 <Tab>
 <Section>
 ```ts copy
-const prepared = db.query.users.findMany({
+const prepared = db._query.users.findMany({
 	limit: placeholder('uLimit'),
 	offset: placeholder('uOffset'),
 	where: ((users, { eq, or }) => or(eq(users.id, placeholder('id')), eq(users.id, 3))),
@@ -822,7 +822,7 @@ const usersWithPosts = await prepared.execute({ pLimit: 1, uLimit: 3, uOffset: 1
 <Tab>
 <Section>
 ```ts copy
-const prepared = db.query.users.findMany({
+const prepared = db._query.users.findMany({
 	limit: placeholder('uLimit'),
 	offset: placeholder('uOffset'),
 	where: ((users, { eq, or }) => or(eq(users.id, placeholder('id')), eq(users.id, 3))),

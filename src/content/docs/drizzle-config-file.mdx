@@ -128,7 +128,7 @@ export default defineConfig({
 📦 <项目根目录>
  ├ ...
  ├ 📂 drizzle
- │ ├ 📂 _meta
+ │ ├ 📂 20242409125510_premium_mister_fear
  │ ├ 📜 user.ts 
  │ ├ 📜 post.ts 
  │ └ 📜 comment.ts 
@@ -140,7 +140,7 @@ export default defineConfig({
 import { defineConfig } from "drizzle-kit";
 
 export default defineConfig({
-  dialect: "postgresql", // "mysql" | "sqlite" | "postgresql" | "turso" | "singlestore"
+  dialect: "postgresql", // "mysql" | "sqlite" | "postgresql" | "turso" | "singlestore" | "mssql"
   schema: "./src/schema/*",
   out: "./drizzle",
 });
@@ -490,12 +490,11 @@ export default defineConfig({
 ```
 
 ### `schemaFilter`
-<Callout>
-如果您想在一个数据库中运行多个项目 - 查看 [我们的指南](/docs/goodies#multi-project-schema)。
-</Callout>
 
-<rem025/>
-`drizzle-kit push` 和 `drizzle-kit pull` 默认会管理 `public` 模式下的所有表。
+自 `1.0.0-beta.1` 版本开始有所更改！
+
+<Callout type='warning' collapsed="0.x 版本中的行为">
+`drizzle-kit push` 和 `drizzle-kit pull` 默认会管理 `public` 模式中的所有表。
 您可以通过 `tablesFilters`、`schemaFilter` 和 `extensionFilters` 选项配置表、模式和扩展的列表。
 
 `schemaFilter` 选项让您指定 Drizzle Kit 要管理的模式列表
@@ -505,6 +504,21 @@ export default defineConfig({
 | 类型          | `string[]` |
 | 默认       | `["public"]`                    |
 | 命令      | `push` `pull`   |
+
+</Callout>
+
+<Callout>
+如果您想在一个数据库中运行多个项目 - 查看 [我们的指南](/docs/goodies#multi-project-schema)。
+</Callout>
+
+`drizzle-kit push` 和 `drizzle-kit pull` 默认会管理所有模式。
+
+`schemaFilter` 选项允许您指定基于 [`glob`](https://www.digitalocean.com/community/tools/glob?comments=true&glob=/**/*.js&matches=false&tests=//%20This%20will%20match%20as%20it%20ends%20with%20'.js'&tests=/hello/world.js&tests=//%20This%20won't%20match!&tests=/test/some/globs) 的模式名过滤器，例如 `["public", "auth"]` 或 `"tenant_*"`
+
+|               |                      |
+| :------------ | :-----------------   |
+| 类型          | `string[]` |
+| 命令          | `push` `pull`   |
 
 <rem025/>
 
@@ -563,9 +577,9 @@ export default defineConfig({
 
 |               |                       |
 | :------------ | :-----------------    |
-| type          | `boolean \| { provider: "neon" \| "supabase", include: string[], exclude: string[]}`|
-| default       | `false`                  |
-| commands      | `push` `pull` `generate` |
+| 类型          | `boolean \| { provider: "neon" \| "supabase", include: string[], exclude: string[]}`|
+| 默认         | `false`                  |
+| 命令          | `push` `pull` `generate` |
 
 <rem025/>
 
@@ -643,7 +657,7 @@ export default defineConfig({
 });
 ```
 
-<Callout title='important'>
+<Callout title='重要'>
 您可能会遇到 Drizzle 相对于数据库提供者指定的新角色略显过时的情况，
 因此您可能需要同时使用 `provider` 选项和 `exclude` 附加角色。您可以轻松地使用 Drizzle 来做到这一点：
 
@@ -673,8 +687,8 @@ export default defineConfig({
 |               |                      |
 | :------------ | :-----------------   |
 | 类型          | `boolean` |
-| 默认       | `false`                    |
-| 命令      | `push`   |
+| 默认         | `false`                    |
+| 命令          | `push`   |
 
 <rem025/>
 
@@ -693,8 +707,8 @@ export default defineConfig({
 |               |                      |
 | :------------ | :-----------------   |
 | 类型          | `boolean` |
-| 默认       | `true`                    |
-| 命令      | `generate` `pull`   |
+| 默认         | `true`                    |
+| 命令          | `generate` `pull`   |
 
 <rem025/>
 
@@ -716,8 +730,8 @@ Drizzle Kit 将自动在生成的 SQL 迁移文件中嵌入 `--> statement-break
 |               |                      |
 | :------------ | :-----------------   |
 | 类型          | `boolean` |
-| 默认       | `true`                    |
-| 命令      | `generate` `pull`   |
+| 默认         | `true`                    |
+| 命令          | `generate` `pull`   |
 
 <rem025/>
 

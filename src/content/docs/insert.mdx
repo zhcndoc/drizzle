@@ -7,8 +7,7 @@ import Tabs from '@mdx/Tabs.astro';
 # SQL 插入
 Drizzle ORM 为您提供最接近 SQL 的方式将行插入数据库表中。
 
-## 插入一行
-使用 Drizzle 插入数据非常简单且类似 SQL。您可以自己看看：
+插入数据使用 Drizzle 极其简单且类似 SQL。您自己看：
 
 <Section>
 ```typescript copy 
@@ -31,9 +30,9 @@ const newUser: NewUser = { name: "Alef" };
 await insertUser(newUser);
 ```
 
-## 返回插入结果
-<IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'SQLite': true, 'MySQL': false, 'SingleStore': false}} />
-您可以在 PostgreSQL 和 SQLite 中插入一行并获得返回值，如下所示：
+## returning
+<IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'SQLite': true, 'MySQL': false, 'SingleStore': false, 'MSSQL': false, 'CockroachDB': true }} />
+您可以在 PostgreSQL 和 SQLite 中插入一行并获得返回，如下所示：
 ```typescript copy
 await db.insert(users).values({ name: "Dan" }).returning();
 
@@ -41,10 +40,10 @@ await db.insert(users).values({ name: "Dan" }).returning();
 await db.insert(users).values({ name: "Partial Dan" }).returning({ insertedId: users.id });
 ```
 
-## 插入 $returningId
-<IsSupportedChipGroup chips={{ 'PostgreSQL': false, 'SQLite': false, 'MySQL': true, 'SingleStore': true }} />
+## $returningId
+<IsSupportedChipGroup chips={{ 'PostgreSQL': false, 'SQLite': false, 'MySQL': true, 'SingleStore': true, 'MSSQL': false, 'CockroachDB': false }} />
 
-MySQL 本身并不原生支持在使用 `INSERT` 后使用 `RETURNING`。对于 `自增`（或 `序列`）类型的 `主键`，只有一种方法可以做到，您可以访问 `insertId` 和 `affectedRows` 字段。我们为您准备了一种自动处理此类情况的方法，使用 Drizzle 自动接收所有插入的 ID 作为独立对象。
+MySQL 本身并不原生支持 `INSERT` 后使用 `RETURNING`。对于 `自增`（或 `序列`）类型的 `主键`，只有一种方式可以做到，您可以访问 `insertId` 和 `affectedRows` 字段。我们为您准备了一种自动处理此类情况的方法，使用 Drizzle 自动接收所有插入的 ID 作为独立对象。
 
 ```ts
 import { boolean, int, text, mysqlTable } from 'drizzle-orm/mysql-core';
@@ -78,16 +77,26 @@ const result = await db.insert(usersTableDefFn).values([{ name: 'John' }, { name
 
 > 如果没有主键 -> 这种查询的类型将是 `{}[]`
 
+## output
+<IsSupportedChipGroup chips={{ 'MSSQL': true }} />
+您可以在 PostgreSQL 和 SQLite 中插入一行并获得返回，如下所示：
+```typescript copy
+await db.insert(users).values({ name: "Dan" }).output();
+
+// 部分返回
+await db.insert(users).values({ name: "Partial Dan" }).output({ insertedId: users.id });
+```
+
 ## 插入多行
 ```typescript copy
 await db.insert(users).values([{ name: 'Andrew' }, { name: 'Dan' }]);
 ```
 
 ## 插入或更新及冲突处理
-Drizzle ORM 提供了简单的接口来处理插入或更新和冲突。
+Drizzle ORM 提供了简单的接口来处理插入或更新以及冲突。
 
 ### 冲突时不执行任何操作
-<IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'SQLite': true, 'MySQL': false, 'SingleStore': false }} />
+<IsSupportedChipGroup chips={{ 'PostgreSQL': true, 'SQLite': true, 'MySQL': false, 'SingleStore': false, 'CockroachDB': true }} />
 
 `onConflictDoNothing` 会在发生冲突时取消插入：
 
@@ -115,7 +124,7 @@ await db.insert(users)
 
 #### `where` 子句
 
-`冲突时更新` 可以在两个不同位置使用 `where` 子句 -
+`冲突时更新` 可以在两个不同位置使用 `where` 子句 ——  
 作为冲突目标的一部分（即用于部分索引）或作为 `更新` 子句的一部分：
 
 ```sql
@@ -164,7 +173,7 @@ await db.insert(users)
 ```
 
 ### 主键重复时更新
-<IsSupportedChipGroup chips={{ 'PostgreSQL': false, 'SQLite': false, 'MySQL': true, 'SingleStore': true }} />
+<IsSupportedChipGroup chips={{ 'PostgreSQL': false, 'SQLite': false, 'MySQL': true, 'SingleStore': true, 'CockroachDB': false }} />
 
 MySQL 支持 [`ON DUPLICATE KEY UPDATE`](https://dev.mysql.com/doc/refman/8.0/en/insert-on-duplicate.html) 代替 `ON CONFLICT` 子句。MySQL 会根据主键和唯一索引自动确定冲突目标，如果 *任何* 唯一索引冲突，将更新该行。
 
@@ -177,7 +186,7 @@ await db.insert(users)
   .onDuplicateKeyUpdate({ set: { name: 'John' } });
 ```
 
-虽然 MySQL 不直接支持在冲突时什么都不做，您可以通过将任意列的值设置为自身来执行无操作，从而达到相同的效果：
+虽然 MySQL 不直接支持冲突时什么都不做，您可以通过将任意列的值设置为自身来执行无操作，从而达到相同的效果：
 
 ```typescript
 import { sql } from 'drizzle-orm';
@@ -220,39 +229,38 @@ returning "admin"
 
 ## Insert into ... select
 
-As the SQLite documentation mentions:
+正如 SQLite 文档所述：
 
 <Callout>
-The second form of the INSERT statement contains a SELECT statement instead of a VALUES clause. 
-A new entry is inserted into the table for each row of data returned by executing the SELECT statement. 
-If a column-list is specified, the number of columns in the result of the SELECT must be the same as 
-the number of items in the column-list. Otherwise, if no column-list is specified, the number of 
-columns in the result of the SELECT must be the same as the number of columns in the table. 
-Any SELECT statement, including compound SELECTs and SELECT statements with ORDER BY and/or LIMIT clauses, 
-may be used in an INSERT statement of this form.
+INSERT 语句的第二种形式包含一个 SELECT 语句代替 VALUES 子句。  
+通过执行 SELECT 语句返回的每一行数据都会插入表中一个新条目。  
+如果指定了列列表，SELECT 结果中的列数必须与列列表中的项目数相同。  
+否则，如果未指定列列表，SELECT 结果中的列数必须与表中的列数相同。  
+任何 SELECT 语句，包括联合 SELECT 及包含 ORDER BY 和/或 LIMIT 子句的 SELECT，都可用于此形式的 INSERT 语句中。
 </Callout>
 <Callout type='warning'>
-To avoid a parsing ambiguity, the SELECT statement should always contain a WHERE clause, even if that clause is simply "WHERE true", if the upsert-clause is present. Without the WHERE clause, the parser does not know if the token "ON" is part of a join constraint on the SELECT, or the beginning of the upsert-clause.
+为避免解析歧义，如果存在 upsert 子句，SELECT 语句应始终包含 WHERE 子句，即使该子句只含“WHERE true”。  
+否则，解析器无法确定“ON”是 SELECT 中连接条件的一部分，还是 upsert 子句的开始。
 </Callout>
 
-As the PostgreSQL documentation mentions:
+正如 PostgreSQL 文档所述：
 <Callout>
-A query (SELECT statement) that supplies the rows to be inserted
+一个查询（SELECT 语句）提供要插入的行
 </Callout>
 
-And as the MySQL documentation mentions:
+正如 MySQL 文档所述：
 
 <Callout>
-With INSERT ... SELECT, you can quickly insert many rows into a table from the result of a SELECT statement, which can select from one or many tables
+通过 INSERT ... SELECT，您可以快速地从 SELECT 语句的结果向表中插入多行，该 SELECT 语句可以从一个或多个表中选择数据
 </Callout>
 
-Drizzle supports the current syntax for all dialects, and all of them share the same syntax. Let's review some common scenarios and API usage. 
-There are several ways to use select inside insert statements, allowing you to choose your preferred approach:
+Drizzle 支持所有数据库方言当前的语法，且它们共享相同的语法。  
+让我们来看看一些常见的场景和 API 用法。  
+在 insert 语句中使用 select 有多种方式，您可以选择自己喜欢的方式：
 
-- You can pass a query builder inside the select function.
-- You can use a query builder inside a callback.
-- You can pass an SQL template tag with any custom select query you want to use
-
+- 您可以在 select 函数中传入查询构建器。
+- 您可以在回调中使用查询构建器。
+- 您可以传入一个带有任意自定义 select 查询的 SQL 模板标签。
 
 <Tabs items={["Query Builder", "Callback", "SQL template tag"]}>
 <Tab>

@@ -8,6 +8,7 @@ import IsSupportedChipGroup from "@mdx/IsSupportedChipGroup.astro";
 import Prerequisites from "@mdx/Prerequisites.astro";
 import CodeTabs from '@mdx/CodeTabs.astro';
 import CodeTab from '@mdx/CodeTab.astro';
+import Callout from '@mdx/Callout.astro';
 
 <IsSupportedChipGroup chips={{PostgreSQL: true, MySQL: true, SQLite: true}}/>
 
@@ -98,10 +99,16 @@ insert into users ("id", "name") values (1, 'John')
 
 Drizzle 提供了简单而灵活的 API，可以让您轻松创建自定义解决方案。这是如何针对 PostgreSQL 和 SQLite 中由于冲突而更新特定列的自定义函数：
 
+<Callout type='warning'>
+`getColumns` available starting from `drizzle-orm@1.0.0-beta.2`(read more [here](/docs/upgrade-v1))
+
+If you are on pre-1 version(like `0.45.1`) then use `getTableColumns`
+</Callout>
+
 <CodeTabs items={["index.ts", "schema.ts"]}>
   <CodeTab>
     ```ts copy {43,46}
-    import { SQL, getTableColumns, sql } from 'drizzle-orm';
+    import { SQL, getColumns, sql } from 'drizzle-orm';
     import { PgTable } from 'drizzle-orm/pg-core';
     import { SQLiteTable } from 'drizzle-orm/sqlite-core';
     import { users } from './schema';
@@ -113,7 +120,7 @@ Drizzle 提供了简单而灵活的 API，可以让您轻松创建自定义解�
       table: T,
       columns: Q[],
     ) => {
-      const cls = getTableColumns(table);
+      const cls = getColumns(table);
 
       return columns.reduce((acc, column) => {
         const colName = cls[column].name;
@@ -357,7 +364,7 @@ Drizzle 提供了简单而灵活的 API，可以让您轻松创建自定义解�
 <CodeTabs items={["index.ts", "schema.ts"]}>
   <CodeTab>
     ```ts copy {36,38}
-    import { SQL, getTableColumns, sql } from 'drizzle-orm';
+    import { SQL, getColumns, sql } from 'drizzle-orm';
     import { MySqlTable } from 'drizzle-orm/mysql-core';
     import { users } from './schema';
 
@@ -365,7 +372,7 @@ Drizzle 提供了简单而灵活的 API，可以让您轻松创建自定义解�
       table: T,
       columns: Q[],
     ) => {
-      const cls = getTableColumns(table);
+      const cls = getColumns(table);
       return columns.reduce((acc, column) => {
         acc[column] = sql`values(${cls[column]})`;
         return acc;

@@ -1,0 +1,22 @@
+import Callout from '@mdx/Callout.astro';
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Section from "@mdx/Section.astro";
+
+在 `src` 目录下创建一个 `index.ts` 文件并初始化连接：
+
+```typescript
+import { drizzle } from 'drizzle-orm/sqlite-cloud';
+
+const db = drizzle(process.env.SQLITE_CLOUD_CONNECTION_STRING);
+```
+
+如果你需要同步连接，可以使用我们的额外连接 API，
+在其中指定一个驱动连接并传递给 Drizzle 实例。
+
+```typescript
+import { Database } from '@sqlitecloud/drivers';
+import { drizzle } from 'drizzle-orm/sqlite-cloud';
+
+const client = new Database(process.env.SQLITE_CLOUD_CONNECTION_STRING!);
+const db = drizzle({ client });
+```

@@ -1,0 +1,92 @@
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
+import Npm from "@mdx/Npm.astro";
+import Callout from '@mdx/Callout.astro';
+import Steps from '@mdx/Steps.astro';
+import AnchorCards from '@mdx/AnchorCards.astro';
+import Breadcrumbs from '@mdx/Breadcrumbs.astro';
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Prerequisites from "@mdx/Prerequisites.astro";
+import IntrospectCockroach from '@mdx/get-started/cockroach/IntrospectCockroach.mdx';
+import FileStructure from '@mdx/get-started/FileStructure.mdx';
+import InstallPackages from '@mdx/get-started/InstallPackages.mdx';
+import SetupConfig from '@mdx/get-started/SetupConfig.mdx';
+import SetupEnv from '@mdx/get-started/SetupEnv.mdx';
+import TransferCode from '@mdx/get-started/TransferCode.mdx';
+import ApplyChanges from '@mdx/get-started/ApplyChanges.mdx';
+import RunFile from '@mdx/get-started/RunFile.mdx';
+import ConnectCockroach from '@mdx/get-started/cockroach/ConnectCockroach.mdx'
+import QueryDatabase from '@mdx/get-started/QueryDatabase.mdx';
+import QueryDatabaseUpdated from '@mdx/get-started/QueryDatabaseUpdated.mdx';
+import UpdateSchema from '@mdx/get-started/cockroach/UpdateSchema.mdx';
+
+<Breadcrumbs/>
+
+# 在现有项目中使用 Drizzle 和 CockroachDB 入门
+
+<Callout type='error'>
+本页面解释的是在 drizzle 版本 `1.0.0-beta.2` 及更高版本中可用的概念。
+</Callout>
+
+<br/>
+
+<Prerequisites>
+  - **dotenv** - 用于管理环境变量的包 - [查看这里](https://www.npmjs.com/package/dotenv)
+  - **tsx** - 用于运行 TypeScript 文件的包 - [查看这里](https://tsx.is/)
+  - **node-postgres** - 用于查询你的 PostgreSQL 数据库的包 - [查看这里](https://node-postgres.com/)
+</Prerequisites>
+
+<FileStructure/>
+
+#### 第 1 步 - 安装 **node-postgres** 包
+<Npm>
+  drizzle-orm@beta pg dotenv
+  -D drizzle-kit@beta tsx @types/pg
+</Npm>
+
+
+#### 第 2 步 - 设置连接变量
+
+<SetupEnv env_variable='DATABASE_URL' />
+
+<Callout title='提示'>
+如果你还没有 PostgreSQL 数据库，且想创建一个用于测试，可以使用我们的 Docker 中设置 PostgreSQL 的指南。
+
+Docker 中的 PostgreSQL 指南见 [这里](/docs/guides/postgresql-local-setup)。按照指南完成设置并生成数据库 URL（指南中有详细说明），完成后返回继续下一步。
+</Callout>
+
+#### 第 3 步 - 设置 Drizzle 配置文件
+
+<SetupConfig dialect='cockroach' env_variable='DATABASE_URL'/>
+
+#### 第 4 步 - 反向工程你的数据库
+
+<IntrospectCockroach/>
+
+#### 第 5 步 - 将代码转移到你的实际 schema 文件中
+
+<TransferCode/>
+
+#### 第 6 步 - 连接 Drizzle ORM 到数据库
+
+<ConnectCockroach/>
+
+#### 第 7 步 - 查询数据库
+
+<QueryDatabase dialect='cockroach' env_variable='DATABASE_URL'/>
+
+#### 第 8 步 - 运行 index.ts 文件
+
+<RunFile/>
+
+#### 第 9 步 - 更新你的表结构（可选）
+
+<UpdateSchema/>
+
+#### 第 10 步 - 应用更改到数据库（可选）
+
+<ApplyChanges />
+
+#### 第 11 步 - 使用新字段查询数据库（可选）
+
+<QueryDatabaseUpdated dialect='cockroach' env_variable='DATABASE_URL' />

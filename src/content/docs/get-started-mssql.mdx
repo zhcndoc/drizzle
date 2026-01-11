@@ -1,0 +1,82 @@
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
+import Npm from "@mdx/Npm.astro";
+import Callout from '@mdx/Callout.astro';
+import Steps from '@mdx/Steps.astro';
+import AnchorCards from '@mdx/AnchorCards.astro';
+import Prerequisites from "@mdx/Prerequisites.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+import WhatsNextMSSQL from "@mdx/WhatsNextMSSQL.astro";
+
+# Drizzle \<\> MSSQL
+
+<Callout type='error'>
+本页讲解的概念适用于 Drizzle 版本 `1.0.0-beta.2` 及以上版本。
+</Callout>
+
+<br/>
+
+<Prerequisites>
+- 使用 Drizzle 进行数据库[连接基础](/docs/connect-overview)
+- node-mssql 的[基础知识](https://github.com/tediousjs/node-mssql)
+</Prerequisites>
+
+Drizzle 原生支持基于 `mssql` 驱动的 MSSQL 连接。
+
+#### 第1步 - 安装包
+<Npm>
+drizzle-orm@beta mssql
+-D drizzle-kit@beta
+</Npm>
+
+#### 第2步 - 初始化驱动并执行查询
+<CodeTabs items={["mssql", "带配置的 mssql"]}>
+```typescript copy
+// 确保已安装 'mssql' 包
+import { drizzle } from 'drizzle-orm/node-mssql';
+
+const db = drizzle(process.env.DATABASE_URL);
+ 
+const result = await db.execute('select 1');
+```
+```typescript copy
+// 确保已安装 'pg' 包
+import { drizzle } from 'drizzle-orm/node-mssql';
+
+// 你可以指定 mssql 连接选项中的任意属性
+const db = drizzle({ 
+  connection: { 
+    connectionString: process.env.DATABASE_URL,
+    ssl: true
+  }
+});
+ 
+const result = await db.execute('select 1');
+```
+</CodeTabs>
+
+<Callout type='warning'>
+由于 `node-mssql` 驱动在初始化 `Pool` 时需要 `await`，所以我们需要在每次请求前对其进行 `await` —— 除非你为 Drizzle 提供了自己的 Pool 实例。在这种情况下，当你想访问 `db.$client` 时，需要先 `await` 它，然后再使用它：
+
+```ts
+const awaitedClient = await db.$client;
+const response = awaitedClient.query...
+```
+</Callout>
+
+如果你需要提供你已有的驱动：
+
+```typescript copy
+// 确保已安装 'mssql' 包
+import { drizzle } from "drizzle-orm/node-mssql";
+import type { ConnectionPool } from 'mssql';
+
+const pool = await mssql.connect(connectionString);
+const db = drizzle({ client: pool });
+ 
+const result = await db.execute('select 1');
+```
+
+#### 下一步？
+
+<WhatsNextMSSQL/>

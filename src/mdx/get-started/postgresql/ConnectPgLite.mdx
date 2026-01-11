@@ -1,4 +1,4 @@
-Create a `index.ts` file in the `src` directory and initialize the connection:
+在 `src` 目录下创建一个 `index.ts` 文件并初始化连接：
 
 ```typescript copy
 import { drizzle } from 'drizzle-orm/pglite';
@@ -6,7 +6,7 @@ import { drizzle } from 'drizzle-orm/pglite';
 const db = drizzle(process.env.DATABASE_URL!);
 ```
 
-If you need to provide your existing driver:
+如果需要提供您现有的驱动：
 
 ```typescript copy
 import { PGlite } from '@electric-sql/pglite';

@@ -1,0 +1,438 @@
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
+import Callout from '@mdx/Callout.astro';
+import SimpleLinkCards from '@mdx/SimpleLinkCards.astro';
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Section from '@mdx/Section.astro';
+import Flex from "@mdx/Flex.astro"
+import LinksList from "@mdx/LinksList.astro"
+
+# Drizzle 关系基础知识
+
+在数据库领域，尤其是关系型数据库中，关系的概念是绝对基础的。  
+把“关系”想象成不同数据之间的连接和联系。就像现实生活中，人们彼此之间有关系，  
+物体与类别相关联一样，数据库使用关系来建模不同类型的信息如何连接并协同工作。
+
+### 规范化
+规范化是组织数据库中数据的过程，旨在减少冗余（重复）并提升数据完整性（准确性和一致性）。  
+可以把它想象成整理杂乱的文件柜。不是所有的文件都堆放在一个文件夹里，  
+而是有条理地分类整理成逻辑清晰的文件夹和类别，使得查找和管理更加简单。
+
+<Callout collapsed="为什么规范化很重要？">
+- **减少数据冗余**：想象一下每次客户下订单时都存储客户地址。如果地址变了，你不得不在多个地方更新它！规范化帮助你只在一个地方存储信息，然后从其他地方引用，最大限度减少重复。
+- **提升数据完整性**：较少冗余意味着一致性错误的可能性更小。如果你更新了地址，所有需要的地方都会同步更新。
+- **防止异常**：规范化有助于避免如下问题：
+  1. **插入异常**：当你缺少相关信息时，难以添加新数据。
+  2. **更新异常**：必须在多行中重复更新相同信息。
+  3. **删除异常**：删除看似无关的内容时意外丢失有价值的信息。
+- **更易理解和维护**：规范化后的数据库结构通常更符合逻辑，更易于理解、查询和修改。
+</Callout>
+
+规范化通常用“范式”（1NF，2NF，3NF等）进行描述。虽然细节会比较技术化，但核心理念很直接：
+
+#### 第一范式（1NF）：`原子值`
+
+**目标**：每个列应保存单一、不可分割的值。单元格内不应有重复的数据组。
+
+**示例**：不使用一个存储 `123 Main St, City, USA` 的 `address` 列，  
+而是拆分成多个列：`street_address`、`city`、`state`、`zip_code`。
+
+```sql
+-- 非规范化（违反 1NF）
+CREATE TABLE Customers_Unnormalized (
+    customer_id INT PRIMARY KEY,
+    name VARCHAR(255),
+    address VARCHAR(255) -- 问题：一个列中存储多个信息
+);
+
+-- 规范化到 1NF
+CREATE TABLE Customers_1NF (
+    customer_id INT PRIMARY KEY,
+    name VARCHAR(255),
+    street_address VARCHAR(255),
+    city VARCHAR(255),
+    state VARCHAR(255),
+    zip_code VARCHAR(10)
+);
+```
+
+#### 第二范式（2NF）：`消除对部分主键的冗余数据依赖`
+
+**目标**：当表有复合主键（由两个或多个列组成）时，2NF 确保所有非键属性完全依赖整个复合主键，而不是其中部分。
+
+假设有一个名为 `order_items` 的表，该表监控订单中的商品，复合主键为 (`order_id`, `product_id`)，  
+因为同一个订单可能含有多个相同商品（虽然在这里为简化起见，每个商品在订单中只出现一次，但复合键逻辑仍然适用）。
+
+<Callout collapsed="展开查看可视化示例">
+```sql
+CREATE TABLE OrderItems_Unnormalized (
+    order_id INT,
+    product_id VARCHAR(10),
+    product_name VARCHAR(100),
+    product_price DECIMAL(10, 2),
+    quantity INT,
+    order_date DATE,
+    PRIMARY KEY (order_id, product_id) -- 复合主键
+);
+
+INSERT INTO OrderItems_Unnormalized (order_id, product_id, product_name, product_price, quantity, order_date) VALUES
+(101, 'A123', 'Laptop', 1200.00, 1, '2023-10-27'),
+(101, 'B456', 'Mouse', 25.00, 2, '2023-10-27'),
+(102, 'A123', 'Laptop', 1200.00, 1, '2023-10-28'),
+(103, 'C789', 'Keyboard', 75.00, 1, '2023-10-29');
+```
+```
++------------------------------------------------------------------------------------+
+| OrderItems_Unnormalized                                                            |
++------------------------------------------------------------------------------------+
+| PK (order_id, product_id) | product_name | product_price | quantity | order_date   |
++------------------------------------------------------------------------------------+
+| 101, A123               | Laptop       | 1200.00       | 1        | 2023-10-27     |
+| 101, B456               | Mouse        | 25.00         | 2        | 2023-10-27     |
+| 102, A123               | Laptop       | 1200.00       | 1        | 2023-10-28     |
+| 103, C789               | Keyboard     | 75.00         | 1        | 2023-10-29     |
++------------------------------------------------------------------------------------+
+```
+</Callout>
+
+**问题**：注意到，`product_name` 和 `product_price` 每次同一 `product_id` 在不同订单出现时都会被重复。  
+这些属性只依赖于 `product_id`（复合主键的一部分），而不是整个复合主键。这是部分依赖。
+
+为了达到 2NF，需要把这些部分依赖的属性（`product_name`，`product_price`）移到一个新表中，  
+它们完全依赖于该新表的主键。
+
+<Callout collapsed="规范化到 2NF：可视化说明">
+```
++-------------------+     1:M     +---------------------------+
+| Products          | <---------- | OrderItems_2NF            |
++-------------------+             +---------------------------+
+| PK product_id     |             | PK (order_id, product_id) |
+| product_name      |             | quantity                  |
+| product_price     |             | order_date                |
++-------------------+             | FK product_id             |
+                                  +---------------------------+
+```
+```sql
+CREATE TABLE Products (
+    product_id VARCHAR(10) PRIMARY KEY,
+    product_name VARCHAR(100),
+    product_price DECIMAL(10, 2)
+);
+
+CREATE TABLE OrderItems_2NF (
+    order_id INT,
+    product_id VARCHAR(10),
+    quantity INT,
+    order_date DATE,
+    PRIMARY KEY (order_id, product_id), -- 保持复合主键
+    FOREIGN KEY (product_id) REFERENCES Products(product_id) -- 外键关联 Products
+);
+
+-- 插入 Products 数据
+INSERT INTO Products (product_id, product_name, product_price) VALUES
+('A123', 'Laptop', 1200.00),
+('B456', 'Mouse', 25.00),
+('C789', 'Keyboard', 75.00);
+
+-- 插入 OrderItems_2NF 数据（引用 Products）
+INSERT INTO OrderItems_2NF (order_id, product_id, quantity, order_date) VALUES
+(101, 'A123', 1, '2023-10-27'),
+(101, 'B456', 2, '2023-10-27'),
+(102, 'A123', 1, '2023-10-28'),
+(103, 'C789', 1, '2023-10-29');
+```
+</Callout>
+
+#### 第三范式（3NF）：`消除对非键属性的冗余数据依赖`
+
+**目标**：删除对其他非键属性的依赖。这是消除传递依赖。
+
+**问题**：假设有一个 `suppliers` 表，我们存储供应商信息，包含 `zip_code`、`city` 和 `state`。`supplier_id` 是主键。
+
+<Callout collapsed="">
+```sql
+CREATE TABLE suppliers (
+    supplier_id VARCHAR(10) PRIMARY KEY,
+    supplier_name VARCHAR(255),
+    zip_code VARCHAR(10),
+    city VARCHAR(100),
+    state VARCHAR(50)
+);
+
+INSERT INTO suppliers (supplier_id, supplier_name, zip_code, city, state) VALUES
+('S1', 'Acme Corp', '12345', 'Anytown', 'NY'),
+('S2', 'Beta Inc', '67890', 'Otherville', 'CA'),
+('S3', 'Gamma Ltd', '12345', 'Anytown', 'NY');
+```
+```
++---------------------------------------------------------------+
+| suppliers                                                     |
++---------------------------------------------------------------+
+| PK supplier_id | supplier_name | zip_code | city      | state |
++---------------------------------------------------------------+
+| S1             | Acme Corp     | 12345    | Anytown    | NY   |
+| S2             | Beta Inc      | 67890    | Otherville | CA   |
+| S3             | Gamma Ltd     | 12345    | Anytown    | NY   |
++---------------------------------------------------------------+
+```
+</Callout>
+
+**解决方案**：为达到 3NF，我们把依赖于非键属性（`city`，`state` 依赖于 `zip_code`）的字段移到独立表，  
+该表以非键属性本身（`zip_code`）作为主键。
+
+<Callout collapsed="规范化到 3NF：可视化说明">
+```
++-------------------+     1:M     +--------------------+
+| zip_codes         | <---------- | suppliers          |
++-------------------+             +--------------------+
+| PK zip_code       |             | PK supplier_id     |
+| city              |             | supplier_name      |
+| state             |             | FK zip_code        |
++-------------------+             +--------------------+
+```
+```sql
+CREATE TABLE zip_codes (
+    zip_code VARCHAR(10) PRIMARY KEY,
+    city VARCHAR(100),
+    state VARCHAR(50)
+);
+
+CREATE TABLE suppliers (
+    supplier_id VARCHAR(10) PRIMARY KEY,
+    supplier_name VARCHAR(255),
+    zip_code VARCHAR(10), -- 外键关联 zip_codes
+    FOREIGN KEY (zip_code) REFERENCES zip_codes(zip_code)
+);
+
+-- 插入 zip_codes 数据
+INSERT INTO zip_codes (zip_code, city, state) VALUES
+('12345', 'Anytown', 'NY'),
+('67890', 'Otherville', 'CA');
+
+-- 插入 suppliers 数据（引用 zip_codes）
+INSERT INTO suppliers (supplier_id, supplier_name, zip_code) VALUES
+('S1', 'Acme Corp', '12345'),
+('S2', 'Beta Inc', '67890'),
+('S3', 'Gamma Ltd', '12345');
+```
+</Callout>
+
+<Callout title="值得了解">
+还有其他范式，如 `4NF`、`5NF`、`6NF`、`EKNF`、`ETNF` 和 `DKNF`。这里暂不展开介绍，  
+我们将在教程和指南部分为它们专门制作系列教程。
+</Callout>
+
+### 数据库关系  
+#### 一对一关系
+
+一对一关系中，`表 A` 中的每条记录最多和 `表 B` 中一条记录相关联，且反过来也相同，  
+是非常直接、一对一的配对关系。
+
+<Callout collapsed="使用场景与示例">
+1. **用户档案和用户账户细节**：比如一个网站。每个用户账户（Users 表）可能对应唯一一个用户档案（UserProfiles 表），存储详细信息。  
+2. **员工和停车位**：Employees 表和 ParkingSpaces 表。每个员工最多分配一个停车位，且每个停车位最多分配给一名员工。  
+3. **拆分表进行组织**：有时你可能将一个很宽的表拆成两个表以便管理或安全，保持它们之间一对一的关系。
+
+```
+表 A（一端）           表 B（一端）
++---------+           +---------+
+| PK (A)  | <-------> | FK (A)  | （外键引用表 A）
+| ...     |           | ...     |
++---------+           +---------+
+```
+</Callout>
+
+#### 一对多关系
+
+一对多关系中，`表 A` 的一条记录可以关联 `表 B` 的多条记录，  
+但 `表 B` 的一条记录最多关联 `表 A` 的一条记录。类似“父子”关系。
+
+<Callout collapsed="使用场景与示例">
+1. **客户和订单**：一个客户可以下多个订单，但每个订单只属于一个客户。  
+2. **作者和书籍**：一个作者可以写多本书，但（简化起见）每本书只有一个主作者。  
+3. **部门和员工**：一个部门有多个员工，但每个员工只属于一个部门。
+
+```
+表 A（一端）           表 B（多端）
++---------+           +---------+
+| PK (A)  | --------> | FK (A)  | （外键引用表 A）
+| ...     |           | ...     |
++---------+           +---------+
+     （一）               （多）
+```
+</Callout>
+
+#### 多对多关系
+
+多对多关系中，`表 A` 的一条记录可关联 `表 B` 多条记录，同时 `表 B` 的一条记录也可关联 `表 A` 多条记录，  
+是一个更复杂、双向的关系。
+
+<Callout collapsed="使用场景与示例">
+1. **学生和课程**：一个学生可以选修多门课程，一门课程也可包含多名学生。  
+2. **产品和类别**：一件产品可以属于多个类别（如 T 恤既属于“服装”，也属于“夏季穿着”类别），一个类别也包含多个产品。  
+3. **作者和书籍**：一本书可以由多个作者合著，一个作者也写多本书。
+
+```
+表 A（多端）         关联表（中间表）     表 B（多端）
++---------+        +-------------+     +---------+
+| PK (A)  | -----> | FK (A)      | <----| FK (B)  |
+| ...     |        | FK (B)      |     | ...     |
++---------+        +-------------+     +---------+
+     （多）          （桥接关联）          （多）
+```
+</Callout>
+
+多对多关系并不会直接通过两个主表间的外键实现，  
+而是需要一个**关联表**（也称为关联表，桥接表）来充当中介，将两边的记录关联起来。
+
+```sql
+-- 学生表（多端）
+CREATE TABLE students (
+    id INT PRIMARY KEY,
+    name VARCHAR(255)
+);
+
+-- 课程表（多端）
+CREATE TABLE courses (
+    id INT PRIMARY KEY,
+    name VARCHAR(255),
+    credits INT
+);
+
+-- 关联表：enrollments（连接学生和课程，实现多对多关系）
+CREATE TABLE enrollments (
+    id INT PRIMARY KEY AUTO_INCREMENT, -- 可选，但对关联表是良好实践
+    student_id INT,
+    course_id INT,
+    enrollment_date DATE,
+    -- 复合外键（通常也是复合主键或唯一约束的一部分）
+    FOREIGN KEY (student_id) REFERENCES students(id),
+    FOREIGN KEY (course_id) REFERENCES courses(id),
+    UNIQUE KEY (student_id, course_id) -- 防止同一个学生重复报名同一课程
+);
+```
+
+### 为什么使用外键？
+
+你可能会认为外键约束只是用来验证数据——确保外键列中的值存在于另一张表的主键列中。  
+你说的没错，这确实是外键的值检查机制。
+
+但是，必须理解这种验证不是终点，而是实现更大目标的手段。  
+外键约束根本上是用来：
+
+<Callout collapsed="1. 明确定义并强制执行关系">
+
+我们之前说过 Customer 和 Orders 的一对多关系。  
+外键是 SQL 语言告诉数据库的方式：  
+
+> 亲，数据库，我想在这里强制执行一对多关系。Orders 表中的 customer_id 列每个值都必须对应 Customers 表中的有效 customer_id。
+
+这不是建议，而是数据库主动执行的约束。  
+数据库因为外键而拥有了关系意识。
+</Callout>
+
+<Callout collapsed="2. 维护参照完整性">
+- 这是关系型数据中“数据完整性”的核心。参照完整性确保表与表之间的关系随时间保持一致有效。  
+- 外键防止产生孤儿记录。孤儿记录是什么？比如订单表中存在订单，但不存在对应客户表中的客户，则为孤儿。外键防止这种情况发生（或者通过 CASCADE、SET NULL 等操作控制删除行为）。  
+- 为什么防止孤儿重要？孤儿记录破坏数据的逻辑结构。丢失客户的订单失去关键上下文，查询变得不可靠，报告数据错误，应用逻辑可能出错。
+
+**示例**：  
+```
+如果没有外键约束，可能会误删 Customers 表中的客户，而他们的订单仍在 Orders 表中存在。  
+这样就有订单指向不存在的客户，造成数据不一致！外键约束可以防止这种情况。
+```
+</Callout>
+
+<Callout collapsed="3. 便于数据库设计和理解">
+- 外键不仅是技术层面约束，同时是数据库设计文档的重要组成。  
+- 当你看到数据库架构中的外键，它立即告诉你：  
+`表 X 与表 Y 通过此方式相关联`，是清晰的视觉和结构标识。  
+- 这让数据库更容易理解、维护和演进。新开发者可以快速了解数据库各部分间的关联。
+</Callout>
+
+总之，外键约束不仅仅是检查值，它们是为了：
+
+1. 定义数据关系的规则  
+2. 在数据库层面主动执行这些规则  
+3. 保证这些关系内数据的完整性和一致性  
+4. 让数据库更健壮、可靠且易于理解
+
+### 为什么不使用外键？
+
+虽然外键非常有用，但某些情况下可能需要慎用或考虑不用。  
+通常是边缘案例，且需要权衡利弊。
+
+<Callout collapsed="1. 在超高写入负载环境中的性能开销">
+- **场景**：极高频交易平台、实时日志、海量物联网数据摄取系统。  
+- **解释**：每次插入或更新带外键的表时，数据库都要检查参照完整性。在极端写入情况下，这种检查可能带来尽管微小但累积显著的性能影响。
+</Callout>
+
+<Callout collapsed="2. 分布式数据库系统与跨节点外键">
+- **场景**：数据分布于多节点/集群（如分片数据库、云环境、微服务架构）。  
+- **解释**：跨节点的外键检查会极大增加复杂性和性能开销。保持参照完整性需节点间协作，导致延迟增加。分布式事务维护一致性更复杂且性能欠佳。在这类架构中，可能选择应用层数据完整性检查或最终一致性模型替代。
+</Callout>
+
+<Callout collapsed="3. 传统系统和非关系数据集成">
+- **场景**：集成老旧系统或非关系数据存储（NoSQL、平面文件、外部 API）。  
+- **解释**：传统系统或非关系数据可能无法严格遵守参照完整性。强制外键约束可能引起导入问题或数据不一致，需要复杂的数据转换或应用层完整性逻辑管理。此时需谨慎评估源数据质量，一般依赖应用或 ETL 流程保障完整性，而不强制数据库层外键约束。
+</Callout>
+
+你也可以查看 PlanetScale 团队的精彩解释，见他们的[文章](https://planetscale.com/docs/learn/operating-without-foreign-key-constraints#why-does-planetscale-not-recommend-constraints)
+
+### 多态关系
+
+多态关系是更高级的概念，允许单个关系指向不同类型的实体或表。它使关系更加灵活，可适应多种共享某些共性的不同数据。
+
+想象你有一个 `activities` 日志。活动可能是 `comment`，`like` 或 `share`。  
+这些活动类型有不同的详情。与其为每类活动及其关联项分别建表和设计关系，  
+你可能采用多态关系方式。
+
+<Callout collapsed="常见场景与示例">
+- **评论/评价**：一条“评论”可能关联不同类型内容：文章、产品、视频等。  
+  不用为每种内容类型在 Comments 表中建立分别的 article_id、product_id、video_id 列，  
+  可以采用多态关系。
+```
++---------------------+
+| **Comments**        |
++---------------------+
+| PK comment_id       |
+| commentable_type    | ------>  [多态关系]
+| commentable_id      | -------->
+| user_id             |
+| comment_text        |
+| ...                 |
++---------------------+
+          ^
+          |
++---------------------+    +---------------------+    +---------------------+
+| **Articles**        |    | **Products**        |    | **Videos**          |
++---------------------+    +---------------------+    +---------------------+
+| PK article_id       |    | PK product_id       |    | PK video_id         |
+| ...                 |    | ...                 |    | ...                 |
++---------------------+    +---------------------+    +---------------------+
+```
+- **通知**：通知可以关联用户、订单、系统事件等。
+```
++----------------------+
+| **Notifications**    |
++----------------------+
+| PK notification_id  |
+| notifiable_type     | ------>  [多态关系]
+| notifiable_id       | -------->
+| user_id             |
+| message             |
+| ...                  |
++----------------------+
+           ^
+           |
++---------------------+    +---------------------+    +-----------------------+
+| **Users**           |    | **Orders**          |    | **System Events**     |
++---------------------+    +---------------------+    +-----------------------+
+| PK user_id          |    | PK order_id         |    | PK event_id           |
+| ...                 |    | ...                 |    | ...                   |
++---------------------+    +---------------------+    +-----------------------+
+```
+</Callout>
+
+多态关系较复杂，通常在应用层实现或借助更高级数据库功能（取决具体数据库系统）。  
+标准 SQL 没有内建直接支持多态外键约束的机制，无法像普通外键那样强制执行。

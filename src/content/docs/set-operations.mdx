@@ -14,7 +14,7 @@ SQL 标准定义了以下三种集合操作：`UNION`、`INTERSECT`、`EXCEPT`�
 
 获取 customers 和 users 表中的所有名称，不带重复。
 
-<Tabs items={["PostgreSQL", "MySQL", "SQLite", "SingleStore"]}>
+<Tabs items={["PostgreSQL", "MySQL", "SQLite", "SingleStore", "MSSQL", "CockroachDB"]}>
   <Tab>
   <CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
 	<CodeTab>
@@ -244,6 +244,122 @@ SQL 标准定义了以下三种集合操作：`UNION`、`INTERSECT`、`EXCEPT`�
     </CodeTab>
   </CodeTabs>
   </Tab> 
+  <Tab>
+  <CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
+	<CodeTab>
+	```typescript copy
+    import { union } from 'drizzle-orm/mssql-core'
+    import { users, customers } from './schema'
+
+    const allNamesForUserQuery = db.select({ name: users.name }).from(users);
+
+    const result = await union(
+		allNamesForUserQuery,
+		db.select({ name: customers.name }).from(customers)
+	).limit(10);
+    ```
+    ```sql
+    (select [name] from [sellers])
+    union
+    (select [name] from [customers])
+    limit @limit
+    ```
+	</CodeTab>
+    <CodeTab>
+    ```ts copy
+    import { users, customers } from './schema'
+
+    const result = await db
+      .select({ name: users.name })
+      .from(users)
+      .union(db.select({ name: customers.name }).from(customers))
+      .limit(10);
+    ```
+    ```sql
+    (select [name] from [sellers])
+    union
+    (select [name] from [customers])
+    limit @limit
+    ```
+    </CodeTab>
+    <CodeTab>
+	```typescript copy
+    import { int, mssqlTable, ntext, nvarchar } from "drizzle-orm/mssql-core";
+
+    const users = mssqlTable('sellers', {
+        id: int().primaryKey(),
+        name: nvarchar({ length: 256 }).notNull(),
+        address: ntext(),
+    });
+    
+    const customers = mssqlTable('customers', {
+        id: int().primaryKey(),
+        name: nvarchar({ length: 256 }).notNull(),
+        city: ntext(),
+        email: nvarchar({ length: 256 }).notNull()
+    });
+    ```
+    </CodeTab>
+  </CodeTabs>
+  </Tab> 
+  <Tab>
+  <CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
+	<CodeTab>
+	```typescript copy
+    import { union } from 'drizzle-orm/cockroach-core'
+    import { users, customers } from './schema'
+
+    const allNamesForUserQuery = db.select({ name: users.name }).from(users);
+
+    const result = await union(
+		allNamesForUserQuery,
+		db.select({ name: customers.name }).from(customers)
+	).limit(10);
+    ```
+    ```sql
+    (select "name" from "sellers")
+    union
+    (select "name" from "customers")
+    limit $1
+    ```
+    </CodeTab>
+    <CodeTab>
+    ```ts copy
+    import { users, customers } from './schema'
+
+    const result = await db
+      .select({ name: users.name })
+      .from(users)
+      .union(db.select({ name: customers.name }).from(customers))
+      .limit(10);
+    ```
+    ```sql
+    (select "name" from "sellers")
+    union
+    (select "name" from "customers")
+    limit $1
+    ```
+	</CodeTab>
+    <CodeTab>
+	```typescript copy
+    import { int4, cockroachTable, text, varchar } from "drizzle-orm/cockroach-core";
+
+    const users = cockroachTable('sellers', {
+        id: int4().primaryKey(),
+        name: varchar({ length: 256 }).notNull(),
+        address: text(),
+    });
+    
+    const customers = cockroachTable('customers', {
+        id: int4().primaryKey(),
+        name: varchar({ length: 256 }).notNull(),
+        city: text(),
+        email: varchar({ length: 256 }).notNull()
+    });
+    ```
+    </CodeTab>
+  </CodeTabs>
+  </Tab> 
 </Tabs>
 
 ### 并集所有（Union All）
@@ -254,7 +370,7 @@ SQL 标准定义了以下三种集合操作：`UNION`、`INTERSECT`、`EXCEPT`�
 由于可能会有重复的交易，
 你希望保留所有记录，而不消除重复项。
 
-<Tabs items={["PostgreSQL", "MySQL", "SQLite", "SingleStore"]}>
+<Tabs items={["PostgreSQL", "MySQL", "SQLite", "SingleStore", "MSSQL", "CockroachDB"]}>
   <Tab>
   <CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
 	<CodeTab>
@@ -482,6 +598,118 @@ SQL 标准定义了以下三种集合操作：`UNION`、`INTERSECT`、`EXCEPT`�
     </CodeTab>
   </CodeTabs>
   </Tab> 
+  <Tab>
+  <CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
+	<CodeTab>
+	```typescript copy
+    import { unionAll } from 'drizzle-orm/mssql-core'
+    import { onlineSales, inStoreSales } from './schema'
+
+    const onlineTransactions = db.select({ transaction: onlineSales.transactionId }).from(onlineSales);
+    const inStoreTransactions = db.select({ transaction: inStoreSales.transactionId }).from(inStoreSales);
+
+    const result = await unionAll(onlineTransactions, inStoreTransactions);
+    ```
+    ```sql
+    (select [transaction_id] from [online_sales])
+    union all
+    (select [transaction_id] from [in_store_sales])
+    ```
+    </CodeTab>
+    <CodeTab>
+    ```ts copy
+    import { onlineSales, inStoreSales } from './schema'
+
+    const result = await db
+      .select({ transaction: onlineSales.transactionId })
+      .from(onlineSales)
+      .unionAll(
+        db.select({ transaction: inStoreSales.transactionId }).from(inStoreSales)
+      );
+    ```
+    ```sql
+    (select [transaction_id] from [online_sales])
+    union all
+    (select [transaction_id] from [in_store_sales])
+    ```
+	</CodeTab>
+    <CodeTab>
+	```typescript copy
+    import { int, mssqlTable, timestamp } from "drizzle-orm/mssql-core";
+
+    const onlineSales = mysqlTable('online_sales', {
+        transactionId: int('transaction_id').primaryKey(),
+        productId: int('product_id').unique(),
+        quantitySold: int('quantity_sold'),
+        saleDate: timestamp('sale_date', { mode: 'date' }),
+    });
+    
+    const inStoreSales = mysqlTable('in_store_sales', {
+        transactionId: int('transaction_id').primaryKey(),
+        productId: int('product_id').unique(),
+        quantitySold: int('quantity_sold'),
+        saleDate: timestamp('sale_date', { mode: 'date' }),
+    });
+    ```
+    </CodeTab>
+  </CodeTabs>
+  </Tab> 
+  <Tab>
+  <CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
+	<CodeTab>
+	```typescript copy
+    import { unionAll } from 'drizzle-orm/cockroach-core'
+    import { onlineSales, inStoreSales } from './schema'
+
+    const onlineTransactions = db.select({ transaction: onlineSales.transactionId }).from(onlineSales);
+    const inStoreTransactions = db.select({ transaction: inStoreSales.transactionId }).from(inStoreSales);
+
+    const result = await unionAll(onlineTransactions, inStoreTransactions);
+    ```
+    ```sql
+    select "transaction_id" from "online_sales"
+    union all
+    select "transaction_id" from "in_store_sales"
+    ```
+    </CodeTab>
+    <CodeTab>
+    ```ts copy
+    import { onlineSales, inStoreSales } from './schema'
+
+    const result = await db
+      .select({ transaction: onlineSales.transactionId })
+      .from(onlineSales)
+      .unionAll(
+        db.select({ transaction: inStoreSales.transactionId }).from(inStoreSales)
+      );
+    ```
+    ```sql
+    select "transaction_id" from "online_sales"
+    union all
+    select "transaction_id" from "in_store_sales"
+    ```
+	</CodeTab>
+    <CodeTab>
+	```typescript copy
+    import { int4, cockroachTable, text, timestamp, varchar } from "drizzle-orm/cockroach-core";
+
+    const onlineSales = cockroachTable('online_sales', {
+        transactionId: int4('transaction_id').primaryKey(),
+        productId: int4('product_id').unique(),
+        quantitySold: int4('quantity_sold'),
+        saleDate: timestamp('sale_date', { mode: 'date' }),
+    });
+    
+    const inStoreSales = cockroachTable('in_store_sales', {
+        transactionId: int4('transaction_id').primaryKey(),
+        productId: int4('product_id').unique(),
+        quantitySold: int4('quantity_sold'),
+        saleDate: timestamp('sale_date', { mode: 'date' }),
+    });
+    ```
+    </CodeTab>
+  </CodeTabs>
+  </Tab> 
 </Tabs>
 
 ### 交集（Intersect）
@@ -495,7 +723,7 @@ SQL 标准定义了以下三种集合操作：`UNION`、`INTERSECT`、`EXCEPT`�
 在此场景中，你希望找到两个系间的共同课程，
 但不希望同一课程即使被同一系的多个学生注册也计数多次。
 
-<Tabs items={["PostgreSQL", "MySQL", "SQLite", "SingleStore"]}>
+<Tabs items={["PostgreSQL", "MySQL", "SQLite", "SingleStore", "MSSQL", "CockroachDB"]}>
   <Tab>
   <CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
 	<CodeTab>
@@ -588,7 +816,7 @@ SQL 标准定义了以下三种集合操作：`UNION`、`INTERSECT`、`EXCEPT`�
         courseName: varchar('course_name', { length: 256 }).notNull(),
     });
     
-    const depB = pgTable('department_b_courses', {
+    const depB = mysqlTable('department_b_courses', {
         studentId: int('student_id'),
         courseName: varchar('course_name', { length: 256 }).notNull(),
     });
@@ -681,16 +909,116 @@ SQL 标准定义了以下三种集合操作：`UNION`、`INTERSECT`、`EXCEPT`�
     </CodeTab>
     <CodeTab>
 	```typescript copy
-    import { int, mysqlTable, varchar } from "drizzle-orm/singlestore-core";
+    import { int, singlestoreTable, varchar } from "drizzle-orm/singlestore-core";
 
-    const depA = mysqlTable('department_a_courses', {
+    const depA = singlestoreTable('department_a_courses', {
         studentId: int('student_id'),
         courseName: varchar('course_name', { length: 256 }).notNull(),
     });
     
-    const depB = pgTable('department_b_courses', {
+    const depB = singlestoreTable('department_b_courses', {
         studentId: int('student_id'),
         courseName: varchar('course_name', { length: 256 }).notNull(),
+    });
+    ```
+    </CodeTab>
+  </CodeTabs>
+  </Tab> 
+  <Tab>
+  <CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
+	<CodeTab>
+	```typescript copy
+    import { intersect } from 'drizzle-orm/mssql-core'
+    import { depA, depB } from './schema'
+
+    const departmentACourses = db.select({ courseName: depA.courseName }).from(depA);
+    const departmentBCourses = db.select({ courseName: depB.courseName }).from(depB);
+
+    const result = await intersect(departmentACourses, departmentBCourses);
+    ```
+    ```sql
+    (select `projects_name` from `department_a_projects`)
+    intersect
+    (select `projects_name` from `department_b_projects`)
+    ```
+	</CodeTab>
+    <CodeTab>
+    ```typescript copy
+    import { depA, depB } from './schema'
+
+    const result = await db
+      .select({ courseName: depA.courseName })
+      .from(depA)
+      .intersect(db.select({ courseName: depB.courseName }).from(depB));
+    ```
+    ```sql
+    (select `projects_name` from `department_a_projects`)
+    intersect
+    (select `projects_name` from `department_b_projects`)
+    ```
+    </CodeTab>
+    <CodeTab>
+	```typescript copy
+    import { int, mssqlTable, varchar } from "drizzle-orm/mssqlTable-core";
+
+    const depA = mssqlTable('department_a_courses', {
+        studentId: int('student_id'),
+        courseName: varchar('course_name', { length: 256 }).notNull(),
+    });
+    
+    const depB = mssqlTable('department_b_courses', {
+        studentId: int('student_id'),
+        courseName: varchar('course_name', { length: 256 }).notNull(),
+    });
+    ```
+    </CodeTab>
+  </CodeTabs>
+  </Tab>
+  <Tab>
+  <CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
+	<CodeTab>
+	```typescript copy
+    import { intersect } from 'drizzle-orm/cockroach-core'
+    import { depA, depB } from './schema'
+
+    const departmentACourses = db.select({ courseName: depA.courseName }).from(depA);
+    const departmentBCourses = db.select({ courseName: depB.courseName }).from(depB);
+
+    const result = await intersect(departmentACourses, departmentBCourses);
+    ```
+    ```sql
+    select "course_name" from "department_a_courses"
+    intersect
+    select "course_name" from "department_b_courses"
+    ```
+	</CodeTab>
+    <CodeTab>
+    ```typescript copy
+    import { depA, depB } from './schema'
+
+    const result = await db
+      .select({ courseName: depA.courseName })
+      .from(depA)
+      .intersect(db.select({ courseName: depB.courseName }).from(depB));
+    ```
+    ```sql
+    select "course_name" from "department_a_courses"
+    intersect
+    select "course_name" from "department_b_courses"
+    ```
+    </CodeTab>
+    <CodeTab>
+	```typescript copy
+    import { int4, cockroachTable, varchar } from "drizzle-orm/cockroach-core";
+
+    const depA = cockroachTable('department_a_courses', {
+        studentId: int4('student_id'),
+        courseName: varchar('course_name').notNull(),
+    });
+    
+    const depB = cockroachTable('department_b_courses', {
+        studentId: int4('student_id'),
+        courseName: varchar('course_name').notNull(),
     });
     ```
     </CodeTab>
@@ -710,7 +1038,7 @@ SQL 标准定义了以下三种集合操作：`UNION`、`INTERSECT`、`EXCEPT`�
 但你希望保留数量信息，
 即使同一产品被不同的客户多次下单。
 
-<Tabs items={["PostgreSQL", "MySQL", "SingleStore"]}>
+<Tabs items={["PostgreSQL", "MySQL", "SQLlite", "SingleStore", "MSSQL" ,"CockroachDB"]}>
   <Tab>
   <CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
 	<CodeTab>
@@ -848,7 +1176,80 @@ SQL 标准定义了以下三种集合操作：`UNION`、`INTERSECT`、`EXCEPT`�
   </CodeTabs>
   </Tab>
   <Tab>
+  Not supported by SQLite
+  </Tab> 
+  <Tab>
   Not supported by SingleStore
+  </Tab> 
+  <Tab>
+  Not supported by MSSQL
+  </Tab> 
+  <Tab>
+  <CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
+	<CodeTab>
+	```typescript copy
+    import { intersectAll } from 'drizzle-orm/cockroach-core'
+    import { regularCustomerOrders, vipCustomerOrders } from './schema'
+
+    const regularOrders = db.select({ 
+        productId: regularCustomerOrders.productId,
+        quantityOrdered: regularCustomerOrders.quantityOrdered }
+    ).from(regularCustomerOrders);
+
+    const vipOrders = db.select({ 
+        productId: vipCustomerOrders.productId,
+        quantityOrdered: vipCustomerOrders.quantityOrdered }
+    ).from(vipCustomerOrders);
+
+    const result = await intersectAll(regularOrders, vipOrders);
+    ```
+    ```sql
+    select "product_id", "quantity_ordered" from "regular_customer_orders"
+    intersect all
+    select "product_id", "quantity_ordered" from "vip_customer_orders"
+    ```
+	</CodeTab>
+    ```ts copy
+    import { regularCustomerOrders, vipCustomerOrders } from './schema'
+
+    const result = await db
+        .select({
+          productId: regularCustomerOrders.productId,
+          quantityOrdered: regularCustomerOrders.quantityOrdered,
+        })
+        .from(regularCustomerOrders)
+        .intersectAll(
+          db
+            .select({
+              productId: vipCustomerOrders.productId,
+              quantityOrdered: vipCustomerOrders.quantityOrdered,
+            })
+            .from(vipCustomerOrders)
+        );
+    ```
+    ```sql
+    select "product_id", "quantity_ordered" from "regular_customer_orders"
+    intersect all
+    select "product_id", "quantity_ordered" from "vip_customer_orders"
+    ```
+    <CodeTab>
+	```typescript copy
+    import { int4, cockroachTable } from "drizzle-orm/cockroach-core";
+
+    const regularCustomerOrders = cockroachTable('regular_customer_orders', {
+        customerId: int4('customer_id').primaryKey(),
+        productId: int4('product_id').notNull(),
+        quantityOrdered: int4('quantity_ordered').notNull(),
+    });
+    
+    const vipCustomerOrders = cockroachTable('vip_customer_orders', {
+        customerId: int4('customer_id').primaryKey(),
+        productId: int4('product_id').notNull(),
+        quantityOrdered: int4('quantity_ordered').notNull(),
+    });
+    ```
+    </CodeTab>
+  </CodeTabs>
   </Tab> 
 </Tabs>
 
@@ -863,7 +1264,7 @@ SQL 标准定义了以下三种集合操作：`UNION`、`INTERSECT`、`EXCEPT`�
 你不希望同一项目计数多次，
 即使同一部门的多个员工都被分配给该项目。
 
-<Tabs items={["PostgreSQL", "MySQL", "SQLite", "SingleStore"]}>
+<Tabs items={["PostgreSQL", "MySQL", "SQLite", "SingleStore", "MSSQL", "CockroachDB"]}>
   <Tab>
   <CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
 	<CodeTab>
@@ -1049,16 +1450,116 @@ SQL 标准定义了以下三种集合操作：`UNION`、`INTERSECT`、`EXCEPT`�
     </CodeTab>
     <CodeTab>
 	```typescript 
-    import { int, mysqlTable, varchar } from "drizzle-orm/singlestore-core";
+    import { int, singlestoreTable, varchar } from "drizzle-orm/singlestore-core";
 
-    const depA = mysqlTable('department_a_projects', {
+    const depA = singlestoreTable('department_a_projects', {
         employeeId: int('employee_id'),
         projectsName: varchar('projects_name', { length: 256 }).notNull(),
     });
     
-    const depB = mysqlTable('department_b_projects', {
+    const depB = singlestoreTable('department_b_projects', {
         employeeId: int('employee_id'),
         projectsName: varchar('projects_name', { length: 256 }).notNull(),
+    });
+    ```
+    </CodeTab>
+  </CodeTabs>
+  </Tab> 
+  <Tab>
+  <CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
+	<CodeTab>
+	```typescript copy
+    import { except } from 'drizzle-orm/mssql-core'
+    import { depA, depB } from './schema'
+
+    const departmentACourses = db.select({ courseName: depA.projectsName }).from(depA);
+    const departmentBCourses = db.select({ courseName: depB.projectsName }).from(depB);
+
+    const result = await except(departmentACourses, departmentBCourses);
+    ```
+    ```sql
+    (select `projects_name` from `department_a_projects`)
+    except
+    (select `projects_name` from `department_b_projects`)
+    ```
+	</CodeTab>
+    <CodeTab>
+    ```ts copy
+    import { depA, depB } from './schema'
+
+    const result = await db
+        .select({ courseName: depA.projectsName })
+        .from(depA)
+        .except(db.select({ courseName: depB.projectsName }).from(depB));
+    ```
+    ```sql
+    (select `projects_name` from `department_a_projects`)
+    except
+    (select `projects_name` from `department_b_projects`)
+    ```
+    </CodeTab>
+    <CodeTab>
+	```typescript 
+    import { int, mssqlTable, nvarchar } from "drizzle-orm/mssql-core";
+
+    const depA = mssqlTable('department_a_projects', {
+        employeeId: int('employee_id'),
+        projectsName: nvarchar('projects_name', { length: 256 }).notNull(),
+    });
+    
+    const depB = mssqlTable('department_b_projects', {
+        employeeId: int('employee_id'),
+        projectsName: nvarchar('projects_name', { length: 256 }).notNull(),
+    });
+    ```
+    </CodeTab>
+  </CodeTabs>
+  </Tab> 
+  <Tab>
+  <CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
+	<CodeTab>
+	```typescript copy
+    import { except } from 'drizzle-orm/cockroach-core'
+    import { depA, depB } from './schema'
+
+    const departmentACourses = db.select({ courseName: depA.projectsName }).from(depA);
+    const departmentBCourses = db.select({ courseName: depB.projectsName }).from(depB);
+
+    const result = await except(departmentACourses, departmentBCourses);
+    ```
+    ```sql
+    select "projects_name" from "department_a_projects"
+    except
+    select "projects_name" from "department_b_projects"
+    ```
+	</CodeTab>
+    <CodeTab>
+    ```ts copy
+    import { depA, depB } from './schema'
+
+    const result = await db
+        .select({ courseName: depA.projectsName })
+        .from(depA)
+        .except(db.select({ courseName: depB.projectsName }).from(depB));
+    ```
+    ```sql
+    select "projects_name" from "department_a_projects"
+    except
+    select "projects_name" from "department_b_projects"
+    ```
+    </CodeTab>
+    <CodeTab>
+	```typescript copy
+    import { int4, cockroachTable, varchar } from "drizzle-orm/cockroach-core";
+
+    const depA = cockroachTable('department_a_projects', {
+        employeeId: int4('employee_id'),
+        projectsName: varchar('projects_name').notNull(),
+    });
+    
+    const depB = cockroachTable('department_b_projects', {
+        employeeId: int4('employee_id'),
+        projectsName: varchar('projects_name').notNull(),
     });
     ```
     </CodeTab>
@@ -1076,7 +1577,7 @@ SQL 标准定义了以下三种集合操作：`UNION`、`INTERSECT`、`EXCEPT`�
 在此场景中，你希望找到仅由普通客户下单的产品，并且不由 VIP 客户下单。
 你希望保留数量信息，即使同一产品被不同的普通客户多次下单。
 
-<Tabs items={["PostgreSQL", "MySQL", "SingleStore"]}>
+<Tabs items={["PostgreSQL", "MySQL", "SQLite", "SingleStore", "MSSQL", "CockroachDB"]}>
   <Tab>
   <CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
 	<CodeTab>
@@ -1214,6 +1715,81 @@ SQL 标准定义了以下三种集合操作：`UNION`、`INTERSECT`、`EXCEPT`�
   </CodeTabs>
   </Tab> 
   <Tab>
+  Not supported by SQLite
+  </Tab>
+  <Tab>
   Not supported by SingleStore
   </Tab>
+  <Tab>
+  Not supported by MSSQL
+  </Tab>
+  <Tab>
+  <CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
+	<CodeTab>
+	```typescript copy
+    import { exceptAll } from 'drizzle-orm/cockroach-core'
+    import { regularCustomerOrders, vipCustomerOrders } from './schema'
+
+    const regularOrders = db.select({ 
+        productId: regularCustomerOrders.productId,
+        quantityOrdered: regularCustomerOrders.quantityOrdered }
+    ).from(regularCustomerOrders);
+
+    const vipOrders = db.select({ 
+        productId: vipCustomerOrders.productId,
+        quantityOrdered: vipCustomerOrders.quantityOrdered }
+    ).from(vipCustomerOrders);
+
+    const result = await exceptAll(regularOrders, vipOrders);
+    ```
+    ```sql
+    select "product_id", "quantity_ordered" from "regular_customer_orders"
+    except all
+    select "product_id", "quantity_ordered" from "vip_customer_orders"
+    ```
+	</CodeTab>
+    <CodeTab>
+    ```ts copy
+    import { regularCustomerOrders, vipCustomerOrders } from './schema'
+ 
+    const result = await db
+        .select({
+          productId: regularCustomerOrders.productId,
+          quantityOrdered: regularCustomerOrders.quantityOrdered,
+        })
+        .from(regularCustomerOrders)
+        .exceptAll(
+          db
+            .select({
+              productId: vipCustomerOrders.productId,
+              quantityOrdered: vipCustomerOrders.quantityOrdered,
+            })
+            .from(vipCustomerOrders)
+        );
+    ```
+    ```sql
+    select "product_id", "quantity_ordered" from "regular_customer_orders"
+    except all
+    select "product_id", "quantity_ordered" from "vip_customer_orders"
+    ```
+    </CodeTab>
+	<CodeTab>
+	```typescript copy
+    import { int4, cockroachTable } from "drizzle-orm/cockroach-core";
+
+    const regularCustomerOrders = cockroachTable('regular_customer_orders', {
+        customerId: int4('customer_id').primaryKey(),
+        productId: int4('product_id').notNull(),
+        quantityOrdered: int4('quantity_ordered').notNull(),
+    });
+    
+    const vipCustomerOrders = cockroachTable('vip_customer_orders', {
+        customerId: int4('customer_id').primaryKey(),
+        productId: int4('product_id').notNull(),
+        quantityOrdered: int4('quantity_ordered').notNull(),
+    });
+    ```
+    </CodeTab>
+  </CodeTabs>
+  </Tab> 
 </Tabs>

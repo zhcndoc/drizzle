@@ -1,37 +1,35 @@
-import Npm from '@mdx/Npm.astro';
-import Callout from '@mdx/Callout.astro';
-import Tabs from '@mdx/Tabs.astro';
-import Tab from '@mdx/Tab.astro';
-import AnchorCards from '@mdx/AnchorCards.astro';
+import Npm from "@mdx/Npm.astro";
+import Callout from "@mdx/Callout.astro";
+import Tabs from "@mdx/Tabs.astro";
+import Tab from "@mdx/Tab.astro";
+import AnchorCards from "@mdx/AnchorCards.astro";
 import WhatsNextPostgres from "@mdx/WhatsNextPostgres.astro";
 import Prerequisites from "@mdx/Prerequisites.astro";
 import CodeTabs from "@mdx/CodeTabs.astro";
 
-# Drizzle \<\> PlanetScale
+# Drizzle \<\> PlanetScale MySQL
 
 <Prerequisites>
-- 数据库 [连接基础]( /docs/connect-overview) 与 Drizzle
+- 数据库 [连接基础](/docs/connect-overview) 与 Drizzle
 - PlanetScale 数据库 - [官网](https://planetscale.com/docs)
 - PlanetScale HTTP 驱动 - [GitHub](https://github.com/planetscale/database-js)
-- Drizzle MySQL 驱动 - [文档]( /docs/get-started-mysql)
+- Drizzle MySQL 驱动 - [文档](/docs/get-started-mysql)
 </Prerequisites>
 
-根据 **[官方网站](https://planetscale.com)**， 
-PlanetScale 是世界上最先进的无服务器 MySQL 平台。
+PlanetScale 提供 MySQL（Vitess）和 PostgreSQL 数据库。本页介绍如何连接 PlanetScale MySQL。
 
-使用 Drizzle ORM，您可以通过官方的
-**[`database-js`](https://github.com/planetscale/database-js)**
-驱动程序，通过无服务器和有服务器环境访问 PlanetScale，使用我们的 `drizzle-orm/planetscale-serverless` 包。
+关于 PlanetScale Postgres，请参阅 [PlanetScale Postgres 连接指南](/docs/connect-planetscale-postgres)。
 
-您还可以通过 TCP 使用 `mysql2` 驱动访问 PlanetScale — **[请参见此处.](/docs/get-started-mysql)**
+使用 Drizzle ORM，您可以通过他们官方的 **[`database-js`](https://github.com/planetscale/database-js)** 驱动，从无服务器和有服务器环境访问 PlanetScale MySQL，使用我们的 `drizzle-orm/planetscale-serverless` 包。
+
+您也可以通过 TCP 使用 `mysql2` 驱动访问 PlanetScale MySQL — **[请见此处](/docs/get-started-mysql)**
 
 #### 步骤 1 - 安装软件包
-<Npm>
-drizzle-orm @planetscale/database
--D drizzle-kit
-</Npm>
+
+<Npm>drizzle-orm @planetscale/database -D drizzle-kit</Npm>
 
 #### 步骤 2 - 初始化驱动并进行查询
+
 ```typescript copy"
 import { drizzle } from "drizzle-orm/planetscale-serverless";
 
@@ -59,9 +57,9 @@ const client = new Client({
 const db = drizzle({ client });
 ```
 
-确保查看 PlanetScale 官方的 **[MySQL 课程](https://planetscale.com/courses/mysql-for-developers)**， 
-我们认为它们非常棒 🙌
+请务必查看 PlanetScale 官方的 **[MySQL 课程](https://planetscale.com/courses/mysql-for-developers)**，  
+我们认为它们非常精彩 🙌
 
 #### 接下来做什么？
 
-<WhatsNextPostgres/>
+<WhatsNextPostgres />

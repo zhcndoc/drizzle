@@ -1,0 +1,15 @@
+如果你想更新表的架构，可以在 `schema.ts` 文件中进行。例如，我们向 `users_table` 添加一个新的列 `phone`：
+
+```typescript copy filename="src/db/schema.ts" {9}
+import { cockroachTable, unique, int4, varchar } from "drizzle-orm/cockroach-core"
+
+export const users = cockroachTable("users", {
+	id: int4().primaryKey().generatedAlwaysAsIdentity({ name: "users_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 2147483647, cache: 1 }),
+	name: varchar({ length: 255 }).notNull(),
+	age: integer().notNull(),
+	email: varchar({ length: 255 }).notNull(),
+	phone: varchar(),
+}, (table) => [
+	unique("users_email_unique").on(table.email)
+]);
+```

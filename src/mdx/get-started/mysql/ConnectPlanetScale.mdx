@@ -1,4 +1,4 @@
-Create a `index.ts` file in the `src/db` directory and initialize the connection:
+在 `src/db` 目录下创建一个 `index.ts` 文件并初始化连接：
 
 ```typescript copy
 import { drizzle } from "drizzle-orm/planetscale-serverless";
@@ -10,7 +10,8 @@ const db = drizzle({ connection: {
 }});
 ```
 
-If you need to provide your existing driver
+如果你需要提供你现有的驱动：
+
 ```typescript copy"
 import { drizzle } from "drizzle-orm/planetscale-serverless";
 import { Client } from "@planetscale/database";

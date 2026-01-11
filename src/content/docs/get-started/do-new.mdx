@@ -31,10 +31,7 @@ import ConnectLibsql from '@mdx/get-started/sqlite/ConnectLibsql.mdx';
 <FileStructure />
 
 #### 第 1 步 - 安装必需的包
-<Npm>
-  drizzle-orm dotenv
-  -D drizzle-kit wrangler @cloudflare/workers-types
-</Npm>
+<InstallPackages lib='wrangler'/>
 
 #### 第 2 步 - 设置 wrangler.toml
 
@@ -69,7 +66,6 @@ fallthrough = true
 #### 第 3 步 - 连接 Drizzle ORM 到数据库
 
 ```ts
-/// <reference types="@cloudflare/workers-types" />
 import { drizzle, type DrizzleSqliteDODatabase } from 'drizzle-orm/durable-sqlite';
 import { DurableObject } from 'cloudflare:workers'
 
@@ -127,7 +123,6 @@ npx drizzle-kit generate
 迁移只能从 Cloudflare Workers 应用。
 为此，我们在 MyDurableObject 中定义迁移功能：
 ```ts copy {4-5,17-19}
-/// <reference types="@cloudflare/workers-types" />
 import { drizzle, type DrizzleSqliteDODatabase } from 'drizzle-orm/durable-sqlite';
 import { DurableObject } from 'cloudflare:workers'
 import { migrate } from 'drizzle-orm/durable-sqlite/migrator';
@@ -152,7 +147,6 @@ export class MyDurableObject extends DurableObject {
 #### 第 8 步 - 迁移并查询数据库
 
 ```typescript copy
-/// <reference types="@cloudflare/workers-types" />
 import { drizzle, DrizzleSqliteDODatabase } from 'drizzle-orm/durable-sqlite';
 import { DurableObject } from 'cloudflare:workers'
 import { migrate } from 'drizzle-orm/durable-sqlite/migrator';

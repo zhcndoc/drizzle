@@ -1,0 +1,39 @@
+Drizzle Kit 提供了一个 CLI 命令来检测你的数据库，并生成包含迁移的 schema 文件。该 schema 文件包含了关于数据库表、列、关系和索引的所有信息。
+
+例如，你的数据库中有如下表：
+
+```sql copy
+CREATE TABLE "users" (
+	"id" int4 PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "users_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"name" varchar(255) NOT NULL,
+	"age" integer NOT NULL,
+	"email" varchar(255) NOT NULL,
+	CONSTRAINT "users_email_unique" UNIQUE("email")
+);
+```
+
+拉取你的数据库 schema：
+
+```bash copy
+npx drizzle-kit pull --init
+```
+
+检测的结果将会生成一个 `schema.ts` 文件，一个包含数据库 schema 快照的 `meta` 文件夹，一个包含迁移的 sql 文件，以及一个用于[关系查询](/docs/rqb)的 `relations.ts` 文件。
+
+以下是生成的 `schema.ts` 文件示例：
+
+```typescript copy filename="src/db/schema.ts"
+// 通过检测生成的表 schema
+import { cockroachTable, unique, int4, varchar } from "drizzle-orm/cockroach-core"
+
+export const users = cockroachTable("users", {
+	id: int4().primaryKey().generatedAlwaysAsIdentity({ name: "users_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 2147483647, cache: 1 }),
+	name: varchar({ length: 255 }).notNull(),
+	age: integer().notNull(),
+	email: varchar({ length: 255 }).notNull(),
+}, (table) => [
+	unique("users_email_unique").on(table.email)
+]);
+```
+
+在[文档](/docs/drizzle-kit-pull)中了解更多关于检测的信息。

@@ -1,4 +1,4 @@
-Create a `index.ts` file in the `src` directory and initialize the connection:
+在 `src` 目录下创建一个 `index.ts` 文件并初始化连接：
 
 ```typescript copy
 import { drizzle } from 'drizzle-orm/vercel-postgres';
@@ -6,7 +6,7 @@ import { drizzle } from 'drizzle-orm/vercel-postgres';
 const db = drizzle();
 ```
 
-If you need to provide your existing driver:
+如果你需要提供你现有的驱动：
 
 ```typescript copy
 import { sql } from '@vercel/postgres';

@@ -10,6 +10,7 @@ Drizzle 支持 Postgres 策略和角色的原始表示，您可以以任何方�
 
 ## 启用 RLS
 
+<Callout type='warning' collapsed="How it works in 0.x versions">
 如果您只想在表上启用 RLS 而不添加策略，可以使用 `.enableRLS()`
 
 正如 PostgreSQL 文档中所提到的：
@@ -23,6 +24,23 @@ import { integer, pgTable } from 'drizzle-orm/pg-core';
 export const users = pgTable('users', {
 	id: integer(),
 }).enableRLS();
+```
+</Callout>
+
+从 `v1.0.0-beta.1` 开始，`.enableRLS()` 已被弃用，
+如果您只想在表上启用 RLS 而不添加策略，可以使用 `pgTable.withRLS(...)`
+
+正如 PostgreSQL 文档中提到的：
+
+> 如果表中不存在策略，则使用默认拒绝策略，这意味着没有行可以被查看或修改。
+适用于整个表的操作，如 TRUNCATE 和 REFERENCES，不受行安全性的限制。
+
+```ts
+import { integer, pgTable } from 'drizzle-orm/pg-core';
+
+export const users = pgTable.withRLS('users', {
+	id: integer(),
+});
 ```
 
 <Callout title='重要'>
@@ -200,7 +218,7 @@ export default defineConfig({
 
 <Callout title='重要'>
 您可能会遇到 Drizzle 与数据库提供者指定的新角色相比略显过时的情况。 
-在这种情况下，您可以使用 `provider` 选项和 `exclude` 除其他角色：
+在这种情况下，您可以使用 `provider` 选项和 `exclude` 排除其他角色：
 
 ```ts
 // drizzle.config.ts
@@ -222,6 +240,13 @@ export default defineConfig({
 
 使用 Drizzle，您还可以在视图上指定 RLS 策略。为此，您需要在视图的 WITH 选项中使用 `security_invoker`。这是一个小示例：
 
+<Callout type='warning'>
+`getColumns` 从 `drizzle-orm@1.0.0-beta.2` 开始可用（详细请参阅 [这里](/docs/upgrade-v1)）
+
+如果您使用的是 1.x 之前的版本（如 `0.45.1`），请使用 `getTableColumns`
+</Callout>
+
+
 ```ts {5}
 ...
 
@@ -232,7 +257,7 @@ export const roomsUsersProfiles = pgView("rooms_users_profiles")
   .as((qb) =>
     qb
       .select({
-        ...getTableColumns(roomsUsers),
+        ...getColumns(roomsUsers),
         email: profiles.email,
       })
       .from(roomsUsers)

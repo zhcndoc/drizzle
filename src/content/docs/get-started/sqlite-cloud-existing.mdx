@@ -1,0 +1,166 @@
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
+import Npm from "@mdx/Npm.astro";
+import Callout from '@mdx/Callout.astro';
+import Steps from '@mdx/Steps.astro';
+import AnchorCards from '@mdx/AnchorCards.astro';
+import Breadcrumbs from '@mdx/Breadcrumbs.astro';
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Prerequisites from "@mdx/Prerequisites.astro";
+import IntrospectSQLite from '@mdx/get-started/sqlite/IntrospectSqlite.mdx';
+import FileStructure from '@mdx/get-started/FileStructure.mdx';
+import InstallPackages from '@mdx/get-started/InstallPackages.mdx';
+import SetupConfig from '@mdx/get-started/SetupConfig.mdx';
+import SetupEnv from '@mdx/get-started/SetupEnv.mdx';
+import TransferCode from '@mdx/get-started/TransferCode.mdx';
+import ApplyChanges from '@mdx/get-started/ApplyChanges.mdx';
+import RunFile from '@mdx/get-started/RunFile.mdx';
+import ConnectSQLiteCloud from '@mdx/get-started/sqlite/ConnectSQLiteCloud.mdx';
+import QueryDatabase from '@mdx/get-started/QueryDatabase.mdx';
+import QueryDatabaseUpdated from '@mdx/get-started/QueryDatabaseUpdated.mdx';
+import UpdateSchema from '@mdx/get-started/sqlite/UpdateSchema.mdx';
+
+<Breadcrumbs/>
+
+# 在现有项目中使用 Drizzle 和 SQLite Cloud 入门
+
+<Prerequisites>
+  - **dotenv** - 管理环境变量的包 - [点击查看](https://www.npmjs.com/package/dotenv)
+  - **tsx** - 运行 TypeScript 文件的包 - [点击查看](https://tsx.is/)
+  - **SQLite Cloud 数据库** - [点击查看](https://docs.sqlitecloud.io/docs/overview)
+  - **SQLite Cloud 驱动** - [点击查看](https://docs.sqlitecloud.io/docs/sdk-js-introduction) & [GitHub](https://github.com/sqlitecloud/sqlitecloud-js)
+</Prerequisites>
+
+<FileStructure/>
+
+#### 第 1 步 - 安装所需包
+<Npm>
+  drizzle-orm@beta @sqlitecloud/drivers dotenv
+  -D drizzle-kit@beta tsx
+</Npm>
+
+#### 第 2 步 - 设置连接变量
+
+<SetupEnv env_variable='SQLITE_CLOUD_CONNECTION_STRING' />
+
+#### 第 3 步 - 设置 Drizzle 配置文件
+
+<SetupConfig dialect='sqlite' env_variable='SQLITE_CLOUD_CONNECTION_STRING'/>
+
+#### 第 4 步 - 反向分析数据库
+
+<IntrospectSQLite/>
+
+#### 第 5 步 - 将代码转移到实际的 schema 文件
+
+<TransferCode/>
+
+#### 第 6 步 - 连接 Drizzle ORM 到数据库
+
+<ConnectSQLiteCloud/>
+
+#### 第 7 步 - 查询数据库
+
+```typescript copy filename="src/index.ts"
+import 'dotenv/config';
+import { eq } from 'drizzle-orm';
+import { drizzle } from 'drizzle-orm/sqlite-cloud';
+import { usersTable } from './db/schema';
+
+async function main() {
+  const db = drizzle();
+
+  const user: typeof usersTable.$inferInsert = {
+    name: 'John',
+    age: 30,
+    email: 'john@example.com',
+  };
+
+  await db.insert(usersTable).values(user);
+  console.log('新用户已创建!')
+
+  const users = await db.select().from(usersTable);
+  console.log('从数据库获取所有用户: ', users)
+  /*
+  const users: {
+    id: number;
+    name: string;
+    age: number;
+    email: string;
+  }[]
+  */
+
+  await db
+    .update(usersTable)
+    .set({
+      age: 31,
+    })
+    .where(eq(usersTable.email, user.email));
+  console.log('用户信息已更新!')
+
+  await db.delete(usersTable).where(eq(usersTable.email, user.email));
+  console.log('用户已删除!')
+}
+
+main();
+```
+
+#### 第 8 步 - 运行 index.ts 文件
+
+<RunFile/>
+
+#### 第 9 步 - 更新表结构（可选）
+
+<UpdateSchema/>
+
+#### 第 10 步 - 应用数据库变更（可选）
+
+<ApplyChanges />
+
+#### 第 11 步 - 使用新字段查询数据库（可选）
+
+```typescript copy filename="src/index.ts"
+import 'dotenv/config';
+import { eq } from 'drizzle-orm';
+import { drizzle } from 'drizzle-orm/sqlite-cloud';
+import { usersTable } from './db/schema';
+
+async function main() {
+  const db = drizzle();
+
+  const user: typeof usersTable.$inferInsert = {
+    name: 'John',
+    age: 30,
+    email: 'john@example.com',
+    phone: '123-456-7890',
+  };
+
+  await db.insert(usersTable).values(user);
+  console.log('新用户已创建!')
+
+  const users = await db.select().from(usersTable);
+  console.log('从数据库获取所有用户: ', users)
+  /*
+  const users: {
+    id: number;
+    name: string;
+    age: number;
+    email: string;
+    phone: string | null;
+  }[]
+  */
+
+  await db
+    .update(usersTable)
+    .set({
+      age: 31,
+    })
+    .where(eq(usersTable.email, user.email));
+  console.log('用户信息已更新!')
+
+  await db.delete(usersTable).where(eq(usersTable.email, user.email));
+  console.log('用户已删除!')
+}
+
+main();
+```

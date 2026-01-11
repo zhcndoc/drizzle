@@ -1,0 +1,801 @@
+---
+title: MSSQL 列类型
+---
+
+import Section from '@mdx/Section.astro';
+import Callout from '@mdx/Callout.astro';
+import Npm from '@mdx/Npm.astro';
+
+<Callout type='error'>
+本页说明的是 drizzle 版本 `1.0.0-beta.2` 及更高版本支持的概念。
+</Callout>
+
+<Npm>
+drizzle-orm@beta
+drizzle-kit@beta -D
+</Npm>
+
+<br/>
+
+我们对所有这些类型都提供了原生支持，如果这些还不能满足你的需求，欢迎创建 **[自定义类型](/docs/custom-types)**。
+
+<Callout title='重要' type='warning'>
+本部分文档中的所有示例均未使用数据库列名别名，列名由 TypeScript 键自动生成。
+
+如果需要，可以在列名中使用数据库别名，也可以使用 `casing` 参数为 Drizzle 定义映射策略。
+
+你可以在此处了解更多相关内容 [here](/docs/sql-schema-declaration#shape-your-data-schema)
+</Callout>
+
+### int
+有符号 4 字节整数     
+
+<Section>
+```typescript
+import { int, mssqlTable } from "drizzle-orm/mssql-core";
+
+export const table = mssqlTable('table', {
+	int: int()
+});
+
+```
+
+```sql
+CREATE TABLE [table] (
+	[int] int
+);
+```
+</Section>
+
+<Section>
+```typescript
+import { sql } from "drizzle-orm";
+import { int, mssqlTable } from "drizzle-orm/mssql-core";
+
+export const table = pgTable('table', {
+	int1: int().default(10),
+});
+
+```
+
+```sql
+CREATE TABLE [table] (
+	[int1] int DEFAULT 10
+);
+```
+</Section>
+
+### smallint
+`smallint`
+
+小范围有符号 2 字节整数   
+
+<Section>
+```typescript
+import { smallint, mssqlTable } from "drizzle-orm/mssql-core";
+
+export const table = mssqlTable('table', {
+	smallint: smallint()
+});
+```
+
+```sql
+CREATE TABLE [table] (
+	[smallint] smallint
+);
+```
+</Section>
+
+<Section>
+```typescript
+import { sql } from "drizzle-orm";
+import { smallint, mssqlTable } from "drizzle-orm/mssql-core";
+
+export const table = mssqlTable('table', {
+	smallint1: smallint().default(10),
+});
+```
+
+```sql
+CREATE TABLE [table] (
+	[smallint1] smallint DEFAULT 10
+);
+```
+</Section>
+
+### tinyint
+`tinyint`
+
+小范围有符号 1 字节整数   
+
+<Section>
+```typescript
+import { tinyint, mssqlTable } from "drizzle-orm/mssql-core";
+
+export const table = mssqlTable('table', {
+	tinyint: tinyint()
+});
+```
+
+```sql
+CREATE TABLE [table] (
+	[tinyint] tinyint
+);
+```
+</Section>
+
+<Section>
+```typescript
+import { sql } from "drizzle-orm";
+import { tinyint, mssqlTable } from "drizzle-orm/mssql-core";
+
+export const table = mssqlTable('table', {
+	tinyint1: tinyint().default(10),
+});
+```
+
+```sql
+CREATE TABLE [table] (
+	[tinyint1] tinyint DEFAULT 10
+);
+```
+</Section>
+
+### bigint
+`bigint`
+
+有符号 8 字节整数  
+
+如果预期值大于 2^31 但小于 2^53，可以使用 `mode: 'number'`，这样对接的是 JavaScript `number` 类型而非 bigint。
+<Section>
+```typescript
+import { bigint, mssqlTable } from "drizzle-orm/mssql-core";
+
+export const table = mssqlTable('table', {
+	bigint: bigint({ mode: 'number' })
+});
+
+// 类型推断为 `number`
+bigint: bigint({ mode: 'number' })
+
+// 类型推断为 `bigint`
+bigint: bigint({ mode: 'bigint' })
+
+// 类型推断为 `string`
+bigint: bigint({ mode: 'string' })
+```
+
+```sql
+CREATE TABLE [table] (
+	[bigint] bigint
+);
+```
+</Section>
+
+<Section>
+```typescript
+import { sql } from "drizzle-orm";
+import { bigint, mssqlTable } from "drizzle-orm/mssql-core";
+
+export const table = mssqlTable('table', {
+	bigint1: bigint({ mode: 'number' }).default(10)
+});
+```
+
+```sql
+CREATE TABLE [table] (
+	[bigint1] bigint DEFAULT 10
+);
+```
+</Section>
+
+## ---
+
+### bit
+
+一种整数数据类型，值可以为 `1`、`0` 或 `NULL`
+
+Drizzle 允许使用 `true` 或 `false` 代替 `1` 和 `0`
+
+<Section>
+```typescript
+import { bit, mssqlTable } from "drizzle-orm/mssql-core";
+
+export const table = mssqlTable('table', {
+	bit: bit()
+});
+
+```
+
+```sql
+CREATE TABLE [table] (
+	[bit] bit
+);
+```
+</Section>
+
+## ---
+
+### text
+`text`  
+服务器代码页中的变长非 Unicode 数据，最大字符串长度为 2^31 - 1（2,147,483,647）
+
+更多信息请参考 MSSQL 官方 **[文档](https://learn.microsoft.com/en-us/sql/t-sql/data-types/ntext-text-and-image-transact-sql?view=sql-server-ver17#text)**
+  
+可以定义 `{ enum: ["value1", "value2"] }` 配置来推断 `insert` 和 `select` 类型，**不会**在运行时校验值。
+<Section>
+```typescript
+import { text, mssqlTable } from "drizzle-orm/mssql-core";
+
+export const table = mssqlTable('table', {
+  text: text()
+});
+
+// 类型推断为 text: "value1" | "value2" | null
+text: text({ enum: ["value1", "value2"] })
+```
+
+```sql
+CREATE TABLE [table] (
+	[text] text
+);
+```
+</Section>
+
+### ntext
+`ntext`  
+变长 Unicode 数据，最大字符串长度为 2^30 - 1（1,073,741,823）。
+
+更多信息请参考 MSSQL 官方 **[文档](https://learn.microsoft.com/en-us/sql/t-sql/data-types/ntext-text-and-image-transact-sql?view=sql-server-ver17#text)**
+  
+可以定义 `{ enum: ["value1", "value2"] }` 配置来推断 `insert` 和 `select` 类型，**不会**在运行时校验值。
+<Section>
+```typescript
+import { ntext, mssqlTable } from "drizzle-orm/mssql-core";
+
+export const table = mssqlTable('table', {
+  ntext: ntext()
+});
+
+// 类型推断为 text: "value1" | "value2" | null
+ntext: ntext({ enum: ["value1", "value2"] })
+```
+
+```sql
+CREATE TABLE [table] (
+	[ntext] ntext
+);
+```
+</Section>
+
+### varchar
+`varchar(n|max)`  
+变长字符串数据。n 指定字符串大小（单位字节），可从 1 到 8,000 之间。
+
+更多信息请参考 MSSQL 官方 **[文档](https://learn.microsoft.com/en-us/sql/t-sql/data-types/char-and-varchar-transact-sql?view=sql-server-ver17#varchar---n--max--)**
+
+可以定义 `{ enum: ["value1", "value2"] }` 配置来推断 `insert` 和 `select` 类型，**不会**在运行时校验值。
+
+根据 MSSQL 文档，`length` 参数为可选。
+<Section>
+```typescript
+import { varchar, mssqlTable } from "drizzle-orm/mssql-core";
+
+export const table = mssqlTable('table', {
+  varchar1: varchar(),
+  varchar2: varchar({ length: 256 }),
+  varchar3: varchar({ length: 'max' })
+});
+
+// 类型推断为 text: "value1" | "value2" | null
+varchar: varchar({ enum: ["value1", "value2"] }),
+```
+
+```sql
+CREATE TABLE [table] (
+	[varchar1] varchar,
+	[varchar2] varchar(256),
+	[varchar3] varchar(max)
+);
+```
+</Section>
+
+### nvarchar
+`nvarchar(n|max)`  
+变长字符串数据。n 指定字符串大小（单位字节对）
+
+更多信息请参考 MSSQL 官方 **[文档](https://learn.microsoft.com/en-us/sql/t-sql/data-types/nchar-and-nvarchar-transact-sql?view=sql-server-ver17#nvarchar---n--max--)**
+
+可以定义 `{ enum: ["value1", "value2"] }` 配置来推断 `insert` 和 `select` 类型，**不会**在运行时校验值。
+
+根据 MSSQL 文档，`length` 参数为可选。
+<Section>
+```typescript
+import { nvarchar, mssqlTable } from "drizzle-orm/mssql-core";
+
+export const table = mssqlTable('table', {
+  nvarchar1: nvarchar(),
+  nvarchar2: nvarchar({ length: 256 }),
+});
+
+// 类型推断为 text: "value1" | "value2" | null
+nvarchar: nvarchar({ enum: ["value1", "value2"] }),
+
+// 类型推断为 `json`
+nvarchar: nvarchar({ mode: 'json' })
+```
+
+```sql
+CREATE TABLE [table] (
+	[nvarchar1] nvarchar,
+	[nvarchar2] nvarchar(256)
+);
+```
+</Section>
+
+### char
+`char(n)`  
+
+定长字符串数据。n 指定字符串大小（单位字节），必须是 1 到 8,000 之间的值。
+
+更多信息请参考 MSSQL 官方 **[文档](https://learn.microsoft.com/en-us/sql/t-sql/data-types/char-and-varchar-transact-sql?view=sql-server-ver17#char---n--)**
+
+可以定义 `{ enum: ["value1", "value2"] }` 配置来推断 `insert` 和 `select` 类型，**不会**在运行时校验值。
+
+根据 MSSQL 文档，`length` 参数为可选。
+<Section>
+```typescript
+import { char, mssqlTable } from "drizzle-orm/mssql-core";
+
+export const table = mssqlTable('table', {
+  char1: char(),
+  char2: char({ length: 256 }),
+});
+
+// 类型推断为 text: "value1" | "value2" | null
+char: char({ enum: ["value1", "value2"] }),
+```
+
+```sql
+CREATE TABLE [table] (
+	[char1] char,
+	[char2] char(256)
+);
+```
+</Section>
+
+### nchar
+`nchar(n)`  
+
+定长字符串数据。n 指定字符串大小（单位字节对），必须是 1 到 4,000 之间的值。
+
+更多信息请参考 MSSQL 官方 **[文档](https://learn.microsoft.com/en-us/sql/t-sql/data-types/nchar-and-nvarchar-transact-sql?view=sql-server-ver17#nchar---n--)**
+
+可以定义 `{ enum: ["value1", "value2"] }` 配置来推断 `insert` 和 `select` 类型，**不会**在运行时校验值。
+
+根据 MSSQL 文档，`length` 参数为可选。
+<Section>
+```typescript
+import { nchar, mssqlTable } from "drizzle-orm/mssql-core";
+
+export const table = mssqlTable('table', {
+  nchar1: nchar(),
+  nchar2: nchar({ length: 256 }),
+});
+
+// 类型推断为 text: "value1" | "value2" | null
+nchar: nchar({ enum: ["value1", "value2"] }),
+```
+
+```sql
+CREATE TABLE [table] (
+	[nchar1] nchar,
+	[nchar2] nchar(256)
+);
+```
+</Section>
+
+## ---
+
+### binary
+
+定长二进制数据，长度为 n 字节，n 的取值范围为 1 到 8,000。存储大小为 n 字节。
+
+<Section>
+```typescript
+import { binary, mssqlTable } from "drizzle-orm/mssql-core";
+
+const table = mssqlTable('table', {
+	binary: binary(),
+	binary1: binary({ length: 256 })
+});
+```
+
+```sql
+CREATE TABLE [table] (
+	[binary] binary,
+	[binary1] binary(256)
+);
+```
+</Section>
+
+### varbinary
+
+变长二进制数据。n 可以是 1 到 8,000 之间的值。max 表示最大存储大小为 2^31-1 字节。
+
+<Section>
+```typescript
+import { varbinary, mssqlTable } from "drizzle-orm/mssql-core";
+
+const table = mssqlTable('table', {
+	varbinary: varbinary(),
+	varbinary1: varbinary({ length: 256 }),
+	varbinary2: varbinary({ length: 'max' })
+});
+```
+
+```sql
+CREATE TABLE [table] (
+	[varbinary] varbinary,
+	[varbinary1] varbinary(256),
+	[varbinary2] varbinary(max)
+);
+```
+</Section>
+
+## ---
+
+### numeric
+`numeric`
+
+固定精度和小数位数字。当使用最大精度时，合法值范围为 -10^38 + 1 至 10^38 - 1。
+
+更多信息请参考 MSSQL 官方 **[文档](https://learn.microsoft.com/en-us/sql/t-sql/data-types/decimal-and-numeric-transact-sql?view=sql-server-ver17#decimal---p---s----and-numeric---p---s---)**
+
+<Section>
+```typescript
+import { numeric, mssqlTable } from "drizzle-orm/mssql-core";
+
+export const table = mssqlTable('table', {
+  numeric1: numeric(),
+  numeric2: numeric({ precision: 100 }),
+  numeric3: numeric({ precision: 100, scale: 20 })
+//   numericNum: numeric({ mode: 'number' }),
+//   numericBig: numeric({ mode: 'bigint' }),
+});
+```
+
+```sql
+CREATE TABLE [table] (
+	[numeric1] numeric,
+	[numeric2] numeric(100),
+	[numeric3] numeric(100, 20)
+);
+```
+</Section>
+
+### decimal
+**[numeric](#numeric)** 类型别名
+
+### real
+
+real 的 ISO 同义词是 float(24)。
+
+更多信息请参考 MSSQL 官方 **[文档](https://learn.microsoft.com/en-us/sql/t-sql/data-types/float-and-real-transact-sql?view=sql-server-ver17)**  
+
+<Section>
+```typescript
+import { sql } from "drizzle-orm";
+import { real, mssqlTable } from "drizzle-orm/mssql-core";  
+
+const table = mssqlTable('table', {
+	real1: real(),
+	real2: real().default(10.10)
+});
+```
+
+```sql
+CREATE TABLE [table] (
+	[real1] real,
+	[real2] real default 10.10
+);
+```
+</Section>
+
+### float
+
+float [ (n) ]，其中 n 表示用于存储以科学计数法表示的浮点数尾数的位数，决定了精度和存储大小。若指定 n，其值必须在 1 到 53 之间。默认值为 53。
+
+更多信息请参考 MSSQL 官方 **[文档](https://learn.microsoft.com/en-us/sql/t-sql/data-types/float-and-real-transact-sql?view=sql-server-ver17#syntax)**  
+
+<Section>
+```typescript
+import { sql } from "drizzle-orm";
+import { float, mssqlTable } from "drizzle-orm/mssql-core";
+
+const table = mssqlTable('table', {
+	float1: float(),
+	float1: float({ precision: 16 })
+});
+```
+
+```sql
+CREATE TABLE [table] (
+	[float1] float,
+	[float2] float(16)
+);
+```
+</Section>
+
+## ---
+
+### time
+`time`
+
+定义一天中的时间。此时间无时区信息，是基于 24 小时制的。
+
+更多信息请参考 MSSQL 官方 **[文档](https://learn.microsoft.com/en-us/sql/t-sql/data-types/time-transact-sql?view=sql-server-ver17#time-description)**
+
+<Section>
+```typescript
+import { time, mssqlTable } from "drizzle-orm/mssql-core";
+
+const table = mssqlTable('table', {
+  time1: time(),
+  time2: time({ mode: 'string' }),
+  time3: time({ precision: 6 }),
+  time4: time({ precision: 6, mode: 'date' })
+});
+```
+
+```sql
+CREATE TABLE [table] (
+	[time1] time,
+	[time2] time,
+	[time3] time(6),
+	[time4] time(6)
+);
+```
+</Section>
+
+### date
+`date`  
+
+日历日期（年、月、日）
+
+更多信息请参考 MSSQL 官方 **[文档](https://learn.microsoft.com/en-us/sql/t-sql/data-types/date-transact-sql?view=sql-server-ver17#date-description)**
+<Section>
+```typescript
+import { date, mssqlTable } from "drizzle-orm/mssql-core";
+
+const table = mssqlTable('table', {
+	date: date(),
+});
+```
+
+```sql
+CREATE TABLE [table] (
+	[date] date
+);
+```
+</Section>
+可以指定推断模式为 `date` 或 `string`：
+```typescript
+// 推断为 date 类型
+date: date({ mode: "date" }),
+
+// 推断为 string 类型
+date: date({ mode: "string" }),
+```
+
+### datetime
+`datetime`  
+
+定义了日期和一天中的时间（可包含秒的小数部分），基于 24 小时制。
+
+<Callout title='MSSQL 文档'>
+避免为新工程使用 datetime。请使用 time、date、datetime2 和 datetimeoffset 数据类型。这些类型符合 SQL 标准且更具可移植性。time、datetime2 和 datetimeoffset 提供更高的秒级精度。datetimeoffset 支持时区，适合全球部署应用。
+</Callout>
+
+更多信息请参考 MSSQL 官方 **[文档](https://learn.microsoft.com/en-us/sql/t-sql/data-types/datetime-transact-sql?view=sql-server-ver17#description)**
+<Section>
+```typescript
+import { datetime, mssqlTable } from "drizzle-orm/mssql-core";
+
+const table = mssqlTable('table', {
+	datetime: datetime(),
+});
+```
+
+```sql
+CREATE TABLE [table] (
+	[datetime] datetime
+);
+```
+</Section>
+可以指定推断模式为 `date` 或 `string`：
+```typescript
+// 推断为 date 类型
+datetime: datetime({ mode: "date" }),
+
+// 推断为 string 类型
+datetime: datetime({ mode: "string" }),
+```
+
+### datetime2
+`datetime2`  
+
+定义了日期和一天中的时间，基于 24 小时制。datetime2 是现有 datetime 类型的扩展，具有更大的日期范围、更高的默认秒分数精度，且支持用户指定精度。
+
+更多信息请参考 MSSQL 官方 **[文档](https://learn.microsoft.com/en-us/sql/t-sql/data-types/datetime2-transact-sql?view=sql-server-ver17#datetime2-description)**
+<Section>
+```typescript
+import { datetime2, mssqlTable } from "drizzle-orm/mssql-core";
+
+const table = mssqlTable('table', {
+	datetime2: datetime2(),
+});
+```
+
+```sql
+CREATE TABLE [table] (
+	[datetime2] datetime2
+);
+```
+</Section>
+可以指定推断模式为 `date` 或 `string`：
+```typescript
+// 推断为 date 类型
+datetime2: datetime2({ mode: "date" }),
+
+// 推断为 string 类型
+datetime2: datetime2({ mode: "string" }),
+```
+
+### datetimeoffset
+`datetimeoffset`  
+
+定义了日期和一天中的时间，基于 24 小时制，类似 datetime2，但增加了基于协调世界时 (UTC) 的时区信息。
+
+更多信息请参考 MSSQL 官方 **[文档](https://learn.microsoft.com/en-us/sql/t-sql/data-types/datetimeoffset-transact-sql?view=sql-server-ver17#datetimeoffset-description)**
+<Section>
+```typescript
+import { datetimeoffset, mssqlTable } from "drizzle-orm/mssql-core";
+
+const table = mssqlTable('table', {
+	datetimeoffset: datetimeoffset(),
+});
+```
+
+```sql
+CREATE TABLE [table] (
+	[datetimeoffset] datetimeoffset
+);
+```
+</Section>
+可以指定推断模式为 `date` 或 `string`：
+```typescript
+// 推断为 date 类型
+datetimeoffset: datetimeoffset({ mode: "date" }),
+
+// 推断为 string 类型
+datetimeoffset: datetimeoffset({ mode: "string" }),
+```
+
+## ---
+
+### 自定义数据类型
+每个列构造器都有一个 `.$type()` 方法，可以用它自定义列的数据类型。
+
+例如，对未知类型或品牌类型非常有用：
+```ts
+type UserId = number & { __brand: 'user_id' };
+type Data = {
+	foo: string;
+	bar: number;
+};
+
+const users = mssqlTable('users', {
+  id: int().$type<UserId>().primaryKey(),
+  jsonField: json().$type<Data>(),
+});
+```
+
+### 默认值
+`DEFAULT` 子句指定当用户执行 `INSERT` 时未显式提供该列值时所使用的默认值。
+如果列定义中没有显式的 `DEFAULT` 子句，则该列的默认值为 `NULL`。
+
+显式的 `DEFAULT` 子句可以指定默认值为 `NULL`、字符串常量、二进制常量、有符号数字，或用括号包裹的任意常量表达式。
+
+<Section>
+```typescript
+import { sql } from "drizzle-orm";
+import { int, mssqlTable, text } from "drizzle-orm/mssql-core";
+
+const table = mssqlTable('table', {
+	integer: integer().default(42),
+	text: text().default('text'),
+});
+```
+
+```sql
+CREATE TABLE [table] (
+	[integer1] integer DEFAULT 42,
+	[text] text DEFAULT 'text',
+);
+```
+</Section>
+
+使用 `$default()` 或 `$defaultFn()`（两者是同一个函数的不同别名），你可以在运行时生成默认值，并在所有插入（insert）查询中使用它们。
+
+<Callout type="info" emoji="ℹ️">
+	注意：该值不会影响 `drizzle-kit` 的行为，仅在运行时 `drizzle-orm` 中生效。
+</Callout>
+
+```ts
+import { text, mssqlTable } from "drizzle-orm/mssql-core";
+import { createId } from '@paralleldrive/cuid2';
+
+const table = mssqlTable('table', {
+	id: text().$defaultFn(() => createId()),
+});
+```
+
+使用 `$onUpdate()` 或 `$onUpdateFn()`（两者是同一个函数的不同别名），你可以在运行时生成默认的更新值，并在所有更新（update）查询中使用它们。
+
+该函数会在行更新时调用，如果未提供列值，则函数返回值将用作该列值。
+如果未提供默认值（或 $defaultFn），该函数在行插入时也会调用，并返回该列的值。
+
+<Callout type="info" emoji="ℹ️">
+	注意：该值不会影响 `drizzle-kit` 的行为，仅在运行时 `drizzle-orm` 中生效。
+</Callout>
+
+```ts
+import { int, timestamp, text, mssqlTable } from "drizzle-orm/mssql-core";
+
+const table = mssqlTable('table', {
+	updateCounter: int().default(sql`1`).$onUpdateFn((): SQL => sql`${table.update_counter} + 1`),
+	updatedAt: timestamp({ mode: 'date', precision: 3 }).$onUpdate(() => new Date()),
+    alwaysNull: text().$type<string | null>().$onUpdate(() => null),
+});
+```
+
+
+### 非空
+`NOT NULL` 约束规定关联列不得包含 `NULL` 值。
+
+<Section>
+```typescript
+import { int, mssqlTable } from "drizzle-orm/mssql-core";
+
+const table = mssqlTable('table', {
+	int: int().notNull(),
+});
+```
+
+```sql
+CREATE TABLE [table] (
+	[int] int NOT NULL
+);
+```
+</Section>
+
+
+### 主键
+主键约束表明一列或一组列可以作为表中行的唯一标识符。
+这要求值必须唯一且非空。
+<Section>
+```typescript
+import { int, mssqlTable } from "drizzle-orm/mssql-core";
+
+const table = pgTable('table', {
+	id: int().primaryKey(),
+});
+```
+
+```sql
+CREATE TABLE [table] (
+	[id] int PRIMARY KEY
+);
+```
+</Section>

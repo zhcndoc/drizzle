@@ -7,6 +7,7 @@ import Section from "@mdx/Section.astro";
 import Prerequisites from "@mdx/Prerequisites.astro";
 import CodeTabs from '@mdx/CodeTabs.astro';
 import CodeTab from '@mdx/CodeTab.astro';
+import Callout from '@mdx/Callout.astro';
 
 <Prerequisites>
 - 开始使用 [PostgreSQL](/docs/get-started-postgresql)
@@ -347,9 +348,15 @@ await db.select().from(posts)
 
 要对搜索结果进行排名，您可以使用 `ts_rank` 或 `ts_rank_cd` 函数和 `orderBy` 方法：
 
+<Callout type='warning'>
+`getColumns` available starting from `drizzle-orm@1.0.0-beta.2`(read more [here](/docs/upgrade-v1))
+
+If you are on pre-1 version(like `0.45.1`) then use `getTableColumns`
+</Callout>
+
 <Section>
 ```ts copy {6,7,12,13,18-20}
-import { desc, getTableColumns, sql } from 'drizzle-orm';
+import { desc, getColumns, sql } from 'drizzle-orm';
 
 const search = 'culture | Europe | Italy | adventure';
 
@@ -359,7 +366,7 @@ const matchQuery = sql`(
 
 await db
   .select({
-    ...getTableColumns(posts),
+    ...getColumns(posts),
     rank: sql`ts_rank(${matchQuery})`,
     rankCd: sql`ts_rank_cd(${matchQuery})`,
   })

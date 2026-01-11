@@ -1,0 +1,50 @@
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
+import Npm from "@mdx/Npm.astro";
+import Callout from '@mdx/Callout.astro';
+import Steps from '@mdx/Steps.astro';
+import AnchorCards from '@mdx/AnchorCards.astro';
+import Prerequisites from "@mdx/Prerequisites.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Section from "@mdx/Section.astro";
+import WhatsNextPostgres from "@mdx/WhatsNextPostgres.astro";
+
+# Drizzle \<\> SQLite 云端
+<Prerequisites>
+- 使用 Drizzle 进行数据库[连接基础](/docs/connect-overview)
+- **SQLite 云数据库** - [文档](https://docs.sqlitecloud.io/docs/overview)
+- **SQLite 云驱动** - [文档](https://docs.sqlitecloud.io/docs/sdk-js-introduction) & [GitHub](https://github.com/sqlitecloud/sqlitecloud-js)
+</Prerequisites>
+
+根据 **[官方网站](https://docs.sqlitecloud.io/docs/overview)**，SQLite Clouds 是一个托管的、分布式的关系数据库系统，构建于 SQLite 数据库引擎之上。
+
+#### 第一步 - 安装包
+<Npm>
+drizzle-orm@beta @sqlitecloud/drivers
+-D drizzle-kit@beta
+</Npm>
+
+#### 第二步 - 初始化驱动并执行查询
+```typescript
+import { drizzle } from 'drizzle-orm/sqlite-cloud';
+
+const db = drizzle(process.env.SQLITE_CLOUD_CONNECTION_STRING);
+
+const result = await db.execute('select 1');
+```
+
+如果需要提供你现有的驱动：
+
+```typescript
+import { Database } from '@sqlitecloud/drivers';
+import { drizzle } from 'drizzle-orm/sqlite-cloud';
+
+const client = new Database(process.env.SQLITE_CLOUD_CONNECTION_STRING!);
+const db = drizzle({ client });
+
+const result = await db.execute('select 1');
+```
+
+#### 接下来做什么？
+
+<WhatsNextPostgres/>

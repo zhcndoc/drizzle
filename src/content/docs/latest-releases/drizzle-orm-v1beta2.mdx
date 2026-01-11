@@ -1,0 +1,522 @@
+---
+title: Drizzle ORM 和 Drizzle Kit v1.0.0-beta.2 发布
+pubDate: 2025-02-12
+description: v1 预发布版本
+---
+
+> 我们在此版本引入了大量更改，某些功能肯定会出现兼容性问题。如果遇到任何问题，您可以降级到版本 `1.0.0-beta.1` 或 `0.44.7`，并请在 GitHub 或我们的 Discord 上反馈问题！
+
+> 别忘了查看 `1.0.0-beta.1` 版本的更新说明：https://github.com/drizzle-team/drizzle-orm/blob/beta/changelogs/drizzle-orm/1.0.0-beta.1.md
+
+> 查看 RQBv1 到 RQBv2 迁移步骤的迁移指南：https://orm.drizzle.team/docs/relations-v1-v2
+
+> 查看新的 RQBv2 架构文档：https://orm.drizzle.team/docs/relations-v2 
+
+> 查看新的 RQBv2 查询文档：https://orm.drizzle.team/docs/rqb-v2
+
+# 新功能
+
+## MSSQL 方言
+
+Drizzle 当前支持 MSSQL 语法，涵盖了 `drizzle-orm`、`drizzle-kit` 和 `drizzle-seed` 包。支持大部分列类型、查询构造器功能、迁移策略等。
+
+唯一还不支持的功能是 `RQBv2`
+
+```ts
+// 确保安装了 'mssql' 包 
+import { drizzle } from 'drizzle-orm/node-mssql';
+
+const db = drizzle(process.env.DATABASE_URL);
+ 
+const result = await db.execute('select 1');
+```
+```ts
+// 确保安装了 'pg' 包 
+import { drizzle } from 'drizzle-orm/node-mssql';
+
+// 你可以指定 mssql 连接选项里的任意属性
+const db = drizzle({ 
+  connection: { 
+    connectionString: process.env.DATABASE_URL,
+    ssl: true
+  }
+});
+ 
+const result = await db.execute('select 1');
+```
+
+## CockroachDB 方言
+
+Drizzle 当前支持 CockroachDB，涵盖了 `drizzle-orm`、`drizzle-kit` 和 `drizzle-seed` 包。支持大部分列类型、查询构造器功能、迁移策略等。
+
+唯一还不支持的功能是 `RQBv2`
+
+```ts
+// 确保安装了 'pg' 包 
+import { drizzle } from 'drizzle-orm/cockroach';
+
+const db = drizzle(process.env.DATABASE_URL);
+ 
+const result = await db.execute('select 1');
+```
+```ts
+// 确保安装了 'pg' 包 
+import { drizzle } from 'drizzle-orm/cockroach';
+
+// 你可以指定 node-postgres 连接选项里的任意属性
+const db = drizzle({ 
+  connection: { 
+    connectionString: process.env.DATABASE_URL,
+    ssl: true
+  }
+});
+ 
+const result = await db.execute('select 1');
+```
+
+## 关系查询部分 (Relational Query Parts)
+
+如果你需要将关系配置拆分成多个部分，可以使用 `defineRelationsPart` 辅助函数
+
+```ts
+import { defineRelations, defineRelationsPart } from 'drizzle-orm';
+import * as schema from "./schema";
+export const relations = defineRelations(schema, (r) => ({
+  users: {
+    invitee: r.one.users({
+      from: r.users.invitedBy,
+      to: r.users.id,
+    }),
+    posts: r.many.posts(),
+  }
+}));
+export const part = defineRelationsPart(schema, (r) => ({
+  posts: {
+    author: r.one.users({
+      from: r.posts.authorId,
+      to: r.users.id,
+    }),
+  }
+}));
+```
+
+然后可以将它们传递给数据库实例
+
+```ts
+const db = drizzle(process.env.DB_URL, { relations: { ...relations, ...part } })
+```
+
+## Folders v3 迁移
+
+> 相关讨论：https://github.com/drizzle-team/drizzle-orm/discussions/2832
+
+我们更新了迁移文件夹结构，主要有：
+- 删除了 journal.json 文件
+- 将 SQL 文件和快照分组到单独的迁移文件夹里
+- 移除了 `drizzle-kit drop` 命令
+
+这些改动避免了 journal 文件产生潜在的 Git 冲突，并简化了删除或修复冲突迁移的流程。
+
+在后续的 beta 版本中，我们将加入交换律检查，帮助指导团队处理迁移冲突，检测可能的冲突点，并给出解决建议。  
+> 交换律讨论：https://github.com/drizzle-team/drizzle-orm/discussions/5005
+
+将之前的文件夹迁移到新格式，您可以执行以下命令：
+```
+drizzle-kit up
+```
+
+## 全新重写的 `drizzle-kit`
+
+架构重写，旨在解决主要的 kit 和迁移问题。我们完成了一系列有价值且必要的更新，帮助加速迭代、提升测试覆盖率并增强整体稳定性。
+
+主要工作总结：
+- 从数据库快照迁移为数据库 DDL 快照
+- 重构了用于检测和应用差异的整个架构
+- 对默认值、表达式和类型检测进行了显著改进
+- 通过减少数据库调用和简化查询，将模式反射时间从 10 秒降低到不足 1 秒
+- 增加了查询提示和 push 的 explain 支持
+- 扩展了测试覆盖范围——每个测试案例现支持多达 6 种不同场景（例如 push+push、pull+generate 等）
+
+## 新增 `drizzle-kit pull --init`
+
+该命令会在数据库中创建 drizzle 迁移表，并将首次拉取的迁移标记为已应用，从而让你可以基于此继续迭代。
+
+## `schemaFilter` 行为更新
+
+`drizzle-kit` 开始管理代码中定义的所有 schema。如果你想过滤它们，可以使用 `schemaFilter`。  
+之前，默认只管理 public schema，除非显式添加更多 schema 到 `schemaFilter`。
+
+现在它还支持通配符模式，允许你按任意方式过滤 schema。
+
+## `.enableRLS()` 弃用
+
+之前在 PostgreSQL 表上启用行级安全 (RLS)，需要这样写：
+
+```ts
+// 旧语法
+pgTable('name', {}).enableRLS()
+``` 
+
+这一选项现已迁移到新位置
+
+```ts
+pgTable.withRLS('users', {});
+```
+
+## 列上直接设定别名
+
+你现在可以简单地为列添加 `as` 别名：
+
+```
+const query = db
+	.select({ age: users.age.as('ageOfUser'), id: users.id.as('userId') })
+	.from(users)
+	.orderBy(asc(users.id.as('userId')));
+```
+
+## MySQL 新增列类型
+
+新增了以下几种 MySQL 列类型：
+
+- blob: https://orm.drizzle.team/docs/column-types/mysql#blob
+- tinyblob: https://orm.drizzle.team/docs/column-types/mysql#tinyblob
+- mediumblob: https://orm.drizzle.team/docs/column-types/mysql#mediumblob
+- longblob: https://orm.drizzle.team/docs/column-types/mysql#longblob
+
+## 其他更新和修复
+
+- 修复了 node-postgres 事务中 pg-native Pool 的检测问题  
+- 允许在 select 字段中使用子查询  
+- 修正了错字 algorythm => algorithm  
+- 修复 `$onUpdate` 无法处理 `SQL` 值的问题（修复了 [#2388](https://github.com/drizzle-team/drizzle-orm/issues/2388)，测试由 [L-Mario564](https://github.com/L-Mario564) 在 [#2911](https://github.com/drizzle-team/drizzle-orm/pull/2911) 实现）
+- 修复 `pg` 映射器未处理 `bun-sql:postgresql` 驱动返回的 `date`、`timestamp` 类型里的 `Date` 实例的问题（修复了 [#4493](https://github.com/drizzle-team/drizzle-orm/issues/4493)）  
+
+## 修复的 Bug
+
+> 该列表尚不完整，我们仅整理了部分问题。未来几周内还会持续更新。
+
+- [[BUG]: Drizzle-kit 将 Postgres 函数拉取为 TypeScript 方法](https://github.com/drizzle-team/drizzle-orm/issues/4916)
+
+- [[BUG]: VARCHAR 列更改为 CITEXT（自定义类型）时生成 `"undefined"."citext"` 而非 `"citext"`](https://github.com/drizzle-team/drizzle-orm/issues/4806)
+
+- [[BUG]: 设置为 snake_case 时，唯一字段约束名没有被转换](https://github.com/drizzle-team/drizzle-orm/issues/4800)
+
+- [[BUG]: `drizzle-kit push` 末尾附加了 `DROP SCHEMA` 且架构名称错误](https://github.com/drizzle-team/drizzle-orm/issues/4796)
+
+- [[BUG]: `drizzle-kit push` 错误地尝试删除复合唯一约束，尽管无更改](https://github.com/drizzle-team/drizzle-orm/issues/4789)
+
+- [[BUG]: MySQL 枚举默认值为 `'0'` 时，反射时被忽略](https://github.com/drizzle-team/drizzle-orm/issues/4786)
+
+- [[BUG]: drizzle-kit / Amazon Aurora DSQL: `drizzle-kit push` 在重应用时尝试删除主键索引，且无任何更改](https://github.com/drizzle-team/drizzle-orm/issues/4779)
+
+- [[BUG]: `drizzle-kit check` 错误地尝试使用 AWS Data API](https://github.com/drizzle-team/drizzle-orm/issues/4775)
+
+- [[BUG]: bunx drizzle-kit push 在版本 ^0.31.4 中卡在“Reading config file”](https://github.com/drizzle-team/drizzle-orm/issues/4771)
+
+- [[BUG]: introspect 生成的文件中视图的列未以数组形式显示](https://github.com/drizzle-team/drizzle-orm/issues/4764)
+
+- [[BUG]: drizzle kit 针对默认字符串的 schema 错误](https://github.com/drizzle-team/drizzle-orm/issues/4760)
+
+- [[BUG]: drizzle-kit pull 未正确对 gen_random_uuid() 进行 sql 函数包装，导致语法错误](https://github.com/drizzle-team/drizzle-orm/issues/4730)
+
+- [[BUG]: `drizzle-kit introspect` 中空 `''` 的 mysqlEnum 与默认值反射错误](https://github.com/drizzle-team/drizzle-orm/issues/4713)
+
+- [[BUG]: 带操作符函数的 CHECK 约束生成带参数值时，产生无效 SQL](https://github.com/drizzle-team/drizzle-orm/issues/4661)
+
+- [[BUG]: tinyint、bigint 在执行 drizzle-kit pull 时未被包含](https://github.com/drizzle-team/drizzle-orm/issues/4653)
+
+- [[BUG]: drizzle-kit pull 生成缺少单引号的默认空文本列](https://github.com/drizzle-team/drizzle-orm/issues/4644)
+
+- [[BUG]: 无法创建复合外键：SQL 语句执行顺序问题 [Postgres]](https://github.com/drizzle-team/drizzle-orm/issues/4638)
+
+- [[BUG]: drizzle-kit MySQL 序列化程序忽略主键与 CHECK 约束](https://github.com/drizzle-team/drizzle-orm/issues/4602)
+
+- [[BUG]: 多列唯一键名称不尊重大小写配置](https://github.com/drizzle-team/drizzle-orm/issues/4541)
+
+- [[BUG]: 目标 Postgres 数据库中存在带默认值的 `jsonb` 列时，`drizzle-kit push` 失败](https://github.com/drizzle-team/drizzle-orm/issues/4529)
+
+- [[BUG]: `drizzle-kit generate` 生成了顺序错误或不正确的迁移文件](https://github.com/drizzle-team/drizzle-orm/issues/4456)
+
+- [[BUG]: 使用 `with:` 列时导致的 `any` 类型值问题](https://github.com/drizzle-team/drizzle-orm/issues/4432)
+
+- [[BUG]: drizzle-orm 未在 ts + mysql 中使用 introspect 命令拉取外键名称](https://github.com/drizzle-team/drizzle-orm/issues/4415)
+
+- [[BUG]: 使用 "with" 功能时为 MySQL 生成了无效的 SQL 查询](https://github.com/drizzle-team/drizzle-orm/issues/4412)
+
+- [[BUG]: 带关联的 findMany 返回的是扁平数组而非键值对象](https://github.com/drizzle-team/drizzle-orm/issues/4409)
+
+- [[BUG]: drizzle-orm@beta 在 NuxtHub 项目中查询对象为空](https://github.com/drizzle-team/drizzle-orm/issues/4390)
+
+- [[BUG]: 使用 json_agg 获取大整数时出现精度丢失](https://github.com/drizzle-team/drizzle-orm/issues/4380)
+
+- [[BUG]: 对使用 `with` 的表（通过辅助函数创建）推断了错误的列类型](https://github.com/drizzle-team/drizzle-orm/issues/4358)
+
+- [[BUG]: drizzle-orm@beta SQLite 查询中使用 `with` 报错](https://github.com/drizzle-team/drizzle-orm/issues/4357)
+
+- [[BUG]: 标识符长度过长（不应超过 63 个字符）](https://github.com/drizzle-team/drizzle-orm/issues/4238)
+
+- [[BUG]: 无法创建 MySQL 外键字符串](https://github.com/drizzle-team/drizzle-orm/issues/4221)
+
+- [[BUG]: Drizzle 类型推断在多个表中无法正常工作](https://github.com/drizzle-team/drizzle-orm/issues/4199)
+
+- [findFirst 返回的 Date 为字符串](https://github.com/drizzle-team/drizzle-orm/issues/4186)
+
+- [[BUG]: 在 Turso 方言中无法删除外键](https://github.com/drizzle-team/drizzle-orm/issues/4167)
+
+- [[BUG]: `$count` 子表达式生成了错误的表名](https://github.com/drizzle-team/drizzle-orm/issues/4164)
+
+- [[BUG]: where 中存在未知列](https://github.com/drizzle-team/drizzle-orm/issues/4159)
+
+- [[BUG]: drizzle-kit generate 删除表时尝试删除已删除的约束](https://github.com/drizzle-team/drizzle-orm/issues/4155)
+
+- [[BUG]: 使用可选列时，查询 API 推断的结果类型不完整](https://github.com/drizzle-team/drizzle-orm/issues/4153)
+
+- [SQLite 中列未标记为唯一，反而创建了唯一索引](https://github.com/drizzle-team/drizzle-orm/issues/4152)
+
+- [[BUG]: 设置非 "no action" 时，introspect 不拉取外键名](https://github.com/drizzle-team/drizzle-orm/issues/4115)
+
+- [[BUG]: `drizzle-kit pull` 生成的 TypeScript 方案损坏（似乎忘记从 drizzle-orm/mysql-core 导入 `tinyint`）](https://github.com/drizzle-team/drizzle-orm/issues/4110)
+
+- [[BUG]: Drizzle 关系查询过滤不正确](https://github.com/drizzle-team/drizzle-orm/issues/4080)
+
+- [[BUG]: 多对多关联中，使用相同模式时返回结果不一致](https://github.com/drizzle-team/drizzle-orm/issues/3937)
+
+- [[BUG]: 查询中关联过滤发生 Typescript 错误 ("drizzle-orm": "^0.38.3")](https://github.com/drizzle-team/drizzle-orm/issues/3911)
+
+- [[BUG]: 找不到数据时，findFirst 未返回 undefined 或 null](https://github.com/drizzle-team/drizzle-orm/issues/3872)
+
+- [[DOCS]: 可为空的关系](https://github.com/drizzle-team/drizzle-orm/issues/3855)
+
+- [[BUG]: 按文档进行过滤选择时报类型错误](https://github.com/drizzle-team/drizzle-orm/issues/3804)
+
+- [[BUG]: 一对一关系实体的非空类型推断错误](https://github.com/drizzle-team/drizzle-orm/issues/3799)
+
+- [[BUG]: 允许为无字段定义一侧的一对一关系指定 relationName](https://github.com/drizzle-team/drizzle-orm/issues/3763)
+
+- [[BUG]: SQLite 中 onConflictDoUpdate 插入时自定义类型不起作用](https://github.com/drizzle-team/drizzle-orm/issues/3730)
+
+- [[FEATURE]: Scopes API](https://github.com/drizzle-team/drizzle-orm/issues/3646)
+
+- [[BUG]: 使用 `sql.js` 时列名转换不生效](https://github.com/drizzle-team/drizzle-orm/issues/3642)
+
+- [[BUG]: drizzle-kit 不再支持枚举值中的特殊字符（MySQL）](https://github.com/drizzle-team/drizzle-orm/issues/3613)
+
+- [[BUG]: drizzle-kit pull 返回 `.with(securityInvoker":"on")`](https://github.com/drizzle-team/drizzle-orm/issues/3585)
+
+- [[BUG]: db.query 在关联查询中产生慢查询](https://github.com/drizzle-team/drizzle-orm/issues/3581)
+
+- [[BUG]: push 生成重复唯一索引语句](https://github.com/drizzle-team/drizzle-orm/issues/3574)
+
+- [[BUG]: findMany 等构建当 where 中引用其他表时生成无效查询](https://github.com/drizzle-team/drizzle-orm/issues/3573)
+
+- [[BUG]: $count() 生成了错误的 PostgreSQL 子查询](https://github.com/drizzle-team/drizzle-orm/issues/3564)
+
+- [[BUG]: drizzle-kit pull 生成错误的 schema.ts](https://github.com/drizzle-team/drizzle-orm/issues/3559)
+
+- [[BUG]: introspect 没有为表添加 `.primaryKey()`](https://github.com/drizzle-team/drizzle-orm/issues/3552)
+
+- [[BUG]: findMany count 关系 extras 无法正常工作](https://github.com/drizzle-team/drizzle-orm/issues/3546)
+
+- [[BUG]: 读取 undefined 的 'columns' 属性时报错](https://github.com/drizzle-team/drizzle-orm/issues/3539)
+
+- [[BUG]: `pgEnum` 生成错误的迁移文件](https://github.com/drizzle-team/drizzle-orm/issues/3514)
+
+- [[BUG]: 查询 include relations 时，如果关联表含 jsonb 字段，SQLite 报错 JSON 无法保存 BLOB](https://github.com/drizzle-team/drizzle-orm/issues/3497)
+
+- [MySQL introspect：警告：无法解析数据库中的 bit(1)](https://github.com/drizzle-team/drizzle-orm/issues/3480)
+
+- [某些 Postgres 类型不被 `introspect:pg` 处理](https://github.com/drizzle-team/drizzle-orm/issues/3479)
+
+- [BUG：`drizzle-kit push:mysql` 处理复合主键异常](https://github.com/drizzle-team/drizzle-orm/issues/3473)
+
+- [push:mysql 不能删除 serial 列并替换为其它类型](https://github.com/drizzle-team/drizzle-orm/issues/3471)
+
+- [db push 卡死，verbose 无提示](https://github.com/drizzle-team/drizzle-orm/issues/3470)
+
+- [Drizzle Studio 因 `CURRENT_TIMESTAMP` 报错](https://github.com/drizzle-team/drizzle-orm/issues/3453)
+
+- [[MySQL] drizzle kit 针对带 fsp 的 timestamp 生成无效 SQL 语法的 onUpdateNow](https://github.com/drizzle-team/drizzle-orm/issues/3373)
+
+- [drizzle-kit push 支持 PostGIS geometry 列](https://github.com/drizzle-team/drizzle-orm/issues/3347)
+
+- [[BUG]: MySQL 新增 .unique().notNull() 时，`add constraint` 语句位置错误](https://github.com/drizzle-team/drizzle-orm/issues/3329)
+
+- [默认值双引号问题](https://github.com/drizzle-team/drizzle-orm/issues/3318)
+
+- [三种情况导致 drizzle-kit introspect:mysql 失效](https://github.com/drizzle-team/drizzle-orm/issues/3297)
+
+- [MySQL 与 PostgreSQL 不检测所有新级联](https://github.com/drizzle-team/drizzle-orm/issues/3293)
+
+- [[BUG]: 数组枚举在 drizzle-kit push 时报错](https://github.com/drizzle-team/drizzle-orm/issues/3278)
+
+- [[BUG]: 深度嵌套查询失败](https://github.com/drizzle-team/drizzle-orm/issues/3277)
+
+- [[BUG]: findMany / findFirst 使用 sql 操作符时错误替换表名](https://github.com/drizzle-team/drizzle-orm/issues/3268)
+
+- [[BUG]: PostgreSQL 中使用 relations 查询 bigint 值错误](https://github.com/drizzle-team/drizzle-orm/issues/3267)
+
+- [[BUG]: bit 类型传入 PostgreSQL 时变为字符串](https://github.com/drizzle-team/drizzle-orm/issues/3254)
+
+- [[BUG]: 外键名称长度问题](https://github.com/drizzle-team/drizzle-orm/issues/3244)
+
+- [[BUG]: “unix_timestamp 未定义”错误](https://github.com/drizzle-team/drizzle-orm/issues/3237)
+
+- [[BUG]: 按下 `escape` 键时 push 确认对话框仍会执行 push](https://github.com/drizzle-team/drizzle-orm/issues/3230)
+
+- [[BUG]: arrayContains、arrayContained、arrayOverlaps 不支持查询回调](https://github.com/drizzle-team/drizzle-orm/issues/3169)
+
+- [[BUG]: 查询 extras 错误解析表名](https://github.com/drizzle-team/drizzle-orm/issues/3110)
+
+- [[BUG]: UUID push 报错，生成和迁移正常](https://github.com/drizzle-team/drizzle-orm/issues/3090)
+
+- [[BUG]: 迁移中的默认值生成无效 sql.ts 文件](https://github.com/drizzle-team/drizzle-orm/issues/3087)
+
+- [[BUG]: drizzle-kit 当 uniqueIndex 与 sql.lower 一起使用时触发 _ZodError](https://github.com/drizzle-team/drizzle-orm/issues/3062)
+
+- [[BUG]: drizzle-kit introspect 报 TypeError: Cannot read properties of null (reading 'camelCase')](https://github.com/drizzle-team/drizzle-orm/issues/3046)
+
+- [[BUG]: 嵌套的 `with: { where }` 无法正确推断类型](https://github.com/drizzle-team/drizzle-orm/issues/3045)
+
+- [[BUG]: drizzle-kit introspect 对 MySQL 数据库未导入 "bigint" 类型](https://github.com/drizzle-team/drizzle-orm/issues/2988)
+
+- [[BUG]: 带 geometry 列的关联查询中，findFirst 和 findMany 的模型无法解析](https://github.com/drizzle-team/drizzle-orm/issues/2961)
+
+- [[FEATURE]: 提供将复杂模式及其关系数据“扁平化”返回形状的查询 API](https://github.com/drizzle-team/drizzle-orm/issues/2933)
+
+- [[FEATURE]: 支持一对一查询中添加 `where` 条件](https://github.com/drizzle-team/drizzle-orm/issues/2903)
+
+- [[DOCUMENTATION]: 代码中的拼写错误](https://github.com/drizzle-team/drizzle-orm/issues/2840)
+
+- [[BUG]: 迁移失败 - 表已存在 - ER_TABLE_EXISTS_ERROR - MySQL](https://github.com/drizzle-team/drizzle-orm/issues/2815)
+
+- [[BUG]: pg geometry 导致迁移失败](https://github.com/drizzle-team/drizzle-orm/issues/2806)
+
+- [[BUG]: 不正确转义 Do 语句中需要 "$" 字符的双美元符号](https://github.com/drizzle-team/drizzle-orm/issues/2710)
+
+- [[BUG]: Drizzle 查询返回结果与 Select 不同](https://github.com/drizzle-team/drizzle-orm/issues/2703)
+
+- [[BUG]: 导入的操作符 `eq`、`lt` 等不支持左侧为表列时的参数，回调语法可用](https://github.com/drizzle-team/drizzle-orm/issues/2698)
+
+- [[BUG]: PG Numeric 被推断为字符串，运行时为 numeric](https://github.com/drizzle-team/drizzle-orm/issues/2681)
+
+- [[BUG]: Geometry 类型忽略 SRID 选项](https://github.com/drizzle-team/drizzle-orm/issues/2675)
+
+- [[FEATURE]: 支持 Drizzle 关联物化视图](https://github.com/drizzle-team/drizzle-orm/issues/2653)
+
+- [[BUG]: MySQL generatedAlwaysAs 联合 notNull 使用问题](https://github.com/drizzle-team/drizzle-orm/issues/2616)
+
+- [[BUG]: 与上游 schema 不一致的唯一键调整问题](https://github.com/drizzle-team/drizzle-orm/issues/2599)
+
+- [[BUG]: 聚合来自多对一关联未返回时间戳（Postgres）](https://github.com/drizzle-team/drizzle-orm/issues/2555)
+
+- [[BUG]: SQLite 查询中嵌套条件与占位符存在问题](https://github.com/drizzle-team/drizzle-orm/issues/2529)
+
+- [[BUG]: Postgis `geometry` 查询中带 `with` 失败](https://github.com/drizzle-team/drizzle-orm/issues/2526)
+
+- [[BUG]: Geometry 配置类型未影响生成 SQL](https://github.com/drizzle-team/drizzle-orm/issues/2454)
+
+- [[BUG]: 关系查询 API 默认别名与常规别名不一致](https://github.com/drizzle-team/drizzle-orm/issues/2431)
+
+- [[BUG]: `$onUpdate` 无法提供 sql 值](https://github.com/drizzle-team/drizzle-orm/issues/2388)
+
+- [[BUG]: 使用不同 schema 中同名表时类型错误](https://github.com/drizzle-team/drizzle-orm/issues/2387)
+
+- [支持嵌套 orderBy](https://github.com/drizzle-team/drizzle-orm/issues/2297)
+
+- [[BUG]: 关系查询返回时间戳格式与直接查询不同](https://github.com/drizzle-team/drizzle-orm/issues/2282)
+
+- [[FEATURE]: 允许关联中使用硬编码值](https://github.com/drizzle-team/drizzle-orm/issues/2268)
+
+- [[BUG]: 添加新列并对其创建唯一键导致迁移文件无效](https://github.com/drizzle-team/drizzle-orm/issues/2236)
+
+- [[BUG]: 非 ASCII 字符编码问题](https://github.com/drizzle-team/drizzle-orm/issues/2235)
+
+- [[BUG]: 查询 API 包含子关联时未包含 schema 名称](https://github.com/drizzle-team/drizzle-orm/issues/2194)
+
+- [[BUG]: Planetscale 对 'serial' 类型推送时报“packets out of order”](https://github.com/drizzle-team/drizzle-orm/issues/2180)
+
+- [[BUG]: Postgres 自定义类型生成了无效的 SQL](https://github.com/drizzle-team/drizzle-orm/issues/2087)
+
+- [[BUG]: 深度嵌套查询因表名长度失败](https://github.com/drizzle-team/drizzle-orm/issues/2066)
+
+- [[BUG]: 多重外键与迁移中级联删除问题](https://github.com/drizzle-team/drizzle-orm/issues/2018)
+
+- [[DOCS]: 关系应有独立页面](https://github.com/drizzle-team/drizzle-orm/issues/1913)
+
+- [[BUG]: 别名常量未为表名前加模式名](https://github.com/drizzle-team/drizzle-orm/issues/1903)
+
+- [[BUG]: BigInt 在 `default(0n)` 指令中出现 “Do not know how to serialize a BigInt” 错误](https://github.com/drizzle-team/drizzle-orm/issues/1879)
+
+- [[BUG]: TypeScript 无法识别一对一关系](https://github.com/drizzle-team/drizzle-orm/issues/1869)
+
+- [[BUG]: extras 中使用 sql 指令时，sql`` 插值错误表名](https://github.com/drizzle-team/drizzle-orm/issues/1815)
+
+- [[BUG]: pg-native Pools 与事务不兼容](https://github.com/drizzle-team/drizzle-orm/issues/1707)
+
+- [[BUG]: `with` 查询中自定义类型不起作用](https://github.com/drizzle-team/drizzle-orm/issues/1572)
+
+- [[BUG]: ERROR: operator does not exist](https://github.com/drizzle-team/drizzle-orm/issues/1570)
+
+- [[BUG]: timestamp 类型的 Property 'notNull` 问题](https://github.com/drizzle-team/drizzle-orm/issues/1535)
+
+- [[BUG]: 0.29.0 版本中 eq 函数失效](https://github.com/drizzle-team/drizzle-orm/issues/1488)
+
+- [[BUG]: pg 中嵌套 with 块存在阈值限制](https://github.com/drizzle-team/drizzle-orm/issues/1477)
+
+- [[FEATURE]: 推断可能为 undefined 的布尔列值](https://github.com/drizzle-team/drizzle-orm/issues/1438)
+
+- [[BUG]: ER_WRONG_AUTO_KEY - Drizzle Kit 未检测主键](https://github.com/drizzle-team/drizzle-orm/issues/1428)
+
+- [[BUG]: 报错 "Multiple primary key defined"](https://github.com/drizzle-team/drizzle-orm/issues/1413)
+
+- [[BUG]: MySQL 中无法对多个相邻关系使用 orderBy 子句](https://github.com/drizzle-team/drizzle-orm/issues/1396)
+
+- [[BUG]: 关系查询时 typeHint 不正确（one 且自动限制 1）](https://github.com/drizzle-team/drizzle-orm/issues/1368)
+
+- [[BUG]: orderBy 导致关系查询失败](https://github.com/drizzle-team/drizzle-orm/issues/1249)
+
+- [[BUG]: 动态条件下，`columns` 部分选择推断类型异常](https://github.com/drizzle-team/drizzle-orm/issues/1163)
+
+- [[BUG]: relational 查询时 findFirst 和 findMany 的 extras 中 `mapWith` 不生效](https://github.com/drizzle-team/drizzle-orm/issues/1157)
+
+- [[BUG]: 使用 sql 指令时，findFirst 和 findMany 未正确设置表名](https://github.com/drizzle-team/drizzle-orm/issues/1149)
+
+- [[FEATURE]: 支持通过关系进行嵌套过滤](https://github.com/drizzle-team/drizzle-orm/issues/1069)
+
+- [[FEATURE]: 支持可选一对一关系](https://github.com/drizzle-team/drizzle-orm/issues/1066)
+
+- [[FEATURE]: 支持多态关联](https://github.com/drizzle-team/drizzle-orm/issues/1051)
+
+- [[BUG]: relational 查询 where 子句覆盖了表名](https://github.com/drizzle-team/drizzle-orm/issues/975)
+
+- [[BUG]: PostgreSQL 中 "role" 列无法自动转换为 user_role 类型](https://github.com/drizzle-team/drizzle-orm/issues/930)
+
+- [[FEATURE]: CockroachDB 支持现状如何？](https://github.com/drizzle-team/drizzle-orm/issues/845)
+
+- [[BUG]: 关系推断错误，使用非默认 Postgres schema](https://github.com/drizzle-team/drizzle-orm/issues/830)
+
+- [[FEATURE]: 过滤与排序的关系](https://github.com/drizzle-team/drizzle-orm/issues/821)
+
+- [[BUG]: 关系查询破坏了带底层 DECIMAL 数据类型的自定义类型](https://github.com/drizzle-team/drizzle-orm/issues/820)
+
+- [[BUG]: 具有自定义类型的列与 `default()` 不兼容](https://github.com/drizzle-team/drizzle-orm/issues/818)
+
+- [[BUG]: 无法在关系 API 中使用视图](https://github.com/drizzle-team/drizzle-orm/issues/769)
+
+- [[FEATURE]: 添加连接附加条件](https://github.com/drizzle-team/drizzle-orm/issues/756)
+
+- [[BUG]: Drizzle 导致 MySQL 索引膨胀](https://github.com/drizzle-team/drizzle-orm/issues/706)
+
+- [[BUG]: SQLite/d1 上带 order-by 的关系查询存在问题](https://github.com/drizzle-team/drizzle-orm/issues/705)
+
+- [支持在关系查询中引用深度嵌套属性](https://github.com/drizzle-team/drizzle-orm/issues/696)
+
+- [[FEATURE]: 支持自定义多重关系](https://github.com/drizzle-team/drizzle-orm/issues/674)
+
+- [[FEATURE]: 支持“through”关系查询](https://github.com/drizzle-team/drizzle-orm/issues/607)
+
+- [[FEATURE]: MSSQL 方言](https://github.com/drizzle-team/drizzle-orm/issues/585)
+
+- [[BUG]: planetscale 在 timestamp 指定 FSP 时 now() 和 current_timestamp() 不生效](https://github.com/drizzle-team/drizzle-orm/issues/472)
+
+- [[BUG]: MySQL ALTER TABLE 当表名为保留字时失败](https://github.com/drizzle-team/drizzle-orm/issues/364)

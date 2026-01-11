@@ -1,4 +1,6 @@
 import Callout from '@mdx/Callout.astro';
+import Tab from "@mdx/Tab.astro";
+import Tabs from "@mdx/Tabs.astro";
 
 # 生成器
 
@@ -13,7 +15,7 @@ import Callout from '@mdx/Callout.astro';
 <rem025 />
 每次调用生成器时会生成相同的给定值。
 
-|  | param          | default     | type
+|  | 参数          | 默认值     | 类型
 |:-| :--------      | :--------   | :--------
 |  |`defaultValue`  |--           |`any`
 |  |`arraySize`     |--           |`number`
@@ -45,12 +47,11 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 <rem025 />
 从给定数组生成值
 
-|  | param      | default                   | type
+|  | 参数      | 默认值                   | 类型
 |:-| :--------  | :--------                 | :--------
 |  |`values`    |--                         |`any[]` \| `{ weight: number; values: any[] }[]`
-|  |`isUnique`  |数据库列的唯一性         |`boolean`
+|  |`isUnique`  |数据库列的唯一性           |`boolean`
 |  |`arraySize` |--                         |`number`
-
 
 <rem025 />
 ```ts 
@@ -81,7 +82,7 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 <rem025 />
 生成从 1 开始的顺序整数。
 
-|  | param      | default    | type
+|  | 参数      | 默认值    | 类型
 |:-| :--------  | :--------  | :--------
 |  |--          |--          |--
 
@@ -105,7 +106,7 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 <rem025 />
 在给定范围内生成带小数的数字
 
-|  | param      | default                                                                                               | type
+|  | 参数       | 默认值                                                                                               | 类型
 |:-| :--------  | :--------                                                                                             | :--------
 |  |`isUnique`  |数据库列的唯一性                                                                                     |`boolean`
 |  |`precision` |`100`                                                                                                  |`number`
@@ -150,7 +151,7 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 <rem025 />
 在给定范围内生成整数
 
-|  | param      | default                                                                            | type
+|  | 参数       | 默认值                                                                            | 类型
 |:-| :--------  | :--------                                                                          | :--------
 |  |`isUnique`  |数据库列的唯一性                                                                  |`boolean`
 |  |`maxValue`  |``` `1000` 如果 isUnique 为 false ``` ``` `count * 10` 如果 isUnique 为 true ```  |`number \| bigint`
@@ -189,7 +190,7 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 <rem025 />
 生成布尔值（真或假）
 
-|  | param      | default    | type
+|  | 参数       | 默认值    | 类型
 |:-| :--------  | :--------  | :--------
 |  |`arraySize` |--          |`number`
 
@@ -216,7 +217,7 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 <rem025 />
 在给定范围内生成日期
 
-|  | param      | default                 | type
+|  | 参数       | 默认值                 | 类型
 |:-| :--------  | :--------------         | :--------
 |  |`minDate`   |`new Date('2020-05-08')` | `string \| Date`
 |  |`maxDate`   |`new Date('2028-05-08')` | `string \| Date`
@@ -255,7 +256,7 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 <rem025 />
 生成 24 小时制的时间
 
-|  | param      | default    | type
+|  | 参数       | 默认值    | 类型
 |:-| :--------  | :--------  | :--------
 |  |`arraySize` |--          |`number`
 
@@ -282,7 +283,7 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 <rem025 />
 生成时间戳
 
-|  | param      | default    | type
+|  | 参数       | 默认值    | 类型
 |:-| :--------  | :--------  | :--------
 |  |`arraySize` |--          |`number`
 
@@ -309,7 +310,7 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 <rem025 />
 生成日期时间对象
 
-|  | param      | default    | type
+|  | 参数       | 默认值    | 类型
 |:-| :--------  | :--------  | :--------
 |  |`arraySize` |--          |`number`
 <rem025 />
@@ -335,7 +336,7 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 <rem025 />
 生成 `YYYY` 格式的年份
 
-|  | param      | default    | type
+|  | 参数       | 默认值    | 类型
 |:-| :--------  | :--------  | :--------
 |  |`arraySize` |--          |`number`
 
@@ -372,7 +373,7 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 
 > JSON 结构将随机选择
 
-|  | param      | default    | type
+|  | 参数       | 默认值    | 类型
 |:-| :--------  | :--------  | :--------
 |  |`arraySize` |--          |`number`
 
@@ -401,7 +402,7 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 
 生成值的示例： `1 year 12 days 5 minutes`
 
-|  | param      | default            | type
+|  | 参数       | 默认值            | 类型
 |:-| :--------  | :--------          | :--------
 |  |`isUnique`  | 列唯一性           |`boolean`
 |  |`arraySize` |--                  |`number`
@@ -432,10 +433,10 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 <rem025 />
 生成随机字符串
 
-|  | param      | default    | type
-|:-| :--------  | :--------  | :--------
-|  |`isUnique`  |--          |`boolean`
-|  |`arraySize` |--          |`number`
+|  | 参数       | 默认值                     | 类型
+|:-| :--------  | :--------                   | :--------
+|  |`isUnique`  |数据库列的唯一性           |`boolean`
+|  |`arraySize` |--                         |`number`
 
 <rem025 />
 ```ts 
@@ -463,7 +464,7 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 <rem025 />
 生成 v4 UUID 字符串
 
-|  | param      | default    | type
+|  | 参数       | 默认值    | 类型
 |:-| :--------  | :--------  | :--------
 |  |`arraySize` |--          |`number`
 
@@ -488,10 +489,10 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 <rem025 />
 生成一个人的名字
 
-|  | param      | default    | type
-|:-| :--------  | :--------  | :--------
-|  |`isUnique`  |--          |`boolean`
-|  |`arraySize` |--          |`number`
+|  | 参数       | 默认值                     | 类型
+|:-| :--------  | :--------                   | :--------
+|  |`isUnique`  |数据库列的唯一性           |`boolean`
+|  |`arraySize` |--                         |`number`
 
 <rem025 />
 ```ts 
@@ -519,10 +520,10 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 <rem025 />
 生成一个人的姓氏
 
-|  | param      | default    | type
-|:-| :--------  | :--------  | :--------
-|  |`isUnique`  |--          |`boolean`
-|  |`arraySize` |--          |`number`
+|  | 参数       | 默认值                     | 类型
+|:-| :--------  | :--------                   | :--------
+|  |`isUnique`  |数据库列的唯一性           |`boolean`
+|  |`arraySize` |--                         |`number`
 
 <rem025 />
 ```ts 
@@ -550,10 +551,10 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 <rem025 />
 生成一个人的全名
 
-|  | param      | default    | type
-|:-| :--------  | :--------  | :--------
-|  |`isUnique`  |--          |`boolean`
-|  |`arraySize` |--          |`number`
+|  | 参数       | 默认值                     | 类型
+|:-| :--------  | :--------                   | :--------
+|  |`isUnique`  |数据库列的唯一性           |`boolean`
+|  |`arraySize` |--                         |`number`
 
 <rem025 />
 ```ts 
@@ -581,7 +582,7 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 <rem025 />
 生成唯一的电子邮件地址
 
-|  | param      | default    | type
+|  | 参数       | 默认值    | 类型
 |:-| :--------  | :--------  | :--------
 |  |`arraySize` |--          |`number`
 
@@ -608,7 +609,7 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 <rem025 />
 生成唯一的电话号码
 
-|  | param                    | default                                         | type
+|  | 参数                    | 默认值                                         | 类型
 |:-| :--------                | :--------                                       | :--------
 |  |`template`                |--                                               |`string`
 |  |`prefixes`                |[用于前缀的数据集](https://github.com/OleksiiKH0240/drizzle-orm/blob/main/drizzle-seed/src/datasets/phonesInfo.ts)   |`string[]`
@@ -687,10 +688,10 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 <rem025 />
 生成国家名称
 
-|  | param      | default    | type
-|:-| :--------  | :--------  | :--------
-|  |`isUnique`  |--          |`boolean`
-|  |`arraySize` |--          |`number`
+|  | 参数       | 默认值                     | 类型
+|:-| :--------  | :--------                   | :--------
+|  |`isUnique`  |数据库列的唯一性           |`boolean`
+|  |`arraySize` |--                         |`number`
 
 <rem025 />
 
@@ -719,10 +720,10 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 <rem025 />
 生成城市名称
 
-|  | param      | default    | type
-|:-| :--------  | :--------  | :--------
-|  |`isUnique`  |--          |`boolean`
-|  |`arraySize` |--          |`number`
+|  | 参数       | 默认值                     | 类型
+|:-| :--------  | :--------                   | :--------
+|  |`isUnique`  |数据库列的唯一性           |`boolean`
+|  |`arraySize` |--                         |`number`
 
 <rem025 />
 
@@ -751,9 +752,10 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 <rem025 />
 生成街道地址
 
-|  | param      | default    | type
-|:-| :--------  | :--------  | :--------
-|  |`isUnique`  |--          |`boolean`
+|  | 参数       | 默认值                     | 类型
+|:-| :--------  | :--------                   | :--------
+|  |`isUnique`  |数据库列的唯一性           |`boolean`
+|  |`arraySize` |--                         |`number`
 
 <rem025 />
 
@@ -782,7 +784,7 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 <rem025 />
 生成职位名称
 
-|  | param      | default    | type
+|  | 参数       | 默认值    | 类型
 |:-| :--------  | :--------  | :--------
 |  |`arraySize` |--          |`number`
 
@@ -810,10 +812,10 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 <rem025 />
 生成邮政编码
 
-|  | param      | default    | type
-|:-| :--------  | :--------  | :--------
-|  |`isUnique`  |--          |`boolean`
-|  |`arraySize` |--          |`number`
+|  | 参数       | 默认值                     | 类型
+|:-| :--------  | :--------                   | :--------
+|  |`isUnique`  |数据库列的唯一性           |`boolean`
+|  |`arraySize` |--                         |`number`
 
 <rem025 />
 
@@ -842,7 +844,7 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 <rem025 />
 生成美国州名
 
-|  | param      | default    | type
+|  | 参数       | 默认值    | 类型
 |:-| :--------  | :--------  | :--------
 |  |`arraySize` |--          |`number`
 
@@ -870,10 +872,10 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 <rem025 />
 生成随机公司的名称
 
-|  | param      | default    | type
-|:-| :--------  | :--------  | :--------
-|  |`isUnique`  |--          |`boolean`
-|  |`arraySize` |--          |`number`
+|  | 参数       | 默认值                     | 类型
+|:-| :--------  | :--------                   | :--------
+|  |`isUnique`  |数据库列的唯一性           |`boolean`
+|  |`arraySize` |--                         |`number`
 
 <rem025 />
 
@@ -901,7 +903,7 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 <rem025 />
 生成 `lorem ipsum` 文本句子。
 
-|  | param            | default    | type
+|  | 参数            | 默认值    | 类型
 |:-| :--------        | :--------  | :--------
 |  |`sentencesCount`  | 1          |`number`
 |  |`arraySize`       |--          |`number`
@@ -933,7 +935,7 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 <rem025 />
 生成在 x 和 y 坐标的指定范围内的二维点。
 
-|  | param       | default                                                                                 | type
+|  | 参数       | 默认值                                                                                 | 类型
 |:-| :--------   | :--------                                                                               | :--------
 |  |`isUnique`   |数据库列的唯一性                                                                       |`boolean`
 |  |`maxXValue`  |``` `10 * 1000` 如果 isUnique 为 false ``` ``` `10 * count` 如果 isUnique 为 true ```  |`number`
@@ -986,7 +988,7 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 线方程： a*x + b*y + c = 0
 ```
 
-|  | param       | default                                                                                 | type
+|  | 参数       | 默认值                                                                                 | 类型
 |:-| :--------   | :--------                                                                               | :--------
 |  |`isUnique`   |数据库列的唯一性                                                                       |`boolean`
 |  |`maxAValue`  |``` `10 * 1000` 如果 isUnique 为 false ``` ``` `10 * count` 如果 isUnique 为 true ```  |`number`
@@ -1029,6 +1031,268 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
         // 每个一维数组中的元素数量。 
         // （如指定，将生成数组。）
         arraySize: 3
+      }),
+    },
+  },
+}));
+
+```
+
+### `bitString`
+
+<rem025 />
+生成基于指定参数的位字符串。
+
+|  | 参数       | 默认值                                                                                 | 类型
+|:-| :--------   | :--------                                                                               | :--------
+|  |`isUnique`   |数据库列的唯一性                                                                       |`boolean`
+|  |`dimensions` |数据库列位长度                                                                         |`number`
+|  |`arraySize`  |--                                                                                     |`number`
+<rem025 />
+
+```ts 
+import { seed } from "drizzle-seed";
+
+await seed(db, schema, { count: 1000 }).refine((funcs) => ({
+  bitStringTable: {
+    columns: {
+      bit: funcs.bitString({
+        // 期望的每个位字符串长度（例如，`dimensions = 3` 生成类似 `'010'` 的值）。
+        dimensions: 12,
+
+        // 控制生成值是否唯一的属性；
+        isUnique: true,
+
+        // 每个一维数组中的元素数量（如指定，将生成数组）；
+        arraySize: 3,
+      }),
+    },
+  },
+}));
+
+```
+
+### `inet`
+
+<rem025 />
+基于指定参数生成 IP 地址。
+
+|  | 参数       | 默认值                                                                                 | 类型
+|:-| :--------   | :--------                                                                               | :--------
+|  |`isUnique`   |数据库列的唯一性                                                                       |`boolean`
+|  |`arraySize`  |--                                                                                     |`number`
+|  |`ipAddress`  |`'ipv4'`                                                                              |`'ipv4' \| 'ipv6'`
+|  |`includeCidr`|`true`                                                                                |`boolean`
+<rem025 />
+
+```ts 
+import { seed } from "drizzle-seed";
+
+await seed(db, schema, { count: 1000 }).refine((funcs) => ({
+  inetTable: {
+    columns: {
+      inet: funcs.inet({
+        // 控制生成值是否唯一的属性；
+        isUnique: true,
+
+        // 每个一维数组中的元素数量（如指定，将生成数组）；
+        arraySize: 3,
+
+        // 要生成的 IP 地址类型 — "ipv4" 或 "ipv6"；
+        ipAddress: "ipv4",
+
+        // 决定生成的 IP 是否包含 CIDR 后缀。
+        includeCidr: true,
+      }),
+    },
+  },
+}));
+```
+
+### `geometry`
+
+<rem025 />
+基于给定参数生成几何对象。
+
+<Callout title='warning'>
+<Tabs items={['arraySize', 'srid']}>
+<Tab>
+目前，如果你将 arraySize 设置为大于 1 的值，或者尝试通过 drizzle-orm 向 PostgreSQL 或 CockroachDB 中的 `geometry(point, 0)[]` 列插入多个 `geometry point` 元素，会遇到错误。
+
+此问题已经列入待办事项。
+
+<Callout title="❌">
+```ts {13}
+import { seed } from "drizzle-seed";
+import { geometry, pgTable } from 'drizzle-orm/pg-core';
+
+const geometryTable = pgTable('geometry_table', {
+	geometryArray: geometry('geometry_array', { type: 'point', srid: 0 }).array(3),
+});
+
+await seed(db, { geometryTable }, { count: 1000 }).refine((funcs) => ({
+  geometryTable: {
+    columns: {
+      geometryArray: funcs.geometry({
+        // 目前不支持大于 1 的 arraySize
+        arraySize: 3,
+      }),
+    },
+  },
+}));
+```
+</Callout>
+
+<Callout title='✅'>
+```ts {13}
+import { seed } from "drizzle-seed";
+import { geometry, pgTable } from 'drizzle-orm/pg-core';
+
+const geometryTable = pgTable('geometry_table', {
+	geometryArray: geometry('geometry_array', { type: 'point', srid: 0 }).array(1),
+});
+
+await seed(db, { geometryTable }, { count: 1000 }).refine((funcs) => ({
+  geometryTable: {
+    columns: {
+      geometryArray: funcs.geometry({
+        // 这样设置将按预期工作
+        arraySize: 1,
+      }),
+    },
+  },
+}));
+```
+</Callout>
+</Tab>
+
+<Tab>
+目前，如果你在 drizzle-orm 表声明中将 `geometry(point)` 列的 SRID 设置为除 0 以外的其它值（例如 4326），
+在填充数据时会遇到错误。
+
+此问题已经列入待办事项。
+
+<Callout title="❌">
+```ts {5}
+import { seed } from "drizzle-seed";
+import { geometry, pgTable } from 'drizzle-orm/pg-core';
+
+const geometryTable = pgTable('geometry_table', {
+	geometryColumn: geometry('geometry_column', { type: 'point', srid: 4326 }),
+});
+
+await seed(db, { geometryTable }, { count: 1000 }).refine((funcs) => ({
+  geometryTable: {
+    columns: {
+      geometryColumn: funcs.geometry({
+        srid: 4326,
+      }),
+    },
+  },
+}));
+```
+</Callout>
+
+<Callout title='✅'>
+```ts {5}
+import { seed } from "drizzle-seed";
+import { geometry, pgTable } from 'drizzle-orm/pg-core';
+
+const geometryTable = pgTable('geometry_table', {
+	geometryColumn: geometry('geometry_column', { type: 'point', srid: 0 }),
+});
+
+await seed(db, { geometryTable }, { count: 1000 }).refine((funcs) => ({
+  geometryTable: {
+    columns: {
+      geometryColumn: funcs.geometry({
+        srid: 4326,
+      }),
+    },
+  },
+}));
+```
+</Callout>
+</Tab>
+</Tabs>
+</Callout>
+
+|  | 参数          | 默认值                                                                                 | 类型
+|:-| :--------      | :--------                                                                               | :--------
+|  |`isUnique`      |数据库列的唯一性                                                                       |`boolean`
+|  |`arraySize`     |--                                                                                     |`number`
+|  |`type`          |`'point'`                                                                             |`'point'`
+|  |`srid`          |`4326`                                                                                |`4326 \| 3857`
+|  |`decimalPlaces` |`6`                                                                                     |`1 \| 2 \| 3 \| 4 \| 5 \| 6 \| 7`
+<rem025 />
+
+```ts 
+import { seed } from "drizzle-seed";
+
+await seed(db, schema, { count: 1000 }).refine((funcs) => ({
+  geometryTable: {
+    columns: {
+      geometryPointTuple: funcs.geometry({
+        // 控制生成值是否唯一的属性；
+        isUnique: true,
+
+        // 每个一维数组中的元素数量（如指定，将生成数组）；
+        arraySize: 1,
+
+        // 要生成的几何类型；当前仅支持 `'point'`；
+        type: "point",
+
+        // 空间参考系统标识符：决定生成的点类型 — `4326` 或 `3857`；
+        srid: 4326,
+
+        // 当 `srid` 是 `4326` 时，点的小数位数（例如，`decimalPlaces = 3` 会生成类似 `'point(30.723 46.482)'` 的值）。
+        decimalPlaces: 5,
+      }),
+    },
+  },
+}));
+
+```
+
+### `vector`
+
+<rem025 />
+基于提供的参数生成向量。
+
+|  | 参数          | 默认值                                                      | 类型
+|:-| :--------      | :--------                                                  | :--------
+|  |`isUnique`      |数据库列的唯一性                                            |`boolean`
+|  |`arraySize`     |--                                                          |`number`
+|  |`decimalPlaces` |`2`                                                         |`number`
+|  |`dimensions`    |数据库列的维数                                              |`number`
+|  |`minValue`      |`-1000`                                                     |`number`
+|  |`maxValue`      |`1000`                                                      |`number`
+<rem025 />
+
+```ts 
+import { seed } from "drizzle-seed";
+
+await seed(db, schema, { count: 1000 }).refine((funcs) => ({
+  vectorTable: {
+    columns: {
+      vector: funcs.vector({
+        // 控制生成值是否唯一的属性；
+        isUnique: true,
+
+        // 每个一维数组中的元素数量（如指定，将生成数组）；
+        arraySize: 3,
+
+        // 每个向量元素的小数位数（例如，`decimalPlaces = 3` 生成如 `1.123` 的值）；
+        decimalPlaces: 5,
+
+        // 每个生成向量的元素数量（例如，`dimensions = 3` 生成如 `[1,2,3]` 的值）；
+        dimensions: 12,
+
+        // 每个向量元素允许的最小值；
+        minValue: -100,
+
+        // 每个向量元素允许的最大值。
+        maxValue: 100,
       }),
     },
   },

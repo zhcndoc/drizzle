@@ -1,9 +1,9 @@
 import Callout from '@mdx/Callout.astro';
 import CodeTabs from "@mdx/CodeTabs.astro";
 
-Create a `index.ts` file in the `src/db` directory and initialize the connection:
+在 `src/db` 目录下创建一个 `index.ts` 文件并初始化连接：
 
-<CodeTabs items={['mysql2', 'mysql2 with config', 'your mysql2 driver']}>
+<CodeTabs items={['mysql2', 'mysql2 带配置', '你的 mysql2 驱动']}>
 ```typescript copy
 import 'dotenv/config';
 import { drizzle } from "drizzle-orm/singlestore";
@@ -14,7 +14,7 @@ const db = drizzle(process.env.DATABASE_URL);
 import 'dotenv/config';
 import { drizzle } from "drizzle-orm/singlestore";
 
-// You can specify any property from the mysql2 connection options
+// 你可以指定 mysql2 连接选项中的任何属性
 const db = drizzle({ connection: { uri: process.env.DATABASE_URL }});
 ```
 ```ts
@@ -29,7 +29,7 @@ const poolConnection = mysql.createPool({
 });
 const db = drizzle({ client: poolConnection });
 
-// or if you need client connection
+// 或者如果你需要客户端连接
 async function main() {
   const connection = await mysql.createConnection({
     host: "host",
@@ -43,7 +43,7 @@ main();
 </CodeTabs>
 
 <Callout type="warning" emoji="⚙️">
-  For the built in `migrate` function with DDL migrations we and drivers strongly encourage you to use single `client` connection.  
+  对于内置的带有 DDL 迁移的 `migrate` 功能，我们和驱动强烈建议你使用单个 `client` 连接。
 
-  For querying purposes feel free to use either `client` or `pool` based on your business demands.
+  在查询时，可以根据你的业务需求自由选择使用 `client` 或基于连接池的 `pool`。
 </Callout>

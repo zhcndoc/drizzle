@@ -1,8 +1,8 @@
 import CodeTabs from "@mdx/CodeTabs.astro";
 
-Create a `index.ts` file in the `src` directory and initialize the connection:
+在 `src` 目录下创建一个 `index.ts` 文件并初始化连接：
 
-<CodeTabs items={["bun:sqlite", "bun:sqlite with config"]}>
+<CodeTabs items={["bun:sqlite", "bun:sqlite 带配置"]}>
 ```typescript copy
 import 'dotenv/config';
 import { drizzle } from 'drizzle-orm/bun-sqlite';
@@ -13,12 +13,12 @@ const db = drizzle(process.env.DB_FILE_NAME!);
 import 'dotenv/config';
 import { drizzle } from 'drizzle-orm/bun-sqlite';
 
-// You can specify any property from the bun:sql connection options
+// 你可以指定 bun:sql 连接选项中的任何属性
 const db = drizzle({ connection: { source: process.env.DB_FILE_NAME! }});
 ```
 </CodeTabs>
 
-If you need to provide your existing driver:
+如果你需要提供已有的驱动：
 ```typescript copy
 import 'dotenv/config';
 import { drizzle } from 'drizzle-orm/bun-sqlite';

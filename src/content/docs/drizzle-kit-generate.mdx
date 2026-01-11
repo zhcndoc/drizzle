@@ -22,7 +22,7 @@ import Dialects from "@mdx/Dialects.mdx"
 
 <br/>
 
-`drizzle-kit generate` 允许您根据r Drizzle 模式在声明时或后续模式更改时生成 SQL 迁移。
+`drizzle-kit generate` 允许您根据 Drizzle 模式在声明时或后续模式更改时生成 SQL 迁移。
 <Callout collapsed="它是如何在后台工作的？">
 Drizzle Kit `generate` 命令触发以下事件序列：
 1. 它将读取您的 Drizzle 模式文件并创建模式的 JSON 快照
@@ -51,12 +51,13 @@ export const users = p.pgTable("users", {
   ┌ 4. 生成 SQL 迁移并持久化到文件
   │    ┌─┴───────────────────────────────────────┐  
   │      📂 drizzle       
-  │      ├ 📂 _meta
-  │      └ 📜 0000_premium_mister_fear.sql
+  │      └ 📂 20242409125510_premium_mister_fear
+  │        ├ 📜 migration.sql
+  │        └ 📜 snapshot.json
   v
 ```
 ```sql
--- drizzle/0000_premium_mister_fear.sql
+-- drizzle/20242409125510_premium_mister_fear/migration.sql
 
 CREATE TABLE "users" (
  "id" SERIAL PRIMARY KEY,
@@ -109,8 +110,9 @@ npx drizzle-kit generate --name=init
 ```plaintext {4}
 📦 <项目根目录>
  ├ 📂 drizzle
- │ ├ 📂 _meta
- │ └ 📜 0000_init.sql 
+ │ └ 📂 20242409125510_init
+ │   ├ 📜 snapshot.json
+ │   └ 📜 migration.sql
  ├ 📂 src
  └ …
 ```
@@ -143,14 +145,13 @@ drizzle-kit generate --custom --name=seed-users
 ```plaintext {5}
 📦 <项目根目录>
  ├ 📂 drizzle
- │ ├ 📂 _meta
- │ ├ 📜 0000_init.sql 
- │ └ 📜 0001_seed-users.sql 
+ │ ├ 📂 20242409125510_init
+ │ └ 📂 20242409125510_seed-users
  ├ 📂 src
  └ …
 ```
 ```sql
--- ./drizzle/0001_seed-users.sql
+-- ./drizzle/20242409125510_seed/migration.sql
 
 INSERT INTO "users" ("name") VALUES('Dan');
 INSERT INTO "users" ("name") VALUES('Andrew');
@@ -226,13 +227,12 @@ npx drizzle-kit generate --config=./configs/drizzle.config.ts --name=seed-users 
 📦 <项目根目录>
  ├ …
  ├ 📂 migrations
- │ ├ 📂 _meta
- │ ├ 📜 0000_init.sql 
- │ └ 📜 0001_seed-users.sql 
+ │ ├ 📂 20242409125510_init
+ │ └ 📂 20242409125510_seed-users
  └ …
 ```
 ```sql
--- ./drizzle/0001_seed-users.sql
+-- ./drizzle/20242409125510_seed-users/migration.sql
 
 INSERT INTO "users" ("name") VALUES('Dan');
 INSERT INTO "users" ("name") VALUES('Andrew');

@@ -1,8 +1,8 @@
 import CodeTabs from "@mdx/CodeTabs.astro";
 
-Create a `index.ts` file in the `src` directory and initialize the connection:
+在 `src` 目录下创建一个 `index.ts` 文件并初始化连接：
 
-<CodeTabs items={["libsql", "libsql with config"]}>
+<CodeTabs items={["libsql", "带配置的 libsql"]}>
 ```typescript copy
 import 'dotenv/config';
 import { drizzle } from 'drizzle-orm/libsql';
@@ -13,12 +13,12 @@ const db = drizzle(process.env.DB_FILE_NAME!);
 import 'dotenv/config';
 import { drizzle } from 'drizzle-orm/libsql';
 
-// You can specify any property from the libsql connection options
+// 你可以指定 libsql 连接选项中的任意属性
 const db = drizzle({ connection: { url: process.env.DB_FILE_NAME! }});
 ```
 </CodeTabs>
 
-If you need to provide your existing driver:
+如果你需要提供现有的驱动：
 
 ```typescript copy
 import 'dotenv/config';
