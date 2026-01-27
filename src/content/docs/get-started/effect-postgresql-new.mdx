@@ -1,0 +1,135 @@
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
+import Npm from "@mdx/Npm.astro";
+import Callout from '@mdx/Callout.astro';
+import Steps from '@mdx/Steps.astro';
+import AnchorCards from '@mdx/AnchorCards.astro';
+import Breadcrumbs from '@mdx/Breadcrumbs.astro';
+import Prerequisites from "@mdx/Prerequisites.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+import FileStructure from '@mdx/get-started/FileStructure.mdx';
+import InstallPackages from '@mdx/get-started/InstallPackages.mdx';
+import ConnectEffect from '@mdx/get-started/postgresql/ConnectEffect.mdx'
+import CreateTable from '@mdx/get-started/postgresql/CreateTable.mdx'
+import SetupConfig from '@mdx/get-started/SetupConfig.mdx';
+import ApplyChanges from '@mdx/get-started/ApplyChanges.mdx';
+import RunFile from '@mdx/get-started/RunFile.mdx';
+import QueryDatabase from '@mdx/get-started/QueryDatabase.mdx';
+import SetupEnv from '@mdx/get-started/SetupEnv.mdx';
+
+<Breadcrumbs/>
+
+# 使用 Drizzle 和 Effect PostgreSQL 快速开始
+
+<Callout type='error'>
+本页面解释了自 drizzle 版本 `1.0.0-beta.9` 及更高版本中可用的概念。
+
+Effect 目前仅支持 PostgreSQL，其他方言支持即将实现。
+
+关于升级的更多信息（详见[这里](/docs/upgrade-v1)）
+</Callout>
+
+<Prerequisites>
+  - **Effect** - Effect 是一个功能强大的 TS 库，旨在帮助开发者轻松创建复杂的同步和异步程序。 - [阅读更多](https://effect.website/docs)
+  - **dotenv** - 用于管理环境变量的包 - [阅读](https://www.npmjs.com/package/dotenv)
+  - **tsx** - 用于运行 TypeScript 文件的包 - [阅读](https://tsx.is/)
+  - **@effect/sql-pg** - Effect 的 PostgreSQL 工具包 - [阅读](https://effect-ts.github.io/effect/docs/sql-pg)
+</Prerequisites>
+
+Drizzle 原生支持使用 `@effect/sql-pg` 驱动的 Effect PostgreSQL 连接。
+
+<FileStructure/>
+
+#### 第一步 - 安装 **node-postgres** 包
+<InstallPackages lib='effect @effect/sql-pg pg' devlib=' @types/pg'/>
+
+#### 第二步 - 设置连接变量
+
+<SetupEnv env_variable='DATABASE_URL' />
+
+<Callout title='技巧'>
+如果你还没有 PostgreSQL 数据库并且想创建一个用于测试，可以参考我们的 PostgreSQL Docker 安装指南。
+
+PostgreSQL Docker 安装指南位于[这里](/docs/guides/postgresql-local-setup)。按照指南完成设置，生成数据库 URL（指南中有详细说明），然后回来执行后续步骤。
+</Callout>
+
+#### 第三步 - 连接 Drizzle ORM 到数据库
+
+<ConnectEffect />
+
+#### 第四步 - 创建表
+
+<CreateTable />
+
+#### 第五步 - 设置 Drizzle 配置文件
+
+<SetupConfig dialect='postgresql' env_variable='DATABASE_URL'/>
+
+#### 第六步 - 应用数据库变更
+
+<ApplyChanges />
+
+#### 第七步 - 填充并查询数据库
+
+让我们**更新** `src/index.ts` 文件，添加创建、读取、更新和删除用户的查询示例。
+
+```ts
+import 'dotenv/config';
+import { drizzle } from 'drizzle-orm/effect-postgres';
+import { Effect, Redacted } from 'effect';
+import { PgClient } from '@effect/sql-pg'
+import { types } from 'pg';
+import { usersTable } from './db/schema'
+
+const clientLayer = PgClient.layer({
+    url: Redacted.make(process.env.DATABASE_URL!);
+	  types: {
+	  	getTypeParser: (typeId, format) => {
+	  		if ([1184, 1114, 1082, 1186, 1231, 1115, 1185, 1187, 1182].includes(typeId)) return (val: any) => val;
+	  		return types.getTypeParser(typeId, format);
+	  	},
+	  },
+});
+
+const program = Effect.gen(function*() {
+	const client = yield* PgClient.PgClient;
+	const db = drizzle(client, { logger: true, /*...*/ });
+
+  const user: typeof usersTable.$inferInsert = {
+    name: 'John',
+    age: 30,
+    email: 'john@example.com',
+  };
+
+  yield* db.insert(usersTable).values(user);
+  console.log('用户已创建！')
+
+  const users = yield* db.select().from(usersTable);
+  console.log('从数据库获取到的所有用户: ', users)
+  /*
+  const users: {
+    id: number;
+    name: string;
+    age: number;
+    email: string;
+  }[]
+  */
+
+  yield* db
+    .update(usersTable)
+    .set({
+      age: 31,
+    })
+    .where(eq(usersTable.email, user.email));
+  console.log('用户信息已更新！')
+
+  yield* db.delete(usersTable).where(eq(usersTable.email, user.email));
+  console.log('用户已删除！')
+});
+
+await Effect.runPromise(program).pipe(Effect.provide(clientLayer));
+```
+
+#### 第八步 - 运行 index.ts 文件
+
+<RunFile/>

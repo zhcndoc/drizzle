@@ -52,18 +52,23 @@ SQL 中的生成列是一项功能，允许您在表中创建列，其值基于�
     在 Drizzle 中，你可以在任何列类型上指定 `.generatedAlwaysAs()` 函数，并添加一个支持的 SQL 查询，这将为你生成该列的数据。
 
     #### 特性 
-    此函数可以以三种方式接受生成表达式：
+    此函数可以以两种方式接受生成表达式：
+
+    <Callout type='warning' collapsed="从 1.0.0-beta.12 版本开始的更改">
+    
+    在之前的版本中，`.generatedAlwaysAs()` 也接受字面量作为表达式。
+    </Callout>
 
     **`string`**
     <CodeTab>
     ```ts
     export const test = pgTable("test", {
-        generatedName: text("gen_name").generatedAlwaysAs(`hello world!`),
+        generatedName: text("gen_name").generatedAlwaysAs(`'hello world!'`),
     });
     ```
     ```sql
-    CREATE TABLE IF NOT EXISTS "test" (
-	    "gen_name" text GENERATED ALWAYS AS (hello world!) STORED
+    CREATE TABLE "test" (
+	    "gen_name" text GENERATED ALWAYS AS ('hello world!') STORED
     );
     ```
     </CodeTab>
@@ -73,12 +78,12 @@ SQL 中的生成列是一项功能，允许您在表中创建列，其值基于�
     <CodeTab>
     ```ts
     export const test = pgTable("test", {
-        generatedName: text("gen_name").generatedAlwaysAs(sql`hello "world"!`),
+        generatedName: text("gen_name").generatedAlwaysAs(sql`'hello "world"!'`),
     });
     ```
     ```sql
-    CREATE TABLE IF NOT EXISTS "test" (
-	    "gen_name" text GENERATED ALWAYS AS (hello "world"!) STORED
+    CREATE TABLE "test" (
+	    "gen_name" text GENERATED ALWAYS AS ('hello "world"!') STORED
     );
     ```
     </CodeTab>
@@ -89,14 +94,14 @@ SQL 中的生成列是一项功能，允许您在表中创建列，其值基于�
     export const test = pgTable("test", {
         name: text("first_name"),
         generatedName: text("gen_name").generatedAlwaysAs(
-          (): SQL => sql`hi, ${test.name}!`
+          (): SQL => sql`'hi, ' || ${test.name} || '!'`
         ),
     });
     ```
     ```sql
-    CREATE TABLE IF NOT EXISTS "test" (
+    CREATE TABLE "test" (
 	    "first_name" text,
-	    "gen_name" text GENERATED ALWAYS AS (hi, "test"."first_name"!) STORED
+	    "gen_name" text GENERATED ALWAYS AS ('hi, ' || "test"."first_name" || '!') STORED
     );
     ```
     </CodeTab>
@@ -131,13 +136,13 @@ SQL 中的生成列是一项功能，允许您在表中创建列，其值基于�
     );
     ```
     ```sql {4}
-    CREATE TABLE IF NOT EXISTS "test" (
+    CREATE TABLE "test" (
     	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "test_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
     	"content" text,
     	"content_search" "tsvector" GENERATED ALWAYS AS (to_tsvector('english', "test"."content")) STORED
     );
     --> statement-breakpoint
-    CREATE INDEX IF NOT EXISTS "idx_content_search" ON "test" USING gin ("content_search");
+    CREATE INDEX "idx_content_search" ON "test" USING gin ("content_search");
     ```
     </CodeTab>
    </CodeTabs>
@@ -164,17 +169,24 @@ SQL 中的生成列是一项功能，允许您在表中创建列，其值基于�
     #### Drizzle 端
 
     #### 特性 
+    此函数可以以两种方式接受生成表达式：
+
+    <Callout type='warning' collapsed="从 1.0.0-beta.12 版本开始的更改">
+    
+    在之前的版本中，`.generatedAlwaysAs()` 也接受字面量作为表达式。
+    </Callout>
 
     **`string`**
     <CodeTab>
     ```ts
     export const test = mysqlTable("test", {
-        generatedName: text("gen_name").generatedAlwaysAs(`hello world!`),
+        generatedName: text("gen_name").generatedAlwaysAs(`'hello world!'`),
     });
     ```
+
     ```sql
-    CREATE TABLE `test` (
-	    `gen_name` text GENERATED ALWAYS AS (hello world!) VIRTUAL
+    CREATE TABLE "test" (
+	    "gen_name" text GENERATED ALWAYS AS ('hello world!') VIRTUAL
     );
     ```
     </CodeTab>
@@ -184,34 +196,35 @@ SQL 中的生成列是一项功能，允许您在表中创建列，其值基于�
     <CodeTab>
     ```ts
     export const test = mysqlTable("test", {
-        generatedName: text("gen_name").generatedAlwaysAs(sql`hello "world"!`),
+        generatedName: text("gen_name").generatedAlwaysAs(sql`'hello "world"!'`),
     });
     ```
     ```sql
     CREATE TABLE `test` (
-	    `gen_name` text GENERATED ALWAYS AS (hello "world"!) VIRTUAL
+	    `gen_name` text GENERATED ALWAYS AS ('hello "world"!') VIRTUAL
     );
     ```
     </CodeTab>
 
     **`callback`** - 如果您需要引用表中的列
 
-    <CodeTab>
+     <CodeTab>
     ```ts
     export const test = mysqlTable("test", {
         name: text("first_name"),
         generatedName: text("gen_name").generatedAlwaysAs(
-          (): SQL => sql`hi, ${test.name}!`
+          (): SQL => sql`'hi, ' || ${test.name} || '!'`
         ),
     });
     ```
     ```sql
     CREATE TABLE `test` (
-    	`first_name` text,
-    	`gen_name` text GENERATED ALWAYS AS (hi, `test`.`first_name`!) VIRTUAL
+  	  `first_name` text,
+  	  `gen_name` text GENERATED ALWAYS AS ('hi, ' || `test`.`first_name` || '!') VIRTUAL
     );
     ```
     </CodeTab>
+
     #### 限制
     Drizzle Kit 也将在 `push` 命令中有限制：
     1. 您不能使用 `push` 更改生成约束表达式和类型。Drizzle-kit 会忽略此更改。要使其工作，您需要先 `drop` 列，`push`，然后 `add` 带有新表达式的列。这是由于数据库端复杂的映射，其中架构表达式将在数据库端被修改，而在反向工程时，我们将得到不同的字符串。我们无法确定您是更改了此表达式，还是它被数据库更改和格式化。由于这些是生成列且 `push` 通常用于本地数据库的原型，`drop` 和 `create` 生成列应该是快速的。由于这些列是 `generated`，所有数据将会被恢复。
@@ -225,22 +238,22 @@ SQL 中的生成列是一项功能，允许您在表中创建列，其值基于�
         id2: int("id2"),
         name: text("name"),
         storedGenerated: text("stored_gen").generatedAlwaysAs(
-          (): SQL => sql`${users.name} || 'hello'`,
+          (): SQL => sql`concat(${users.name}, ' ', 'hello')`,
           { mode: "stored" }
         ),
         virtualGenerated: text("virtual_gen").generatedAlwaysAs(
-          (): SQL => sql`${users.name} || 'hello'`,
+          (): SQL => sql`concat(${users.name}, ' ', 'hello')`,
           { mode: "virtual" }
         ),
-    })
+    });
     ```
     ```sql
     CREATE TABLE `users` (
-	    `id` int,
-	    `id2` int,
-	    `name` text,
-	    `stored_gen` text GENERATED ALWAYS AS (`users`.`name` || 'hello') STORED,
-	    `virtual_gen` text GENERATED ALWAYS AS (`users`.`name` || 'hello') VIRTUAL
+      `id` int,
+      `id2` int,
+      `name` text,
+      `stored_gen` text GENERATED ALWAYS AS (concat(`users`.`name`, ' ', 'hello')) STORED,
+      `virtual_gen` text GENERATED ALWAYS AS (concat(`users`.`name`, ' ', 'hello')) VIRTUAL
     );
     ```
     </CodeTab>
@@ -268,28 +281,42 @@ SQL 中的生成列是一项功能，允许您在表中创建列，其值基于�
     #### Drizzle 端
 
     #### 特性
+    此函数可以以两种方式接受生成表达式：
+
+    <Callout type='warning' collapsed="从 1.0.0-beta.12 版本开始的更改">
+    
+    在 1.0.0-beta.12 之前的版本，`.generatedAlwaysAs()` 也接受字面量作为表达式。
+    </Callout>
+
     **`string`**
+    <CodeTab>
     ```ts
     export const test = sqliteTable("test", {
-        generatedName: text("gen_name").generatedAlwaysAs(`hello world!`),
+        id: int("id").primaryKey(),
+        generatedName: text("gen_name").generatedAlwaysAs(`'hello world!'`),
     });
     ```
+
     ```sql
     CREATE TABLE `test` (
-	    `gen_name` text GENERATED ALWAYS AS (hello world!) VIRTUAL
+	    `id` integer PRIMARY KEY,
+	    `gen_name` text GENERATED ALWAYS AS ('hello world!') VIRTUAL
     );
     ```
+    </CodeTab>
 
     **`sql`** 标签 - 如果您希望 Drizzle 为您转义一些值
 
     ```ts
     export const test = sqliteTable("test", {
-        generatedName: text("gen_name").generatedAlwaysAs(sql`hello "world"!`),
+        id: int("id").primaryKey(),
+        generatedName: text("gen_name").generatedAlwaysAs(sql`'hello "world"!'`),
     });
     ```
     ```sql
     CREATE TABLE `test` (
-	    `gen_name` text GENERATED ALWAYS AS (hello "world"!) VIRTUAL
+      `id` integer PRIMARY KEY,
+      `gen_name` text GENERATED ALWAYS AS ('hello "world"!') VIRTUAL
     );
     ```
 
@@ -299,14 +326,14 @@ SQL 中的生成列是一项功能，允许您在表中创建列，其值基于�
     export const test = sqliteTable("test", {
         name: text("first_name"),
         generatedName: text("gen_name").generatedAlwaysAs(
-          (): SQL => sql`hi, ${test.name}!`
+          (): SQL => sql`'hi,' || ${test.name} || '!'`
         ),
     });
     ```
     ```sql
     CREATE TABLE `test` (
-	    `first_name` text,
-	    `gen_name` text GENERATED ALWAYS AS (hi, "first_name"!) VIRTUAL
+      `first_name` text,
+      `gen_name` text GENERATED ALWAYS AS ('hi,' || "first_name" || '!') VIRTUAL
     );
     ```
 
@@ -317,7 +344,7 @@ SQL 中的生成列是一项功能，允许您在表中创建列，其值基于�
     3. 您不能更改现有列中的 `stored` 生成表达式，由于以上原因。但是，您可以更改 `virtual` 表达式。
     4. 您不能将生成约束类型从 `virtual` 更改为 `stored`，由于以上原因。但是，您可以从 `stored` 更改为 `virtual`。
 
-   <CodeTabs items={["index.ts", "schema.ts"]}>
+  <CodeTabs items={["schema.ts"]}>
 	<CodeTab>
 	```typescript copy
     export const users = sqliteTable("users", {
@@ -347,7 +374,7 @@ SQL 中的生成列是一项功能，允许您在表中创建列，其值基于�
   <Tab>
   进行中
   </Tab>
-<Tab>
+  <Tab>
     #### 数据库端
     **类型**: `PERSISTED`, `VIRTUAL`
 
@@ -361,32 +388,41 @@ SQL 中的生成列是一项功能，允许您在表中创建列，其值基于�
     #### Drizzle 端
 
     #### 特性 
+    此函数可以以两种方式接受生成表达式：
+
+    <Callout type='warning' collapsed="从 1.0.0-beta.12 版本开始的更改">
+    
+    在之前的版本中，`.generatedAlwaysAs()` 也接受字面量作为表达式。
+    </Callout>
 
     **`string`**
     <CodeTab>
     ```ts
     export const test = mssqlTable("test", {
-        generatedName: text("gen_name").generatedAlwaysAs(`hello world!`),
+        generatedName: text("gen_name").generatedAlwaysAs(`'hello world!'`),
     });
     ```
     ```sql
     CREATE TABLE [test] (
-	    [gen_name] AS ('hello world!') VIRTUAL
+	    [gen_name] AS ('hello world!')
     );
     ```
     </CodeTab>
+    </Callout>
 
     **`sql`** 标签 - 如果您希望 Drizzle 为您转义一些值
 
     <CodeTab>
     ```ts
     export const test = mssqlTable("test", {
+        id: int("id"),
         generatedName: text("gen_name").generatedAlwaysAs(sql`hello "world"!`),
     });
     ```
     ```sql
     CREATE TABLE [test] (
-	    [gen_name] AS ('hello "world"!') VIRTUAL
+	    [id] int,
+	    [gen_name] AS ('hello "world"!') 
     );
     ```
     </CodeTab>
@@ -398,14 +434,14 @@ SQL 中的生成列是一项功能，允许您在表中创建列，其值基于�
     export const test = mssqlTable("test", {
         name: text("first_name"),
         generatedName: text("gen_name").generatedAlwaysAs(
-          (): SQL => sql`hi, ${test.name}!`
+          (): SQL => sql`concat('hi,', ' ', ${test.name}, '!')`
         ),
     });
     ```
     ```sql
     CREATE TABLE [test] (
     	[first_name] text,
-    	[gen_name] AS ('hi, [test].[first_name]!') VIRTUAL
+    	[gen_name] AS (concat('hi,', ' ', [test].[first_name], '!')) 
     );
     ```
     </CodeTab>
@@ -415,33 +451,39 @@ SQL 中的生成列是一项功能，允许您在表中创建列，其值基于�
     这将为你生成该列的数据。
 
     #### 特性 
-    此函数可以以三种方式接受生成表达式：
+    此函数可以以两种方式接受生成表达式：
+
+    <Callout type='warning' collapsed="从 1.0.0-beta.12 版本开始的更改">
+    
+    在之前的版本中，`.generatedAlwaysAs()` 也接受字面量作为表达式。
+    </Callout>
 
     **`string`**
     <CodeTab>
     ```ts
     export const test = cockroachTable("test", {
-        generatedName: text("gen_name").generatedAlwaysAs(`hello world!`),
+        generatedName: text("gen_name").generatedAlwaysAs(`'hello world!'`),
     });
     ```
     ```sql
     CREATE TABLE "test" (
-	    "gen_name" text GENERATED ALWAYS AS (hello world!) STORED
+    	"gen_name" string GENERATED ALWAYS AS ('hello world!') STORED
     );
     ```
     </CodeTab>
+    </Callout>
 
     **`sql`** 标签 - 如果您希望 Drizzle 为您转义一些值
 
     <CodeTab>
     ```ts
     export const test = cockroachTable("test", {
-        generatedName: text("gen_name").generatedAlwaysAs(sql`hello "world"!`),
+        generatedName: text("gen_name").generatedAlwaysAs(sql`'hello "world"!'`),
     });
     ```
     ```sql
     CREATE TABLE "test" (
-	    "gen_name" text GENERATED ALWAYS AS (hello "world"!) STORED
+	    "gen_name" string GENERATED ALWAYS AS ('hello "world"!') STORED
     );
     ```
     </CodeTab>
@@ -452,14 +494,15 @@ SQL 中的生成列是一项功能，允许您在表中创建列，其值基于�
     export const test = cockroachTable("test", {
         name: text("first_name"),
         generatedName: text("gen_name").generatedAlwaysAs(
-          (): SQL => sql`hi, ${test.name}!`
+          (): SQL => sql`'hi, ' || ${test.name} || '!'`
         ),
     });
     ```
+
     ```sql
     CREATE TABLE "test" (
-	    "first_name" text,
-	    "gen_name" text GENERATED ALWAYS AS (hi, "test"."first_name"!) STORED
+    	"first_name" string,
+    	"gen_name" string GENERATED ALWAYS AS ('hi, ' || "test"."first_name" || '!') STORED
     );
     ```
     </CodeTab>
@@ -495,11 +538,10 @@ SQL 中的生成列是一项功能，允许您在表中创建列，其值基于�
     ```
     ```sql {4}
     CREATE TABLE "test" (
-    	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "test_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
-    	"content" text,
-    	"content_search" "tsvector" GENERATED ALWAYS AS (to_tsvector('english', "test"."content")) STORED
+    	"id" int4 PRIMARY KEY GENERATED ALWAYS AS IDENTITY (INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+    	"content" string,
+    	"content_search" tsvector GENERATED ALWAYS AS (to_tsvector('english', "test"."content")) STORED
     );
-    --> statement-breakpoint
     CREATE INDEX "idx_content_search" ON "test" USING gin ("content_search");
     ```
     </CodeTab>

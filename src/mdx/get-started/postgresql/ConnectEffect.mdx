@@ -1,0 +1,28 @@
+在 `src` 目录下创建一个 `index.ts` 文件并初始化连接：
+
+```typescript
+import 'dotenv/config';
+import { drizzle } from 'drizzle-orm/effect-postgres';
+import { Effect, Redacted } from 'effect';
+import { PgClient } from '@effect/sql-pg'
+import { types } from 'pg';
+
+const clientLayer = PgClient.layer({
+    url: Redacted.make(process.env.DATABASE_URL!);
+    types: {
+        getTypeParser: (typeId, format) => {
+            if ([1184, 1114, 1082, 1186, 1231, 1115, 1185, 1187, 1182].includes(typeId)) { 
+                return (val: any) => val;
+            }
+            return types.getTypeParser(typeId, format);
+        },
+    },
+});
+
+const program = Effect.gen(function*() {
+    const client = yield* PgClient.PgClient;
+    const db = drizzle(client, { logger: true, /*...*/ });
+});
+
+await Effect.runPromise(program).pipe(Effect.provide(clientLayer));
+```

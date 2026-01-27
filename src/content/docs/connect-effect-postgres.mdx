@@ -1,0 +1,64 @@
+import Npm from "@mdx/Npm.astro";
+import Callout from '@mdx/Callout.astro';
+import AnchorCards from '@mdx/AnchorCards.astro';
+import Steps from '@mdx/Steps.astro';
+import WhatsNextPostgres from "@mdx/WhatsNextPostgres.astro";
+import Prerequisites from "@mdx/Prerequisites.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+
+# Drizzle \<\> Effect Postgres
+
+<Callout type='error'>
+本页介绍的是 Drizzle 版本 `1.0.0-beta.9` 及以上支持的概念。
+
+Effect 目前仅支持 PostgreSQL，其他方言支持正在开发中。
+
+如何升级请查看（详见 [这里](/docs/upgrade-v1)）
+</Callout>
+
+<Prerequisites>
+- 使用 Drizzle 的数据库 [连接基础](/docs/connect-overview)
+- Effect - [官网](https://effect.website/docs)
+- Bun SQL - 用于操作 PostgreSQL 数据库的原生绑定 - [阅读这里](https://bun.sh/docs/api/sql)
+- **@effect/sql-pg** - Effect 的 PostgreSQL 工具包 - [阅读这里](https://effect-ts.github.io/effect/docs/sql-pg)
+</Prerequisites>
+
+Drizzle 原生支持使用 `@effect/sql-pg` 驱动进行 Effect PostgreSQL 连接
+
+#### 第1步 - 安装依赖包
+<Npm>
+drizzle-orm effect @effect/sql-pg pg
+-D drizzle-kit
+</Npm>
+
+#### 第2步 - 初始化驱动并执行查询
+```typescript copy
+import 'dotenv/config';
+import { drizzle } from 'drizzle-orm/effect-postgres';
+import { Effect, Redacted } from 'effect';
+import { PgClient } from '@effect/sql-pg'
+import { types } from 'pg';
+
+const clientLayer = PgClient.layer({
+    url: Redacted.make(process.env.DATABASE_URL!);
+	  types: {
+		  getTypeParser: (typeId, format) => {
+			  if ([1184, 1114, 1082, 1186, 1231, 1115, 1185, 1187, 1182].includes(typeId)) { 
+          return (val: any) => val;
+        }
+			  return types.getTypeParser(typeId, format);
+		  },
+	  },
+});
+
+const program = Effect.gen(function*() {
+	const client = yield* PgClient.PgClient;
+	const db = drizzle(client, { logger: true, /*...*/ });
+});
+
+await Effect.runPromise(program).pipe(Effect.provide(clientLayer));
+```
+
+#### 接下来该做什么？
+
+<WhatsNextPostgres/>
