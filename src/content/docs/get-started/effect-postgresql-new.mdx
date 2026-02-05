@@ -22,7 +22,7 @@ import SetupEnv from '@mdx/get-started/SetupEnv.mdx';
 # 使用 Drizzle 和 Effect PostgreSQL 快速开始
 
 <Callout type='error'>
-本页面解释了自 drizzle 版本 `1.0.0-beta.9` 及更高版本中可用的概念。
+本页面解释了自 drizzle 版本 `1.0.0-beta.13` 及更高版本中可用的概念。
 
 Effect 目前仅支持 PostgreSQL，其他方言支持即将实现。
 
@@ -41,6 +41,7 @@ Drizzle 原生支持使用 `@effect/sql-pg` 驱动的 Effect PostgreSQL 连接�
 <FileStructure/>
 
 #### 第一步 - 安装 **node-postgres** 包
+
 <InstallPackages lib='effect @effect/sql-pg pg' devlib=' @types/pg'/>
 
 #### 第二步 - 设置连接变量
@@ -75,25 +76,28 @@ PostgreSQL Docker 安装指南位于[这里](/docs/guides/postgresql-local-setup
 
 ```ts
 import 'dotenv/config';
-import { drizzle } from 'drizzle-orm/effect-postgres';
-import { Effect, Redacted } from 'effect';
-import { PgClient } from '@effect/sql-pg'
+import * as PgDrizzle from 'drizzle-orm/effect-postgres';
+import { PgClient } from '@effect/sql-pg';
+import * as Effect from 'effect/Effect';
+import * as Redacted from 'effect/Redacted';
 import { types } from 'pg';
-import { usersTable } from './db/schema'
+import { eq } from 'drizzle-orm';
+import { usersTable } from './db/schema';
 
-const clientLayer = PgClient.layer({
-    url: Redacted.make(process.env.DATABASE_URL!);
-	  types: {
-	  	getTypeParser: (typeId, format) => {
-	  		if ([1184, 1114, 1082, 1186, 1231, 1115, 1185, 1187, 1182].includes(typeId)) return (val: any) => val;
-	  		return types.getTypeParser(typeId, format);
-	  	},
-	  },
+const PgClientLive = PgClient.layer({
+  url: Redacted.make(process.env.DATABASE_URL!),
+  types: {
+    getTypeParser: (typeId, format) => {
+      if ([1184, 1114, 1082, 1186, 1231, 1115, 1185, 1187, 1182].includes(typeId)) {
+        return (val: any) => val;
+      }
+      return types.getTypeParser(typeId, format);
+    },
+  },
 });
 
 const program = Effect.gen(function*() {
-	const client = yield* PgClient.PgClient;
-	const db = drizzle(client, { logger: true, /*...*/ });
+  const db = yield* PgDrizzle.makeWithDefaults();
 
   const user: typeof usersTable.$inferInsert = {
     name: 'John',
@@ -127,7 +131,7 @@ const program = Effect.gen(function*() {
   console.log('用户已删除！')
 });
 
-await Effect.runPromise(program).pipe(Effect.provide(clientLayer));
+Effect.runPromise(program.pipe(Effect.provide(PgClientLive)));
 ```
 
 #### 第八步 - 运行 index.ts 文件

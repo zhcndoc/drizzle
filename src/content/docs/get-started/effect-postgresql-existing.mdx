@@ -1,3 +1,4 @@
+```markdown
 import Tab from '@mdx/Tab.astro';
 import Tabs from '@mdx/Tabs.astro';
 import Npm from "@mdx/Npm.astro";
@@ -23,7 +24,7 @@ import UpdateSchema from '@mdx/get-started/postgresql/UpdateSchema.mdx';
 # 在现有项目中使用 Drizzle 和 Effect PostgreSQL 快速开始
 
 <Callout type='error'>
-本页介绍的概念适用于 drizzle 版本 `1.0.0-beta.9` 及以上。
+本页介绍的概念适用于 drizzle 版本 `1.0.0-beta.13` 及以上。
 
 Effect 目前仅支持 PostgreSQL，其他数据库方言将很快支持。
 
@@ -39,7 +40,7 @@ Effect 目前仅支持 PostgreSQL，其他数据库方言将很快支持。
 
 <FileStructure/>
 
-#### 第 1 步 - 安装 **node-postgres** 包
+#### 第 1 步 - 安装所需包
 <InstallPackages lib='effect @effect/sql-pg pg' devlib=' @types/pg'/>
 
 #### 第 2 步 - 设置连接变量
@@ -72,25 +73,28 @@ Docker 中的 PostgreSQL 指南在 [这里](/docs/guides/postgresql-local-setup)
 
 ```ts
 import 'dotenv/config';
-import { drizzle } from 'drizzle-orm/effect-postgres';
-import { Effect, Redacted } from 'effect';
-import { PgClient } from '@effect/sql-pg'
+import * as PgDrizzle from 'drizzle-orm/effect-postgres';
+import { PgClient } from '@effect/sql-pg';
+import * as Effect from 'effect/Effect';
+import * as Redacted from 'effect/Redacted';
 import { types } from 'pg';
-import { usersTable } from './db/schema'
+import { eq } from 'drizzle-orm';
+import { usersTable } from './db/schema';
 
-const clientLayer = PgClient.layer({
-    url: Redacted.make(process.env.DATABASE_URL!);
-	  types: {
-	  	getTypeParser: (typeId, format) => {
-	  		if ([1184, 1114, 1082, 1186, 1231, 1115, 1185, 1187, 1182].includes(typeId)) return (val: any) => val;
-	  		return types.getTypeParser(typeId, format);
-	  	},
-	  },
+const PgClientLive = PgClient.layer({
+  url: Redacted.make(process.env.DATABASE_URL!),
+  types: {
+    getTypeParser: (typeId, format) => {
+      if ([1184, 1114, 1082, 1186, 1231, 1115, 1185, 1187, 1182].includes(typeId)) {
+        return (val: any) => val;
+      }
+      return types.getTypeParser(typeId, format);
+    },
+  },
 });
 
 const program = Effect.gen(function*() {
-	const client = yield* PgClient.PgClient;
-	const db = drizzle(client, { logger: true, /*...*/ });
+  const db = yield* PgDrizzle.makeWithDefaults();
 
   const user: typeof usersTable.$inferInsert = {
     name: 'John',
@@ -124,7 +128,7 @@ const program = Effect.gen(function*() {
   console.log('用户已删除！')
 });
 
-await Effect.runPromise(program).pipe(Effect.provide(clientLayer));
+Effect.runPromise(program.pipe(Effect.provide(PgClientLive)));
 ```
 
 #### 第 8 步 - 运行 index.ts 文件
@@ -143,25 +147,28 @@ await Effect.runPromise(program).pipe(Effect.provide(clientLayer));
 
 ```ts
 import 'dotenv/config';
-import { drizzle } from 'drizzle-orm/effect-postgres';
-import { Effect, Redacted } from 'effect';
-import { PgClient } from '@effect/sql-pg'
+import * as PgDrizzle from 'drizzle-orm/effect-postgres';
+import { PgClient } from '@effect/sql-pg';
+import * as Effect from 'effect/Effect';
+import * as Redacted from 'effect/Redacted';
 import { types } from 'pg';
-import { usersTable } from './db/schema'
+import { eq } from 'drizzle-orm';
+import { usersTable } from './db/schema';
 
-const clientLayer = PgClient.layer({
-    url: Redacted.make(process.env.DATABASE_URL!);
-	  types: {
-	  	getTypeParser: (typeId, format) => {
-	  		if ([1184, 1114, 1082, 1186, 1231, 1115, 1185, 1187, 1182].includes(typeId)) return (val: any) => val;
-	  		return types.getTypeParser(typeId, format);
-	  	},
-	  },
+const PgClientLive = PgClient.layer({
+  url: Redacted.make(process.env.DATABASE_URL!),
+  types: {
+    getTypeParser: (typeId, format) => {
+      if ([1184, 1114, 1082, 1186, 1231, 1115, 1185, 1187, 1182].includes(typeId)) {
+        return (val: any) => val;
+      }
+      return types.getTypeParser(typeId, format);
+    },
+  },
 });
 
 const program = Effect.gen(function*() {
-	const client = yield* PgClient.PgClient;
-	const db = drizzle(client, { logger: true, /*...*/ });
+  const db = yield* PgDrizzle.makeWithDefaults();
 
   const user: typeof usersTable.$inferInsert = {
     name: 'John',
@@ -197,5 +204,6 @@ const program = Effect.gen(function*() {
   console.log('用户已删除！')
 });
 
-await Effect.runPromise(program).pipe(Effect.provide(clientLayer));
+Effect.runPromise(program.pipe(Effect.provide(PgClientLive)));
+```
 ```

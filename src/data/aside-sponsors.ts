@@ -3,6 +3,36 @@ import { type ISponsor, ImageType } from "@/types";
 export const asideSponsors: ISponsor[] = [
   {
     tier: {
+      name: "$2500 a month",
+      isOneTime: false,
+    },
+    sponsorEntity: {
+      __typename: "Organization",
+      login: "driz.link/railway",
+      name: "Railway",
+      avatarUrl:
+        '<svg width="1200" height="1200" viewBox="0 0 1200 1200" fill="none" xmlns="http://www.w3.org/2000/svg"></svg>',
+    },
+    createdAt: "2025-01-28T00:00:00Z",
+    isActive: true,
+    imageType: ImageType.SVG,
+    badge: "Our Cloud Partner",
+    darkStyle: {
+      filter: "brightness(0.3)",
+      
+      background:
+      'url("/svg/railway-sidebar.svg") center / contain no-repeat content-box',
+      minWidth: "calc(100% + 128px)"
+    },
+    lightStyle: {
+      filter: "invert(0.6)",
+      background:
+        'url("/svg/railway-sidebar-light.svg") center / contain no-repeat content-box',
+      minWidth: "calc(100% + 128px)"
+    },
+  },
+  {
+    tier: {
       name: "$1000 a month",
       isOneTime: false,
     },
@@ -102,33 +132,6 @@ export const asideSponsors: ISponsor[] = [
       background:
         'url("/svg/neon-light.svg") 0% 0% / cover no-repeat content-box',
       padding: "6px",
-    },
-  },
-  {
-    tier: {
-      name: "$1000 a month",
-      isOneTime: false,
-    },
-    sponsorEntity: {
-      __typename: "Organization",
-      login: "hub.nuxt.com/?utm_source=drizzle-docs",
-      name: "Nuxt",
-      avatarUrl:
-        '<svg width="1200" height="1200" viewBox="0 0 1200 1200" fill="none" xmlns="http://www.w3.org/2000/svg"></svg>',
-    },
-    createdAt: "2023-06-11T13:32:16Z",
-    isActive: true,
-    followLink: true,
-    imageType: ImageType.SVG,
-    darkStyle: {
-      filter: "brightness(0.4) grayscale(1)",
-      background:
-        'url("/svg/nuxt-green.svg") 0% 0% / cover no-repeat content-box',
-    },
-    lightStyle: {
-      filter: "brightness(0.9) grayscale(1)",
-      background:
-        'url("/svg/nuxt-green.svg") 0% 0% / cover no-repeat content-box',
     },
   },
   // {
@@ -459,32 +462,6 @@ export const asideSponsors: ISponsor[] = [
       filter: "brightness(0.3)",
       background:
         'url("/svg/warp-dark.svg") center / contain no-repeat content-box',
-    },
-  },
-  {
-    tier: {
-      name: "$1000 a month",
-      isOneTime: false,
-    },
-    sponsorEntity: {
-      __typename: "Organization",
-      login: "vercel.com",
-      name: "Vercel",
-      avatarUrl:
-        '<svg width="1200" height="1200" viewBox="0 0 1200 1200" fill="none" xmlns="http://www.w3.org/2000/svg"></svg>',
-    },
-    createdAt: "2025-11-07T00:00:00Z",
-    isActive: true,
-    imageType: ImageType.SVG,
-    lightStyle: {
-      filter: "invert(0.6)",
-      background:
-        'url("/svg/vercel-light.svg") center / contain no-repeat content-box',
-    },
-    darkStyle: {
-      filter: "brightness(0.3)",
-      background:
-        'url("/svg/vercel-dark.svg") center / contain no-repeat content-box',
     },
   },
   // Placeholder

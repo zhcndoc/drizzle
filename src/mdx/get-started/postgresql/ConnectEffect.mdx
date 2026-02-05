@@ -2,27 +2,33 @@
 
 ```typescript
 import 'dotenv/config';
-import { drizzle } from 'drizzle-orm/effect-postgres';
-import { Effect, Redacted } from 'effect';
-import { PgClient } from '@effect/sql-pg'
+import * as PgDrizzle from 'drizzle-orm/effect-postgres';
+import { PgClient } from '@effect/sql-pg';
+import * as Effect from 'effect/Effect';
+import * as Redacted from 'effect/Redacted';
 import { types } from 'pg';
 
-const clientLayer = PgClient.layer({
-    url: Redacted.make(process.env.DATABASE_URL!);
-    types: {
-        getTypeParser: (typeId, format) => {
-            if ([1184, 1114, 1082, 1186, 1231, 1115, 1185, 1187, 1182].includes(typeId)) { 
-                return (val: any) => val;
-            }
-            return types.getTypeParser(typeId, format);
-        },
+// 配置 PgClient 层及类型解析器
+const PgClientLive = PgClient.layer({
+  url: Redacted.make(process.env.DATABASE_URL!),
+  types: {
+    getTypeParser: (typeId, format) => {
+      // 对日期/时间类型返回原始值，由 Drizzle 处理解析
+      if ([1184, 1114, 1082, 1186, 1231, 1115, 1185, 1187, 1182].includes(typeId)) {
+        return (val: any) => val;
+      }
+      return types.getTypeParser(typeId, format);
     },
+  },
 });
 
 const program = Effect.gen(function*() {
-    const client = yield* PgClient.PgClient;
-    const db = drizzle(client, { logger: true, /*...*/ });
+  // 使用默认服务创建数据库
+  const db = yield* PgDrizzle.makeWithDefaults();
+
+  // 这里编写你的查询...
 });
 
-await Effect.runPromise(program).pipe(Effect.provide(clientLayer));
+// 使用 PgClient 层运行程序
+Effect.runPromise(program.pipe(Effect.provide(PgClientLive)));
 ```
