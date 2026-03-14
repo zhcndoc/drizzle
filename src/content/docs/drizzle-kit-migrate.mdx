@@ -97,8 +97,20 @@ export default defineConfig({
 });
 ```
 
-### 一个项目中的多个配置文件
-您可以在项目中拥有多个配置文件，当您有多个数据库阶段或在同一项目中有多个数据库时，这非常有用：
+### 忽略冲突
+
+<Callout type='warning'>
+`--ignore-conflicts` 从 `drizzle-orm@1.0.0-beta.16` 开始可用
+</Callout>
+
+如果您需要让 `migrate` 命令跳过可交换性检查并绕过它，可以使用 `--ignore-conflicts`。如果您想使用它，很大可能是 `drizzle-kit` 没有正确检查迁移，这是一个 bug。请向我们报告您的情况，以便我们修复。
+
+```shell
+drizzle-kit migrate --ignore-conflicts
+```
+
+### 一个项目中多个配置文件
+您可以在项目中拥有多个配置文件，这在您有多个数据库阶段或在同一项目中有多个数据库时非常有用：
 <Npx>
   drizzle-kit migrate --config=drizzle-dev.config.ts
   drizzle-kit migrate --config=drizzle-prod.config.ts

@@ -1,29 +1,27 @@
 import Npm from '@mdx/Npm.astro';
 import Callout from '@mdx/Callout.astro';
 
-# drizzle-valibot
+<Callout type="error">
+从 `drizzle-orm@1.0.0-beta.15` 开始，`drizzle-valibot` 已被弃用，转而支持 Drizzle ORM 内置的一流模式生成支持。
 
-`drizzle-valibot` 是一个 **[Drizzle ORM](https://github.com/drizzle-team/drizzle-orm)** 的插件，允许你从 Drizzle ORM 方案生成 **[Valibot](https://valibot.dev/)** 方案。
+你仍然可以使用 `drizzle-valibot` 包，但所有新更新将直接添加到 Drizzle ORM。
+</Callout>
+
+# valibot
 
 ### 安装依赖
 
 <Npm>
-drizzle-valibot
+valibot
 </Npm>
 
-<Callout type="warning">
-此文档适用于 `drizzle-valibot@0.3.0` 及更高版本
-
-你还必须安装 Drizzle ORM v0.36.0 或更高版本，以及 Valibot v1.0.0-beta.7 或更高版本。
-</Callout>
-
-### 选择方案
+### Select schema
 
 定义从数据库查询的数据形状 - 可用于验证 API 响应。
 
 ```ts copy
 import { pgTable, text, integer } from 'drizzle-orm/pg-core';
-import { createSelectSchema } from 'drizzle-valibot';
+import { createSelectSchema } from 'drizzle-orm/valibot';
 import { parse } from 'valibot';
 
 const users = pgTable('users', {
@@ -45,7 +43,7 @@ const parsed: { id: number; name: string; age: number } = parse(userSelectSchema
 
 ```ts copy
 import { pgEnum } from 'drizzle-orm/pg-core';
-import { createSelectSchema } from 'drizzle-valibot';
+import { createSelectSchema } from 'drizzle-orm/valibot';
 import { parse } from 'valibot';
 
 const roles = pgEnum('roles', ['admin', 'basic']);
@@ -63,7 +61,7 @@ const parsed: { id: number; name: string; age: number } = parse(usersViewSchema,
 
 ```ts copy
 import { pgTable, text, integer } from 'drizzle-orm/pg-core';
-import { createInsertSchema } from 'drizzle-valibot';
+import { createInsertSchema } from 'drizzle-orm/valibot';
 import { parse } from 'valibot';
 
 const users = pgTable('users', {
@@ -88,7 +86,7 @@ await db.insert(users).values(parsed);
 
 ```ts copy
 import { pgTable, text, integer } from 'drizzle-orm/pg-core';
-import { createUpdateSchema } from 'drizzle-valibot';
+import { createUpdateSchema } from 'drizzle-orm/valibot';
 import { parse } from 'valibot';
 
 const users = pgTable('users', {
@@ -113,7 +111,7 @@ await db.update(users).set(parsed).where(eq(users.name, 'Jane'));
 
 ```ts copy
 import { pgTable, text, integer, json } from 'drizzle-orm/pg-core';
-import { createSelectSchema } from 'drizzle-valibot';
+import { createSelectSchema } from 'drizzle-orm/valibot';
 import { parse, pipe, maxLength, object, string } from 'valibot';
 
 const users = pgTable('users', {
@@ -482,4 +480,4 @@ pg.dataType().array(...);
 
 // 方案
 pipe(array(baseDataTypeSchema), length(size));
-``` 
+```

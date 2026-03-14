@@ -1,0 +1,62 @@
+import Npm from '@mdx/Npm.astro';
+import Callout from '@mdx/Callout.astro';
+
+<Callout type="error">
+Drizzle+Effect Schema 集成从 `drizzle-orm@1.0.0-beta.15` 开始提供
+</Callout>
+
+# effect-schema
+
+允许你从 Drizzle ORM 架构生成 [effect](https://effect.website/) 架构。
+
+**功能**
+
+- 为表、视图和枚举创建 select 架构。
+- 为表创建 insert 和 update 架构。
+- 支持的方言：CockroachDB、MSSQL、MySQL、PostgreSQL、SingleStore、SQLite。
+
+#### 用法
+
+```ts
+import { pgEnum, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
+import { createInsertSchema, createSelectSchema, createUpdateSchema } from 'drizzle-orm/effect-schema';
+import { Schema } from 'effect';
+
+const users = pgTable('users', {
+	id: serial('id').primaryKey(),
+	name: text('name').notNull(),
+	email: text('email').notNull(),
+	role: text('role', { enum: ['admin', 'user'] }).notNull(),
+	createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+// 用于插入用户的架构 - 可用于验证 API 请求
+const UserInsert = createInsertSchema(users);
+
+// 用于更新用户的架构 - 可用于验证 API 请求
+const UserUpdate = createUpdateSchema(users);
+
+// 用于选择用户的架构 - 可用于验证 API 响应
+const UserSelect = createSelectSchema(users);
+
+// 重写字段
+const UserInsert = createInsertSchema(users, {
+	role: Schema.String,
+});
+
+// 细化字段 - 如果你想在字段变为可空/可选的最终架构之前修改字段，这很有用
+const UserInsert = createInsertSchema(users, {
+	id: (schema) => schema.pipe(Schema.greaterThanOrEqualTo(0)),
+	role: Schema.String,
+});
+
+// 用法
+
+const program = Effect.gen(function*() {
+	const parsedUser = yield* Schema.validate(UserInsert)({
+		name: 'John Doe',
+		email: 'johndoe@test.com',
+		role: 'admin',
+	});
+});
+```

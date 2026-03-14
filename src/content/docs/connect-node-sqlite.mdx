@@ -1,0 +1,65 @@
+import Npm from "@mdx/Npm.astro";
+import Callout from '@mdx/Callout.astro';
+import AnchorCards from '@mdx/AnchorCards.astro';
+import Steps from '@mdx/Steps.astro';
+import WhatsNextPostgres from "@mdx/WhatsNextPostgres.astro";
+import Prerequisites from "@mdx/Prerequisites.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+
+# Drizzle \<\> Node SQLite
+
+<Prerequisites>
+- 使用 Drizzle 的数据库[连接基础](/docs/connect-overview)
+- Node - [官网](https://nodejs.org/)
+- Node SQLite 驱动 - [文档](https://nodejs.org/api/sqlite.html)
+</Prerequisites>
+
+Drizzle ORM 原生支持 **[`node:sqlite`](https://nodejs.org/api/sqlite.html)** 模块
+
+我们支持 SQL 方言以及方言特定的驱动和语法，与其他任何 ORM 不同，  
+对于同步驱动如 `node:sqlite`，我们同时提供 **异步** 和 **同步** API，并且我们模仿最流行的  
+SQLite 类似的 `all`、`get`、`values` 和 `run` 查询方法语法。
+
+#### 第一步 - 安装包
+<Npm>
+drizzle-orm
+-D drizzle-kit
+</Npm>
+
+#### 第二步 - 初始化驱动并执行查询
+```typescript copy
+import { drizzle } from 'drizzle-orm/node-sqlite';
+
+const db = drizzle("sqlite.db");
+
+const result = await db.select().from(...);
+```
+
+如果你需要提供现有驱动：
+```typescript copy
+import { drizzle } from 'drizzle-orm/node-sqlite';
+import { DatabaseSync } from 'node:sqlite';
+
+const sqlite = new DatabaseSync('sqlite.db');
+const db = drizzle({ client: sqlite });
+
+const result = await db.select().from(...);
+```
+
+如果你想使用 **同步** API：
+```typescript copy
+import { drizzle } from 'drizzle-orm/node-sqlite';
+import { DatabaseSync } from 'node:sqlite';
+
+const sqlite = new Database('sqlite.db');
+const db = drizzle({ client: sqlite });
+
+const result = db.select().from(users).all();
+const result = db.select().from(users).get();
+const result = db.select().from(users).values();
+const result = db.select().from(users).run();
+```
+
+#### 下一步是什么？
+
+<WhatsNextPostgres/>

@@ -39,7 +39,19 @@ drizzle-orm@beta
 drizzle-kit up
 </Npx>
 
-#### 步骤 2 - 更新关系查询到 v2
+#### 步骤 2 - 更新验证器包的导入
+
+我们已停止维护单独的验证器包（例如 `drizzle-zod`、`drizzle-valibot`），并将它们迁移到了 `drizzle-orm` 仓库中。这将所有内容整合到了一个包中，消除了管理独立 peer 依赖和版本的需求。
+
+所有包现均可通过 `drizzle-orm` 导入：
+
+- `drizzle-zod` -> `drizzle-orm/zod`
+- `drizzle-valibot` -> `drizzle-orm/valibot`
+- `drizzle-typebox` -> `drizzle-orm/typebox-legacy`（使用 `@sinclair/typebox`）
+- `drizzle-typebox` -> `drizzle-orm/typebox`（使用 `typebox`）
+- `drizzle-arktype` -> `drizzle-orm/arktype`
+
+#### 步骤 3 - 将关系查询更新到 v2
 
 我们详细解释了所有 RQBv2 的变更，以及更新代码库的方案：
 

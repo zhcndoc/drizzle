@@ -1,0 +1,246 @@
+import { Image } from "astro:assets";
+import roman from "@/assets/images/core/roman.jpg";
+import smm from "@/assets/images/core/smm.jpg";
+import group from "@/assets/images/core/group.jpeg";
+import alex_sherman from "@/assets/images/core/alex_sherman.jpg";
+import reka from "@/assets/images/team/reka.png";
+import andrew from "@/assets/images/core/andrew.jpeg";
+import blokh from "@/assets/images/core/blokh.jpeg";
+import dan from "@/assets/images/core/dan.jpeg";
+
+# Drizzle 可持续性
+
+我们从 2021 年开始构建 Drizzle，虽然项目经历了几次演变（以及情绪崩溃），
+但核心的理念和愿景从未改变。
+
+这些年来，我们拥有 100 多位赞助者，从了不起的个人到支持我们工作的优秀公司。
+
+截至 2026 年 3 月，PlanetScale 聘请了整个 Drizzle 核心团队，成为我们最大的支持者！
+
+他们雇佣了整个团队，这样我们就可以全职继续开发 Drizzle，继续推进路线图，
+发布更多改进，并持续构建我们一直想带给社区的所有雄心勃勃的内容。
+
+经过与 PlanetScale 团队和 Sam Lambert 的多次精彩对话，我们达成了共识：
+让 Drizzle 成为地球上最可持续的 ORM 的最好方式就是携手合作。
+
+因此，现在 PlanetScale 是我们最大的赞助商，他们雇佣了我们，我们可以继续做自己热爱的事情：
+
+- 为社区构建产品，
+- 痴迷于开发者体验（DX），
+- 让 SQL 和数据库变得更加有趣且易于使用。
+
+## 我们的团队
+
+这就是我们，所有核心的 Drizzle 团队成员
+
+<Image src={group} alt="group" />
+
+#### 但是我们来谈谈每个人：
+
+<style>{`
+  .team-member {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin: 2rem 0;
+  }
+
+  .team-member__info {
+    flex: 0 0 50%;
+    max-width: 50%;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+
+  .team-member__name {
+    margin-top: 0 !important;
+    margin-bottom: 0.75rem;
+  }
+
+  .team-member__photo {
+    width: 100%;
+    max-width: 50%;
+    flex: 0 0 50%;
+    border-radius: 12px;
+  }
+
+  @media (max-width: 900px) {
+    .team-member {
+      flex-direction: column-reverse;
+      gap: 1rem;
+    }
+
+    .team-member__photo {
+      width: 100%;
+      max-width: 320px;
+      flex: 0 0 auto;
+      align-self: center;
+    }
+
+    .team-member__info {
+      max-width: 100%;
+      flex: 0 0 auto;
+    }
+  }
+`}</style>
+
+<section class="team-member">
+  <div class="team-member__info">
+    <h4 class="team-member__name">Oleksandr Blokh (Alex)</h4>
+    <p>
+      Alex 共同创建了 Drizzle 并帮助启动了 Drizzle 团队。他从 2021 年开始参与，当时写了第一段 <code>drizzle-orm</code> 代码。
+    </p>
+    <p>
+      现在他领导核心 Drizzle 开发，参与 Drizzle Studio、OneDollarStats、RubberBoots 及其他项目的工作。
+    </p>
+    <p>
+      给他在 <a href="https://x.com/_alexblokh">X 订阅</a> • <a href="https://github.com/AlexBlokh">GitHub</a>
+    </p>
+  </div>
+  <Image
+    class="team-member__photo"
+    src={blokh}
+    alt="Oleksandr Blokh"
+    width={400}
+  />
+</section>
+
+<section class="team-member">
+  <div class="team-member__info">
+    <h4 class="team-member__name">Andrii Sherman (Andrew)</h4>
+    <p>
+      Andrew 是另一位 Drizzle 联合创始人。早在 2020 年，他用 Java 编写了 Drizzle ORM。后来，看到 TypeScript 领域对同类工具的需求，他和 Alex 将项目转向了 TypeScript，从那里一切开始。
+    </p>
+    <p>
+      给他在 <a href="https://x.com/andrii_sherman">X 订阅</a> • <a href="https://github.com/AndriiSherman">GitHub</a>
+    </p>
+  </div>
+  <Image
+    class="team-member__photo"
+    src={andrew}
+    alt="Andrii Sherman"
+    width={400}
+  />
+</section>
+
+<section class="team-member">
+  <div class="team-member__info">
+    <h4 class="team-member__name">Dan Kochetov</h4>
+    <p>
+      Dan 第一个承担了完整的 <code>drizzle-orm</code> 重写工作，将其变成你现在所知道的 API。他还创建了关系查询（Relational Queries）的第一个版本。
+    </p>
+    <p>
+      现在，经过短暂的休息，Dan 重新投入工作，准备为 Drizzle 发布更多优秀功能。
+    </p>
+    <p>
+      给他在 <a href="https://x.com/bloberenober">X 订阅</a> • <a href="https://github.com/dankochetov">GitHub</a>
+    </p>
+  </div>
+  <Image class="team-member__photo" src={dan} alt="Dan Kochetov" width={400} />
+</section>
+
+<section class="team-member">
+  <div class="team-member__info">
+    <h4 class="team-member__name">Roman Nabukhotnyi (Zeus)</h4>
+    <p>
+      Roman（Zeus）正努力将 Drizzle Studio 以各种可能的形式呈现给你。
+    </p>
+    <p>
+      Roman 经常撰写关于 Drizzle Studio 的内容 <a href="https://x.com/nabukhotnyi">在 X 上</a> • <a href="https://github.com/RomanNabukhotnyi">GitHub</a>
+    </p>
+  </div>
+  <Image
+    class="team-member__photo"
+    src={roman}
+    alt="Roman Nabukhontyi"
+    width={400}
+  />
+</section>
+
+<section class="team-member">
+  <div class="team-member__info">
+    <h4 class="team-member__name">Serhii Reka</h4>
+    <p>
+      Serhii 重写了关系查询（Relational Queries），掌握了高级 TypeScript 类型，
+      并持续为 <code>drizzle</code> 生态系统发布优质功能。
+    </p>
+    <p>
+      给他在 <a href="https://x.com/s_reka_">X 订阅</a> • <a href="https://github.com/Sukairo-02">GitHub</a>
+    </p>
+  </div>
+  <Image class="team-member__photo" src={reka} alt="Serhii Reka" width={400} />
+</section>
+
+<section class="team-member">
+  <div class="team-member__info">
+    <h4 class="team-member__name">Oleksandr Sherman</h4>
+    <p>
+      Oleksandr（"Sania"）是 <code>drizzle-kit</code> 的高手。他帮助重写了 <code>alternation-engine</code>、drizzle-kit 测试套件，
+      现在的任务是确保 <code>drizzle-kit</code> 标签的 GitHub 问题归零。
+    </p>
+    <p>
+      给他在 <a href="https://x.com/_alex_sherman">X 订阅</a> • <a href="https://github.com/AleksandrSherman">GitHub</a>
+    </p>
+  </div>
+  <Image
+    class="team-member__photo"
+    src={alex_sherman}
+    alt="Oleksandr Sherman"
+    width={400}
+  />
+</section>
+
+<section class="team-member">
+  <div class="team-member__info">
+    <h4 class="team-member__name">社媒经理</h4>
+    <p>
+      “我现在专业地负责之前免费发生在 X 上的事情”（c）
+    </p>
+    <p>
+      给他订阅: <a href="https://x.com/DrizzleOrm">X</a>
+    </p>
+  </div>
+  <Image class="team-member__photo" src={smm} alt="社媒经理" width={400} />
+</section>
+
+## 收入来源
+
+Drizzle 不仅是 `drizzle-orm` 仓库，我们还构建并商业化了不同的产品。
+
+#### Drizzle Studio
+
+Drizzle Studio 是基于网页的现代数据库浏览器，形式包括：
+
+1. [本地开发的 Drizzle Studio](https://orm.drizzle.team/drizzle-studio/overview)，用于你的 Drizzle ORM 项目
+2. [Drizzle Studio Chrome 扩展](https://driz.link/extension)，允许你在 PlanetScale、Cloudflare D1、Vercel Postgres 和 AWS Data API 的原生控制台中直接浏览数据
+3. [Drizzle Studio Gateway](https://gateway.drizzle.team) 是一个可部署的 Docker 版本增强版 Studio，你可以将其放入基础设施中并私密连接数据库
+4. `Drizzle Studio 嵌入组件` - 是预打包的框架无关的 Drizzle Studio 网页组件，可以嵌入你的 UI（React/Vue/Svelte/VanillaJS/任意框架）
+
+#### OneDollarStats
+
+正如我们发布的所有产品一样，分析工具最初是为我们自己在不同商业项目中的使用而构建的。
+我们找到了一种让它如此实惠且带给社区的方法，使你不需要在网页分析上花费大量资金。
+
+我们目前定价为每月 1 美元且无限制，稍后会引入基于使用量的定价。
+
+https://onedollarstats.com/
+
+#### Rubber Boots
+
+这是我们尚未发布的东西。
+
+## Drizzle LLC
+
+Drizzle 是一家位于乌克兰的法人实体。
+除了 5 名核心 Drizzle 团队成员，我们还有 18 名开发者与我们合作，参与外包和咨询的不同生产级应用。
+
+这实际上以两大方式帮助我们建设 Drizzle。
+
+- 首先，这为我们提供了另一种收入来源，这意味着我们能够继续投入到开源工作中，测试新想法，推动 Drizzle 前进。
+- 其次，这给了我们大量的真实世界经验。我们参与各种项目（网页、移动、桌面等），使用多种语言，重点是 TypeScript。
+  这也意味着我们拥有丰富的框架、托管平台及不同产品构建和发布方式的实践经验。
+
+Drizzle 之所以成为今天的样子，很大一部分原因是我们从未局限于只构建一件事。我们不断进行各种类型项目的工作，这为我们带来了新的想法、更广阔的视角，以及帮助我们以现在的方式构建 Drizzle 的经验。

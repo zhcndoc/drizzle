@@ -159,8 +159,21 @@ INSERT INTO "users" ("name") VALUES('Dandrew');
 ```
 </Section>
 
-### 可用配置的扩展列表
-`drizzle-kit generate` 有一系列仅限 cli 的选项。
+### 忽略冲突
+
+<Callout type='warning'>
+`--ignore-conflicts` 从 `drizzle-orm@1.0.0-beta.16` 版本开始可用
+</Callout>
+
+如果您需要 `generate` 命令跳过可交换性检查并绕过它，可以使用 `--ignore-conflicts`。如果您感觉需要使用它，
+很可能是 `drizzle-kit` 没有正确检查迁移，这是一个错误。请向我们报告您的用例，以便我们修复它。
+
+```shell
+drizzle-kit generate --ignore-conflicts
+```
+
+### 扩展配置选项列表
+`drizzle-kit generate` 拥有一个仅供 CLI 使用的选项列表
 
 <rem025/>
 

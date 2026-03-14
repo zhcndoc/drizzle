@@ -1,29 +1,27 @@
 import Npm from '@mdx/Npm.astro';
 import Callout from '@mdx/Callout.astro';
 
-# drizzle-arktype
+<Callout type="error">
+从 `drizzle-orm@1.0.0-beta.15` 开始，`drizzle-arktype` 已被弃用，建议直接使用 Drizzle ORM 内置的一流架构生成支持。
 
-`drizzle-arktype` 是 **[Drizzle ORM](https://github.com/drizzle-team/drizzle-orm)** 的一个插件，允许你从 Drizzle ORM 模式生成 **[Arktype](https://arktype.io/)** 模式。
+你仍然可以使用 `drizzle-arktype` 包，但所有新的更新将直接添加到 Drizzle ORM 中。
+</Callout>
+
+# arktype
 
 ### 安装依赖
 
 <Npm>
-drizzle-arktype
+arktype
 </Npm>
 
-<Callout type="warning">
-本文档适用于 `drizzle-arktype@0.1.0` 及更高版本
-
-你还必须安装 Drizzle ORM v0.36.0 或更高版本和 Arktype v2.0.0 或更高版本。
-</Callout>
-
-### 选择 schema
+### Select schema
 
 定义从数据库查询的数据形状 - 可用于验证 API 返回的数据。
 
 ```ts copy
 import { pgTable, text, integer } from 'drizzle-orm/pg-core';
-import { createSelectSchema } from 'drizzle-arktype';
+import { createSelectSchema } from 'drizzle-orm/arktype';
 
 const users = pgTable('users', {
   id: integer().generatedAlwaysAsIdentity().primaryKey(),
@@ -44,7 +42,7 @@ const parsed: { id: number; name: string; age: number } = userSelectSchema(rows[
 
 ```ts copy
 import { pgEnum } from 'drizzle-orm/pg-core';
-import { createSelectSchema } from 'drizzle-arktype';
+import { createSelectSchema } from 'drizzle-orm/arktype';
 
 const roles = pgEnum('roles', ['admin', 'basic']);
 const rolesSchema = createSelectSchema(roles);
@@ -61,7 +59,7 @@ const parsed: { id: number; name: string; age: number } = usersViewSchema(...);
 
 ```ts copy
 import { pgTable, text, integer } from 'drizzle-orm/pg-core';
-import { createInsertSchema } from 'drizzle-arktype';
+import { createInsertSchema } from 'drizzle-orm/arktype';
 
 const users = pgTable('users', {
   id: integer().generatedAlwaysAsIdentity().primaryKey(),
@@ -85,7 +83,7 @@ await db.insert(users).values(parsed);
 
 ```ts copy
 import { pgTable, text, integer } from 'drizzle-orm/pg-core';
-import { createUpdateSchema } from 'drizzle-arktype';
+import { createUpdateSchema } from 'drizzle-orm/arktype';
 import { parse } from 'arktype';
 
 const users = pgTable('users', {
@@ -110,7 +108,7 @@ await db.update(users).set(parsed).where(eq(users.name, 'Jane'));
 
 ```ts copy
 import { pgTable, text, integer, json } from 'drizzle-orm/pg-core';
-import { createSelectSchema } from 'drizzle-arktype';
+import { createSelectSchema } from 'drizzle-orm/arktype';
 import { parse, pipe, maxLength, object, string } from 'arktype';
 
 const users = pgTable('users', {
