@@ -1,6 +1,6 @@
 ---
 import GlobalStyles from "@components/GlobalStyles.astro";
-import { ViewTransitions } from "astro:transitions";
+import { ClientRouter } from "astro:transitions";
 interface Props {
   title: string;
   description?: string;
@@ -15,7 +15,7 @@ const defaultDescription =
   <meta charset="UTF-8" />
   <meta name="robots" content="index,follow" />
   <link rel="sitemap" href="/sitemap-index.xml" />
-  <ViewTransitions />
+  <ClientRouter />
   <meta
     name="viewport"
     content="width=device-width, initial-scale=1.0, viewport-fit=cover"
@@ -126,26 +126,18 @@ const defaultDescription =
     type="module"
     src="https://unpkg.com/@inkeep/widgets-embed@0.2.237/dist/embed.js"
     defer></script>
-  <script
-    is:inline
-    defer
-    data-domain="orm.drizzle.team"
-    src="https://plausible.io/js/script.js"></script>
   <script is:inline src="https://cdn.jsdelivr.net/npm/@docsearch/js@3"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3" />
   <link rel="stylesheet" href="/preferred.css" />
-  <link
-    rel="preconnect"
-    href="https://MXZNUT59HV-dsn.algolia.net"
-    crossorigin
-  />
   <script
     is:inline
     defer
     data-site-id="orm.drizzle.team"
     src="https://assets.onedollarstats.com/tracker.js"></script>
-  <script is:inline defer src="https://scripts.withcabin.com/hello.js"></script>
-  <script is:inline async src="https://scripts.simpleanalyticscdn.com/latest.js"
-  ></script>
+  <script
+    is:inline
+    src="https://analytics.ahrefs.com/analytics.js"
+    data-key="SKUeEfeeQbx1VaWCrIf53A"
+    async></script>
   <GlobalStyles />
 </head>
