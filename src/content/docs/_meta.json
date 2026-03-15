@@ -1,6 +1,7 @@
 [
   "meet drizzle",
   ["get-started", "Get started"],
+  ["sustainability", "Sustainability"],
   ["overview", "Why Drizzle?"],
   ["guides", "Guides"],
   ["tutorials", "Tutorials"],
@@ -43,6 +44,7 @@
   ["connect-sqlite-cloud", "SQLite Cloud"],
   ["connect-cloudflare-d1", "Cloudflare D1"],
   ["connect-bun-sqlite", "Bun SQLite"],
+  ["connect-node-sqlite", "Node SQLite"],
   ["connect-cloudflare-do", "Cloudflare Durable Objects"],
   "---",
   ["connect-expo-sqlite", "Expo SQLite"],
