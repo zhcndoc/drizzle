@@ -1,0 +1,386 @@
+---
+title: "在 Railway 上使用 Bun 和 PostgreSQL 的 Drizzle"
+date: "2026-03-07"
+---
+
+import Prerequisites from "@mdx/Prerequisites.astro";
+import Npm from "@mdx/Npm.astro";
+import Steps from "@mdx/Steps.astro";
+import Section from "@mdx/Section.astro";
+import Callout from "@mdx/Callout.astro";
+
+本教程演示如何在 [Railway](https://driz.link/railway) 上部署的 [Bun](https://bun.sh/) 运行时和 PostgreSQL 数据库中使用 Drizzle ORM。
+
+<Prerequisites>
+  - 你应该已经安装了 [Bun](https://bun.sh/)。你可以按照[官方指南](https://bun.sh/docs/installation)进行安装。
+
+  - 你应该已经安装了 Drizzle ORM 和 [Drizzle kit](/docs/kit-overview)。你可以通过运行以下命令来完成安装：
+  <Npm>
+    drizzle-orm
+    -D drizzle-kit
+  </Npm>
+
+  - 你应该已经安装了 `pg` 包作为 PostgreSQL 驱动程序。
+  <Npm>
+    pg
+    -D @types/pg
+  </Npm>
+
+  - 你应该拥有一个 [Railway](https://driz.link/railway) 账户。
+</Prerequisites>
+
+## 设置 Railway 和 Drizzle ORM
+
+<Steps>
+#### 创建 Railway 项目
+
+登录你的 [Railway 控制台](https://railway.app/dashboard)并点击 `New Project` 按钮。
+
+![](@/assets/images/tutorials/railway-create-service-menu.png)
+
+#### 配置 PostgreSQL 数据库
+
+在项目画布中，点击右上角的 `New` 按钮，然后选择 `Database` → `PostgreSQL`。你也可以使用命令面板（`Cmd/Ctrl + K`）并搜索 PostgreSQL。Railway 将为你提供一个新的 PostgreSQL 实例。
+
+![](@/assets/images/tutorials/railway-select-postgres.png)
+
+#### 获取连接字符串
+
+点击项目中的 PostgreSQL 服务，进入 `Variables` 选项卡，找到 `DATABASE_PUBLIC_URL` 变量。复制其值——它应该类似于这样：
+
+```bash
+postgresql://postgres:password@region.railway.app:port/railway
+```
+
+![](@/assets/images/tutorials/railway-postgres-variables.png)
+
+<Callout type="warning">
+Railway 提供两种类型的数据库连接 URL：
+
+- **Public URL** — 可从任何地方访问（你的本地机器、外部服务）。使用 TCP 代理，看起来像 `postgresql://postgres:password@region.railway.app:port/railway`。
+- **Private URL** — 仅可通过同一 Railway 项目内的服务使用内部网络访问。使用 `*.railway.internal` 主机名。
+
+对于**本地开发**（例如运行 `drizzle-kit push` 或 `drizzle-kit studio`），你必须使用**公共 URL**。私有的 `*.railway.internal` 主机名在你的本地机器上无法解析。
+</Callout>
+
+#### 设置连接字符串变量
+
+在项目根目录创建一个 `.env` 文件，并添加 `DATABASE_URL` 环境变量。使用来自 Railway 的**公共**连接字符串：
+
+```plaintext copy
+DATABASE_URL=postgresql://postgres:password@region.railway.app:port/railway
+```
+
+<Callout type="info">
+  这个 `.env` 文件仅用于本地开发。部署到 Railway 时，你将通过服务引用变量在 Railway 控制台中单独配置 `DATABASE_URL` 环境变量。
+</Callout>
+
+#### 将 Drizzle ORM 连接到数据库
+
+创建一个 `db.ts` 文件并设置数据库配置：
+
+```typescript copy filename="src/db.ts"
+import { drizzle } from "drizzle-orm/node-postgres";
+
+export const db = drizzle(process.env.DATABASE_URL!);
+```
+
+#### 创建表
+
+创建一个 `schema.ts` 文件并声明你的表：
+
+```typescript copy filename="src/schema.ts"
+import * as p from "drizzle-orm/pg-core";
+
+export const usersTable = p.pgTable("users", {
+  id: p.serial().primaryKey(),
+  name: p.text().notNull(),
+  age: p.integer().notNull(),
+  email: p.text().notNull().unique(),
+});
+
+export const postsTable = p.pgTable("posts", {
+  id: p.serial().primaryKey(),
+  title: p.text().notNull(),
+  content: p.text().notNull(),
+  userId: p
+    .integer()
+    .notNull()
+    .references(() => usersTable.id, { onDelete: "cascade" }),
+  createdAt: p.timestamp().notNull().defaultNow(),
+  updatedAt: p
+    .timestamp()
+    .notNull()
+    .$onUpdate(() => new Date()),
+});
+
+export type InsertUser = typeof usersTable.$inferInsert;
+export type SelectUser = typeof usersTable.$inferSelect;
+
+export type InsertPost = typeof postsTable.$inferInsert;
+export type SelectPost = typeof postsTable.$inferSelect;
+```
+
+#### 设置 Drizzle 配置文件
+
+**Drizzle config** - 一个由 [Drizzle Kit](/docs/kit-overview) 使用的配置文件，包含数据库连接、迁移文件夹和 schema 文件的所有信息。
+
+在项目根目录创建一个 `drizzle.config.ts` 文件并添加以下内容：
+
+```typescript copy filename="drizzle.config.ts"
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  schema: "./src/schema.ts",
+  out: "./migrations",
+  dialect: "postgresql",
+  dbCredentials: {
+    url: process.env.DATABASE_URL!,
+  },
+});
+```
+
+#### 将更改应用到数据库
+
+你可以使用 `drizzle-kit generate` 命令生成迁移，然后使用 `drizzle-kit migrate` 命令运行它们。
+
+生成迁移：
+
+```bash copy
+bunx drizzle-kit generate
+```
+
+`generate` 命令仅会根据你的 schema 创建迁移 SQL 文件——它**不会**将任何更改应用到数据库。这些迁移会按照 `drizzle.config.ts` 中的配置存储在 `migrations` 目录中。该目录将包含更新数据库 schema 所需的 SQL 文件，以及用于存储不同迁移阶段 schema 快照的 `meta` 文件夹。
+
+生成的迁移示例：
+
+```sql
+CREATE TABLE "posts" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"title" text NOT NULL,
+	"content" text NOT NULL,
+	"userId" integer NOT NULL,
+	"createdAt" timestamp DEFAULT now() NOT NULL,
+	"updatedAt" timestamp NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "users" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"name" text NOT NULL,
+	"age" integer NOT NULL,
+	"email" text NOT NULL,
+	CONSTRAINT "users_email_unique" UNIQUE("email")
+);
+--> statement-breakpoint
+ALTER TABLE "posts" ADD CONSTRAINT "posts_userId_users_id_fk" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
+```
+
+将生成的迁移应用到数据库：
+
+```bash copy
+bunx drizzle-kit migrate
+```
+
+<Callout type="info">
+  在本教程中，迁移会在应用启动时使用 `drizzle-orm/node-postgres/migrator` 中的 `migrate()` 自动应用。你也可以在本地测试时使用 `drizzle-kit migrate` 手动应用它们。
+</Callout>
+
+另外，你也可以使用 [Drizzle kit push 命令](/docs/kit-overview#prototyping-with-db-push)直接将更改推送到数据库：
+
+```bash copy
+bunx drizzle-kit push
+```
+
+<Callout type="warning">
+  push 命令非常适合本地开发中的快速原型设计，能够在无需管理迁移文件的情况下快速迭代。对于生产环境部署，建议使用 `generate` + `migrate` 工作流，以保留 schema 变更的版本化历史。
+</Callout>
+
+</Steps>
+
+## 基本文件结构
+
+这是项目的基本文件结构。在 `src` 目录中，我们包含了与数据库相关的文件，包括 `db.ts` 中的连接和 `schema.ts` 中的 schema 定义。
+
+```plaintext
+📦 <project root>
+ ├ 📂 src
+ │  ├ 📜 db.ts
+ │  ├ 📜 schema.ts
+ │  └ 📜 index.ts
+ ├ 📂 migrations
+ │  ├ 📂 meta
+ │  │  ├ 📜 _journal.json
+ │  │  └ 📜 0000_snapshot.json
+ │  └ 📜 0000_whole_nomad.sql
+ ├ 📜 .env
+ ├ 📜 drizzle.config.ts
+ ├ 📜 package.json
+ └ 📜 tsconfig.json
+```
+
+## 将应用部署到 Railway
+
+<Steps>
+#### 为部署准备你的项目
+
+一旦你[生成了迁移](#applying-changes-to-the-database)，请将 `migrations` 目录提交到你的仓库——当应用启动时，这些文件将会自动应用。
+
+创建一个 `index.ts` 文件作为应用入口。下面的示例会在启动时运行迁移，然后使用 Bun 启动一个简单的 HTTP 服务器：
+
+```typescript copy filename="src/index.ts"
+import { drizzle } from "drizzle-orm/node-postgres";
+import { migrate } from "drizzle-orm/node-postgres/migrator";
+import { usersTable } from "./schema";
+
+const db = drizzle(process.env.DATABASE_URL!);
+
+await migrate(db, { migrationsFolder: "./migrations" });
+
+const server = Bun.serve({
+  port: process.env.PORT || 3000,
+  async fetch(req) {
+    const url = new URL(req.url);
+
+    if (url.pathname === "/users") {
+      const users = await db.select().from(usersTable);
+      return new Response(JSON.stringify(users), {
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    return new Response("OK");
+  },
+});
+
+console.log(`Server running on port ${server.port}`);
+```
+
+`migrate()` 函数会读取 `migrations` 目录中的 SQL 文件，并将所有尚未应用的迁移应用到数据库。它可以安全地在每次启动时运行——已经应用过的迁移会被跳过。
+
+确保你的 `package.json` 包含一个 start 脚本：
+
+```json copy filename="package.json"
+{
+  "scripts": {
+    "start": "bun src/index.ts"
+  }
+}
+```
+
+#### 将项目推送到 GitHub
+
+Railway 从 GitHub 仓库部署。初始化 git 仓库并推送你的代码：
+
+```bash copy
+git init
+git add .
+git commit -m "initial commit"
+```
+
+在 GitHub 上创建一个新仓库并将你的代码推送过去。
+
+#### 将你的 GitHub 仓库连接到 Railway
+
+在你的 Railway 项目中，点击画布右上角的 `New` 按钮并选择 `GitHub Repo`。如有提示，请连接你的 GitHub 账户，然后选择你刚刚推送的仓库。
+
+![](@/assets/images/tutorials/railway-canvas-postgres-add-service.png)
+
+![](@/assets/images/tutorials/bun-railway-github-repo-search.png)
+
+#### 配置环境变量
+
+在已部署服务的设置中，进入 `Variables` 选项卡。通过引用 PostgreSQL 服务变量添加 `DATABASE_URL` 变量：
+
+点击 `Add Variable`，将名称设为 `DATABASE_URL`，并使用 Railway 变量引用 `${{Postgres.DATABASE_URL}}` 作为值。
+
+<Callout type="info">
+`${{Postgres.DATABASE_URL}}` 引用变量会在运行时自动解析为**私有**内部连接字符串，这对于 Railway 内部服务之间的通信是最优的。这与本地 `.env` 文件中使用的公共 URL 不同。
+</Callout>
+
+![](@/assets/images/tutorials/bun-railway-app-set-database-url.png)
+
+#### 部署
+
+当你推送到已连接的分支时，Railway 会自动部署你的应用。你可以在 `Deployments` 选项卡中监控部署过程。
+
+![](@/assets/images/tutorials/bun-railway-deployment-successful.png)
+
+#### 验证你的设置
+
+部署完成后，前往 Railway 项目的 `Architecture` 选项卡。你应该能看到你的应用服务已连接到 PostgreSQL 数据库。
+
+![](@/assets/images/tutorials/bun-railway-canvas-app-postgres.png)
+
+<Callout type="warning" title="替代方案：零停机迁移">
+本教程在应用启动时使用 `migrate()` 应用迁移。这是最简单的方法，并且适用于大多数应用。
+
+如果你需要**零停机部署**，你可能希望将迁移作为一个**独立步骤**在新版本应用开始接收流量之前执行。这样你就可以独立于数据库更改回滚应用。
+
+在 Railway 上，你可以使用[预部署命令](https://docs.railway.com/deployments/pre-deploy-command)来实现这一点——它在构建和部署阶段之间运行，可以访问你的私有网络和环境变量，如果执行失败，部署将不会继续。
+
+在服务设置中，向下滚动到 **Deploy** 部分并点击 `Add pre-deploy step`：
+
+![](@/assets/images/tutorials/bun-railway-app-predeploy-migrate.png)
+
+输入以下命令：
+
+```bash copy
+bunx drizzle-kit migrate
+```
+
+采用这种方式时，请从你的 `index.ts` 中移除 `await migrate(db, { migrationsFolder: "./migrations" })` 调用——迁移将改由预部署命令处理。
+
+有关更多详情，请参阅 [Drizzle migrations fundamentals](/docs/migrations) 页面。
+
+</Callout>
+
+</Steps>
+
+## 将 Drizzle Studio 部署到 Railway
+
+你可以将 [Drizzle Studio](/docs/drizzle-studio/overview) 与你的应用一起部署到 Railway 上，直接从浏览器浏览和管理数据库。你可以使用 [Drizzle Studio Railway 模板](https://railway.com/deploy/drizzle-studio-1)，或者按照下面的步骤操作。
+
+<Steps>
+#### 从模板添加一个新服务
+
+在你的 Railway 项目中，点击画布右上角的 `New` 按钮，然后选择 `Template`。
+
+![](@/assets/images/tutorials/bun-railway-canvas-postgres-add-new-service.png)
+
+#### 选择 Drizzle Studio 模板
+
+搜索 `drizzle studio`，然后选择 Drizzle 提供的 **Drizzle Studio** 模板。
+
+![](@/assets/images/tutorials/railway-template-search-drizzle-studio.png)
+
+#### 配置环境变量并部署
+
+该模板包含两个预配置的环境变量：
+
+- `PASSCODE` - 访问你的 Studio 实例的密码。默认值为 `${{secret()}}`，它会生成一个随机密钥。
+- `DATABASE_URL` - 数据库连接字符串。将其设置为 `${{Postgres.DATABASE_URL}}`，以引用你现有的 PostgreSQL 服务。
+
+点击 `Deploy Template` 进行部署。
+
+![](@/assets/images/tutorials/railway-drizzle-studio-template-config.png)
+
+#### 找到你的 Drizzle Studio URL
+
+部署完成后，点击项目中的 Drizzle Studio 服务，进入 `Settings` 选项卡，并向下滚动到 `Networking` 部分。你会在 **Public Networking** 下找到你的公共域名。
+
+![](@/assets/images/tutorials/railway-drizzle-studio-networking.png)
+
+#### 使用 Drizzle Studio 浏览你的数据库
+
+在浏览器中打开 Drizzle Studio 的 URL。你应该可以看到数据库表，并能直接浏览、筛选和编辑数据。
+
+![](@/assets/images/tutorials/drizzle-studio-posts-table.png)
+
+#### 验证你的设置
+
+进入你 Railway 项目中的 `Architecture` 选项卡。现在你应该能看到三个服务：你的应用、PostgreSQL 数据库和 Drizzle Studio。
+
+![](@/assets/images/tutorials/bun-railway-canvas-all-services.png)
+
+</Steps>
+
