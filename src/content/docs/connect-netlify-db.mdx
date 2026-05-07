@@ -9,39 +9,39 @@ import CodeTabs from "@mdx/CodeTabs.astro";
 import Section from "@mdx/Section.astro";
 import WhatsNextPostgres from "@mdx/WhatsNextPostgres.astro";
 
-# Drizzle \<\> Netlify Database
+# Drizzle \<\> Netlify 数据库
 <Prerequisites>
-- Database [connection basics](/docs/connect-overview) with Drizzle
-- Netlify Database - [website](https://docs.netlify.com/build/data-and-storage/netlify-database/)
+- 使用 Drizzle 进行数据库[连接基础](/docs/connect-overview)
+- Netlify Database - [网站](https://docs.netlify.com/build/data-and-storage/netlify-database/)
 </Prerequisites>
 
 <Callout type="warning">
-The Netlify Database driver is developed and maintained by the Netlify team.
+Netlify Database 驱动由 Netlify 团队开发和维护。
 
-The Netlify Database driver is available in both `drizzle-orm@latest` and `drizzle-orm@beta`. We strongly recommend using the beta tag, as it has better support for Netlify's platform-managed migrations
+Netlify Database 驱动同时可用于 `drizzle-orm@latest` 和 `drizzle-orm@beta`。我们强烈建议使用 beta 标签，因为它对 Netlify 的平台托管迁移有更好的支持
 </Callout>
 
-Drizzle has native support for Netlify Database connections, that intelligently selects the optimal underlying Postgres driver based on the runtime environment.
+Drizzle 原生支持 Netlify Database 连接，并会根据运行时环境智能选择底层最优的 Postgres 驱动。
 
-Netlify Database is a managed Postgres database. On Netlify's platform, the same application code runs in two very different contexts:
+Netlify Database 是一个托管的 Postgres 数据库。在 Netlify 平台上，相同的应用代码会在两种截然不同的上下文中运行：
 
-- Serverless functions: no persistent connections, best served by HTTP-based queries
-- Server mode: persistent connections via node-postgres
+- 无服务器函数：没有持久连接，最适合基于 HTTP 的查询
+- 服务模式：通过 node-postgres 使用持久连接
 
-This adapter abstracts that decision away so consumers can write `drizzle()` once and get the right driver automatically.
+这个适配器将这一决策抽象掉，因此使用者只需编写一次 `drizzle()`，即可自动获得正确的驱动。
   
-#### Step 1 - Install packages
+#### 第 1 步 - 安装包
 <Npm>
 drizzle-orm @netlify/database
 -D drizzle-kit
 </Npm>
 
-#### Step 2 - Initialize the driver and make a query
-<CodeTabs items={["Zero config", "Connection string", "Explicit client"]}>
+#### 第 2 步 - 初始化驱动并进行查询
+<CodeTabs items={["零配置", "连接字符串", "显式客户端"]}>
 ```typescript
 import { drizzle } from 'drizzle-orm/netlify-db';
 
-// Connection string is set automatically by the platform
+// 连接字符串由平台自动设置
 const db = drizzle();
 
 const result = await db.execute('select 1');
@@ -58,13 +58,13 @@ const result = await db.execute('select 1');
 ```typescript
 import { drizzle } from 'drizzle-orm/netlify-db';
 
-// Explicit client — consumer controls the driver
+// 显式客户端 — 由使用者控制驱动
 const db = drizzle({ client: netlifyDbClient });
 
 const result = await db.execute('select 1');
 ```
 </CodeTabs>
 
-#### What's next?
+#### 接下来是什么？
 
 <WhatsNextPostgres/>

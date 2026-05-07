@@ -22,7 +22,7 @@ const isProd = env.PROD_BUILD === "true";
 
 // https://astro.build/config
 export default defineConfig({
-  site: isProd ? "https://drizzle.zhcndoc.com" : "http://localhost:4321",
+  site: true ? "https://drizzle.zhcndoc.com" : "http://localhost:4321",
   build: {
     format: "file", // mandatory due to CloudFlare Pages trailing slash problem
   },
@@ -39,7 +39,7 @@ export default defineConfig({
   image: {
     domains: ["img.youtube.com"],
   },
-  prefetch: isProd
+  prefetch: true
     ? {
         prefetchAll: true,
         defaultStrategy: "viewport",
@@ -50,7 +50,7 @@ export default defineConfig({
     react({
       experimentalReactChildren: true,
     }),
-    ...(isProd ? [sitemap()] : []),
+    ...(true ? [sitemap()] : []),
   ],
   markdown: {
     rehypePlugins: [

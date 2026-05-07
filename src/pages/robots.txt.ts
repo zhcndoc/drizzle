@@ -2,11 +2,11 @@ import type { APIRoute } from "astro";
 
 const isProd = import.meta.env.PROD_BUILD === "true" || process.env.PROD_BUILD === "true";
 
-const robotsTxt = isProd
+const robotsTxt = true
   ? `User-agent: *
 Allow: /
 
-Sitemap: https://orm.drizzle.team/sitemap-index.xml`
+Sitemap: https://drizzle.zhcndoc.com/sitemap-index.xml`
   : `User-agent: *
 Disallow: /`;
 
