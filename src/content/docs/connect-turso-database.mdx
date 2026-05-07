@@ -37,7 +37,7 @@ const result = await db.execute('select 1');
 如果你需要提供你已有的驱动：
 
 ```typescript
-import { Database } from '@tursodatabase/drivers';
+import { Database } from '@tursodatabase/database';
 import { drizzle } from 'drizzle-orm/tursodatabase/database';
 
 const client = new Database('sqlite.db');
