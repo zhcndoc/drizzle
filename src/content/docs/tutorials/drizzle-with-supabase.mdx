@@ -1,0 +1,353 @@
+---
+title: "使用 Supabase 数据库的 Drizzle"
+date: "2024-05-07"
+svgs: ['<svg width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="9.63139" height="40.8516" rx="4.8157" transform="matrix(0.873028 0.48767 -0.497212 0.867629 43.4805 67.3037)" fill="currentColor"></rect><rect width="9.63139" height="40.8516" rx="4.8157" transform="matrix(0.873028 0.48767 -0.497212 0.867629 76.9395 46.5342)" fill="currentColor"></rect><rect width="9.63139" height="40.8516" rx="4.8157" transform="matrix(0.873028 0.48767 -0.497212 0.867629 128.424 46.5352)" fill="currentColor"></rect><rect width="9.63139" height="40.8516" rx="4.8157" transform="matrix(0.873028 0.48767 -0.497212 0.867629 94.957 67.3037)" fill="currentColor"></rect></svg>', <svg width="24" height="25" viewBox="0 0 24 25" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M13.3501 21.1611C12.9303 21.6898 12.079 21.4002 12.0689 20.7251L11.921 10.8511H18.5603C19.7628 10.8511 20.4335 12.24 19.6857 13.1818L13.3501 21.1611Z" /><path d="M10.6499 5.27307C11.0697 4.7443 11.921 5.03403 11.9311 5.70913L11.996 15.5831H5.43981C4.23723 15.5831 3.56652 14.1942 4.31432 13.2524L10.6499 5.27307Z"/></svg>]
+---
+
+import Prerequisites from "@mdx/Prerequisites.astro";
+import Npm from '@mdx/Npm.astro';
+import Steps from '@mdx/Steps.astro';
+import Section from "@mdx/Section.astro";
+import Callout from '@mdx/Callout.astro';
+
+本教程演示如何将 Drizzle ORM 与 [Supabase Database](https://supabase.com/docs/guides/database/overview) 一起使用。每个 Supabase 项目都配备一个完整的 [Postgres](https://www.postgresql.org/docs) 数据库。
+
+<Prerequisites>
+- 您应该已安装 Drizzle ORM 和 [Drizzle kit](/docs/kit-overview)。您可以通过运行以下命令来完成此操作：
+<Npm>
+  drizzle-orm@rc
+  -D drizzle-kit@rc
+</Npm>
+- 您应该已安装 `dotenv` 包以管理环境变量。有关该包的更多信息，请[点击此处](https://www.npmjs.com/package/dotenv)。
+<Npm>
+  dotenv
+</Npm>
+
+- 您应该已安装 `postgres` 包以连接到 Postgres 数据库。有关该包的更多信息，请[点击此处](https://www.npmjs.com/package/postgres)。
+<Npm>
+  postgres
+</Npm>
+
+- 您还应安装最新版本的 [Supabase CLI](https://supabase.com/docs/guides/cli/getting-started#installing-the-supabase-cli)（仅在您想使用 Supabase CLI 进行迁移时）。
+</Prerequisites>
+
+请查看 [Supabase 文档](https://supabase.com/docs/guides/database/connecting-to-postgres#connecting-with-drizzle)，了解如何使用 Drizzle ORM 连接到数据库。
+
+## 设置 Supabase 和 Drizzle ORM
+
+<Steps>
+#### 创建一个新的 Supabase 项目
+
+您可以在 [仪表板](https://supabase.com/dashboard) 中创建新的 Supabase 项目，或通过此 [链接](https://database.new/) 创建。
+
+#### 设置连接字符串变量
+
+导航到 [数据库设置](https://supabase.com/dashboard/project/_/settings/database)，并从 `连接字符串` 部分复制 URI。确保使用 `连接池`。请记得用您的实际数据库密码替换密码占位符。
+
+将 `DATABASE_URL` 变量添加到您的 `.env` 或 `.env.local` 文件中。
+
+```plaintext copy
+DATABASE_URL=<YOUR_DATABASE_URL>
+```
+
+有关连接池和池模式的更多信息，请查看 [文档](https://supabase.com/docs/guides/database/connecting-to-postgres#connection-pooler)。
+
+#### 将 Drizzle ORM 连接到您的数据库
+
+在 `src/db` 目录中创建一个 `index.ts` 文件，并设置您的数据库配置：
+
+```typescript copy filename="src/db/index.ts"
+import { config } from 'dotenv';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
+
+config({ path: '.env' }); // 或 .env.local
+
+const client = postgres(process.env.DATABASE_URL!);
+export const db = drizzle({ client });
+```
+
+#### 创建表
+
+在 `src/db` 目录中创建一个 `schema.ts` 文件，并声明您的表：
+
+```typescript copy filename="src/db/schema.ts"
+import { integer, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
+
+export const usersTable = pgTable('users_table', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  age: integer('age').notNull(),
+  email: text('email').notNull().unique(),
+});
+
+export const postsTable = pgTable('posts_table', {
+  id: serial('id').primaryKey(),
+  title: text('title').notNull(),
+  content: text('content').notNull(),
+  userId: integer('user_id')
+    .notNull()
+    .references(() => usersTable.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at')
+    .notNull()
+    .$onUpdate(() => new Date()),
+});
+
+export type InsertUser = typeof usersTable.$inferInsert;
+export type SelectUser = typeof usersTable.$inferSelect;
+
+export type InsertPost = typeof postsTable.$inferInsert;
+export type SelectPost = typeof postsTable.$inferSelect;
+```
+
+#### 设置 Drizzle 配置文件
+
+**Drizzle 配置** - 一个由 [Drizzle Kit](/docs/kit-overview) 使用的配置文件，包含有关您的数据库连接、迁移文件夹和架构文件的所有信息。
+
+在项目根目录下创建一个 `drizzle.config.ts` 文件，并添加以下内容：
+
+```typescript copy filename="drizzle.config.ts"
+import { config } from 'dotenv';
+import { defineConfig } from 'drizzle-kit';
+
+config({ path: '.env' });
+
+export default defineConfig({
+  schema: './src/db/schema.ts',
+  out: './supabase/migrations',
+  dialect: 'postgresql',
+  dbCredentials: {
+    url: process.env.DATABASE_URL!,
+  },
+});
+```
+
+#### 将更改应用于数据库
+
+您可以使用 `drizzle-kit generate` 命令生成迁移，然后使用 `drizzle-kit migrate` 命令运行它们。
+
+生成迁移：
+
+```bash copy
+npx drizzle-kit generate
+```
+
+这些迁移存储在 `supabase/migrations` 目录中，正如您在 `drizzle.config.ts` 中指定的那样。该目录将包含更新您的数据库架构所需的 SQL 文件，以及一个用于存储不同迁移阶段架构快照的 `meta` 文件夹。
+
+生成迁移的示例：
+
+```sql
+CREATE TABLE IF NOT EXISTS "posts_table" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"title" text NOT NULL,
+	"content" text NOT NULL,
+	"user_id" integer NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "users_table" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"name" text NOT NULL,
+	"age" integer NOT NULL,
+	"email" text NOT NULL,
+	CONSTRAINT "users_table_email_unique" UNIQUE("email")
+);
+--> statement-breakpoint
+DO $$ BEGIN
+ ALTER TABLE "posts_table" ADD CONSTRAINT "posts_table_user_id_users_table_id_fk" FOREIGN KEY ("user_id") REFERENCES "users_table"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+```
+
+运行迁移：
+
+```bash copy
+npx drizzle-kit migrate
+```
+
+了解有关 [迁移过程](/docs/migrations) 的更多信息。您还可以使用 [Supabase CLI](https://supabase.com/docs/guides/cli/getting-started) 应用迁移：
+- 对于已存在的表，手动审查从 `npx drizzle-kit generate` 生成的迁移文件，并注释或调整任何不安全的纯创建语句（例如，`CREATE SCHEMA "auth";`），确保安全的条件创建（例如，`CREATE TABLE IF NOT EXISTS "auth"."users"`）得到妥善处理。
+
+或者，您可以使用 [Drizzle kit push 命令](/docs/kit-overview#prototyping-with-db-push) 直接将更改推送到数据库：
+
+```bash copy
+npx drizzle-kit push
+```
+
+<Callout type="warning">Push 命令适用于需要快速测试新架构设计或在本地开发环境中进行更改的情况，使您能够快速迭代，而无需管理迁移文件的开销。</Callout>
+
+要使用 Supabase CLI 应用迁移，您应遵循以下步骤：
+
+使用 Drizzle Kit 生成迁移：
+
+```bash copy
+npx drizzle-kit generate
+```
+
+初始化本地 Supabase 项目：
+
+```bash copy
+supabase init
+```
+
+将其链接到您的远程项目：
+
+```bash copy
+supabase link
+```
+
+将更改推送到数据库：
+
+```bash copy
+supabase db push
+```
+</Steps>
+
+## Basic File Structure
+
+This is the basic file structure of the project. In the `src/db` directory, we have database-related files, including the connection in `index.ts` and the schema definition in `schema.ts`.
+
+```plaintext
+📦 <project root>
+ ├ 📂 src
+ │   ├ 📂 db
+ │   │  ├ 📜 index.ts
+ │   │  └ 📜 schema.ts
+ ├ 📂 supabase
+ │   ├ 📂 migrations
+ │   │  ├ 📂 meta
+ │   │  │  ├ 📜 _journal.json
+ │   │  │  └ 📜 0000_snapshot.json
+ │   │  └ 📜 0000_watery_spencer_smythe.sql
+ │   └ 📜 config.toml
+ ├ 📜 .env
+ ├ 📜 drizzle.config.ts
+ ├ 📜 package.json
+ └ 📜 tsconfig.json
+```
+
+## 查询示例
+
+例如，我们可以创建 `src/db/queries` 文件夹，并为每个操作（插入、选择、更新、删除）单独创建文件。
+
+#### 插入数据
+
+有关插入查询的更多信息，请参阅 [文档](/docs/insert)。
+
+```typescript copy filename="src/db/queries/insert.ts" {4, 8}
+import { db } from '../index';
+import { InsertPost, InsertUser, postsTable, usersTable } from '../schema';
+
+export async function createUser(data: InsertUser) {
+  await db.insert(usersTable).values(data);
+}
+
+export async function createPost(data: InsertPost) {
+  await db.insert(postsTable).values(data);
+}
+```
+
+#### 选择数据
+
+有关选择查询的更多信息，请参阅 [文档](/docs/select)。
+
+<Callout type='warning'>
+`getColumns` 可从 `drizzle-orm@1.0.0-beta.2` 开始使用（更多信息请阅读 [这里](/docs/upgrade-v1)）
+
+如果您使用的是 pre-1 版本（例如 `0.45.1`），请改用 `getTableColumns`
+</Callout>
+
+```typescript copy filename="src/db/queries/select.ts" {5, 16, 41}
+import { asc, between, count, eq, getColumns, sql } from 'drizzle-orm';
+import { db } from '../index';
+import { SelectUser, postsTable, usersTable } from '../schema';
+
+export async function getUserById(id: SelectUser['id']): Promise<
+  Array<{
+    id: number;
+    name: string;
+    age: number;
+    email: string;
+  }>
+> {
+  return db.select().from(usersTable).where(eq(usersTable.id, id));
+}
+
+export async function getUsersWithPostsCount(
+  page = 1,
+  pageSize = 5,
+): Promise<
+  Array<{
+    postsCount: number;
+    id: number;
+    name: string;
+    age: number;
+    email: string;
+  }>
+> {
+  return db
+    .select({
+      ...getColumns(usersTable),
+      postsCount: count(postsTable.id),
+    })
+    .from(usersTable)
+    .leftJoin(postsTable, eq(usersTable.id, postsTable.userId))
+    .groupBy(usersTable.id)
+    .orderBy(asc(usersTable.id))
+    .limit(pageSize)
+    .offset((page - 1) * pageSize);
+}
+
+export async function getPostsForLast24Hours(
+  page = 1,
+  pageSize = 5,
+): Promise<
+  Array<{
+    id: number;
+    title: string;
+  }>
+> {
+  return db
+    .select({
+      id: postsTable.id,
+      title: postsTable.title,
+    })
+    .from(postsTable)
+    .where(between(postsTable.createdAt, sql`now() - interval '1 day'`, sql`now()`))
+    .orderBy(asc(postsTable.title), asc(postsTable.id))
+    .limit(pageSize)
+    .offset((page - 1) * pageSize);
+}
+```
+
+或者，您可以使用 [关系查询语法](/docs/rqb)。
+#### 更新数据
+
+有关更新查询的更多信息，请参阅 [文档](/docs/update)。
+
+```typescript copy filename="src/db/queries/update.ts" {5}
+import { eq } from 'drizzle-orm';
+import { db } from '../index';
+import { SelectPost, postsTable } from '../schema';
+
+export async function updatePost(id: SelectPost['id'], data: Partial<Omit<SelectPost, 'id'>>) {
+  await db.update(postsTable).set(data).where(eq(postsTable.id, id));
+}
+```
+
+#### 删除数据
+
+有关删除查询的更多信息，请参阅 [文档](/docs/delete)。
+
+```typescript copy filename="src/db/queries/delete.ts" {5}
+import { eq } from 'drizzle-orm';
+import { db } from '../index';
+import { SelectUser, usersTable } from '../schema';
+
+export async function deleteUser(id: SelectUser['id']) {
+  await db.delete(usersTable).where(eq(usersTable.id, id));
+}
+```

@@ -1,0 +1,245 @@
+import Tab from "@mdx/Tab.astro";
+import Tabs from "@mdx/Tabs.astro";
+import Callout from "@mdx/Callout.astro";
+import TableWrapper from "@mdx/TableWrapper.astro";
+
+# 版本控制
+
+`drizzle-seed` 使用版本控制来管理静态数据和动态数据的输出。为了确保真正的
+确定性，请确保在使用相同的 `seed` 数字时，值保持不变。如果对
+静态数据源或动态数据生成逻辑进行了更改，版本将会更新，让你可以选择
+继续使用之前的版本，或使用最新版本。
+
+你可以升级到最新的 `drizzle-seed` 版本以获取新功能，例如额外的
+生成器，同时在需要时仍可通过旧版本保持确定性的输出。这
+在你需要依赖现有确定性数据，同时又想使用新功能时尤其有用。
+
+```ts
+await seed(db, schema, { version: '2' });
+```
+
+## 历史
+<TableWrapper>
+|          api version  |   npm version    |     Changed generators                    |
+|  :--------------      | :--------------  | :-------------                            |
+|       `v1`            | `0.1.1`          |                                           |
+|       `v2`	        | `0.2.1`          |`string()`, `interval({ isUnique: true })` |
+|       `v3`            | `0.4.0`          |`hash generating function`    			   |
+|       `v4 (LTS) `     | `1.0.0-beta.8`   |`uuid` 								       |
+</TableWrapper>
+
+<Callout collapsed="底层是如何工作的？">
+> 这并不是实际的 API 变更；这只是我们将如何推进 `drizzle-seed` 版本管理的示例。
+
+例如，`lastName` 生成器发生了变更，并且该生成器的新版本 `V2` 可用了。
+
+后来，`firstName` 生成器发生了变更，使得该生成器的 `V3` 版本可用。
+
+|                  |       `V1`       |      `V2`       |   `V3(最新)`   |
+| :--------------: | :--------------: | :-------------: | :--------------: |
+| **LastNameGen**  | `LastNameGenV1`  | `LastNameGenV2` |                  |
+| **FirstNameGen** | `FirstNameGenV1` |                 | `FirstNameGenV3` |
+
+
+##### 使用 3 版的 `firstName` 生成器和 2 版的 `lastName` 生成器
+```ts
+await seed(db, schema);
+```
+
+如果你还不准备立即使用最新的生成器版本，可以指定要使用的最大版本
+
+##### 使用 1 版的 `firstName` 生成器和 2 版的 `lastName` 生成器
+```ts
+await seed(db, schema, { version: '2' });
+```
+
+##### 使用 1 版的 `firstName` 生成器和 1 版的 `lastName` 生成器。
+```ts
+await seed(db, schema, { version: '1' });
+```
+
+</Callout>
+
+## 版本 2
+#### 唯一 `interval` 生成器已更改
+
+<Callout title='升级原因'>
+旧版本的生成器可能会生成像 `1 minute 60 seconds` 和 `2 minutes 0 seconds` 这样的区间，并将它们视为不同的区间。
+然而，当 `1 minute 60 seconds` 区间插入 SQLite 数据库时，它会自动转换为 `2 minutes 0 seconds`。因此，之后尝试将 `2 minutes 0 seconds` 区间插入唯一列时会导致错误
+</Callout>
+
+
+如果你在种子脚本中使用唯一的 `interval` 生成器，如下面的脚本所示，你会受到影响：
+```ts
+import { blob, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
+import { seed } from 'drizzle-seed';
+
+const intervals = sqliteTable('intervals', {
+	interval1: text().unique(),
+	interval2: text(),
+	interval3: blob().unique(),
+	interval4: blob(),
+});
+
+async function main() {
+	const db = drizzle(process.env.DATABASE_URL!);
+
+	await seed(db, { intervals }).refine((f) => ({
+		intervals: {
+			columns: {
+				interval1: f.interval({ isUnique: true }),
+				interval2: f.interval({ isUnique: true }),
+				interval3: f.interval({ isUnique: true }),
+				interval4: f.interval({ isUnique: true }),
+			},
+		},
+	}));
+}
+
+main();
+
+```
+
+#### `string` 生成器已更改：包括非唯一和唯一
+
+<Callout title='升级原因'>
+可以基于文本列的长度生成唯一字符串（例如 `varchar(20)`）
+</Callout>
+
+如果你的表包含带最大长度参数的类文本类型列，或者包含类文本类型的唯一列，你会受到影响：
+```ts
+import { drizzle } from 'drizzle-orm/better-sqlite3';
+import { blob, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { seed } from "drizzle-seed";
+
+const strings = sqliteTable('strings', {
+	string1: text().unique(),
+	string2: text({ length: 256 }),
+	string3: text({ length: 256 }).unique(),
+	string4: blob().unique(),
+});
+
+async function main() {
+  const db = drizzle(process.env.DATABASE_URL!);
+
+  await seed(db, { strings });
+}
+
+main();
+```
+
+如果你在种子脚本中使用 `string` 生成器，如下面的脚本所示，你会受到影响：
+```ts
+import { blob, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
+import { seed } from "drizzle-seed";
+
+const strings = sqliteTable("strings", {
+    string1: text().unique(),
+	string2: text(),
+	string3: text({ length: 256 }).unique(),
+	string4: text({ length: 256 }),
+	string5: text({ length: 256 }),
+	string6: blob().unique(),
+	string7: blob(),
+});
+
+async function main() {
+	const db = drizzle(process.env.DATABASE_URL!);
+
+	await seed(db, { strings }).refine((f) => ({
+		strings: {
+			columns: {
+				string1: f.string({ isUnique: true }),
+				string2: f.string({ isUnique: true }),
+				string3: f.string({ isUnique: true }),
+				string4: f.string({ isUnique: true }),
+				string5: f.string(),
+				string6: f.string({ isUnique: true }),
+				string7: f.string({ isUnique: true }),
+			},
+		},
+	}));
+}
+
+main();
+```
+
+## 版本 3
+#### `hash generating function was changed`
+
+<Callout title='升级原因'>
+之前版本的哈希生成函数会根据使用的是 Bun 还是 Node.js 生成不同的哈希，而且哈希在不同版本的 Node.js 之间也会有所不同。
+
+新的哈希生成函数将无论 Node.js 或 Bun 的版本如何都生成相同的哈希，从而在所有版本中实现确定性的数据生成。
+</Callout>
+
+与之前版本相比，所有生成器都会输出不同的值，即使使用相同的种子编号也是如此。
+
+**用法**
+```ts
+await seed(db, schema);
+// or explicit
+await seed(db, schema, { version: '3' });
+```
+
+**切换到旧版本**
+
+之前版本的哈希生成函数是 v1。
+```ts
+await seed(db, schema, { version: '1' });
+```
+要在保留 v1 哈希生成函数的同时使用 v2 生成器：
+```ts
+await seed(db, schema, { version: '2' });
+```
+
+## 版本 4
+#### `uuid` 生成器已更改
+
+<Callout title='升级原因'>
+旧版本的 `uuid` 生成器生成的 UUID 值无法通过 Zod 的 v4 UUID 校验。
+
+示例
+```ts
+import { createSelectSchema } from 'drizzle-zod';
+import { seed } from 'drizzle-seed';
+
+await seed(db, { uuidTest: schema.uuidTest }, { count: 1 }).refine((funcs) => ({
+		uuidTest: {
+			columns: {
+				col1: funcs.uuid()
+			}
+		}
+	})
+);
+
+const uuidSelectSchema = createSelectSchema(schema.uuidTest);
+const res = await db.select().from(schema.uuidTest);
+// 当使用旧版本的 uuid 生成器时，下面这一行会抛出错误
+uuidSelectSchema.parse(res[0]);
+```
+</Callout>
+
+**用法**
+```ts
+await seed(db, schema);
+// 或显式指定
+await seed(db, schema, { version: '4' });
+```
+
+**切换到旧版本**
+
+之前版本的 `uuid` 生成器是 v1。
+```ts
+await seed(db, schema, { version: '1' });
+```
+要在保留 v1 `uuid` 生成器的同时使用 v2 生成器：
+```ts
+await seed(db, schema, { version: '2' });
+```
+要在保留 v1 `uuid` 生成器的同时使用 v3 生成器：
+```ts
+await seed(db, schema, { version: '3' });
+```

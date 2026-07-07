@@ -1,0 +1,49 @@
+import Npm from "@mdx/Npm.astro";
+import Callout from '@mdx/Callout.astro';
+import AnchorCards from '@mdx/AnchorCards.astro';
+import Steps from '@mdx/Steps.astro';
+import WhatsNextMySQL from "@mdx/WhatsNextMySQL.astro";
+import Prerequisites from "@mdx/Prerequisites.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+
+# Drizzle \<\> Bun SQL
+
+<Prerequisites>
+- 使用 Drizzle 的数据库[连接基础](/docs/connect-overview)
+- Bun - [网站](https://bun.sh/docs)
+- Bun SQL - 用于 MySQL 数据库的原生绑定 - [点击这里](https://bun.sh/docs/api/sql)
+</Prerequisites>
+
+根据 **[官方网站](https://bun.sh/)** 的介绍，Bun 是一个快速的一体化 JavaScript 运行时。 
+
+Drizzle ORM 原生支持 **[`bun sql`](https://bun.sh/docs/api/sql)** 模块，而且速度快得离谱 🚀  
+
+#### 步骤 1 - 安装依赖包
+<Npm>
+ drizzle-orm@rc
+ -D drizzle-kit@rc
+</Npm>
+
+#### 步骤 2 - 初始化驱动并执行查询
+```typescript copy
+import 'dotenv/config';
+import { drizzle } from 'drizzle-orm/bun-sql/mysql';
+
+const db = drizzle(process.env.DATABASE_URL);
+
+const result = await db.select().from(...);
+```
+
+如果你需要提供已有的驱动：
+```typescript copy
+import 'dotenv/config';
+import { drizzle } from 'drizzle-orm/bun-sql/mysql';
+import { SQL } from 'bun';
+
+const client = new SQL(process.env.DATABASE_URL!);
+const db = drizzle({ client });
+```
+
+#### 接下来是什么？
+
+<WhatsNextMySQL/>

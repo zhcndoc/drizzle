@@ -1,0 +1,169 @@
+import Callout from '@mdx/Callout.astro';
+import Section from '@mdx/Section.astro';
+
+# 视图
+
+使用 Drizzle ORM，你可以通过多种方式声明视图。  
+
+你可以声明需要创建的视图，也可以声明数据库中已经存在的视图。 
+
+你可以使用内联 `query builder` 语法、`standalone query builder` 以及原始 `sql` 操作符来声明视图语句。 
+
+当使用内联或独立的查询构建器创建视图时，视图列模式会自动推断，  
+而当你使用 `sql` 时，则必须显式声明视图列模式。
+
+### 声明视图
+
+<Section>
+      ```ts filename="schema.ts" copy {14-15}
+      import { int, mssqlTable, mssqlView, nvarchar, datetime2 } from "drizzle-orm/mssql-core";
+      import { eq } from "drizzle-orm";
+
+      export const user = mssqlTable("user", {
+        id: int().identity().primaryKey(),
+        name: nvarchar({ length: 256 }),
+        email: nvarchar({ length: 256 }),
+        password: nvarchar({ length: 256 }),
+        role: nvarchar({ length: 256 }).$type<"admin" | "customer">(),
+        createdAt: datetime2("created_at"),
+        updatedAt: datetime2("updated_at"),
+      });
+
+      export const userView = mssqlView("user_view").as((qb) => qb.select().from(user));
+      export const customersView = mssqlView("customers_view").as((qb) => qb.select().from(user).where(eq(user.role, "customer")));
+      ```
+      ```sql
+      CREATE VIEW [customers_view] AS select ... from [user] where [user].[role] = 'customer';
+      CREATE VIEW [user_view] AS select ... from [user];
+      ```
+    </Section>
+
+你也可以使用 `standalone query builder` 来声明视图，它的工作方式完全相同：
+
+<Section>
+      ```ts filename="schema.ts" copy {4,16-17}
+      import { int, mssqlTable, mssqlView, nvarchar, datetime2, QueryBuilder } from "drizzle-orm/mssql-core";
+      import { eq } from "drizzle-orm";
+
+      const qb = new QueryBuilder();
+
+      export const user = mssqlTable("user", {
+        id: int().identity().primaryKey(),
+        name: nvarchar({ length: 256 }),
+        email: nvarchar({ length: 256 }),
+        password: nvarchar({ length: 256 }),
+        role: nvarchar({ length: 256 }).$type<"admin" | "customer">(),
+        createdAt: datetime2("created_at"),
+        updatedAt: datetime2("updated_at"),
+      });
+
+      export const userView = mssqlView("user_view").as(qb.select().from(user));
+      export const customersView = mssqlView("customers_view").as(qb.select().from(user).where(eq(user.role, "customer")));
+      ```
+      ```sql
+      CREATE VIEW [customers_view] AS select ... from [user] where [user].[role] = 'customer';
+      CREATE VIEW [user_view] AS select ... from [user];
+      ```
+    </Section>
+
+### 使用原始 SQL 声明视图
+当你需要使用查询构建器不支持的语法来声明视图时，  
+你可以直接使用 `sql` 操作符，并显式指定视图列模式。
+
+```ts copy
+import { eq, sql } from "drizzle-orm";
+import { int, mssqlTable, mssqlView, nvarchar } from "drizzle-orm/mssql-core";
+
+export const users = mssqlTable("users", {
+  id: int().identity().primaryKey(),
+  name: nvarchar({ length: 256 }),
+  cityId: int("city_id"),
+});
+
+export const newYorkers = mssqlView("new_yorkers", {
+  id: int().primaryKey(),
+  name: nvarchar({ length: 256 }).notNull(),
+  cityId: int("city_id").notNull(),
+}).as(sql`select * from ${users} where ${eq(users.cityId, 1)}`);
+```
+```sql
+CREATE VIEW [new_yorkers] AS select * from [users] where [users].[city_id] = 1;
+```
+
+### 声明已有视图
+当你获得了对数据库中现有视图的只读访问权限时，应使用 `.existing()` 视图配置，  
+`drizzle-kit` 会忽略它，并且不会在生成的迁移中生成 `create view` 语句。
+
+```ts {17}
+import { int, mssqlTable, mssqlView, nvarchar, datetime2 } from "drizzle-orm/mssql-core";
+
+export const user = mssqlTable("user", {
+  id: int().identity().primaryKey(),
+  name: nvarchar({ length: 256 }),
+  email: nvarchar({ length: 256 }),
+  password: nvarchar({ length: 256 }),
+  role: nvarchar({ length: 256 }).$type<"admin" | "customer">(),
+  createdAt: datetime2("created_at"),
+  updatedAt: datetime2("updated_at"),
+});
+
+export const trimmedUser = mssqlView("trimmed_user", {
+  id: int("id"),
+  name: nvarchar("name", { length: 256 }),
+  email: nvarchar("email", { length: 256 }),
+}).existing();
+```
+
+### 扩展示例
+<Callout type="info" emoji="ℹ️">
+查询中的所有参数都将被内联，而不是参数化。
+</Callout>
+
+```ts copy
+export const newYorkers = mssqlView('new_yorkers')
+  .with({
+    encryption: true,
+    schemaBinding: false,
+    viewMetadata: true,
+    checkOption: true,
+  })
+  .as((qb) => {
+    const sq = qb.$with('sq').as(
+      qb
+        .select({
+          userId: users.id.as('user_id'),
+          cityId: cities.id.as('city_id'),
+        })
+        .from(users)
+        .leftJoin(cities, eq(cities.id, users.homeCity))
+        .where(sql`${users.age1} > 18 and ${users.homeCity} = 1`),
+    );
+
+    return qb.with(sq).select().from(sq);
+  });
+```
+```sql
+CREATE VIEW [new_yorkers]
+WITH ENCRYPTION, VIEW_METADATA 
+AS
+WITH
+	[sq] AS (
+		SELECT
+			[users].[id] AS [user_id],
+			[cities].[id] AS [city_id]
+		FROM
+			[users]
+			LEFT JOIN [cities] ON [cities].[id] = [users].[home_city]
+		WHERE
+			[users].[age1] > 18
+			AND [users].[home_city] = 1
+	)
+SELECT
+	[user_id],
+	[city_id]
+FROM
+	[sq]
+WITH
+	CHECK
+OPTION;
+```

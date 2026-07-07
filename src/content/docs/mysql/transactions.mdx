@@ -1,0 +1,101 @@
+# 事务
+
+SQL 事务是一组与数据库交互的一个或多个 SQL 语句。
+一个事务整体可以作为单个逻辑单元提交到数据库，
+或者回滚（变为未执行）为单个逻辑单元。
+
+Drizzle ORM 提供了在事务中运行 SQL 语句的 API：
+
+```ts copy
+const db = drizzle(...)
+
+await db.transaction(async (tx) => {
+  await tx.update(accounts).set({ balance: sql`${accounts.balance} - 100.00` }).where(eq(users.name, 'Dan'));
+  await tx.update(accounts).set({ balance: sql`${accounts.balance} + 100.00` }).where(eq(users.name, 'Andrew'));
+});
+```
+
+Drizzle ORM 支持带有嵌套事务 API 的 `savepoints`：
+
+```ts copy {7-9}
+const db = drizzle(...)
+
+await db.transaction(async (tx) => {
+  await tx.update(accounts).set({ balance: sql`${accounts.balance} - 100.00` }).where(eq(users.name, 'Dan'));
+  await tx.update(accounts).set({ balance: sql`${accounts.balance} + 100.00` }).where(eq(users.name, 'Andrew'));
+
+  await tx.transaction(async (tx2) => {
+    await tx2.update(users).set({ name: "Mr. Dan" }).where(eq(users.name, "Dan"));
+  });
+});
+```
+
+你可以将业务逻辑嵌入事务，并在需要时随时回滚：
+
+```ts copy {7}
+const db = drizzle(...)
+
+await db.transaction(async (tx) => {
+  const [account] = await tx.select({ balance: accounts.balance }).from(accounts).where(eq(users.name, 'Dan'));
+  if (account.balance < 100) {
+    // 这会抛出一个异常，从而回滚事务。
+    tx.rollback()
+  }
+
+  await tx.update(accounts).set({ balance: sql`${accounts.balance} - 100.00` }).where(eq(users.name, 'Dan'));
+  await tx.update(accounts).set({ balance: sql`${accounts.balance} + 100.00` }).where(eq(users.name, 'Andrew'));
+});
+```
+
+你可以从事务中返回值：
+
+```ts copy {8}
+const db = drizzle(...)
+
+const newBalance: number = await db.transaction(async (tx) => {
+  await tx.update(accounts).set({ balance: sql`${accounts.balance} - 100.00` }).where(eq(users.name, 'Dan'));
+  await tx.update(accounts).set({ balance: sql`${accounts.balance} + 100.00` }).where(eq(users.name, 'Andrew'));
+
+  const [account] = await tx.select({ balance: accounts.balance }).from(accounts).where(eq(users.name, 'Dan'));
+  return account.balance;
+});
+```
+
+你可以将事务与 **[关系型查询](/docs/mysql/rqb)** 一起使用：
+
+```ts
+const db = drizzle({ schema })
+
+await db.transaction(async (tx) => {
+  await tx.query.users.findMany({
+    with: {
+      accounts: true
+    }
+  });
+});
+```
+
+我们提供了方言相关的事务配置 API：
+
+```ts {6-8}
+await db.transaction(
+  async (tx) => {
+    await tx.update(accounts).set({ balance: sql`${accounts.balance} - 100.00` }).where(eq(users.name, "Dan"));
+    await tx.update(accounts).set({ balance: sql`${accounts.balance} + 100.00` }).where(eq(users.name, "Andrew"));
+  }, {
+    isolationLevel: "读已提交",
+    accessMode: "读写",
+    withConsistentSnapshot: true,
+  }
+);
+
+interface MySqlTransactionConfig {
+  isolationLevel?:
+    | "读未提交"
+    | "读已提交"
+    | "可重复读"
+    | "可串行化";
+  accessMode?: "只读" | "读写";
+  withConsistentSnapshot?: boolean;
+}
+```

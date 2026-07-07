@@ -1,0 +1,92 @@
+import CodeTab from "@mdx/CodeTab.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Section from "@mdx/Section.astro";
+import Tab from "@mdx/Tab.astro";
+import Tabs from "@mdx/Tabs.astro";
+import Callout from "@mdx/Callout.astro";
+import Prerequisites from "@mdx/Prerequisites.astro";
+import Npm from "@mdx/Npm.astro";
+import Npx from "@mdx/Npx.astro";
+import Dialects from "@mdx/Dialects.mdx"
+
+# `drizzle-kit check`
+
+<Prerequisites>
+- 开始使用 Drizzle 和 `drizzle-kit` - [请阅读这里](/docs/sqlite/get-started)
+- Drizzle schema 基础知识 - [请阅读这里](/docs/sqlite/sql-schema-declaration)
+- 数据库连接基础 - [请阅读这里](/docs/sqlite/connect-overview)
+- Drizzle migrations 基础知识 - [请阅读这里](/docs/sqlite/migrations)
+- Drizzle Kit [概览](/docs/sqlite/kit-overview) 和 [配置文件](/docs/sqlite/drizzle-config-file)
+- `drizzle-kit generate` 命令 - [请阅读这里](/docs/sqlite/drizzle-kit-generate)
+</Prerequisites>
+
+`drizzle-kit check` 命令可以让你检查已生成的 SQL migrations 历史是否一致。
+
+当有多个开发者在项目中协作，并且在不同分支上修改数据库 schema 时，这个功能非常有用 - 更多内容请阅读 [团队 migrations](/docs/sqlite/kit-migrations-for-teams)。
+
+<br/>
+<hr/>
+<br/>
+
+`drizzle-kit check` 命令要求你指定 `dialect`，
+你可以通过 [drizzle.config.ts](/docs/sqlite/drizzle-config-file) 配置文件或 CLI 选项来提供它
+
+<CodeTabs items={["使用配置文件", "作为 CLI 选项"]}>
+<Section>
+```ts {5,8}
+// drizzle.config.ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "sqlite",
+});
+```
+```shell
+npx drizzle-kit check
+```
+</Section>
+```shell
+npx drizzle-kit check --dialect=sqlite
+```
+</CodeTabs>
+
+### 一个项目中的多个配置文件
+你可以在项目中使用多个配置文件，当你有多个数据库阶段或同一个项目中有多个数据库时，这非常有用：
+<Npx>
+  drizzle-kit check --config=drizzle-dev.config.ts
+  drizzle-kit check --config=drizzle-prod.config.ts
+</Npx>
+```plaintext {5-6}
+📦 <项目根目录>
+ ├ 📂 drizzle
+ ├ 📂 src
+ ├ 📜 .env
+ ├ 📜 drizzle-dev.config.ts
+ ├ 📜 drizzle-prod.config.ts
+ ├ 📜 package.json
+ └ 📜 tsconfig.json
+```
+
+### 忽略冲突
+
+如果你需要 `check` 命令跳过交换律检查并绕过它，可以使用 `--ignore-conflicts`。如果你会用到它，那么
+很有可能是 `drizzle-kit` 没有正确检查 migrations，这是一个 bug。请把你的情况报告给我们，这样我们可以修复它
+
+```shell
+drizzle-kit check --ignore-conflicts
+```
+
+### 扩展配置列表
+我们建议通过 [drizzle.config.ts](/docs/sqlite/drizzle-config-file) 文件来配置 `drizzle-kit`，
+但如果有必要，例如在 CI/CD 流水线等场景中，你也可以通过 CLI 提供所有配置选项。
+<rem025/>
+|           |            |                                                                         |
+| :-------- | :--------- | :---------------------------------------------------------------------- |
+| `dialect` | `required` | 你正在使用的数据库方言。可以是 <Dialects/> 中的一种 |
+| `out`     |            | migrations 文件夹，默认值=`./drizzle`                                  |
+| `config`  |            | 配置文件路径，默认值=`drizzle.config.ts`                           |
+<br/>
+<Npx>
+drizzle-kit check --dialect=sqlite
+drizzle-kit check --dialect=sqlite --out=./migrations-folder
+</Npx>

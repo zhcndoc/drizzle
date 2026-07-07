@@ -1,0 +1,44 @@
+import Npm from "@mdx/Npm.astro";
+import Npx from "@mdx/Npx.astro";
+import Prerequisites from "@mdx/Prerequisites.astro";
+
+# 升级到 Drizzle v1
+
+<Npm>
+ drizzle-orm@rc
+ -D drizzle-kit@rc
+</Npm>
+
+#### 第 1 步 - 运行 `drizzle-kit up`
+
+> v3 迁移文件夹讨论：https://github.com/drizzle-team/drizzle-orm/discussions/2832  
+
+我们通过以下方式更新了迁移文件夹结构：
+- 移除了 `journal.json`
+- 将 SQL 文件和快照分组到单独的迁移文件夹中
+- 移除了 `drizzle-kit drop` 命令
+
+这些更改消除了 journal 文件可能带来的 Git 冲突，并简化了删除或修复冲突迁移的过程
+
+drizzle-kit 已在架构上重新设计：
+- 从数据库快照迁移到了 DDL 快照
+
+新增了可交换性检查：
+- 检测跨分支的非可交换迁移
+> 可交换性讨论：https://github.com/drizzle-team/drizzle-orm/discussions/5005
+
+要从旧结构迁移到新结构，你需要运行
+
+<Npx>
+drizzle-kit up
+</Npx>
+
+#### 第 2 步 - 查看破坏性变更
+
+你可以在[这里](/docs/v0-v1-changes#breaking-changes)查看完整的破坏性变更列表，并确保相应地更新你的代码
+
+如果你使用了关系查询，你需要升级到 v2：
+- [如何将关系定义从 v1 迁移到 v2](/docs/relations-v1-v2#how-to-migrate-relations-schema-definition-from-v1-to-v2)
+- [如何将查询从 v1 迁移到 v2](/docs/relations-v1-v2#how-to-migrate-queries-from-v1-to-v2)
+
+#### 第 3 步 - 完成 ✅

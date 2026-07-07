@@ -1,6 +1,5 @@
 ---
 title: SQL 基于游标的分页
-slug: cursor-based-pagination
 ---
 
 import CodeTabs from '@mdx/CodeTabs.astro';
@@ -9,12 +8,12 @@ import IsSupportedChipGroup from "@mdx/IsSupportedChipGroup.astro";
 import Section from "@mdx/Section.astro";
 import Prerequisites from "@mdx/Prerequisites.astro";
 
-<IsSupportedChipGroup chips={{PostgreSQL: true, MySQL: true, SQLite: true}}/>
+<IsSupportedChipGroup chips={{PostgreSQL: true, MySQL: true, SQLite: true, MSSQL: true, Cockroach: true}}/>
 
 <Prerequisites>
-- 了解如何使用 [PostgreSQL](/docs/get-started-postgresql)、[MySQL](/docs/get-started-mysql) 和 [SQLite](/docs/get-started-sqlite) 
-- 使用 [order by 子句](/docs/select#order-by) 的 [选择语句](/docs/select)
-- 使用 [order by 子句](/docs/rqb#order-by) 的 [关系查询](/docs/rqb)
+- 从 [PostgreSQL](/docs/get-started-postgresql)、[MySQL](/docs/mysql/get-started-mysql)、[SQLite](/docs/sqlite/get-started-sqlite)、[MSSQL](/docs/mssql/get-started-mssql) 和 [Cockroach](/docs/cockroach/get-started-cockroach) 开始
+- 带有 [order by 子句](/docs/select#order-by) 的 [select 语句](/docs/select)
+- 带有 [order by 子句](/docs/rqb#order-by) 的 [关系查询](/docs/rqb)
 - [索引](/docs/indexes-constraints)
 </Prerequisites>
 

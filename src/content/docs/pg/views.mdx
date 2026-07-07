@@ -1,0 +1,247 @@
+import Callout from '@mdx/Callout.astro';
+import Section from '@mdx/Section.astro';
+
+# 视图
+
+在 Drizzle ORM 中，你可以通过几种方式来声明视图。  
+
+你可以声明需要创建的视图，也可以声明数据库中已经存在的视图。 
+
+你可以使用内联的 `query builder` 语法、`standalone query builder`，以及原始的 `sql` 操作符来声明视图语句。 
+
+当视图通过内联或独立的查询构建器创建时，视图列的 schema 会自动推断；  
+而当你使用 `sql` 时，则必须显式声明视图列的 schema。
+
+### 声明视图
+
+<Section>
+      ```ts filename="schema.ts" copy {14-15}
+      import { pgTable, pgView, serial, text, timestamp } from "drizzle-orm/pg-core";
+      import { eq } from "drizzle-orm";
+
+      export const user = pgTable("user", {
+        id: serial(),
+        name: text(),
+        email: text(),
+        password: text(),
+        role: text().$type<"admin" | "customer">(),
+        createdAt: timestamp("created_at"),
+        updatedAt: timestamp("updated_at"),
+      });
+
+      export const userView = pgView("user_view").as((qb) => qb.select().from(user));
+      export const customersView = pgView("customers_view").as((qb) => qb.select().from(user).where(eq(user.role, "customer")));
+      ```
+      ```sql
+      CREATE VIEW "user_view" AS (SELECT * FROM "user");
+      CREATE VIEW "customers_view" AS (SELECT * FROM "user" WHERE "role" = 'customer');
+      ```
+    </Section>
+
+你也可以使用 `standalone query builder` 来声明视图，使用方式完全相同：
+
+<Section>
+      ```ts filename="schema.ts" copy {4,16-17}
+      import { pgTable, pgView, serial, text, timestamp, QueryBuilder} from "drizzle-orm/pg-core";
+      import { eq } from "drizzle-orm";
+
+      const qb = new QueryBuilder();
+
+      export const user = pgTable("user", {
+        id: serial(),
+        name: text(),
+        email: text(),
+        password: text(),
+        role: text().$type<"admin" | "customer">(),
+        createdAt: timestamp("created_at"),
+        updatedAt: timestamp("updated_at"),
+      });
+
+      export const userView = pgView("user_view").as(qb.select().from(user));
+      export const customersView = pgView("customers_view").as(qb.select().from(user).where(eq(user.role, "customer")));
+      ```
+      ```sql
+      CREATE VIEW "user_view" AS (SELECT * FROM "user");
+      CREATE VIEW "customers_view" AS (SELECT * FROM "user" WHERE "role" = 'customer');
+      ```
+    </Section>
+
+### 使用原始 SQL 声明视图
+当你需要使用查询构建器不支持的语法来声明视图时，  
+你可以直接使用 `sql` 操作符，并显式指定视图列的 schema。
+
+```ts copy
+// 普通视图
+export const newYorkers = pgView('new_yorkers', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  cityId: integer('city_id').notNull(),
+}).as(sql`select * from ${users} where ${eq(users.cityId, 1)}`);
+
+// 物化视图
+export const newYorkers = pgMaterializedView('new_yorkers', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  cityId: integer('city_id').notNull(),
+}).as(sql`select * from ${users} where ${eq(users.cityId, 1)}`);
+```
+
+### 声明已存在的视图
+当你只被授予数据库中某个现有视图的只读访问权限时，你应该使用 `.existing()` 视图配置，  
+`drizzle-kit` 会忽略它，并且不会在生成的迁移中生成 `create view` 语句。
+```ts {16,23}
+export const user = pgTable("user", {
+  id: serial(),
+  name: text(),
+  email: text(),
+  password: text(),
+  role: text().$type<"admin" | "customer">(),
+  createdAt: timestamp("created_at"),
+  updatedAt: timestamp("updated_at"),
+});
+
+// 普通视图
+export const trimmedUser = pgView("trimmed_user", {
+  id: serial("id"),
+  name: text("name"),
+  email: text("email"),
+}).existing();
+
+// 物化视图不会有任何区别，不过你可以为了保持一致性而使用它
+export const trimmedUser = pgMaterializedView("trimmed_user", {
+  id: serial("id"),
+  name: text("name"),
+  email: text("email"),
+}).existing();
+```
+
+### 物化视图
+
+根据官方文档，PostgreSQL 和 CockroachDB 都支持 **[`regular`](https://www.postgresql.org/docs/current/sql-createview.html)**
+和 **[`materialized`](https://www.postgresql.org/docs/current/sql-creatematerializedview.html)** 视图。
+  
+PostgreSQL 和 CockroachDB 中的物化视图和普通视图一样使用规则系统，但会将结果以类似表的形式持久化存储。
+{/* This means that when a query is executed against a materialized view, the results are returned directly from the materialized view,
+like from a table, rather than being reconstructed by executing the query against the underlying base tables that make up the view. */}
+
+<Section>
+```ts filename="schema.ts" copy
+export const newYorkers = pgMaterializedView('new_yorkers').as((qb) => qb.select().from(users).where(eq(users.cityId, 1)));
+```
+```sql
+CREATE MATERIALIZED VIEW "new_yorkers" AS (SELECT * FROM "users");
+```
+</Section>
+
+然后，你可以在应用运行时刷新物化视图：
+```ts copy
+await db.refreshMaterializedView(newYorkers);
+
+await db.refreshMaterializedView(newYorkers).concurrently();
+
+await db.refreshMaterializedView(newYorkers).withNoData();
+```
+
+### 扩展示例
+<Callout type="info" emoji="ℹ️">
+查询中的所有参数都将被内联，而不是被替换为 `$1`、`$2` 等。
+</Callout>
+
+```ts copy
+// 普通视图
+export const newYorkers = pgView('new_yorkers')
+  .with({
+    checkOption: 'cascaded',
+    securityBarrier: true,
+    securityInvoker: true,
+  })
+  .as((qb) => {
+    const sq = qb
+      .$with('sq')
+      .as(
+        qb.select({ userId: users.id.as("user_id"), cityId: cities.id.as("city_id"), homeCity: users.homeCity })
+          .from(users)
+          .leftJoin(cities, eq(cities.id, users.homeCity))
+          .where(sql`${users.age1} > 18`),
+      );
+    return qb.with(sq).select().from(sq).where(sql`${sq.homeCity} = 1`);
+  });
+
+// 物化视图
+export const newYorkers2 = pgMaterializedView('new_yorkers_2')
+  .using('btree')
+  .with({
+    fillfactor: 90,
+    toastTupleTarget: 0.5,
+    autovacuumEnabled: true,
+    ...
+  })
+  .tablespace('custom_tablespace')
+  .withNoData()
+  .as((qb) => {
+    const sq = qb
+      .$with('sq')
+      .as(
+        qb.select({ userId: users.id.as("user_id"), cityId: cities.id.as("city_id"), homeCity: users.homeCity })
+          .from(users)
+          .leftJoin(cities, eq(cities.id, users.homeCity))
+          .where(sql`${users.age1} > 18`),
+      );
+    return qb.with(sq).select().from(sq).where(sql`${sq.homeCity} = 1`);
+  });
+```
+```sql
+...
+
+CREATE VIEW "new_yorkers"
+WITH
+	(check_option = cascaded, security_barrier = TRUE, security_invoker = TRUE) AS (
+		WITH
+			"sq" AS (
+				SELECT
+					"user"."id" AS "user_id",
+					"cities"."id" AS "city_id",
+					"user"."homeCity"
+				FROM
+					"user"
+					LEFT JOIN "cities" ON "cities"."id" = "user"."homeCity"
+				WHERE
+					"user"."age1" > 18
+			)
+		SELECT
+			"user_id",
+			"city_id",
+			"homeCity"
+		FROM
+			"sq"
+		WHERE
+			"sq"."homeCity" = 1
+	);
+
+CREATE MATERIALIZED VIEW "new_yorkers_2" USING "btree"
+WITH
+	(autovacuum_enabled = TRUE, fillfactor = 90, toast_tuple_target = 0.5) TABLESPACE custom_tablespace AS (
+		WITH
+			"sq" AS (
+				SELECT
+					"user"."id" AS "user_id",
+					"cities"."id" AS "city_id",
+					"user"."homeCity"
+				FROM
+					"user"
+					LEFT JOIN "cities" ON "cities"."id" = "user"."homeCity"
+				WHERE
+					"user"."age1" > 18
+			)
+		SELECT
+			"user_id",
+			"city_id",
+			"homeCity"
+		FROM
+			"sq"
+		WHERE
+			"sq"."homeCity" = 1
+	)
+WITH
+	NO DATA;
+```

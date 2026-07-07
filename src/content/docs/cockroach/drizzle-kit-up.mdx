@@ -1,0 +1,85 @@
+import CodeTab from "@mdx/CodeTab.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Section from "@mdx/Section.astro";
+import Tab from "@mdx/Tab.astro";
+import Tabs from "@mdx/Tabs.astro";
+import Callout from "@mdx/Callout.astro";
+import Prerequisites from "@mdx/Prerequisites.astro";
+import Npx from "@mdx/Npx.astro";
+import Dialects from "@mdx/Dialects.mdx"
+
+# `drizzle-kit up`
+
+<Prerequisites>
+- 开始使用 Drizzle 和 `drizzle-kit` - [点此阅读](/docs/cockroach/get-started)
+- Drizzle schema 基础知识 - [点此阅读](/docs/cockroach/sql-schema-declaration)
+- 数据库连接基础 - [点此阅读](/docs/cockroach/connect-overview)
+- Drizzle migrations 基础知识 - [点此阅读](/docs/cockroach/migrations)
+- Drizzle Kit [概览](/docs/cockroach/kit-overview) 和 [配置文件](/docs/cockroach/drizzle-config-file)
+- `drizzle-kit generate` 命令 - [点此阅读](/docs/cockroach/drizzle-kit-generate)
+</Prerequisites>
+
+`drizzle-kit up` 命令可让你将 drizzle schema 快照升级到更新的版本。 
+每当我们对 schema 的 json 快照引入破坏性变更并升级内部版本时，就需要使用它。
+
+<br/>
+<hr/>
+<br/>
+
+`drizzle-kit up` 命令要求你指定 `dialect` 参数，
+你可以通过 [drizzle.config.ts](/docs/cockroach/drizzle-config-file) 配置文件或 CLI 选项来提供它
+
+<CodeTabs items={["使用配置文件", "作为 CLI 选项"]}>
+<Section>
+```ts {5,8}
+// drizzle.config.ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "cockroach",
+});
+```
+```shell
+npx drizzle-kit up
+```
+</Section>
+```shell
+npx drizzle-kit up --dialect=cockroach
+```
+</CodeTabs>
+
+### 一个项目中的多个配置文件
+你可以在项目中使用多个配置文件，当你有多个数据库阶段或同一项目中有多个数据库时，这非常有用：
+<Npx>
+  drizzle-kit migrate --config=drizzle-dev.config.ts
+  drizzle-kit migrate --config=drizzle-prod.config.ts
+</Npx>
+```plaintext {5-6}
+📦 <project root>
+ ├ 📂 drizzle
+ ├ 📂 src
+ ├ 📜 .env
+ ├ 📜 drizzle-dev.config.ts
+ ├ 📜 drizzle-prod.config.ts
+ ├ 📜 package.json
+ └ 📜 tsconfig.json
+```
+
+### 扩展的配置列表
+我们建议通过 [drizzle.config.ts](/docs/cockroach/drizzle-config-file) 文件来配置 `drizzle-kit`， 
+不过如有必要，例如在 CI/CD 流水线中等，你也可以通过 CLI 提供所有配置选项。
+<rem025/>
+|           |            |                                                                         |
+| :-------- | :--------- | :---------------------------------------------------------------------- |
+| `dialect` | `required` | 你正在使用的数据库方言。可以是 <Dialects/> 中的一种 |
+| `out`     |            | migrations 文件夹，默认=`./drizzle`                                  |
+| `config`  |            | 配置文件路径，默认=`drizzle.config.ts`                           |
+<br/>
+<Npx>
+drizzle-kit up --dialect=cockroach
+drizzle-kit up --dialect=cockroach --out=./migrations-folder
+</Npx>
+
+{/* TODO: update up gif */}
+![](@/assets/gifs/up_mysql.gif)
+

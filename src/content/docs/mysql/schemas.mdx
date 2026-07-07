@@ -1,0 +1,25 @@
+import Section from '@mdx/Section.astro';
+import Callout from '@mdx/Callout.astro';
+
+# 表模式
+
+如果你在某个模式中声明一个实体，查询构建器会在查询中添加模式名称：<br/>
+`select * from schema.users`
+
+<Section>
+    ```ts {3,5}
+    import { int, text, mysqlSchema } from "drizzle-orm/mysql-core";
+
+    export const mySchema = mysqlSchema("my_schema")
+
+    export const mySchemaUsers = mySchema.table("users", {
+      id: int("id").primaryKey().autoincrement(),
+      name: text("name"),
+    });
+    ```
+    </Section>
+
+{/* TODO: ??? example > **Warning**
+> If you will have tables with same names in different schemas then drizzle will respond with `never[]` error in result types and error from database
+>
+> In this case you may use [alias syntax](./joins#join-aliases-and-self-joins) */}

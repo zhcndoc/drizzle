@@ -1,0 +1,25 @@
+import Callout from '@mdx/Callout.astro';
+
+你可以直接使用 `drizzle-kit push` 命令对数据库应用更改。这是一种方便的方法，可在本地开发环境中快速测试新的 schema 设计或修改，支持快速迭代，无需管理迁移文件：
+
+```bash copy
+npx drizzle-kit push
+```
+
+在 [文档](/docs/singlestore/drizzle-kit-push) 中阅读更多关于 push 命令的内容。
+
+<Callout type='info' title='提示' emoji='💡'>
+或者，你也可以使用 `drizzle-kit generate` 命令生成迁移，然后使用 `drizzle-kit migrate` 命令应用它们：
+
+生成迁移：
+```bash copy
+npx drizzle-kit generate
+```
+
+应用迁移：
+```bash copy
+npx drizzle-kit migrate
+```
+
+在 [文档](/docs/singlestore/kit-overview) 中阅读更多关于迁移流程的内容。
+</Callout>

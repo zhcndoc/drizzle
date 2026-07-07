@@ -1,0 +1,158 @@
+---
+title: 统计行数
+---
+import Section from "@mdx/Section.astro";
+import Prerequisites from "@mdx/Prerequisites.astro";
+import CodeTabs from '@mdx/CodeTabs.astro';
+import CodeTab from '@mdx/CodeTab.astro';
+import Callout from '@mdx/Callout.astro';
+
+<Prerequisites>
+- 开始使用 [SQLite](/docs/sqlite/get-started-sqlite)
+- [Select 语句](/docs/sqlite/select)
+- [Filters](/docs/sqlite/operators) 和 [sql 操作符](/docs/sqlite/sql)
+- [聚合](/docs/sqlite/select#aggregations) 和 [聚合辅助函数](/docs/sqlite/select#aggregations-helpers)
+- [Joins](/docs/sqlite/joins)
+</Prerequisites>
+
+要统计表中的所有行，你可以使用 `count()` 函数，或者像下面这样使用 `sql` 操作符：
+
+<CodeTabs items={["index.ts", "schema.ts"]}>
+  <CodeTab>
+    ```ts copy {6,9}
+    import { count, sql } from 'drizzle-orm';
+    import { products } from './schema';
+
+    const db = drizzle(...);
+
+    await db.select({ count: count() }).from(products);
+
+    // 在底层，count() 函数会在运行时将其结果转换为 number。
+    await db.select({ count: sql`count(*)`.mapWith(Number) }).from(products);
+    ```
+
+    ```ts
+    // 结果类型
+    type Result = {
+      count: number;
+    }[];
+    ```
+
+    ```sql
+    select count(*) from products;
+    ```
+  </CodeTab>
+  ```ts
+  import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+
+  export const products = sqliteTable('products', {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    name: text('name').notNull(),
+    discount: integer('discount'),
+    price: integer('price').notNull(),
+  });
+  ```
+</CodeTabs>
+
+要统计指定列中包含非 NULL 值的行，可以在 `count()` 函数中传入一列：
+
+<Section>
+```ts copy {1}
+await db.select({ count: count(products.discount) }).from(products);
+```
+
+```ts
+// 结果类型
+type Result = {
+  count: number;
+}[];
+```
+
+```sql
+select count("discount") from products;
+```
+</Section>
+
+在 SQLite 中，`count()` 的返回结果是 integer。
+
+<Section>
+```ts copy {3,4}
+import { sql } from 'drizzle-orm';
+
+await db.select({ count: sql<number>`count(*)` }).from(products);
+await db.select({ count: sql<number>`count(${products.discount})` }).from(products);
+```
+
+```sql
+select count(*) from products;
+select count("discount") from products;
+```
+</Section>
+
+<Callout type="warning">
+通过指定 `sql<number>`，你是在告诉 Drizzle 该字段的**预期**类型是 `number`。<br />
+如果你指定错误（例如，对一个实际上会返回 number 的字段使用 `sql<string>`），运行时的值将与预期类型不匹配。
+Drizzle 无法根据提供的类型泛型执行任何类型转换，因为这些信息在运行时不可用。
+
+如果你需要对返回值应用运行时转换，可以使用 [`.mapWith()`](/docs/sqlite/sql#sqlmapwith) 方法。
+</Callout>
+
+要统计满足某个条件的行，可以使用 `.where()` 方法：
+
+<Section>
+```ts copy {4,6}
+import { count, gt } from 'drizzle-orm';
+
+await db
+  .select({ count: count() })
+  .from(products)
+  .where(gt(products.price, 100));
+```
+
+```sql
+select count(*) from products where price > 100
+```
+</Section>
+
+下面是如何将 `count()` 函数与连接和聚合一起使用：
+
+<CodeTabs items={["index.ts", "schema.ts"]}>
+	<CodeTab>
+    ```ts copy {8,11,12,13}
+    import { count, eq } from 'drizzle-orm';
+    import { countries, cities } from './schema';
+
+    // 统计每个国家的城市数量
+    await db
+      .select({
+        country: countries.name,
+        citiesCount: count(cities.id),
+      })
+      .from(countries)
+      .leftJoin(cities, eq(countries.id, cities.countryId))
+      .groupBy(countries.id)
+      .orderBy(countries.name);
+    ```
+
+    ```sql
+    select countries.name, count("cities"."id") from countries
+      left join cities on countries.id = cities.country_id
+      group by countries.id
+      order by countries.name;
+    ```
+  </CodeTab>
+  ```ts
+  import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+
+  export const countries = sqliteTable('countries', {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    name: text('name').notNull(),
+  });
+
+  export const cities = sqliteTable('cities', {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    name: text('name').notNull(),
+    countryId: integer('country_id').notNull().references(() => countries.id),
+  });
+  ```
+</CodeTabs>

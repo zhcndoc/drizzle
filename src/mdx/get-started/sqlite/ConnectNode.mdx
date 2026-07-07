@@ -1,0 +1,29 @@
+import CodeTabs from "@mdx/CodeTabs.astro";
+
+在 `src` 目录中创建一个 `index.ts` 文件并初始化连接：
+
+<CodeTabs items={["node:sqlite", "node:sqlite 带配置"]}>
+```typescript copy
+import 'dotenv/config';
+import { drizzle } from 'drizzle-orm/node-sqlite';
+
+const db = drizzle(process.env.DB_FILE_NAME!);
+```
+```typescript copy
+import 'dotenv/config';
+import { drizzle } from 'drizzle-orm/node-sqlite';
+
+// 你可以指定 node:sqlite 连接选项中的任意属性
+const db = drizzle({ connection: { source: process.env.DB_FILE_NAME! }});
+```
+</CodeTabs>
+
+如果你需要提供现有的驱动程序：
+```typescript copy
+import 'dotenv/config';
+import { drizzle } from 'drizzle-orm/node-sqlite';
+import { DatabaseSync } from 'node:sqlite';
+
+const sqlite = new DatabaseSync(process.env.DB_FILE_NAME!);
+const db = drizzle({ client: sqlite });
+```

@@ -1,0 +1,251 @@
+import CodeTab from "@mdx/CodeTab.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Section from "@mdx/Section.astro";
+import Tab from "@mdx/Tab.astro";
+import Tabs from "@mdx/Tabs.astro";
+import Callout from "@mdx/Callout.astro";
+import Prerequisites from "@mdx/Prerequisites.astro";
+import Npx from "@mdx/Npx.astro";
+import SchemaFilePaths from "@mdx/SchemaFilePaths.mdx";
+import Drivers from "@mdx/Drivers.mdx"
+import Dialects from "@mdx/Dialects.mdx"
+import DriversExamples from "@mdx/DriversExamples.mdx"
+
+# `drizzle-kit push`
+
+<Prerequisites>
+- 开始使用 Drizzle 和 `drizzle-kit` - [点击这里阅读](/docs/mssql/get-started)
+- Drizzle schema 基础 - [点击这里阅读](/docs/mssql/sql-schema-declaration) 
+- 数据库连接基础 - [点击这里阅读](/docs/mssql/connect-overview) 
+- Drizzle migrations 基础 - [点击这里阅读](/docs/mssql/migrations) 
+- Drizzle Kit [概览](/docs/mssql/kit-overview) 和 [配置文件](/docs/mssql/drizzle-config-file) 文档
+</Prerequisites>
+
+
+`drizzle-kit push` 让你可以直接把 schema 以及后续的 schema 变更直接推送到
+数据库，同时省略 SQL 文件的生成；它旨在覆盖 Drizzle migrations 的 [code first](/docs/mssql/migrations)
+方法。
+
+<Callout collapsed="底层是如何工作的？">
+当你运行 Drizzle Kit 的 `push` 命令时，它会：
+1. 读取你的 Drizzle schema 文件，并生成 schema 的 json 快照
+2. 拉取（introspect）数据库 schema
+3. 基于两者之间的差异生成 SQL migrations
+4. 将 SQL migrations 应用到数据库
+
+<Section>
+```typescript filename="src/schema.ts"
+import * as p from "drizzle-orm/mssql-core";
+
+export const users = p.mssqlTable("users", {
+  id: p.int().primaryKey().identity(),
+  name: p.nvarchar({ length: 255 }),
+});
+```
+```
+┌─────────────────────┐                  
+│ ~ drizzle-kit push  │                  
+└─┬───────────────────┘                  
+  │                                           ┌──────────────────────────┐
+  └ 拉取当前数据库 schema --------------------> │                          │
+                                              │                          │
+  ┌ 基于 diff 生成变更 <---------------------- │         DATABASE         │
+  │                                           │                          │
+  └ 将 migrations 应用到数据库 ---------------> │                          │
+                                       │      └──────────────────────────┘
+                                       │
+  ┌────────────────────────────────────┴─────┐
+   CREATE TABLE [users] (
+     [id] int IDENTITY(1, 1),
+     [name] nvarchar(255),
+     CONSTRAINT [users_pkey] PRIMARY KEY([id])
+   );
+```
+</Section>
+</Callout>
+
+这是快速原型开发的最佳方式，我们已经看到许多团队和个人开发者
+成功地将它作为生产应用中的主要 migrations 流程。
+它与蓝绿部署策略、托管数据库部署以及 CI/CD 工作流配合得非常好。
+
+<br/>
+<hr/>
+<br/>
+
+
+`drizzle-kit push` 需要你指定 `dialect`、`schema` 文件路径，以及数据库连接的 `url` 或
+`user:password@host:port/db` 参数，你可以通过 [drizzle.config.ts](/docs/mssql/drizzle-config-file) 配置文件，
+或者通过 CLI 选项来提供：
+
+<CodeTabs items={["使用配置文件", "使用 CLI 选项"]}>
+<Section>
+```ts
+// drizzle.config.ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "mssql",
+  schema: "./src/schema.ts",
+  dbCredentials: {
+    url: "mssql://user:password@host:port/dbname",
+  },
+});
+```
+```shell
+npx drizzle-kit push
+```
+</Section>
+
+```shell
+npx drizzle-kit push --dialect=mssql --schema=./src/schema.ts --url=mssql://user:password@host:port/dbname
+```
+
+</CodeTabs>
+
+### Schema 文件路径
+
+你可以只使用一个 `schema.ts` 文件，也可以把尽可能多的 schema 文件分散在项目中。
+Drizzle Kit 需要你通过 `schema` 配置项以 [glob](https://www.digitalocean.com/community/tools/glob?comments=true&glob=/**/*.js&matches=false&tests=//%20This%20will%20match%20as%20it%20ends%20with%20'.js'&tests=/hello/world.js&tests=//%20This%20won't%20match!&tests=/test/some/globs) 的形式指定它们的路径。
+
+<SchemaFilePaths />
+
+### 一个项目中的多个配置文件
+
+你可以在项目中拥有多个配置文件，当你有多个数据库阶段、多个数据库，或者同一项目下有不同数据库时，这会非常有用：
+
+<Npx>
+  drizzle-kit push --config=drizzle-dev.config.ts
+  drizzle-kit push --config=drizzle-prod.config.ts
+</Npx>
+```plaintext {5-6}
+📦 <project root>
+ ├ 📂 drizzle
+ ├ 📂 src
+ ├ 📜 .env
+ ├ 📜 drizzle-dev.config.ts
+ ├ 📜 drizzle-prod.config.ts
+ ├ 📜 package.json
+ └ 📜 tsconfig.json
+```
+
+### 包含 tables 和 schemas
+默认情况下，`drizzle-kit push` 会管理所有 tables 和 schemas。
+你可以通过 `tablesFilter`、`schemaFilter` 选项配置 tables 和 schemas 的列表。
+
+|                     |                                                                                               |
+| :------------------ | :-------------------------------------------------------------------------------------------- |
+| `tablesFilter`      | 基于 `glob` 的表名过滤器，例如 `["users", "user_info"]` 或 `"user*"`。默认值为 `"*"` |
+| `schemaFilter`      | Schema 名称过滤器，例如 `["dbo", "drizzle"]`                                             |
+<br/>
+
+让我们配置 drizzle-kit 只操作 **dbo** schema 中的 **所有 tables**。
+
+<Section>
+```ts filename="drizzle.config.ts" {9-10}
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "mssql",
+  schema: "./src/schema.ts",
+  dbCredentials: {
+    url: "mssql://user:password@host:port/dbname",
+  },
+  schemaFilter: ["dbo"],
+  tablesFilter: ["*"],
+});
+```
+```shell
+npx drizzle-kit push
+```
+</Section>
+
+### 扩展配置列表
+
+`drizzle-kit push` 还提供了一组仅限 CLI 的选项
+
+<rem025/>
+
+|           |                                                                 |
+| :-------- | :---------------------------------------------------------------|
+| `verbose` | 在执行前打印所有 SQL 语句                     |
+| `explain` | 打印计划中的 SQL 变更，但不实际应用（dry run）  |
+| `force`   | 自动接受所有数据丢失相关语句                            |
+<br/>
+<Npx>
+drizzle-kit push --explain --verbose --force
+</Npx>
+
+<br/>
+<hr/>
+<br/>
+我们建议通过 [drizzle.config.ts](/docs/mssql/drizzle-config-file) 文件来配置 `drizzle-kit`， 
+但如果有必要，你也可以通过 CLI 提供所有配置选项，例如在 CI/CD 流水线中，等等。
+
+|                     |            |                                                                           |
+| :------------------ | :--------- | :------------------------------------------------------------------------ |
+| `dialect`           | `required` | 数据库方言，取值之一为 <Dialects/>                                      |
+| `schema`            | `required` | TypeScript schema 文件或包含多个 schema 文件的文件夹路径 |
+| `tablesFilter`      |            | 表名过滤器                                                         |
+| `schemaFilter`      |            | Schema 名称过滤器。默认值：`["*"]`                                 |
+| `url`               |            | 数据库连接字符串                                                |
+| `user`              |            | 数据库用户                                                             |
+| `password`          |            | 数据库密码                                                         |
+| `host`              |            | 主机                                                                      |
+| `port`              |            | 端口                                                                      |
+| `database`          |            | 数据库名称                                                             |
+| `config`            |            | 配置文件路径，默认=`drizzle.config.ts`                             |
+
+<Npx>
+drizzle-kit push dialect=mssql schema=src/schema.ts url=mssql://user:password@host:port/dbname
+drizzle-kit push dialect=mssql schema=src/schema.ts --tablesFilter='user*' url=mssql://user:password@host:port/dbname
+</Npx>
+
+
+### 扩展示例
+让我们在项目中声明 drizzle schema，并通过 `drizzle-kit push` 命令将其推送到数据库
+
+```plaintext
+📦 <project root>
+ ├ 📂 src
+ │ ├ 📜 schema.ts
+ │ └ 📜 index.ts
+ ├ 📜 drizzle.config.ts
+ └ …
+```
+<CodeTabs items={["drizzle.config.ts", "src/schema.ts"]}>
+```ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "mssql",
+  schema: "./src/schema.ts",
+  dbCredentials: {
+    url: "mssql://user:password@host:port/dbname"
+  },
+});
+```
+```ts 
+import * as p from "drizzle-orm/mssql-core";
+
+export const users = p.mssqlTable("users", {
+  id: p.int().primaryKey().identity(),
+  name: p.nvarchar({ length: 255 }),
+})
+```
+</CodeTabs>
+
+现在让我们运行
+```shell
+npx drizzle-kit push
+```
+
+它会从数据库中拉取现有的（空）schema，生成 SQL migration，并在底层将其应用
+```sql
+CREATE TABLE [users] (
+	[id] int IDENTITY(1, 1),
+	[name] nvarchar(255),
+	CONSTRAINT [users_pkey] PRIMARY KEY([id])
+);
+```
+
+完成 ✅

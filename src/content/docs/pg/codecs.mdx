@@ -1,0 +1,239 @@
+import Section from '@mdx/Section.astro';
+import Callout from '@mdx/Callout.astro';
+
+# 编解码器
+
+## 什么是编码器？
+
+编码器是一个与驱动程序感知相关的转换层，位于你的 JavaScript 值和数据库之间。它们解决了**不同驱动程序对相同列类型返回和接受不同格式数据**的问题。
+
+## 为什么需要它们？
+
+1. **驱动差异** — 每个 PG 驱动（`node-postgres`、`postgres-js`、`pglite` 等）解析和序列化类型的方式都不同。Codec 会统一这些差异，这样你的应用代码就不需要关心当前使用的是哪个驱动。
+
+2. **JSON 上下文** — 当某个列在 JSON 函数中被选中时（例如 `jsonAgg`、`jsonBuildObject` 或关系查询），数据库返回的值会是 JSON 格式，可能与常规格式不同。例如，JSON 中的 `bigint` 会变成数字（从而丢失精度）。Codec 通过在进行 JSON 化之前先转换为文本（`castInJson`），再把它解析回来（`normalizeInJson`）来处理这种情况。
+
+## 编解码器如何工作
+
+编解码器有两层：**cast** 和 **normalize**。
+
+```
+
+          ┌───────────────────────────────────────┐
+          │  Cast 层（数据库层）                  │
+          │  SELECT "bigint"::text FROM "users"   │
+          └───────────────────────────────────────┘
+ 
+          ┌────────────────────────────────────┐
+          │  Normalize 层（代码层）            │
+          │  "123" → BigInt("123") → 123n      │
+          └────────────────────────────────────┘
+```
+
+<br/>
+
+**Cast** 在数据库层工作——它会把列包装成 SQL `::type`
+
+**Normalize** 在代码层工作——它会把原始值转换成你/驱动程序期望的类型
+
+<br/>
+
+对于不同的查询上下文，这两层都可以有独立的变体：
+
+对于读取（SELECT）：
+
+```
+SQL generation:      SELECT "col"::text FROM ...     ← cast 层修改 SQL
+                            ▼
+Database executes:   返回文本表示
+                            ▼
+JS result mapping:   parseLineABC(rawValue)          ← normalize 层在 JS 中转换
+                            ▼
+Your code gets:      { a: 1, b: 2, c: 3 }
+```
+
+对于写入（INSERT/UPDATE）：
+
+```
+Your JS value:       { key: "val" }
+                            ▼
+JS param building:   JSON.stringify(value)            ← normalize 层在 JS 中转换
+                            ▼
+SQL generation:      INSERT ... VALUES ($1::jsonb)    ← cast 层修改 SQL
+                            ▼
+Database receives:   '{"key":"val"}' with type hint
+```
+
+<br/>
+
+每一层都在 3 种上下文中工作，并且都有标量和数组变体：
+
+```
+                        Cast (SQL)              Normalize (JS)
+                   ┌──────────────────┐    ┌──────────────────────┐
+  Regular SELECT   │ cast             │    │ normalize            │
+                   │ castArray        │    │ normalizeArray       │
+                   ├──────────────────┤    ├──────────────────────┤
+  Inside JSON      │ castInJson       │    │ normalizeInJson      │
+  (jsonAgg, RQB)   │ castArrayInJson  │    │ normalizeArrayInJson │
+                   ├──────────────────┤    ├──────────────────────┤
+  Params           │ castParam        │    │ normalizeParam       │
+  (INSERT/UPDATE)  │ castArrayParam   │    │ normalizeParamArray  │
+                   └──────────────────┘    └──────────────────────┘
+```
+
+之所以存在 JSON 上下文，是因为数据库在 JSON 内部序列化值的方式不同——一个通常从驱动程序返回时是字符串的 `bigint`，在 JSON 对象内部会变成有精度损失的数字。所以编解码器需要单独处理：先在 SQL 中于 JSON 包裹之前转换为 `::text`，然后在 JS 中把文本解析回来。
+
+<br/>
+
+| 方法 | 何时 | 示例 SQL |
+|---|---|:---:|
+| `cast` | SELECT 中的列 | `"col"::text` |
+| `castArray` | SELECT 中的数组列 | `"col"::text[]` |
+| `castInJson` | JSON 函数中的列 | `"col"::text`（在 `json_agg` 中） |
+| `castArrayInJson` | JSON 中的数组列 | |
+| `castParam` | INSERT/UPDATE/WHERE 中的参数占位符 | `$1::date` |
+| `castArrayParam` | 数组参数占位符 | `$1::date[]` |
+
+<br/>
+
+| 方法 | 何时 | 示例 |
+|---|---|:---:|
+| `normalize` | SELECT 结果 → JS 值 | `"123"` → `123n` |
+| `normalizeArray` | SELECT 数组结果 → JS 数组 | `["123", "456"]` → `[123n, 456n]` |
+| `normalizeInJson` | JSON 中的 SELECT 结果 → JS | JSON `bigint` → `BigInt` |
+| `normalizeArrayInJson` | JSON 中的 SELECT 数组 → JS | |
+| `normalizeParam` | JS 值 → 驱动参数（INSERT/UPDATE/WHERE） | `{ key: "val" }` → `'{"key":"val"}'` |
+| `normalizeParamArray` | JS 数组 → 驱动数组参数 | `[1, 2]` → `{1,2}`（PG 数组字面量） |
+
+<br/>
+
+## 它们默认启用吗？
+
+是的。每个驱动程序都自带默认编解码器。当你调用 `drizzle(client)` 时，会自动使用该驱动程序的编解码器。  
+你不需要做任何事情来启用它们。
+
+## 内置列类型中的 codec 如何工作
+
+每个内置的 PG 列类都会声明一个 `codec` 字符串标识符：
+
+```ts {3,8,11,14,19,22,27}
+// pg-core/columns/integer.ts
+class PgInteger extends PgColumn {
+  override readonly codec = 'int';
+}
+
+// pg-core/columns/bigint.ts  
+class PgBigInt53 extends PgColumn {
+  override readonly codec = 'bigint:number';
+}
+class PgBigInt64 extends PgColumn {
+  override readonly codec = 'bigint';
+}
+class PgBigIntString extends PgColumn {
+  override readonly codec = 'bigint:string';
+}
+
+// pg-core/columns/line.ts
+class PgLineABC extends PgColumn {
+  override readonly codec = 'line';
+}
+class PgLineTuple extends PgColumn {
+  override readonly codec = 'line:tuple'
+}
+
+...
+```
+
+这个标识符是驱动程序 codec 映射中的一个查找键。如果驱动为该键定义了转换，就会应用这些转换；如果没有，值将保持原样传递。
+
+例如，`integer` 的 codec 是 `'int'`。`node-postgres` 的 codec 映射中**没有** `'int'` 这一项——整数不需要任何转换。但 `bigint` 的 codec 是 `'bigint'`，而 node-postgres 定义了：
+
+```ts
+// node-postgres/codecs.ts
+bigint: {
+  normalize: BigInt,                           // SELECT: "123" → 123n
+  normalizeArray: arrayCompatNormalize(BigInt), // SELECT array: ["123"] → [123n]
+}
+```
+
+## 覆盖内置类型的编码器
+
+内置列（如 `integer()`、`bigint()`、`date()`、`text()` 等）都有一个硬编码的 `codec` 字符串——你无法更改某一列所使用的编码器标识符。但你**可以**通过覆盖驱动程序的 codec 映射来更改该编码器标识符的行为。
+
+每个 PG 驱动都接受 `drizzle()` 中的 `codecs` 选项：
+
+```ts {3-6}
+const db = drizzle(client, {
+  codecs: {
+    "bigint:number": {
+      cast: (name) => sql`${name}::text`,
+      normalize: BigInt,
+    },
+  },
+});
+```
+
+## `customType()` 中编解码器的工作方式
+
+<Callout type='info' title='注意'>
+`customType` 上的 `toDriver`/`fromDriver` 和 codecs 是**独立层**。  
+`toDriver`/`fromDriver` 是按列实例进行的转换。Codecs 是驱动级别的转换，并且二者都会被应用  
+读取时 - 先 `codec normalize` → 再 `fromDriver`  
+写入时 - 先 `toDriver` → 再 `codec normalizeParam`
+</Callout>
+
+在这里了解更多关于自定义类型的信息 [here](/docs/custom-types)
+
+定义自定义列类型时，你可以通过 `codec` 属性指定要使用的 codec：
+
+```ts
+import { customType } from 'drizzle-orm/pg-core';
+
+// Use an existing codec by name
+const customBigint = customType<{ data: bigint; driverData: string }>({
+  dataType() {
+    return "bigint";
+  },
+  fromDriver(value: string) {
+    return BigInt(Number(value) * 1000); // ← 额外的列映射逻辑
+  },
+  codec: "bigint", // ← 使用驱动的 bigint codec
+});
+
+// Codec as a function (useful when codec depends on config)
+const customDataType = customType<{
+  data: number;
+  driverData: bigint | number;
+  config?: { mode: "bigint" | "number" };
+  configRequired: true;
+}>({
+  dataType() {
+    return `custom_type`;
+  },
+  fromDriver(value: bigint | number) {
+    return Number(value) / 1000; // ← 额外的列映射逻辑
+  },
+  codec: (config) => {
+    // ← 可以根据 config 动态变化
+    if (!config || config.mode === "bigint") {
+      return "bigint";
+    }
+
+    return "bigint:number";
+  },
+});
+
+// No codec — skip codec transforms entirely
+const rawCustom = customType<{ data: string; driverData: string }>({
+  dataType() {
+    return 'my_type';
+  },
+  // codec 默认是 undefined — 不应用任何 codec 转换
+});
+```
+
+`codec` 字段接受：
+- 一个 `string` —— PostgreSQL 类型标识符之一（例如 `'bigint'`、`'date'`、`'json'`、`'text'` 等）
+- 一个 `function` `(config) => string | undefined` —— 根据列的 config 动态解析 codec
+- `undefined`（默认）—— 不使用 codec，值按原样透传

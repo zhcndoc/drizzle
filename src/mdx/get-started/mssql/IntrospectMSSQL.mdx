@@ -19,7 +19,7 @@ CREATE TABLE [users] (
 npx drizzle-kit pull --init
 ```
 
-检测的结果将生成一个 `schema.ts` 文件，一个包含数据库 schema 快照的 `meta` 文件夹，一个包含迁移的 sql 文件，以及用于[关系查询](/docs/rqb)的 `relations.ts` 文件。
+检测结果将生成一个 `schema.ts` 文件、一个包含数据库 schema 快照的 `meta` 文件夹、一个包含迁移的 sql 文件，以及一个用于[关系查询](/docs/mssql/rqb)的 `relations.ts` 文件。
 
 下面是生成的 `schema.ts` 文件示例：
 
@@ -38,4 +38,4 @@ export const users = mssqlTable("users", {
 ]);
 ```
 
-在[文档](/docs/drizzle-kit-pull)中了解更多关于检测的信息。
+在[文档](/docs/mssql/drizzle-kit-pull)中了解更多关于检测的信息。

@@ -1,0 +1,447 @@
+import CodeTab from "@mdx/CodeTab.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Section from "@mdx/Section.astro";
+import Tab from "@mdx/Tab.astro";
+import Tabs from "@mdx/Tabs.astro";
+import Callout from "@mdx/Callout.astro";
+import SchemaFilePaths from "@mdx/SchemaFilePaths.mdx"
+import Prerequisites from "@mdx/Prerequisites.astro"
+import Dialects from "@mdx/Dialects.mdx"
+import Drivers from "@mdx/Drivers.mdx"
+import DriversExamples from "@mdx/DriversExamples.mdx"
+import Npx from "@mdx/Npx.astro"
+
+# Drizzle Kit 配置文件
+<Prerequisites>
+- 开始使用 Drizzle 和 `drizzle-kit` - [点击这里阅读](/docs/sqlite/get-started)
+- Drizzle schema 基础 - [点击这里阅读](/docs/sqlite/sql-schema-declaration)
+- 数据库连接基础 - [点击这里阅读](/docs/sqlite/connect-overview)
+- Drizzle 迁移基础 - [点击这里阅读](/docs/sqlite/migrations)
+- Drizzle Kit [概述](/docs/sqlite/kit-overview) 和 [配置文件](/docs/sqlite/drizzle-config-file)
+</Prerequisites>
+
+Drizzle Kit 允许你在 `TypeScript` 或 `JavaScript` 配置文件中声明配置选项。
+
+<Section>
+```plaintext {5}
+📦 <项目根目录>
+ ├ ...
+ ├ 📂 drizzle
+ ├ 📂 src
+ ├ 📜 drizzle.config.ts
+ └ 📜 package.json
+```
+<CodeTabs items={["drizzle.config.ts", "drizzle.config.js"]}>
+<CodeTab>
+```ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "sqlite",
+  schema: "./src/schema.ts",
+  out: "./drizzle",
+});
+```
+</CodeTab>
+<CodeTab>
+```js
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "sqlite",
+  schema: "./src/schema.ts",
+  out: "./drizzle",
+});
+```
+</CodeTab>
+</CodeTabs>
+</Section>
+
+扩展示例配置文件
+```ts collapsable
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  out: "./drizzle",
+  dialect: "sqlite",
+  schema: "./src/schema.ts",
+
+  driver: "d1-http",
+  dbCredentials: {
+    url: "./sqlite.db",
+  },
+
+  tablesFilter: "*",
+
+  introspect: {
+    casing: "camel",
+  },
+
+  migrations: {
+    table: "__drizzle_migrations__",
+  },
+
+  breakpoints: true,
+  verbose: true,
+});
+```
+
+### 多个配置文件
+你可以在项目中拥有多个配置文件，当你有多个数据库阶段、多个数据库，或者同一项目中存在不同数据库时，这非常有用：
+<Npx>
+  drizzle-kit generate --config=drizzle-dev.config.ts
+  drizzle-kit generate --config=drizzle-prod.config.ts
+</Npx>
+```plaintext {5-6}
+📦 <项目根目录>
+ ├ 📂 drizzle
+ ├ 📂 src
+ ├ 📜 .env
+ ├ 📜 drizzle-dev.config.ts
+ ├ 📜 drizzle-prod.config.ts
+ ├ 📜 package.json
+ └ 📜 tsconfig.json
+```
+
+### 迁移文件夹
+`out` 参数允许你为迁移文件定义文件夹，它是可选的，默认值为 `drizzle`。  
+当你在同一项目中为不同数据库拥有多个独立 schema，并希望为它们使用不同的迁移文件夹时，这非常有用。  
+  
+迁移文件夹包含带有 `.sql` 迁移文件的文件夹，这些文件会被 `drizzle-kit` 使用
+
+<Section>
+```plaintext {3}
+📦 <项目根目录>
+ ├ ...
+ ├ 📂 drizzle
+ │ ├ 📂 20242409125510_premium_mister_fear
+ │ ├ 📜 user.ts 
+ │ ├ 📜 post.ts 
+ │ └ 📜 comment.ts 
+ ├ 📂 src
+ ├ 📜 drizzle.config.ts
+ └ 📜 package.json
+```
+```ts {6}
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "sqlite",
+  schema: "./src/schema/*",
+  out: "./drizzle",
+});
+```
+</Section>
+
+## ---
+
+### `dialect`
+<rem025/>
+
+你正在使用的数据库方言 
+|               |                                                 |
+| :------------ | :-----------------------------------            |
+| type        | <Dialects/>                                     |
+| default        | --                                     |
+| commands    | `generate`, `push`, `pull`, `studio`,  `migrate`, `up`, `export` |
+
+<rem025/>
+```ts {4}
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "sqlite", 
+});
+```
+
+
+### `schema`
+<rem025/>
+
+[`glob`](https://www.digitalocean.com/community/tools/glob?comments=true&glob=/**/*.js&matches=false&tests=//%20This%20will%20match%20as%20it%20ends%20with%20'.js'&tests=/hello/world.js&tests=//%20This%20won't%20match!&tests=/test/some/globs)
+ 基于路径的 drizzle schema 文件或文件夹路径。
+|               |                      |
+| :------------ | :-----------------   |
+| type          | `string` `string[]` |
+| default        | --                    |
+| commands      | `generate`, `push`, `export`, `studio`  |
+
+<rem025/>
+<SchemaFilePaths />
+
+
+### `out`
+<rem025/>
+
+定义 SQL migration 文件、schema 的 json 快照，以及 `drizzle-kit pull` 命令生成的 `schema.ts` 的输出文件夹。
+|               |                      |
+| :------------ | :-----------------   |
+| type          | `string` `string[]` |
+| default        | `drizzle`                    |
+| commands      | `generate`, `pull`, `migrate`, `check`, `up` |
+
+<rem025/>
+```ts {4}
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  out: "./drizzle", 
+});
+```
+
+### `driver`
+<rem025/>
+
+Drizzle Kit 会根据你当前项目中的 `dialect: "sqlite"` 自动选择一个可用的 SQLite 驱动。
+当需要 SQLite 驱动例外时使用 `driver`，例如 Cloudflare D1 HTTP。
+
+|               |                      |
+| :------------ | :-----------------   |
+| type          | `d1-http` |
+| default        | --                    |
+| commands      | `push`, `migrate`, `pull`, `studio`  |
+
+<rem025/>
+
+```ts {5}
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "sqlite",
+  driver: "d1-http",
+  dbCredentials: {
+    accountId: "accountId",
+    databaseId: "databaseId",
+    token: "token",
+  },
+});
+```
+
+## ---
+
+### `dbCredentials`
+<rem025/>
+
+以 `url`、`user:password@host:port/db` 参数形式提供的数据库连接凭据，或各异常驱动程序（<Drivers/>）特定的连接选项。
+
+|               |                      |
+| :------------ | :-----------------   |
+| type          | <Dialects/> |
+| default       | --                    |
+| commands      | `push`, `pull`, `migrate`, `studio` |
+
+<rem025/>
+
+<CodeTabs items={["SQLite", "Turso", "Cloudflare D1"]}>
+```ts
+import { defineConfig } from 'drizzle-kit'
+
+export default defineConfig({
+  dialect: "sqlite",
+  dbCredentials: {
+    url: ":memory:", // 内存数据库
+    // 或
+    url: "sqlite.db", 
+    // 或
+    url: "file:sqlite.db" // libsql 需要 file: 前缀
+  }
+});
+```
+```ts
+import { defineConfig } from 'drizzle-kit'
+
+export default defineConfig({
+  dialect: "turso",
+  dbCredentials: {
+    url: "libsql://acme.turso.io" // 远程 Turso 数据库 URL
+    authToken: "...",
+
+    // 或者如果你需要本地数据库
+
+    url: ":memory:", // 内存数据库
+    // 或
+    url: "file:sqlite.db", // libsql 需要 file: 前缀
+  }
+});
+```
+```ts
+import { defineConfig } from 'drizzle-kit'
+
+export default defineConfig({
+  dialect: "sqlite",
+  driver: "d1-http",
+  dbCredentials: {
+    accountId: "accountId",
+    databaseId: "databaseId",
+    token: "token",
+  },
+});
+```
+</CodeTabs>
+
+### `migrations`
+<rem025/>
+
+当运行 `drizzle-kit migrate` 时，drizzle 会将已成功应用的迁移记录到数据库中名为 `__drizzle_migrations` 的日志表里。
+
+`migrations` 配置选项可让你更改迁移日志的 `table` 名称。
+
+|               |                      |
+| :------------ | :-----------------   |
+| type          | `{ table: string }` |
+| default       | `{ table: "__drizzle_migrations" }`                    |
+| commands      | `migrate`, `push`, `pull` |
+
+<rem025/>
+
+```ts
+export default defineConfig({
+  dialect: "sqlite",
+  schema: "./src/schema.ts",
+  migrations: {
+    table: 'my-migrations-table', // 默认是 `__drizzle_migrations`
+  },
+});
+```
+
+### `introspect`
+<rem025/>
+
+`drizzle-kit pull` 命令的配置。
+
+`casing` 负责代码中列键名的大小写格式
+
+|               |                      |
+| :------------ | :-----------------   |
+| type          | `{ casing: "preserve" \| "camel" }` |
+| default       | `{ casing: "camel" }`                    |
+| commands      | `pull`   |
+
+<rem025/>
+
+<CodeTabs items={["camel", "preserve"]}>
+<Section>
+```ts
+import * as p from "drizzle-orm/sqlite-core"
+
+export const users = p.sqliteTable("users", {
+  id: p.integer().primaryKey({ autoIncrement: true }),
+  firstName: p.text("first-name"),
+  lastName: p.text("LastName"),
+  email: p.text("email"),
+  phoneNumber: p.text("phone_number"),
+});
+```
+```sql
+PRAGMA table_info(users);
+```
+``` 
+ column_name   | data_type        
+---------------+------------------------
+ id            | integer
+ first-name    | text
+ LastName      | text
+ email         | text
+ phone_number  | text
+```
+</Section>
+<Section>
+```ts
+import * as p from "drizzle-orm/sqlite-core"
+
+export const users = p.sqliteTable("users", {
+  id: p.integer().primaryKey({ autoIncrement: true }),
+  "first-name": p.text("first-name"),
+  LastName: p.text("LastName"),
+  email: p.text("email"),
+  phone_number: p.text("phone_number"),
+});
+```
+```sql
+PRAGMA table_info(users);
+```
+``` 
+ column_name   | data_type        
+---------------+------------------------
+ id            | integer
+ first-name    | text
+ LastName      | text
+ email         | text
+ phone_number  | text
+```
+</Section>
+</CodeTabs>
+
+
+## --- 
+
+### `tablesFilter`
+<Callout>
+如果你想使用一个数据库运行多个项目 - 请查看[我们的指南](/docs/sqlite/goodies#multi-project-schema)。
+</Callout>
+<rem025/>
+`drizzle-kit push` 和 `drizzle-kit pull` 默认会管理所有表。
+你可以通过 `tablesFilter` 配置表列表。
+
+`tablesFilter` 选项允许你指定基于 [`glob`](https://www.digitalocean.com/community/tools/glob?comments=true&glob=/**/*.js&matches=false&tests=//%20This%20will%20match%20as%20it%20ends%20with%20'.js'&tests=/hello/world.js&tests=//%20This%20won't%20match!&tests=/test/some/globs) 的表名过滤器，例如 `["users", "user_info"]` 或 `"user*"`
+
+|               |                      |
+| :------------ | :-----------------   |
+| type          | `string` `string[]` |
+| default       | --                    |
+| commands      | `push` `pull`   |
+
+<rem025/>
+```ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "sqlite",
+  tablesFilter: ["users", "posts", "project1_*"],
+});
+```
+
+## ---
+
+### `verbose`
+<rem025/>
+
+在 `drizzle-kit push` 命令期间打印所有 SQL 语句。
+
+|               |                      |
+| :------------ | :-----------------   |
+| type          | `boolean` |
+| default       | `false`                    |
+| commands      | `pull`   |
+
+<rem025/>
+
+```ts
+export default defineConfig({
+  dialect: "sqlite",
+  verbose: false,
+});
+```
+
+### `breakpoints`
+<rem025/>
+
+Drizzle Kit 会自动在生成的 SQL 迁移文件中嵌入 `--> statement-breakpoint`，  
+这对于不支持在一个事务中执行多个 DDL 变更语句的数据库是必要的（MySQL 和 SQLite）。
+
+`breakpoints` 选项标志允许你将其开启或关闭
+
+|               |                      |
+| :------------ | :-----------------   |
+| type          | `boolean` |
+| default       | `true`                    |
+| commands      | `generate` `pull`   |
+
+<rem025/>
+
+```ts
+export default defineConfig({
+  dialect: "sqlite",
+  breakpoints: false,
+});
+```

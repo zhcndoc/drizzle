@@ -1,0 +1,270 @@
+import Callout from '@mdx/Callout.astro';
+
+# v1 中的变更
+
+此页面展示了从 `drizzle-orm@0.x`、`drizzle-kit@0.x`、`drizzle-seed@0.x` 变更到最新的 `drizzle-orm@1.0`、`drizzle-kit@1.0`、`drizzle-seed@1.0` 的所有内容
+
+<Callout type="info">
+在这里了解更多关于如何升级的信息 [这里](/docs/sqlite/upgrade-v1)
+</Callout>
+
+## 重大变更
+
+#### v1.0 之前的外键处理
+旧版 `drizzle-kit` 不会将 TS schema 中的 FK 名称传递到生成的 SQL 中：
+```ts {6}
+export const table = sqliteTable("table", {
+  column1: integer(),
+  column2: integer(),
+}, (t) => [
+  foreignKey({
+    name: "name",
+    columns: [t.column1],
+    foreignColumns: [t.column2],
+  }),
+]);
+```
+```sql {5}
+-- 之前：生成的 SQL 中没有名称
+CREATE TABLE `table` (
+	`column1` integer,
+	`column2` integer,
+	FOREIGN KEY (`column1`) REFERENCES `table`(`column2`) ON UPDATE no action ON DELETE no action
+);
+```
+
+在 `introspect` 时，drizzle-kit 会解析 DDL 以查找约束名称；如果没有找到，则使用默认名称。
+
+升级到 v1 之后，第一次 `push` 会生成一个重新创建表的 diff（数据库中没有名称，而 TS 中有）。**为避免这种情况，请从 TS schema 中移除 FK 名称**——这样就不会生成 diff。
+
+`drizzle-kit generate` 的行为符合预期；无需任何改动。
+
+#### 已移除 Relational Queries v1
+
+RQBv1 已被移除。请改用带有新 `defineRelations()` API 和新特性的 [Relational Queries v2](/docs/sqlite/relations)。关于从 rqb v1 迁移到 v2 的更多细节，可以在[这里](/docs/sqlite/relations-v1-v2)找到。
+
+一个基于 `defineRelations()` 的新关系系统：
+
+```ts
+import { defineRelations } from 'drizzle-orm';
+
+const relations = defineRelations(schema, (r) => ({
+  users: {
+    posts: r.many.posts(),
+    profile: r.one.profiles(),
+  },
+  posts: {
+    author: r.one.users({
+      from: posts.authorId,
+      to: users.id,
+    }),
+  },
+}));
+```
+
+#### 新的 Casing API
+
+旧版的 `drizzle({ casing: 'camelCase' })` 已被替换为表 / 视图 / schema 级别的 API：
+
+```ts
+import { snakeCase, camelCase } from 'drizzle-orm/pg-core';
+
+export const users = snakeCase.table('users', {
+  id: serial().primaryKey(),
+  fullName: text(),        // → 数据库中为 full_name
+  createdAt: timestamp(),  // → 数据库中为 created_at
+});
+
+// 适用于所有实体类型：
+snakeCase.table / snakeCase.view / snakeCase.materializedView / snakeCase.schema
+camelCase.table / camelCase.view / camelCase.materializedView / camelCase.schema
+```
+
+#### 验证器包已整合到 `drizzle-orm` 中
+
+<Callout type="warning">
+你仍然可以使用 drizzle-zod/valibot/typebox/arktype 验证包，但所有新的更新都会直接添加到 Drizzle ORM 中
+</Callout>
+
+- drizzle-zod -> drizzle-orm/zod
+- drizzle-valibot -> drizzle-orm/valibot
+- drizzle-typebox -> drizzle-orm/typebox-legacy（使用 @sinclair/typebox）
+- drizzle-typebox -> drizzle-orm/typebox（使用 typebox）
+- drizzle-arktype -> drizzle-orm/arktype
+- 新增 `drizzle-orm/effect-schema` 包
+
+#### `.generatedAlwaysAs()` 仅接受 SQL
+
+```ts
+// ❌ 之前 — 接受原始值
+.generatedAlwaysAs('some expression')
+
+// ✅ 之后 — 仅接受 sql`` 或 () => sql``
+.generatedAlwaysAs(sql`some expression`)
+.generatedAlwaysAs(() => sql`some expression`)
+```
+
+#### `getTableColumns` 弃用
+
+请改用 `getColumns`
+
+```ts
+// ❌ 之前
+import { getTableColumns } from 'drizzle-orm';
+
+const columns = getTableColumns(users);
+
+// ✅ 之后
+import { getColumns } from 'drizzle-orm';
+
+const columns = getColumns(users);
+```
+
+#### 新的迁移文件夹结构（v3）
+
+**关联讨论**: [#2832](https://github.com/drizzle-team/drizzle-orm/discussions/2832)
+
+<br/>
+
+- 不再使用 `journal.json`
+- SQL 文件和快照分组到独立的迁移文件夹中
+- 移除了 `drizzle-kit drop` 命令
+
+这些更改消除了与 journal 文件可能产生的 Git 冲突，并简化了删除或修复冲突迁移的流程
+
+<Callout type="info">
+阅读更多关于如何升级的内容[这里](/docs/sqlite/upgrade-v1)
+</Callout>
+
+#### `drizzle-kit push --strict` 弃用
+
+`--strict` 标志已被移除——其行为现在已成为默认行为。除非传入 `--force` 标志，否则 `drizzle-kit push` 在执行可能导致数据丢失的语句时总会提示确认。使用 [drizzle-kit push --explain](/docs/sqlite/drizzle-kit-push) 可在运行前预览将要执行的 SQL。
+
+#### Drizzle seed：UUID 生成器升级到 v4
+
+UUID 生成器现在会生成符合 RFC 4122 v4 的 UUID，确保与 Zod v4 验证兼容。使用 `{ version: '1' }` 可保持旧行为，或使用 `{ version: '2' | '3' }` 以使用更新的生成器。
+
+## 其他功能
+
+#### JIT Mapper（可选启用）
+
+即时编译的行映射器，使映射速度与原始驱动程序一样快。
+你可以在[这里](/docs/sqlite/jit-mappers)了解更多
+
+```ts {1}
+const db = drizzle({ ..., jit: true });
+```
+
+#### 新的 MSSQL 方言
+
+新增对 MSSQL 方言的支持。你可以在[这里](/docs/mssql/get-started-mssql)了解更多
+
+#### 新的 CockroachDB 方言
+
+新增对 CockroachDB 方言的支持。你可以在[这里](/docs/cockroach/get-started-cockroach)了解更多
+
+#### 通过 `.as()` 使用列别名
+
+你可以在[这里](/docs/sqlite/aliases)了解更多别名信息
+```ts
+const query = db
+  .select({ age: users.age.as('ageOfUser'), id: users.id.as('userId') })
+  .from(users)
+  .orderBy(asc(users.id.as('userId')));
+```
+
+#### `drizzle-kit pull --init`
+
+创建 drizzle 迁移表，并将第一次拉取的迁移标记为已应用。你可以在[这里](/docs/sqlite/drizzle-kit-pull)了解更多
+
+#### `drizzle-kit push --explain`
+
+显示将要执行的 SQL，但不会真正运行它。你可以在[这里](/docs/sqlite/drizzle-kit-push)了解更多
+
+#### `drizzle-kit check` — 交换律检查
+
+检测分支之间的非交换迁移——例如，两个分支修改同一列，或一个重命名表而另一个正在修改该表。
+
+其工作方式如下：
+- 从快照 `prevIds` 构建 DAG，以理解分支结构
+- 找到分支分叉的位置
+- 计算从父快照到每个分支叶子的 DDL 差异
+- 使用一个映射来检查冲突，该映射记录哪些 DDL 语句类型可能相互干扰
+
+如果发现冲突，报告会明确告诉你哪些分支上的哪些迁移不兼容，以及哪些语句发生了冲突。
+
+#### `drizzle-kit --ignore-conflicts` 标志
+
+当你知道这些冲突是预期内的时候，可绕过交换律检查。
+
+#### `drizzle-kit generate`：迁移冲突检测
+
+`drizzle-kit generate` 现在会识别迁移分支之间的[不兼容更改](/docs/sqlite/v0-v1-changes#drizzle-kit-check--commutativity-check)。使用 `--ignore-conflicts` 可绕过。
+
+#### 迁移表更新
+
+当你运行 `drizzle-kit up` 时，迁移表会自动升级。会新增两个列：
+
+- **`name`** — 完整的迁移文件夹名称（例如 `20250220153045_brave_wolverine`）
+- **`applied_at`** — 迁移执行时间的时间戳（已有记录会回填为 `NULL`）
+
+| 列 | 类型 | v0 | v1 |
+| --- | --- | --- |:---:|
+| `id` | integer | yes | yes |
+| `hash` | text | yes | yes |
+| `created_at` | numeric | yes | yes（旧版） |
+| `name` | text | — | 新增 |
+| `applied_at` | text | — | 新增 |
+
+现在迁移会按完整文件夹名称匹配，而不是按时间戳。即使两个迁移在同一秒生成，名称后缀也能保证唯一性。
+
+升级过程中，现有记录会通过多步骤策略回填：
+1. **毫秒匹配** — 将存储的毫秒截断到秒，并与本地文件夹时间戳匹配
+2. **哈希决胜** — 如果多个迁移共享同一秒，则通过 SQL 哈希进行区分
+3. **仅哈希回退** — 如果毫秒匹配完全失败，则仅通过哈希进行匹配
+
+<br/>
+这意味着该升级能够处理所有边缘情况：普通的单开发者项目、迁移时间非常接近的团队，甚至是旧日志数据与新的文件夹名称并不完全对齐的情况。
+
+#### Migrator 会应用所有缺失的迁移
+
+以前 migrator 只会查找创建日期晚于上一次已应用迁移的本地迁移。现在它会检测并应用**每一个缺失的迁移**，不受时间戳顺序影响。所有迁移都按完整文件夹名称（14 位 UTC 时间戳 + 名称后缀）进行匹配。
+
+#### drizzle 配置文件中的顶层 `await`
+
+现在在 Node.js 的 `drizzle.config.ts` 和 schema 文件中支持顶层 `await`。
+
+#### Drizzle-kit：构建系统改进
+
+- 从 `esbuild-register` 迁移到 `tsx` loader —— 无缝支持 ESM 和 CJS
+- 原生支持 Bun 和 Deno 启动
+
+#### TS Schema 文件处理
+
+只处理以下扩展名的文件：`.js`、`.mjs`、`.cjs`、`.jsx`、`.ts`、`.mts`、`.cts`、`.tsx`。所有其他文件类型都会被忽略。
+
+#### Drizzle Seed：在细化规则中忽略列
+
+在播种时跳过特定列——将改用数据库默认值：
+
+```ts
+await seed(db, schema).refine((f) => ({
+  users: {
+    count: 5,
+    columns: {
+      name: f.fullName(),
+      photo: false, // 跳过——将使用数据库默认值
+    },
+  },
+}));
+```
+
+#### `min` / `max` 参数
+
+基于时间的生成器现在接受边界值：
+
+```ts
+funcs.time({ min: '13:12:13', max: '15:12:13' })
+funcs.timestamp({ min: '2024-01-01T00:00:00Z', max: '2025-01-01T00:00:00Z' })
+funcs.datetime({ min: '2024-01-01', max: '2025-01-01' })
+```

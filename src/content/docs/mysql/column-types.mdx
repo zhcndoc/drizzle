@@ -1,0 +1,1078 @@
+---
+title: MySQL 列类型
+---
+import Section from '@mdx/Section.astro';
+import Callout from '@mdx/Callout.astro';
+
+我们已经原生支持所有这些类型，不过如果这还不够用，你也可以随时创建 **[自定义类型](/docs/mysql/custom-types)**。
+
+<Callout title='important' type='warning'>
+本部分文档中的所有示例都没有使用数据库列名别名，列名是根据 TypeScript 键生成的。 
+
+如果你愿意，也可以在列名中使用数据库别名，并且还可以使用 `casing API` 为 Drizzle 定义一种映射策略。
+
+你可以在 [这里](/docs/mysql/sql-schema-declaration#shape-your-data-schema) 阅读更多相关内容
+</Callout>
+
+<Callout title='important' type='info'>
+所有整数类型（`int`、`tinyint`、`smallint`、`mediumint`、`bigint`）默认都是 `signed`，因此既允许负值也允许正值。 
+添加 `{ unsigned: true }` 会将列限制为仅允许非负值，但会将上限范围加倍。
+</Callout>
+
+### integer
+
+一个 `4` 字节整数，带符号范围为 `-2,147,483,648` 到 `2,147,483,647`，无符号范围为 `0` 到 `4,294,967,295`
+
+更多信息请参考官方 MySQL **[文档。](https://dev.mysql.com/doc/refman/8.0/en/integer-types.html)**
+
+<Section>
+```typescript
+import { int, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable('table', {
+	int: int(),
+	int2: int({ unsigned: true })
+});
+```
+
+```sql
+CREATE TABLE `table` (
+	`int` int,
+	`int2` int unsigned
+);
+```
+</Section>
+
+### tinyint
+
+一个 `1` 字节整数，带符号范围为 `-128` 到 `127`，无符号范围为 `0` 到 `255`
+
+更多信息请参考官方 MySQL **[文档。](https://dev.mysql.com/doc/refman/8.0/en/integer-types.html)**
+
+<Section>
+```typescript
+import { tinyint, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable('table', {
+	tinyint: tinyint(),
+	tinyint2: tinyint({ unsigned: true })
+});
+```
+
+```sql
+CREATE TABLE `table` (
+	`tinyint` tinyint,
+	`tinyint2` tinyint unsigned
+);
+```
+</Section>
+
+### smallint
+
+一个 `2` 字节整数，带符号范围为 `-32,768` 到 `32,767`，无符号范围为 `0` 到 `65,535`
+
+更多信息请参考官方 MySQL **[文档。](https://dev.mysql.com/doc/refman/8.0/en/integer-types.html)**
+
+<Section>
+```typescript
+import { smallint, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable('table', {
+	smallint: smallint(),
+	smallint2: smallint({ unsigned: true }),
+});
+```
+
+```sql
+CREATE TABLE `table` (
+	`smallint` smallint,
+	`smallint2` smallint unsigned
+);
+```
+</Section>
+
+### mediumint
+
+一个 `3` 字节整数，带符号范围为 `-8,388,608` 到 `8,388,607`，无符号范围为 `0` 到 `16,777,215`
+
+更多信息请参考官方 MySQL **[文档。](https://dev.mysql.com/doc/refman/8.0/en/integer-types.html)**
+
+<Section>
+```typescript
+import { mediumint, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable('table', {
+	mediumint: mediumint(),
+	mediumint2: mediumint({ unsigned: true })
+});
+```
+
+```sql
+CREATE TABLE `table` (
+	`mediumint` mediumint,
+	`mediumint2` mediumint unsigned
+);
+```
+</Section>
+
+### bigint
+
+一个 `8` 字节整数，带符号范围为 `-2^63` 到 `2^63-1`，无符号范围为 `0` 到 `2^64-1`
+
+更多信息请参考官方 MySQL **[文档。](https://dev.mysql.com/doc/refman/8.0/en/integer-types.html)**
+
+<Section>
+```typescript
+import { bigint, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable('table', {
+	bigint: bigint({ mode: 'number' }),
+	bigintUnsigned: bigint({ mode: 'number', unsigned: true })
+});
+
+bigint("...", { mode: 'number' | 'bigint' | 'string' });
+
+// You can also specify unsigned option for bigint
+bigint("...", { mode: 'number' | 'bigint' | 'string', unsigned: true });
+```
+
+```sql
+CREATE TABLE `table` (
+	`bigint` bigint,
+	`bigintUnsigned` bigint unsigned
+);
+```
+</Section>
+
+我们省略了 `bigint(M)` 中 `M` 的配置，因为它表示该数值类型的显示宽度 
+
+## ---
+
+### real
+
+一个浮点数
+
+有关更多信息，请参阅官方 MySQL **[文档。](https://dev.mysql.com/doc/refman/8.0/en/floating-point-types.html)**
+
+<Section>
+```typescript
+import { real, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable('table', {
+	real: real()
+});
+```
+
+```sql
+CREATE TABLE `table` (
+	`real` real
+);
+```
+</Section>
+
+<Section>
+```typescript
+import { real, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable('table', {
+	realPrecision: real({ precision: 1 }),
+	realPrecisionScale: real({ precision: 1, scale: 1 }),
+});
+```
+
+```sql
+CREATE TABLE `table` (
+	`realPrecision` real(1),
+	`realPrecisionScale` real(1, 1)
+);
+```
+</Section>
+
+### decimal
+
+一种精确的定点数。`DECIMAL(M, D)` 可存储最多 `M` 位总数字，其中小数点后有 `D` 位数字。最大精度为 `65` 位数字
+
+有关更多信息，请参阅官方 MySQL **[文档。](https://dev.mysql.com/doc/refman/8.0/en/fixed-point-types.html)**
+
+<Section>
+```typescript
+import { decimal, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable('table', {
+	decimal: decimal(),
+	decimalNum: decimal({ precision: 30, mode: 'number' }),
+	decimalBig: decimal({ precision: 30, mode: 'bigint' }),
+	decimal2: decimal({ precision: 30, scale: 10 }),
+});
+```
+
+```sql
+CREATE TABLE `table` (
+	`decimal` decimal,
+	`decimalNum` decimal(30),
+	`decimalBig` decimal(30),
+	`decimal2` decimal(30,10)
+);
+```
+</Section>
+
+### double
+
+一个 `8` 字节的双精度浮点数，用于表示近似数值数据
+
+有关更多信息，请参阅官方 MySQL **[文档。](https://dev.mysql.com/doc/refman/8.0/en/floating-point-types.html)**
+
+<Section>
+```typescript
+import { double, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable('table', {
+	double: double()
+});
+```
+
+```sql
+CREATE TABLE `table` (
+	`double` double
+);
+```
+</Section>
+
+<Section>
+```typescript
+import { double, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable('table', {
+	doublePrecision: double({ precision: 1 }),
+	doublePrecisionScale: double({ precision: 1, scale: 1 })
+});
+```
+
+```sql
+CREATE TABLE `table` (
+	`doublePrecision` double(1),
+	`doublePrecisionScale` double(1,1)
+);
+```
+</Section>
+
+### float
+
+一个 `4` 字节的单精度浮点数，用于表示近似数值数据
+
+有关更多信息，请参阅官方 MySQL **[文档。](https://dev.mysql.com/doc/refman/8.0/en/floating-point-types.html)**
+
+<Section>
+```typescript
+import { float, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable('table', {
+	float: float()
+});
+```
+
+```sql
+CREATE TABLE `table` (
+	`float` float
+);
+```
+</Section>
+
+## ---
+
+### serial
+
+<Section>
+
+`SERIAL` 是 `BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE` 的别名。
+
+更多信息请参阅官方 MySQL **[文档。](https://dev.mysql.com/doc/refman/8.0/en/numeric-type-syntax.html)**
+
+```typescript
+import { serial, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable('table', {
+	serial: serial()
+});
+```
+
+```sql
+CREATE TABLE `table` (
+	`serial` serial
+);
+```
+</Section>
+
+## ---
+
+### binary
+`BINARY(M)` 存储一个固定长度的字节字符串，长度恰好为 M 字节（如果省略，M 默认值为 1）。  
+在插入时，较短的值会用 `0x00` 字节在右侧填充以达到 M 字节；在检索时，不会去除任何填充。
+在比较中，所有字节都具有重要性，包括 `ORDER BY` 和 `DISTINCT` 操作
+
+更多信息请参阅 MySQL 官方 **[文档。](https://dev.mysql.com/doc/refman/8.0/en/binary-varbinary.html)**
+<Section>
+```typescript
+import { binary, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable('table', {
+	binary: binary(),
+	binary2: binary({ length: 10 }),
+});
+```
+
+```sql
+CREATE TABLE `table` (
+	`binary` binary,
+	`binary2` binary(10)
+);
+```
+</Section>
+
+### varbinary
+`VARBINARY(M)` 存储一个长度可变的字节字符串，最多可达 M 字节（按需使用 M）。  
+对于 `VARBINARY`，插入时不会填充，检索时也不会去除任何字节。
+在比较中，所有字节都具有重要性，包括 `ORDER BY` 和 `DISTINCT` 操作
+
+更多信息请参阅 MySQL 官方 **[文档。](https://dev.mysql.com/doc/refman/8.0/en/binary-varbinary.html)**
+<Section>
+```typescript
+import { varbinary, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable('table', {
+	varbinary: varbinary({ length: 2 }),
+});
+```
+
+```sql
+CREATE TABLE `table` (
+	`varbinary` varbinary(2)
+);
+```
+</Section>
+
+## ---
+
+### blob
+
+`BLOB` 是一种二进制大对象，可以存储可变大小的数据，最大长度为 `65,535` 字节（`64` KB）
+
+更多信息请参阅 MySQL 官方 **[文档。](https://dev.mysql.com/doc/refman/8.0/en/blob.html)**
+<Section>
+```typescript
+import { blob, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable('table', {
+	blob: blob()
+});
+```
+
+```sql
+CREATE TABLE `table` (
+	`blob` blob
+);
+```
+</Section>
+
+<Section>
+你可以指定 `buffer` 或 `string` 模式：
+```typescript
+// 将被推断为 `Buffer`
+blob: blob({ mode: "buffer" }),
+
+// 将被推断为 `string`
+blob: blob({ mode: "string" }),
+```
+</Section>
+
+> `buffer` 模式是使用 blob 的默认方式。
+> Drizzle 会将 blob 值表示为 `Buffer` 实例
+
+> `string` 模式将 blob 值表示为 UTF-8 编码字符串，
+> 这在将文本数据存储到 blob 列中时会很有用
+
+
+### tinyblob
+
+一个最大长度为 `255` 字节的 `BLOB` 列
+
+更多信息请参阅 MySQL 官方 **[文档。](https://dev.mysql.com/doc/refman/8.0/en/blob.html)**
+<Section>
+```typescript
+import { tinyblob, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable('table', {
+	tinyblob: tinyblob()
+});
+```
+
+```sql
+CREATE TABLE `table` (
+	`tinyblob` tinyblob
+);
+```
+</Section>
+
+<Section>
+你可以指定 `buffer` 或 `string` 模式：
+```typescript
+// 将被推断为 `Buffer`
+tinyblob: tinyblob({ mode: "buffer" }),
+
+// 将被推断为 `string`
+tinyblob: tinyblob({ mode: "string" }),
+```
+</Section>
+
+> `buffer` 模式是使用 blob 的默认方式。
+> Drizzle 会将 blob 值表示为 `Buffer` 实例
+
+> `string` 模式将 blob 值表示为 UTF-8 编码字符串，
+> 这在将文本数据存储到 blob 列中时会很有用
+
+### mediumblob
+
+一个最大长度为 `16,777,215` 字节（`16` MB）的 `BLOB` 列
+
+更多信息请参阅 MySQL 官方 **[文档。](https://dev.mysql.com/doc/refman/8.0/en/blob.html)**
+<Section>
+```typescript
+import { mediumblob, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable('table', {
+	mediumblob: mediumblob()
+});
+```
+
+```sql
+CREATE TABLE `table` (
+	`mediumblob` mediumblob
+);
+```
+</Section>
+
+<Section>
+你可以指定 `buffer` 或 `string` 模式：
+```typescript
+// 将被推断为 `Buffer`
+mediumblob: mediumblob({ mode: "buffer" }),
+
+// 将被推断为 `string`
+mediumblob: mediumblob({ mode: "string" }),
+```
+</Section>
+
+> `buffer` 模式是使用 blob 的默认方式。
+> Drizzle 会将 blob 值表示为 `Buffer` 实例
+
+> `string` 模式将 blob 值表示为 UTF-8 编码字符串，
+> 这在将文本数据存储到 blob 列中时会很有用
+
+
+### longblob
+
+一个最大长度为 `4,294,967,295` 字节（`4` GB）的 `BLOB` 列
+
+更多信息请参阅 MySQL 官方 **[文档。](https://dev.mysql.com/doc/refman/8.0/en/blob.html)**
+<Section>
+```typescript
+import { longblob, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable('table', {
+	longblob: longblob()
+});
+```
+
+```sql
+CREATE TABLE `table` (
+	`longblob` longblob
+);
+```
+</Section>
+
+<Section>
+你可以指定 `buffer` 或 `string` 模式：
+```typescript
+// 将被推断为 `Buffer`
+longblob: longblob({ mode: "buffer" }),
+
+// 将被推断为 `string`
+longblob: longblob({ mode: "string" }),
+```
+</Section>
+
+> `buffer` 模式是使用 blob 的默认方式。
+> Drizzle 会将 blob 值表示为 `Buffer` 实例
+
+> `string` 模式将 blob 值表示为 UTF-8 编码字符串，
+> 这在将文本数据存储到 blob 列中时会很有用
+
+## ---
+
+### char
+
+`CHAR(M)` 列的长度在创建表时会固定为你声明的长度。`M` 可以是从 `0` 到 `255` 的任意值，默认值为 `1`
+存储 `CHAR` 值时，会在右侧填充空格以达到指定长度。检索 `CHAR` 值时，除非启用了 [PAD_CHAR_TO_FULL_LENGTH](https://dev.mysql.com/doc/refman/9.7/en/sql-mode.html#sqlmode_pad_char_to_full_length) SQL 模式，否则会移除尾随空格。
+
+更多信息请参阅官方 MySQL **[文档。](https://dev.mysql.com/doc/refman/8.0/en/char.html)**
+
+你可以定义 `{ enum: ["value1", "value2"] }` 配置来推断插入和查询类型，它不会检查运行时值。
+
+<Section>
+```typescript
+import { char, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable('table', {
+	char: char(),
+});
+
+// 将被推断为 char: "value1" | "value2" | null
+char: char({ enum: ["value1", "value2"] })
+```
+
+```sql
+CREATE TABLE `table` (
+	`char` char
+);
+```
+</Section>
+
+### varchar
+
+`VARCHAR` 列中的值是可变长度字符串。  
+`VARCHAR(M)` 最多存储 `M` 个字符，其中 `M` 的范围是 `0` 到 `65,535`
+存储 `VARCHAR` 值时不会进行填充。根据标准 SQL，存储和检索值时都会保留尾随空格。
+
+更多信息请参阅官方 MySQL **[文档。](https://dev.mysql.com/doc/refman/8.0/en/char.html)**
+
+你可以定义 `{ enum: ["value1", "value2"] }` 配置来推断 `insert` 和 `select` 类型，它**不会**检查运行时值。
+<Section>
+```typescript
+import { varchar, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable('table', {
+	varchar: varchar({ length: 2 }),
+});
+
+// 将被推断为 text: "value1" | "value2" | null
+varchar: varchar({ length: 6, enum: ["value1", "value2"] })
+```
+
+```sql
+CREATE TABLE `table` (
+	`varchar` varchar(2)
+);
+```
+</Section>
+
+### text
+
+一个最大长度为 `65,535` 个字符（`64` KB）的 `TEXT` 列
+
+更多信息请参阅官方 MySQL **[文档。](https://dev.mysql.com/doc/refman/8.0/en/blob.html)**
+
+你可以定义 `{ enum: ["value1", "value2"] }` 配置来推断 `insert` 和 `select` 类型，它**不会**检查运行时值。
+
+<Section>
+```typescript
+import { text, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable('table', {
+	text: text(),
+});
+
+// 将被推断为 text: "value1" | "value2" | null
+text: text({ enum: ["value1", "value2"] });
+```
+
+```sql
+CREATE TABLE `table` (
+	`text` text
+);
+```
+</Section>
+
+### tinytext
+
+一个最大长度为 `255` 个字符的 `TEXT` 列
+
+更多信息请参阅官方 MySQL **[文档。](https://dev.mysql.com/doc/refman/8.0/en/blob.html)**
+
+你可以定义 `{ enum: ["value1", "value2"] }` 配置来推断 `insert` 和 `select` 类型，它**不会**检查运行时值。
+
+<Section>
+```typescript
+import { tinytext, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable('table', {
+	tinytext: tinytext(),
+});
+
+// 将被推断为 tinytext: "value1" | "value2" | null
+tinytext: tinytext({ enum: ["value1", "value2"] });
+```
+
+```sql
+CREATE TABLE `table` (
+	`tinytext` tinytext
+);
+```
+</Section>
+
+### mediumtext
+
+一个最大长度为 `16,777,215` 个字符（`16` MB）的 `TEXT` 列
+
+更多信息请参阅官方 MySQL **[文档。](https://dev.mysql.com/doc/refman/8.0/en/blob.html)**
+
+你可以定义 `{ enum: ["value1", "value2"] }` 配置来推断 `insert` 和 `select` 类型，它**不会**检查运行时值。
+
+<Section>
+```typescript
+import { mediumtext, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable('table', {
+	mediumtext: mediumtext(),
+});
+
+// 将被推断为 mediumtext: "value1" | "value2" | null
+mediumtext: mediumtext({ enum: ["value1", "value2"] });
+```
+
+```sql
+CREATE TABLE `table` (
+	`mediumtext` mediumtext
+);
+```
+</Section>
+
+### longtext
+
+一个最大长度为 `4,294,967,295` 个字符（`4` GB）的 `TEXT` 列
+
+更多信息请参阅官方 MySQL **[文档。](https://dev.mysql.com/doc/refman/8.0/en/blob.html)**
+
+你可以定义 `{ enum: ["value1", "value2"] }` 配置来推断 `insert` 和 `select` 类型，它**不会**检查运行时值。
+
+<Section>
+```typescript
+import { longtext, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable('table', {
+	longtext: longtext(),
+});
+
+// 将被推断为 longtext: "value1" | "value2" | null
+longtext: longtext({ enum: ["value1", "value2"] });
+```
+
+```sql
+CREATE TABLE `table` (
+	`longtext` longtext
+);
+```
+</Section>
+
+## ---
+
+### 布尔值
+
+`BOOLEAN` 是 `TINYINT(1)` 的同义词。值为 `0` 被视为 false，非零值被视为 true
+
+更多信息请参阅 MySQL 官方 **[文档。](https://dev.mysql.com/doc/refman/8.0/en/numeric-type-syntax.html)**
+
+<Section>
+```typescript
+import { boolean, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable('table', {
+	boolean: boolean(),
+});
+```
+
+```sql
+CREATE TABLE `table` (
+	`boolean` boolean
+);
+```
+</Section>
+
+## ---
+
+### date
+
+一个 `date` 值，格式为 `'YYYY-MM-DD'`，范围为 `'1000-01-01'` 到 `'9999-12-31'`
+
+更多信息请参考 MySQL 官方 **[文档。](https://dev.mysql.com/doc/refman/8.0/en/datetime.html)**
+
+<Section>
+```typescript
+import { date, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable('table', {
+	date: date(),
+});
+```
+
+```sql
+CREATE TABLE `table` (
+	`date` date
+);
+```
+</Section>
+
+你可以指定 `date` 或 `string` 推断模式：
+```typescript
+// will infer as date
+date: date({ mode: "date" }),
+
+// will infer as string
+date: date({ mode: "string" }),
+```
+
+### datetime
+
+一个日期和时间值，格式为 `'YYYY-MM-DD hh:mm:ss'`，范围为 `'1000-01-01 00:00:00'` 到 `'9999-12-31 23:59:59'`。支持最多 `6` 位的小数秒
+
+更多信息请参考 MySQL 官方 **[文档。](https://dev.mysql.com/doc/refman/8.0/en/datetime.html)**
+
+<Section>
+```typescript
+import { datetime, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable('table', {
+	datetime: datetime(),
+});
+
+datetime('...', { mode: 'date' | "string"}),
+datetime('...', { fsp : 0..6}),
+```
+
+```sql
+CREATE TABLE `table` (
+	`datetime` datetime
+);
+```
+</Section>
+
+<Section>
+```typescript
+import { datetime, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable('table', {
+	datetime: datetime({ mode: 'date', fsp: 6 }),
+});
+```
+
+```sql
+CREATE TABLE `table` (
+	`datetime` datetime(6)
+);
+```
+</Section>
+
+### time 
+
+一个 `time` 值，格式为 `'hh:mm:ss'`，范围为 `'-838:59:59'` 到 `'838:59:59'`。可表示一天中的时间或已过去的时长。支持最多 `6` 位的小数秒
+
+更多信息请参考 MySQL 官方 **[文档。](https://dev.mysql.com/doc/refman/8.0/en/time.html)**
+
+<Section>
+```typescript
+import { time, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable('table', {
+	time: time(),
+	timefsp: time({ fsp: 6 }),
+});
+	
+time('...', { fsp: 0..6 }),
+```
+
+```sql
+CREATE TABLE `table` (
+	`time` time,
+	`timefsp` time(6)
+);
+```
+</Section>
+
+### year
+
+一个用于年份值的 `1` 字节类型，格式为 `YYYY`，范围为 `1901` 到 `2155`，以及 `0000`
+
+更多信息请参考 MySQL 官方 **[文档。](https://dev.mysql.com/doc/refman/8.0/en/year.html)**
+
+<Section>
+```typescript
+import { year, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable('table', {
+	year: year(),
+});
+```
+
+```sql
+CREATE TABLE `table` (
+	`year` year
+);
+```
+</Section>
+
+### timestamp
+
+一个日期和时间值，格式为 `'YYYY-MM-DD hh:mm:ss'`，范围为 UTC 的 `'1970-01-01 00:00:01'` 到 UTC 的 `'2038-01-19 03:14:07'`。MySQL 会在存储时将 `TIMESTAMP` 值从当前时区转换为 UTC，在读取时再从 UTC 转回当前时区。支持最多 `6` 位的小数秒
+
+更多信息请参考 MySQL 官方 **[文档。](https://dev.mysql.com/doc/refman/8.0/en/datetime.html)**
+
+<Section>
+```typescript
+import { timestamp, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable('table', {
+	timestamp: timestamp(),
+});
+
+timestamp('...', { mode: 'date' | "string"}),
+timestamp('...', { fsp : 0..6}),
+```
+
+```sql
+CREATE TABLE `table` (
+	`timestamp` timestamp
+);
+```
+</Section>
+
+<Section>
+```typescript
+import { timestamp, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable('table', {
+	timestamp: timestamp({ mode: 'date', fsp: 6 }),
+});
+```
+
+```sql
+CREATE TABLE `table` (
+	`timestamp` timestamp(6)
+);
+```
+</Section>
+
+<Section>
+```typescript
+import { timestamp, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable('table', {
+	timestamp: timestamp().defaultNow(),
+});
+```
+
+```sql
+CREATE TABLE `table` (
+	`timestamp` timestamp DEFAULT (now())
+);
+```
+</Section>
+
+## ---
+
+### json
+
+一种原生的 `JSON` 数据类型，可高效访问 JSON 文档中的数据。JSON 文档会自动校验，并以优化的二进制格式存储，从而支持快速读取文档元素
+
+更多信息请参考 MySQL 官方 **[文档。](https://dev.mysql.com/doc/refman/8.0/en/json.html)**
+
+<Section>
+```typescript
+import { json, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable('table', {
+	json: json(),
+});
+
+```
+
+```sql
+CREATE TABLE `table` (
+	`json` json
+);
+```
+</Section>
+
+你可以为 json 对象推断指定 `.$type<..>()`，它 **不会** 检查运行时值。 
+它为默认值、插入和查询模式提供编译时保护。
+```typescript
+// 将被推断为 { foo: string }
+json: json().$type<{ foo: string }>();
+
+// 将被推断为 string[]
+json: json().$type<string[]>();
+
+// 无法编译
+json: json().$type<string[]>().default({});
+```
+
+## ---
+
+### enum
+
+一种字符串对象，其值从在创建表时枚举的一组允许值中选择。
+
+更多信息请参考官方 MySQL **[文档。](https://dev.mysql.com/doc/refman/8.0/en/enum.html)**
+
+<Section>
+```typescript
+import { mysqlEnum, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable('table', {
+	popularity: mysqlEnum(['unknown', 'known', 'popular']),
+});
+```
+
+```sql
+CREATE TABLE `table` (
+	`popularity` enum('unknown','known','popular')
+);
+```
+</Section>
+
+## ---
+
+### 自定义数据类型
+
+每个列构建器都有一个 `.$type()` 方法，可让你自定义该列的数据类型。例如，这对于未知类型或品牌类型很有用。
+
+```ts
+import { int, json, mysqlTable } from "drizzle-orm/mysql-core";
+
+type UserId = number & { __brand: "user_id" };
+type Data = {
+  foo: string;
+  bar: number;
+};
+
+export const users = mysqlTable("users", {
+  id: int().$type<UserId>().primaryKey(),
+  jsonField: json().$type<Data>(),
+});
+```
+
+### 非空
+`NOT NULL` 约束规定相关列不能包含 `NULL` 值。
+
+<Section>
+```typescript
+import { int, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable('table', {
+	int: int().notNull(),
+});
+```
+
+```sql
+CREATE TABLE `table` (
+	`int` int NOT NULL
+);
+```
+</Section>
+
+### 默认值
+
+`DEFAULT` 子句指定当用户在执行 `INSERT` 时未显式提供值时，该列要使用的默认值。
+如果列定义中没有显式附加 `DEFAULT` 子句，那么该列的默认值为 `NULL`。
+
+显式的 `DEFAULT` 子句可以指定默认值为 `NULL`、字符串常量、blob 常量、有符号数字，或任何用括号括起来的常量表达式。
+
+<Section>
+```typescript
+import { sql } from "drizzle-orm";
+import { int, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable("table", {
+  int: int().default(3),
+  int2: int().default(sql`3`),
+});
+```
+
+```sql
+CREATE TABLE `table` (
+	`int` int DEFAULT 3,
+	`int2` int DEFAULT (3)
+);
+```
+</Section>
+
+当使用 `$default()` 或 `$defaultFn()` 时，它们只是同一个函数的不同别名，  
+你可以在运行时生成默认值，并在所有插入查询中使用这些值。  
+这些函数可以帮助你使用各种实现，例如 `uuid`、`cuid`、`cuid2` 等更多类型。
+
+<Callout type="info" emoji="ℹ️">
+	注意：此值不会影响 `drizzle-kit` 的行为，它仅在 `drizzle-orm` 的运行时使用
+</Callout>
+
+```ts
+import { varchar, mysqlTable } from "drizzle-orm/mysql-core";
+import { createId } from '@paralleldrive/cuid2';
+
+export const table = mysqlTable('table', {
+	id: varchar({ length: 128 }).$defaultFn(() => createId()),
+});
+```
+
+当使用 `$onUpdate()` 或 `$onUpdateFn()` 时，它们只是同一个函数的不同别名，  
+你可以在运行时生成默认值，并在所有更新查询中使用这些值。  
+
+为列添加一个动态更新值。该函数会在行被更新时调用，  
+如果未提供值，则返回值将用作该列的值。
+如果未提供默认值（或 `$defaultFn`），该函数也会在行插入时被调用，  
+并且返回值将用作该列的值。
+
+<Callout type="info" emoji="ℹ️">
+	注意：此值不会影响 `drizzle-kit` 的行为，它仅在 `drizzle-orm` 的运行时使用
+</Callout>
+
+```ts
+import { text, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable('table', {
+    alwaysNull: text().$type<string | null>().$onUpdate(() => null),
+});
+```
+
+### 主键 
+
+<Section>
+```typescript
+import { int, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable('table', {
+	int: int().primaryKey(),
+});
+```
+
+```sql
+CREATE TABLE `table` (
+	`int` int PRIMARY KEY NOT NULL
+);
+```
+</Section>
+
+### 自增
+
+<Section>
+```typescript
+import { int, mysqlTable } from "drizzle-orm/mysql-core";
+
+export const table = mysqlTable('table', {
+	int: int().autoincrement(),
+});
+```
+
+```sql
+CREATE TABLE `table` (
+	`int` int AUTO_INCREMENT
+);
+```
+</Section>

@@ -1,0 +1,172 @@
+import CodeTab from "@mdx/CodeTab.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Section from "@mdx/Section.astro";
+import Tab from "@mdx/Tab.astro";
+import Tabs from "@mdx/Tabs.astro";
+import Callout from "@mdx/Callout.astro";
+import Prerequisites from "@mdx/Prerequisites.astro";
+import Drivers from "@mdx/Drivers.mdx"
+import Dialects from "@mdx/Dialects.mdx"
+import Npm from "@mdx/Npm.astro"
+import Npx from "@mdx/Npx.astro"
+
+# `drizzle-kit pull`
+
+<Prerequisites>
+- 开始使用 Drizzle 和 `drizzle-kit` - [请阅读这里](/docs/mysql/get-started)
+- Drizzle schema 基础知识 - [请阅读这里](/docs/mysql/sql-schema-declaration) 
+- 数据库连接基础知识 - [请阅读这里](/docs/mysql/connect-overview) 
+- Drizzle migrations 基础知识 - [请阅读这里](/docs/mysql/migrations) 
+- Drizzle Kit [概览](/docs/mysql/kit-overview) 和 [配置文件](/docs/mysql/drizzle-config-file) 文档
+</Prerequisites>
+
+`drizzle-kit pull` 允许你直接拉取（introspect）现有数据库的 schema，并生成 `schema.ts` drizzle schema 文件，  
+它旨在支持 Drizzle migrations 的 [database first](/docs/mysql/migrations) 方法。
+
+<Callout collapsed="底层是如何工作的？">
+当你运行 Drizzle Kit `pull` 命令时，它会：
+1. 拉取你现有数据库的 schema（DDL）
+2. 生成 `schema.ts` drizzle schema 文件并保存到 `out` 文件夹
+
+<Section>
+```
+                                  ┌────────────────────────┐      ┌─────────────────────────┐ 
+                                  │                        │ <---  CREATE TABLE `users` (
+┌──────────────────────────┐      │                        │        `id` int auto_increment primary key,
+│ ~ drizzle-kit pull       │      │                        │        `name` varchar(255),
+└─┬────────────────────────┘      │        DATABASE        │        `email` varchar(255) unique
+  │                               │                        │       );
+  └ 拉取数据库 schema -------> │                        │
+  ┌ 生成 Drizzle         <----- │                        │
+  │ schema TypeScript 文件       └────────────────────────┘
+  │
+  v
+```
+```typescript
+import * as p from "drizzle-orm/mysql-core";
+
+export const users = p.mysqlTable(
+  "users",
+  {
+    id: p.int().autoincrement().primaryKey(),
+    name: p.varchar({ length: 255 }),
+    email: p.varchar({ length: 255 }),
+  },
+  (table) => [p.uniqueIndex("email").on(table.email)]
+);
+```
+</Section>
+</Callout>
+
+如果你需要在 TypeScript 项目之外管理数据库 schema，或者你使用的是由他人管理的数据库，这是一种很好的方式。
+
+<br/>
+<hr/>
+<br/>
+
+`drizzle-kit pull` 需要你指定 `dialect`，以及数据库连接 `url` 或 `user:password@host:port/db` 参数；你可以通过 [drizzle.config.ts](/docs/mysql/drizzle-config-file) 配置文件或 CLI 选项来提供它们：
+
+<CodeTabs items={["使用配置文件", "使用 CLI 选项"]}>
+<Section>
+```ts
+// drizzle.config.ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "mysql",
+  dbCredentials: {
+    url: "mysql://user:password@host:3306/dbname",
+  },
+});
+```
+```shell
+npx drizzle-kit pull
+```
+</Section>
+
+```shell
+npx drizzle-kit pull --dialect=mysql --url=mysql://user:password@host:3306/dbname
+```
+</CodeTabs>
+
+### 一个项目中使用多个配置文件
+
+你可以在项目中拥有多个配置文件，当你有多个数据库阶段、多个数据库，或者同一项目中使用不同数据库时，这非常有用：
+
+<Npx>
+  drizzle-kit pull --config=drizzle-dev.config.ts
+  drizzle-kit pull --config=drizzle-prod.config.ts
+</Npx>
+```plaintext {5-6}
+📦 <project root>
+ ├ 📂 drizzle
+ ├ 📂 src
+ ├ 📜 .env
+ ├ 📜 drizzle-dev.config.ts
+ ├ 📜 drizzle-prod.config.ts
+ ├ 📜 package.json
+ └ 📜 tsconfig.json
+```
+
+### 初始 pull
+
+你可以使用 `--init` 标志将拉取到的 schema 标记为数据库中一个已应用的 migration，  
+这样后续所有 migrations 都会基于这个初始 migration 进行 diff。
+
+```shell
+npx drizzle-kit pull --init
+```
+
+### 包含表
+`drizzle-kit pull` 默认会 introspect 所有 MySQL 表。
+你可以通过 `tablesFilter` 配置表列表。
+
+|                |                                                                                               |
+| :------------- | :-------------------------------------------------------------------------------------------- |
+| `tablesFilter` | 基于 `glob` 的表名过滤器，例如 `["users", "user_info"]` 或 `"user*"`。默认值是 `"*"` |
+<br/>
+
+让我们配置 drizzle-kit 去 introspect **连接的 MySQL 数据库中的所有表**。
+
+<Section>
+```ts filename="drizzle.config.ts" {8}
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "mysql",
+  dbCredentials: {
+    url: "mysql://user:password@host:3306/dbname",
+  },
+  tablesFilter: ["*"],
+});
+```
+```shell
+npx drizzle-kit pull
+```
+</Section>
+
+### 扩展配置列表
+我们建议通过 [drizzle.config.ts](/docs/mysql/drizzle-config-file) 文件来配置 `drizzle-kit`，  
+但在需要时，你也可以通过 CLI 提供所有配置选项，例如在 CI/CD 流水线中等。
+
+|                     |            |                                                                           |
+| :------------------ | :--------- | :------------------------------------------------------------------------ |
+| `dialect`           | `required` | 数据库方言，取值为 <Dialects/> 之一                                      |
+| `out`               |            | migrations 输出文件夹路径，默认是 `./drizzle`                     |
+| `url`               |            | 数据库连接字符串                                                |
+| `user`              |            | 数据库用户                                                             |
+| `password`          |            | 数据库密码                                                         |
+| `host`              |            | 主机                                                                      |
+| `port`              |            | 端口                                                                      |
+| `database`          |            | 数据库名                                                             |
+| `config`            |            | 配置文件路径，默认是 `drizzle.config.ts`                          |
+| `introspect-casing` |            | 用于为列、表等创建 JS key 的策略。`preserve` `camel` |
+| `tablesFilter`      |            | 表名过滤器                                                         |
+
+<Npx>
+drizzle-kit pull --dialect=mysql --url=mysql://user:password@host:3306/dbname
+drizzle-kit pull --dialect=mysql --tablesFilter='user*' url=mysql://user:password@host:3306/dbname
+</Npx>
+
+{/* TODO update gifs */}
+![](@/assets/gifs/introspect_mysql.gif)

@@ -1,0 +1,215 @@
+
+import Callout from '@mdx/Callout.astro';
+import CodeTabs from '@mdx/CodeTabs.astro';
+
+## 类型 API
+要从你的表结构中为 `select` 和 `insert` 查询检索类型，你可以使用我们的类型辅助工具。
+
+```ts
+import { int, text, mysqlTable } from 'drizzle-orm/mysql-core';
+import { type InferSelectModel, type InferInsertModel } from 'drizzle-orm'
+
+const users = mysqlTable('users', {
+  id: int().primaryKey(),
+  name: text().notNull(),
+});
+
+type SelectUser = typeof users.$inferSelect;
+type InsertUser = typeof users.$inferInsert;
+// 或者
+type SelectUser = InferSelectModel<typeof users>;
+type InsertUser = InferInsertModel<typeof users>;
+```
+
+
+## 日志记录
+要启用默认查询日志，只需将 `{ logger: true }` 传递给 `drizzle` 初始化函数：
+```typescript copy
+import { drizzle } from 'drizzle-orm/mysql2';
+
+const db = drizzle({ logger: true });
+```
+
+你可以通过创建一个 `DefaultLogger` 实例并为其提供自定义的 `writer` 来更改日志输出目标：
+```typescript copy
+import { DefaultLogger, type LogWriter } from "drizzle-orm/logger";
+import { drizzle } from "drizzle-orm/mysql2";
+
+class MyLogWriter implements LogWriter {
+  write(message: string) {
+    // 写入文件、标准输出等。
+  }
+}
+
+const logger = new DefaultLogger({ writer: new MyLogWriter() });
+const db = drizzle(process.env.DB_URL, { logger });
+```
+
+你也可以创建一个自定义日志记录器：
+```typescript copy
+import { type Logger } from 'drizzle-orm/logger';
+import { drizzle } from 'drizzle-orm/mysql2';
+
+class MyLogger implements Logger {
+  logQuery(query: string, params: unknown[]): void {
+    console.log({ query, params });
+  }
+}
+
+const db = drizzle(process.env.DB_URL, { logger: new MyLogger() });
+```
+
+
+## 多项目模式
+**Table creator** API 允许你定义自定义表名。  
+当你需要将不同项目的模式保存在同一个数据库中时，它非常有用。
+
+```ts {3}
+import { int, text, mysqlTableCreator } from 'drizzle-orm/mysql-core';
+
+const mysqlTable = mysqlTableCreator((name) => `project1_${name}`);
+
+export const users = mysqlTable('users', {
+  id: int().primaryKey(),
+  name: text().notNull(),
+});
+```
+```ts {10}
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  schema: "./src/schema/*",
+  out: "./drizzle",
+  dialect: "mysql", 
+  dbCredentials: {
+    url: process.env.DATABASE_URL,
+  }
+  tablesFilter: ["project1_*"],
+});
+```
+
+你可以应用多个 `or` 过滤器：
+```ts
+tablesFilter: ["project1_*", "project2_*"]
+```
+
+
+## 打印 SQL 查询
+你可以使用 `db` 实例，或者通过 **[`独立查询构建器`](#standalone-query-builder)** 来打印 SQL 查询。
+```typescript copy
+const query = db
+  .select({ id: users.id, name: users.name })
+  .from(users)
+  .groupBy(users.id)
+  .toSQL();
+// 查询：
+{
+  sql: 'select `id`, `name` from `users` group by `users`.`id`',
+  params: [],
+}
+```
+
+## 原始 SQL 查询执行
+如果你有一些复杂的查询需要执行，而 `drizzle-orm` 目前还无法处理，
+你可以使用 `db.execute` 方法来执行原始的 `parametrized` 查询。
+
+```typescript copy
+import { ..., type MySqlRawQueryResult } from "drizzle-orm/mysql2";
+
+const userId = 11;
+const statement = sql`select * from ${users} where ${users.id} = ${userId}`;
+
+const res: MySqlRawQueryResult = await db.execute(statement);
+```
+
+
+## 独立查询构建器
+Drizzle ORM 提供了一个独立的查询构建器，允许你在不创建数据库实例的情况下构建查询
+并获取生成的 SQL。
+```typescript copy
+import { QueryBuilder } from 'drizzle-orm/mysql-core';
+
+const qb = new QueryBuilder();
+
+const query = qb.select().from(users).where(eq(users.name, 'Dan'));
+const { sql, params } = query.toSQL();
+```
+
+## 获取类型化列
+你可以获取一个类型化的列映射，
+在选择时需要省略某些列时非常有用。
+
+<CodeTabs items={["index.ts", "schema.ts"]}>
+  ```ts
+  import { getColumns } from "drizzle-orm";
+  import { user } from "./schema";
+
+  const { password, role, ...rest } = getColumns(user);
+
+  await db.select({ ...rest }).from(user);
+  ```
+  ```ts
+  import { int, text, mysqlTable } from "drizzle-orm/mysql-core";
+
+  export const user = mysqlTable("user", {
+    id: int().primaryKey().autoincrement(),
+    name: text(),
+    email: text(),
+    password: text(),
+    role: text().$type<"admin" | "customer">(),
+  });
+  ```
+</CodeTabs>
+
+## 获取表信息
+```ts copy
+import { getTableConfig, mysqlTable } from 'drizzle-orm/mysql-core';
+
+export const table = mysqlTable(...);
+
+const {
+  columns,
+  indexes,
+  foreignKeys,
+  checks,
+  primaryKeys,
+  name,
+  schema,
+} = getTableConfig(table);
+```
+
+## 比较对象类型（`instanceof` 替代方案）
+
+你可以使用 `is()` 函数来检查一个对象是否属于某个特定的 Drizzle 类型。  
+你可以将它用于 Drizzle 中任何可用的类型。
+
+<Callout type="warning" emoji="⭐️">
+  你应该始终使用 `is()`，而不是 `instanceof`
+</Callout>
+
+**一些示例**
+```ts
+import { Column, is } from 'drizzle-orm';
+
+if (is(value, Column)) {
+  // value 的类型会被缩小为 Column
+}
+```
+
+### Mock Driver
+这个 API 是一个后继方案，用于替代未定义的 `drizzle({} as any)` API；我们曾在 Drizzle 测试中内部使用它，但很少向外部开发者推荐。 
+
+我们决定构建并公开一个正式的 API，现在每个 `drizzle` driver 都有 `drizzle.mock()`：
+```ts
+import { drizzle } from "drizzle-orm/mysql2";
+
+const db = drizzle.mock();
+```
+
+如果有必要，你可以提供 schema 以获得类型信息
+```ts
+import { drizzle } from "drizzle-orm/mysql2";
+import { relations } from "./relations"
+
+const db = drizzle.mock({ relations  });
+```

@@ -1,31 +1,17 @@
-If you want to update your table schema, you can do it in the `schema.ts` file. For example, let's add a new column `phone` to the `users_table`:
+如果你想更新表结构，可以在 `schema.ts` 文件中进行。例如，让我们给 `users_table` 添加一个新的列 `phone`：
 
-```typescript copy filename="src/db/schema.ts" {20}
-import {
-  mysqlTable,
-  mysqlSchema,
-  AnyMySqlColumn,
-  primaryKey,
-  unique,
-  serial,
-  varchar,
-  int,
-} from 'drizzle-orm/mysql-core';
-import { sql } from 'drizzle-orm';
+```typescript copy filename="src/db/schema.ts" {9}
+import { mysqlTable, mysqlSchema, AnyMySqlColumn, int, varchar, uniqueIndex } from "drizzle-orm/mysql-core"
+import { sql } from "drizzle-orm"
 
-export const usersTable = mysqlTable(
-  'users_table',
-  {
-    id: serial().notNull(),
-    name: varchar({ length: 255 }).notNull(),
-    age: int().notNull(),
-    email: varchar({ length: 255 }).notNull(),
-    phone: varchar({ length: 255 }),
-  },
-  (table) => [
-    primaryKey({ columns: [table.id], name: 'users_table_id' }),
-    unique('id').on(table.id),
-    unique('users_table_email_unique').on(table.email),
-  ],
-);
+export const usersTable = mysqlTable("users_table", {
+	id: int().autoincrement().primaryKey(),
+	name: varchar({ length: 255 }).notNull(),
+	age: int().notNull(),
+	email: varchar({ length: 255 }).notNull(),
+	phone: varchar({ length: 255 }),
+},
+(table) => [
+	uniqueIndex("users_table_email_unique").on(table.email),
+]);
 ```

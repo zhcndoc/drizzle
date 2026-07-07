@@ -1,0 +1,316 @@
+import Npm from '@mdx/Npm.astro';
+import Callout from '@mdx/Callout.astro';
+
+<Callout type="error">
+从 `drizzle-orm@1.0.0-beta.15` 开始，`drizzle-arktype` 已被弃用，转而推荐使用 Drizzle ORM 本身内置的一等 Schema 生成功能
+
+你仍然可以使用 `drizzle-arktype` 包，但所有新的更新都会直接添加到 Drizzle ORM 中
+</Callout>
+
+# arktype
+
+### 安装依赖
+
+<Npm>
+arktype
+</Npm>
+
+### 选择 schema
+
+定义从数据库查询出的数据形状——可用于验证 API 响应。
+
+```ts copy
+import { int, singlestoreTable, text } from 'drizzle-orm/singlestore-core';
+import { createSelectSchema } from 'drizzle-orm/arktype';
+
+const users = singlestoreTable('users', {
+  id: int().primaryKey().autoincrement(),
+  name: text().notNull(),
+  age: int().notNull()
+});
+
+const userSelectSchema = createSelectSchema(users);
+
+const rows = await db.select({ id: users.id, name: users.name }).from(users).limit(1);
+const parsed: { id: number; name: string; age: number } = userSelectSchema(rows[0]); // 错误：上面的查询未返回 `age`
+
+const rows = await db.select().from(users).limit(1);
+const parsed: { id: number; name: string; age: number } = userSelectSchema(rows[0]); // 将成功解析
+```
+
+列枚举通过 SingleStore 表 schema 支持，并且可以使用生成的表 schema 进行验证。
+
+### 插入 schema
+
+定义要插入数据库的数据形状——可用于验证 API 请求。
+
+```ts copy
+import { int, singlestoreTable, text } from 'drizzle-orm/singlestore-core';
+import { createInsertSchema } from 'drizzle-orm/arktype';
+
+const users = singlestoreTable('users', {
+  id: int().primaryKey().autoincrement(),
+  name: text().notNull(),
+  age: int().notNull()
+});
+
+const userInsertSchema = createInsertSchema(users);
+
+const user = { name: 'John' };
+const parsed: { name: string, age: number } = userInsertSchema(user); // 错误：未定义 `age`
+
+const user = { name: 'Jane', age: 30 };
+const parsed: { name: string, age: number } = userInsertSchema(user); // 将成功解析
+await db.insert(users).values(parsed);
+```
+
+### 更新 schema
+
+定义要在数据库中更新的数据形状——可用于验证 API 请求。
+
+```ts copy
+import { int, singlestoreTable, text } from 'drizzle-orm/singlestore-core';
+import { createUpdateSchema } from 'drizzle-orm/arktype';
+import { parse } from 'arktype';
+
+const users = singlestoreTable('users', {
+  id: int().primaryKey().autoincrement(),
+  name: text().notNull(),
+  age: int().notNull()
+});
+
+const userUpdateSchema = createUpdateSchema(users);
+
+const user = { id: 5, name: 'John' };
+const parsed: { name?: string | undefined, age?: number | undefined } = userUpdateSchema(user); // 错误：`id` 是生成列，不能更新
+
+const user = { age: 35 };
+const parsed: { name?: string | undefined, age?: number | undefined } = userUpdateSchema(user); // 将成功解析
+await db.update(users).set(parsed).where(eq(users.name, 'Jane'));
+```
+
+### 细化
+
+每个 create schema 函数都接受一个额外的可选参数，你可以用它来扩展、修改或完全覆盖字段的 schema。传入回调函数会进行扩展或修改，而传入 arktype schema 则会直接覆盖它。
+
+```ts copy
+import { int, json, singlestoreTable, text } from 'drizzle-orm/singlestore-core';
+import { createSelectSchema } from 'drizzle-orm/arktype';
+import { parse, pipe, maxLength, object, string } from 'arktype';
+
+const users = singlestoreTable('users', {
+  id: int().primaryKey().autoincrement(),
+  name: text().notNull(),
+  bio: text(),
+  preferences: json()
+});
+
+const userSelectSchema = createSelectSchema(users, {
+  name: (schema) => pipe(schema, maxLength(20)), // 扩展 schema
+  bio: (schema) => pipe(schema, maxLength(1000)), // 在变为可空/可选之前扩展 schema
+  preferences: object({ theme: string() }) // 覆盖该字段，包括其可空性
+});
+
+const parsed: {
+  id: number;
+  name: string,
+  bio?: string | undefined;
+  preferences: {
+    theme: string;
+  };
+} = userSelectSchema(...);
+```
+
+### 数据类型参考
+
+```ts
+singlestore.boolean();
+
+// Schema
+type.boolean;
+```
+
+```ts
+singlestore.date({ mode: 'date' });
+singlestore.datetime({ mode: 'date' });
+singlestore.timestamp({ mode: 'date' });
+
+// Schema
+type.Date;
+```
+
+```ts
+singlestore.binary();
+singlestore.date({ mode: 'string' });
+singlestore.datetime({ mode: 'string' });
+singlestore.decimal();
+singlestore.time();
+singlestore.timestamp({ mode: 'string' });
+singlestore.varbinary();
+
+// Schema
+type.string;
+```
+
+```ts
+singlestore.char({ length: ... });
+
+// Schema
+type.string.exactlyLength(length);
+```
+
+```ts
+singlestore.varchar({ length: ... });
+
+// Schema
+type.string.atMostLength(length);
+```
+
+```ts
+singlestore.text();
+
+// Schema
+type.string.atMostLength(65_535); // 无符号 16 位整数上限
+```
+
+```ts
+singlestore.text({ enum: ... });
+singlestore.char({ enum: ... });
+singlestore.varchar({ enum: ... });
+singlestore.singlestoreEnum(..., ...);
+
+// Schema
+type.enumerated(...enum);
+```
+
+```ts
+singlestore.tinyint();
+
+// Schema
+type.keywords.number.integer.atLeast(-128).atMost(127); // 8 位整数下限和上限
+```
+
+```ts
+singlestore.tinyint({ unsigned: true });
+
+// Schema
+type.keywords.number.integer.atLeast(0).atMost(255); // 无符号 8 位整数下限和上限
+```
+
+```ts
+singlestore.smallint();
+
+// Schema
+type.keywords.number.integer.atLeast(-32_768).atMost(32_767); // 16 位整数下限和上限
+```
+
+```ts
+singlestore.smallint({ unsigned: true });
+
+// Schema
+type.keywords.number.integer.atLeast(0).atMost(65_535); // 无符号 16 位整数下限和上限
+```
+
+```ts
+singlestore.float();
+
+// Schema
+type.number.atLeast(-8_388_608).atMost(8_388_607); // 24 位整数下限和上限
+```
+
+```ts
+singlestore.mediumint();
+
+// Schema
+type.keywords.number.integer.atLeast(-8_388_608).atMost(8_388_607); // 24 位整数下限和上限
+```
+
+```ts
+singlestore.float({ unsigned: true });
+
+// Schema
+type.number.atLeast(0).atMost(16_777_215); // 无符号 24 位整数下限和上限
+```
+
+```ts
+singlestore.mediumint({ unsigned: true });
+
+// Schema
+type.keywords.number.integer.atLeast(0).atMost(16_777_215); // 无符号 24 位整数下限和上限
+```
+
+```ts
+singlestore.int();
+
+// Schema
+type.keywords.number.integer.atLeast(-2_147_483_648).atMost(2_147_483_647); // 32 位整数下限和上限
+```
+
+```ts
+singlestore.int({ unsigned: true });
+
+// Schema
+type.keywords.number.integer.atLeast(0).atMost(4_294_967_295); // 无符号 32 位整数
+```
+
+```ts
+singlestore.double();
+singlestore.real();
+
+// Schema
+type.number.atLeast(-140_737_488_355_328).atMost(140_737_488_355_327); // 48 位整数下限和上限
+```
+
+```ts
+singlestore.double({ unsigned: true });
+
+// Schema
+type.number.atLeast(0).atMost(281_474_976_710_655); // 无符号 48 位整数下限和上限
+```
+
+```ts
+singlestore.bigint({ mode: 'number' });
+
+// Schema
+type.keywords.number.integer.atLeast(-9_007_199_254_740_991).atMost(9_007_199_254_740_991); // JavaScript 最小和最大安全整数
+```
+
+```ts
+singlestore.serial();
+
+// Schema
+type.keywords.number.integer.atLeast(0).atMost(9_007_199_254_740_991); // JavaScript 最大安全整数
+```
+
+```ts
+singlestore.bigint({ mode: 'bigint' });
+
+// Schema
+type.bigint.narrow(
+  (value, ctx) => value < -9_223_372_036_854_775_808n ? ctx.mustBe('greater than') : value > 9_223_372_036_854_775_807n ? ctx.mustBe('less than') : true
+); // 64 位整数下限和上限
+```
+
+```ts
+singlestore.bigint({ mode: 'bigint', unsigned: true });
+
+// Schema
+type.bigint.narrow(
+  (value, ctx) => value < 0n ? ctx.mustBe('greater than') : value > 18_446_744_073_709_551_615n ? ctx.mustBe('less than') : true
+); // 无符号 64 位整数下限和上限
+```
+
+```ts
+singlestore.year();
+
+// Schema
+type.keywords.number.integer.atLeast(1_901).atMost(2_155);
+```
+
+```ts
+singlestore.json();
+
+// Schema
+type('string | number | boolean | null').or(type('unknown.any[] | Record<string, unknown.any>'));
+```
+

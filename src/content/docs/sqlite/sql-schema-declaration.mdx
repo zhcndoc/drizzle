@@ -1,0 +1,357 @@
+import Callout from '@mdx/Callout.astro';
+import SimpleLinkCards from '@mdx/SimpleLinkCards.astro';
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Section from '@mdx/Section.astro';
+import Flex from "@mdx/Flex.astro"
+import LinksList from "@mdx/LinksList.astro"
+
+# Drizzle 模式
+
+Drizzle 允许你使用底层数据库支持的各种模型和属性，在 TypeScript 中定义一个模式。  
+当你定义模式时，它会作为未来查询修改（使用 Drizzle-ORM）和迁移（使用 Drizzle-Kit）的事实来源。
+
+<Callout> 
+如果你在迁移过程中使用 Drizzle-Kit，请务必导出你在模式文件中定义的所有模型，这样 Drizzle-Kit 才能导入它们，并在迁移差异处理过程中使用它们。 
+</Callout>
+
+<CodeTabs items={["使用导入", "使用回调", "使用 import *"]}>
+```ts
+import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+
+export const usersTable = sqliteTable("users", {
+  id: integer().primaryKey({ autoIncrement: true }),
+  name: text().notNull(),
+  age: integer().notNull(),
+  email: text().notNull().unique(),
+});
+```
+```ts
+import { sqliteTable } from "drizzle-orm/sqlite-core";
+
+export const usersTable = sqliteTable("users", (t) => ({
+  id: t.integer().primaryKey({ autoIncrement: true }),
+  name: t.text().notNull(),
+  age: t.integer().notNull(),
+  email: t.text().notNull().unique(),
+}));
+```
+```ts
+import * as t from "drizzle-orm/sqlite-core";
+
+export const usersTable = t.sqliteTable("users", {
+  id: t.integer().primaryKey({ autoIncrement: true }),
+  name: t.text().notNull(),
+  age: t.integer().notNull(),
+  email: t.text().notNull().unique(),
+});
+```
+</CodeTabs>
+
+## 组织你的 schema 文件 
+你可以直接在 TypeScript 中声明你的 SQL schema，方式可以是一个 `schema.ts` 文件，
+也可以把它们分散到不同文件中——无论你更喜欢哪种方式，都完全自由！
+
+#### 单文件中的 Schema
+使用 Drizzle 声明 schema 最常见的方式，是把所有表都放在一个 `schema.ts` 文件里。
+
+> 注意：你可以把 schema 文件命名成任何你喜欢的名字。例如，它可以是 `models.ts`，或者别的什么名字。
+
+如果你定义的表模型不多，或者你希望把它们都放在同一个文件里，这种方式会很适合
+
+示例：
+```plaintext
+📦 <project root>
+ └ 📂 src
+    └ 📂 db
+       └ 📜 schema.ts
+```
+
+在 `drizzle.config.ts` 文件中，你需要指定 schema 文件的路径。使用这种配置时，Drizzle 会
+从 `schema.ts` 文件中读取内容，并在生成迁移的过程中使用这些信息。有关 `drizzle.config.ts`
+文件以及 Drizzle 迁移的更多信息，请查看：[link](/docs/sqlite/drizzle-config-file)
+```ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: 'sqlite',
+  schema: './src/db/schema.ts'
+})
+```
+
+#### 多文件中的 Schema
+
+你可以把你的 Drizzle 模型——例如表、枚举、序列等——不只放在一个文件里，而是放到你喜欢的任何文件中。
+你必须确保的唯一一件事是：从这些文件中导出所有模型，这样 Drizzle kit 才能导入
+它们并在迁移中使用。
+
+一种用法是把每张表拆分到它自己的文件中。
+```plaintext
+📦 <project root>
+ └ 📂 src
+    └ 📂 db
+       └ 📂 schema
+          ├ 📜 users.ts
+          ├ 📜 countries.ts
+          ├ 📜 cities.ts
+          ├ 📜 products.ts
+          ├ 📜 clients.ts
+          └ 📜 etc.ts
+```
+
+在 `drizzle.config.ts` 文件中，你需要指定 schema 文件夹的路径。使用这种配置时，Drizzle 会
+从 `schema` 文件夹中读取，并递归查找所有文件，然后获取其中所有的 drizzle 表。有关 `drizzle.config.ts`
+文件以及 Drizzle 迁移的更多信息，请查看：[link](/docs/sqlite/drizzle-config-file)
+
+```ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: 'sqlite',
+  schema: './src/db/schema'
+})
+```
+
+你也可以按任何你喜欢的方式进行分组，比如为用户相关表、消息相关表、产品相关表等创建分组。 
+```plaintext
+📦 <project root>
+ └ 📂 src
+    └ 📂 db
+       └ 📂 schema
+          ├ 📜 users.ts
+          ├ 📜 messaging.ts
+          └ 📜 products.ts
+```
+
+## 塑造你的数据模式
+
+Drizzle schema 由你所使用数据库中的多种模型类型组成。使用 drizzle，你可以指定：
+- 带有列、约束等的表
+- 视图
+- 等等
+
+让我们逐一来看，检查 schema 应该如何通过 drizzle 来定义
+
+#### **表与列的声明** 
+
+在 Drizzle 中，表至少应该定义 1 个列，这和在数据库中一样。有一点很重要需要知道，
+Drizzle 中没有通用的表对象。你需要选择你正在使用的方言：PostgreSQL、MySQL、SQLite 等。
+
+![](@/assets/images/table-structure.svg)
+
+```ts copy
+import { sqliteTable, integer } from "drizzle-orm/sqlite-core"
+
+export const users = sqliteTable('users', {
+  id: integer()
+});
+```
+
+默认情况下，Drizzle 会在数据库查询中使用 TypeScript 的键名作为列名。 
+因此，上面示例中的 schema 和查询会生成如下所示的 SQL 查询
+
+<Callout>
+此示例使用了一个 db 对象，其初始化不在本文档的这一部分中介绍。要了解如何连接数据库，请参考 [连接文档](/docs/sqlite/get-started-sqlite)
+</Callout>
+
+\
+**TypeScript 键 = 数据库键**
+<Section>
+```ts
+// schema.ts
+import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+
+export const users = sqliteTable('users', {
+  id: integer(),
+  first_name: text()
+})
+```
+```ts
+// query.ts
+await db.select().from(users);
+```
+```sql
+SELECT "id", "first_name" from users;
+```
+</Section>
+
+如果你想在 TypeScript 代码和数据库中使用不同的名称，可以使用列别名
+
+<Section>
+```ts
+// schema.ts
+import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+
+export const users = sqliteTable('users', {
+  id: integer(),
+  firstName: text('first_name')
+})
+```
+```ts
+// query.ts
+await db.select().from(users);
+```
+```sql
+SELECT "id", "first_name" from users;
+```
+</Section>
+
+### 驼峰命名与蛇形命名
+
+数据库模型名称通常使用 `snake_case` 约定，而在 TypeScript 中，通常使用 `camelCase` 来命名模型。
+这可能会导致在 schema 中需要定义很多别名。为了解决这个问题，Drizzle 提供了一种通过专用 builder 自动将 TypeScript 中的 `camelCase` 映射到数据库中的 `snake_case` 的方式。
+
+使用来自 `drizzle-orm/pg-core` 的 `snakeCase` 或 `camelCase` builder 来声明一个表，其列键会自动映射到所选的数据库命名约定
+
+<Section>
+```ts {2,4,11,12}
+// schema.ts
+import { snakeCase, camelCase } from 'drizzle-orm/sqlite-core';
+
+export const users = snakeCase.table('users', {
+  id: integer().primaryKey(),
+  fullName: text(),        // → 数据库中的 full_name
+  createdAt: integer({ mode: 'timestamp' }),  // → 数据库中的 created_at
+});
+
+// 可用于所有实体类型：
+snakeCase.table / snakeCase.view
+camelCase.table / camelCase.view
+```
+```ts
+// db.ts
+import { drizzle } from "drizzle-orm/better-sqlite3";
+
+const db = drizzle({ connection: process.env.DATABASE_URL })
+```
+```ts
+// query.ts
+await db.select().from(users);
+```
+```sql
+select "id", "full_name", "created_at" from "users";
+```
+</Section>
+
+### 高级
+
+Drizzle ORM 中有一些技巧可以使用。只要 Drizzle 完全位于 TypeScript 文件中，
+你本质上可以像在一个简单的 TypeScript 项目中那样对代码做任何事情。
+
+一个常见的做法是把列拆分到不同的位置，然后复用它们。比如，考虑 `updated_at`、`created_at` 和 `deleted_at` 这几列。许多表/模型可能都需要这三个字段来跟踪和分析系统中实体的创建、删除和更新
+
+我们可以在单独的文件中定义这些列，然后导入并扩展到你拥有的所有表对象中
+
+<Section>
+```ts
+// columns.helpers.ts
+export const timestamps = {
+  updated_at: text(),
+  created_at: text().$defaultFn(() => new Date().toISOString()).notNull(),
+  deleted_at: text(),
+}
+```
+```ts
+// users.sql.ts
+export const users = sqliteTable('users', {
+  id: integer(),
+  ...timestamps
+})
+```
+```ts
+// posts.sql.ts
+export const posts = sqliteTable('posts', {
+  id: integer(),
+  ...timestamps
+})
+```
+</Section>
+
+#### **Schemas**
+
+\
+在 SQLite 中，没有 schema 的概念，因此你只能在单个 SQLite 文件上下文中定义表
+
+![](@/assets/images/sqlite-db-structure.png)
+
+### 示例
+
+当你了解了基础知识后，让我们为一个真实项目定义一个 schema 示例，以便更好地了解和理解
+
+> 所有示例都会使用 `generateUniqueString`。它的实现将在所有 schema 示例之后提供
+
+```ts copy
+import * as t from "drizzle-orm/sqlite-core";
+
+export const users = t.sqliteTable(
+  "users",
+  {
+    id: t.integer().primaryKey({ autoIncrement: true }),
+    firstName: t.text("first_name"),
+    lastName: t.text("last_name"),
+    email: t.text().notNull(),
+    invitee: t.integer().references((): t.AnySQLiteColumn => users.id),
+    role: t.text().$type<"guest" | "user" | "admin">().default("guest"),
+  },
+  (table) => [
+    t.uniqueIndex("email_idx").on(table.email)
+  ]
+);
+
+export const posts = t.sqliteTable(
+  "posts",
+  {
+    id: t.integer().primaryKey({ autoIncrement: true }),
+    slug: t.text().$default(() => generateUniqueString(16)),
+    title: t.text(),
+    ownerId: t.integer("owner_id").references(() => users.id),
+  },
+  (table) => [
+    t.uniqueIndex("slug_idx").on(table.slug),
+    t.index("title_idx").on(table.title),
+  ]
+);
+
+export const comments = t.sqliteTable("comments", {
+  id: t.integer().primaryKey({ autoIncrement: true }),
+  text: t.text({ length: 256 }),
+  postId: t.integer("post_id").references(() => posts.id),
+  ownerId: t.integer("owner_id").references(() => users.id),
+});
+```
+
+**`generateUniqueString` 实现：**
+```ts
+function generateUniqueString(length: number = 12): string {
+  const characters =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let uniqueString = "";
+
+  for (let i = 0; i < length; i++) {
+    const randomIndex = Math.floor(Math.random() * characters.length);
+    uniqueString += characters[randomIndex];
+  }
+
+  return uniqueString;
+}
+```
+
+#### 接下来是什么？
+<br/>
+<Flex>
+  <LinksList 
+    title='管理 schema'
+    links={[
+        ["列类型", "/docs/sqlite/column-types"], 
+        ["索引与约束", "/docs/sqlite/indexes-constraints"],
+        ["数据库视图", "/docs/sqlite/views"],
+      ]}
+  />
+  <LinksList 
+    title='从零到高手'
+    links={[
+        ["数据库连接", "/docs/sqlite/connect-overview"], 
+        ["数据查询", "/docs/sqlite/data-querying"], 
+        ["迁移", "/docs/sqlite/migrations"], 
+      ]}
+  />
+</Flex>

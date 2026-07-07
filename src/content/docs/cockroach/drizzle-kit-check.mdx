@@ -1,0 +1,89 @@
+import CodeTab from "@mdx/CodeTab.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Section from "@mdx/Section.astro";
+import Tab from "@mdx/Tab.astro";
+import Tabs from "@mdx/Tabs.astro";
+import Callout from "@mdx/Callout.astro";
+import Prerequisites from "@mdx/Prerequisites.astro";
+import Npm from "@mdx/Npm.astro";
+import Npx from "@mdx/Npx.astro";
+import Dialects from "@mdx/Dialects.mdx"
+
+# `drizzle-kit check`
+
+<Prerequisites>
+- 开始使用 Drizzle 和 `drizzle-kit` - [请阅读这里](/docs/cockroach/get-started)
+- Drizzle schema 基础知识 - [请阅读这里](/docs/cockroach/sql-schema-declaration)
+- 数据库连接基础知识 - [请阅读这里](/docs/cockroach/connect-overview)
+- Drizzle 迁移基础知识 - [请阅读这里](/docs/cockroach/migrations)
+- Drizzle Kit [概览](/docs/cockroach/kit-overview) 和 [配置文件](/docs/cockroach/drizzle-config-file)
+- `drizzle-kit generate` 命令 - [请阅读这里](/docs/cockroach/drizzle-kit-generate)
+</Prerequisites>
+
+`drizzle-kit check` 命令可让你检查已生成的 SQL 迁移历史的一致性。
+
+当你有多个开发者在项目中协作，并且在不同分支上修改数据库 schema 时，这非常有用——更多内容请阅读 [团队迁移](/docs/cockroach/kit-migrations-for-teams)。
+
+<br/>
+<hr/>
+<br/>
+
+`drizzle-kit check` 命令要求你指定 `dialect`，你可以通过 [drizzle.config.ts](/docs/cockroach/drizzle-config-file) 配置文件提供，或者通过 CLI 选项提供
+
+<CodeTabs items={["使用配置文件", "作为 CLI 选项"]}>
+<Section>
+```ts {5,8}
+// drizzle.config.ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "cockroach",
+});
+```
+```shell
+npx drizzle-kit check
+```
+</Section>
+```shell
+npx drizzle-kit check --dialect=cockroach
+```
+</CodeTabs>
+
+### 一个项目中的多个配置文件
+如果你的项目中有多个配置文件，这会非常有用，例如当你在同一个项目中有多个数据库阶段或多个数据库时：
+<Npx>
+  drizzle-kit check --config=drizzle-dev.config.ts
+  drizzle-kit check --config=drizzle-prod.config.ts
+</Npx>
+```plaintext {5-6}
+📦 <project root>
+ ├ 📂 drizzle
+ ├ 📂 src
+ ├ 📜 .env
+ ├ 📜 drizzle-dev.config.ts
+ ├ 📜 drizzle-prod.config.ts
+ ├ 📜 package.json
+ └ 📜 tsconfig.json
+```
+
+### 忽略冲突
+
+如果你需要 `check` 命令跳过交换性检查并绕过它，可以使用 `--ignore-conflicts`。如果你会想使用它，那么很大概率是 `drizzle-kit` 没有正确检查迁移，这是一个 bug。请向我们报告你的情况，以便我们修复它
+
+```shell
+drizzle-kit check --ignore-conflicts
+```
+
+### 扩展配置列表
+我们建议通过 [drizzle.config.ts](/docs/cockroach/drizzle-config-file) 文件配置 `drizzle-kit`，不过如有必要，你也可以通过 CLI 提供所有配置项，例如在 CI/CD 流水线中等。
+<rem025/>
+|           |            |                                                                         |
+| :-------- | :--------- | :---------------------------------------------------------------------- |
+| `dialect` | `required` | 你使用的数据库方言。可以是 <Dialects/> 之一 |
+| `out`     |            | 迁移文件夹，默认=`./drizzle`                                         |
+| `config`  |            | 配置文件路径，默认=`drizzle.config.ts`                           |
+<br/>
+<Npx>
+drizzle-kit check --dialect=cockroach
+drizzle-kit check --dialect=cockroach --out=./migrations-folder
+</Npx>

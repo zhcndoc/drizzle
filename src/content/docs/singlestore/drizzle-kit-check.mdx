@@ -1,0 +1,83 @@
+import CodeTab from "@mdx/CodeTab.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Section from "@mdx/Section.astro";
+import Tab from "@mdx/Tab.astro";
+import Tabs from "@mdx/Tabs.astro";
+import Callout from "@mdx/Callout.astro";
+import Prerequisites from "@mdx/Prerequisites.astro";
+import Npm from "@mdx/Npm.astro";
+import Npx from "@mdx/Npx.astro";
+
+
+# `drizzle-kit check`
+
+<Prerequisites>
+- 开始使用 Drizzle 和 `drizzle-kit` - [阅读这里](/docs/singlestore/get-started)
+- Drizzle schema 基础 - [阅读这里](/docs/singlestore/sql-schema-declaration)
+- 数据库连接基础 - [阅读这里](/docs/singlestore/connect-overview)
+- Drizzle migrations 基础 - [阅读这里](/docs/singlestore/migrations)
+- Drizzle Kit [概览](/docs/singlestore/kit-overview) 和 [配置文件](/docs/singlestore/drizzle-config-file)
+- `drizzle-kit generate` 命令 - [阅读这里](/docs/singlestore/drizzle-kit-generate)
+</Prerequisites>
+
+`drizzle-kit check` 命令可让你检查已生成的 SQL migrations 历史记录的一致性。
+
+当你有多个开发者在项目中协作，并且在不同分支上修改数据库 schema 时，这个功能非常有用 - 了解更多关于 [团队 migrations](/docs/singlestore/kit-migrations-for-teams)。
+
+<br/>
+<hr/>
+<br/>
+
+`drizzle-kit check` 命令要求你同时指定 `dialect` 和数据库连接凭据，  
+你可以通过 [drizzle.config.ts](/docs/singlestore/drizzle-config-file) 配置文件或 CLI 选项提供它们
+
+<CodeTabs items={["使用配置文件", "作为 CLI 选项"]}>
+<Section>
+```ts {5,8}
+// drizzle.config.ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "singlestore",
+});
+```
+```shell
+npx drizzle-kit check
+```
+</Section>
+```shell
+npx drizzle-kit check --dialect=singlestore
+```
+</CodeTabs>
+
+### 一个项目中的多个配置文件
+当你有多个数据库阶段或同一个项目中有多个数据库时，你可以在项目中使用多个配置文件，这非常有用：
+<Npx>
+  drizzle-kit check --config=drizzle-dev.config.ts
+  drizzle-kit check --config=drizzle-prod.config.ts
+</Npx>
+```plaintext {5-6}
+📦 <项目根目录>
+ ├ 📂 drizzle
+ ├ 📂 src
+ ├ 📜 .env
+ ├ 📜 drizzle-dev.config.ts
+ ├ 📜 drizzle-prod.config.ts
+ ├ 📜 package.json
+ └ 📜 tsconfig.json
+```
+
+### 扩展配置列表
+我们建议通过 [drizzle.config.ts](/docs/singlestore/drizzle-config-file) 文件来配置 `drizzle-kit`，  
+不过在必要时你也可以通过 CLI 提供所有配置选项，例如在 CI/CD 流水线等场景中。
+<rem025/>
+|           |            |                                                                         |
+| :-------- | :--------- | :---------------------------------------------------------------------- |
+| `dialect` | `required` | 你正在使用的数据库方言。可以是 `postgresql`、`mysql`、`sqlite` 或 `singlestore` |
+| `out`     |            | migrations 文件夹，默认=`./drizzle`                                  |
+| `config`  |            | 配置文件路径，默认=`drizzle.config.ts`                           |
+<br/>
+<Npx>
+drizzle-kit check --dialect=singlestore
+drizzle-kit check --dialect=singlestore --out=./migrations-folder
+</Npx>

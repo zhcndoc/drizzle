@@ -55,8 +55,8 @@ create expo-app --template blank-typescript
 
 #### 第二步 - 安装所需包
 <Npm>
-  drizzle-orm @op-engineering/op-sqlite
-  -D drizzle-kit
+    drizzle-orm@rc @op-engineering/op-sqlite
+    -D drizzle-kit@rc
 </Npm>
 
 #### 第三步 - 将 Drizzle ORM 连接到数据库
@@ -183,7 +183,7 @@ export default function App() {
   if (error) {
     return (
       <View>
-        <Text>Migration error: {error.message}</Text>
+        <Text>迁移错误：{error.message}</Text>
       </View>
     );
   }
@@ -191,7 +191,7 @@ export default function App() {
   if (!success) {
     return (
       <View>
-        <Text>Migration is in progress...</Text>
+        <Text>迁移正在进行中...</Text>
       </View>
     );
   }
@@ -199,7 +199,7 @@ export default function App() {
   if (items === null || items.length === 0) {
     return (
       <View>
-        <Text>Empty</Text>
+        <Text>空</Text>
       </View>
     );
   }

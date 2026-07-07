@@ -1,6 +1,5 @@
 ---
-title: 使用 'with' 选项进行数据填充
-slug: seeding-using-with-option
+title: 使用 'with' 选项进行播种
 ---
 
 import IsSupportedChipGroup from "@mdx/IsSupportedChipGroup.astro";
@@ -10,10 +9,10 @@ import CodeTab from '@mdx/CodeTab.astro';
 import Callout from '@mdx/Callout.astro';
 import Section from "@mdx/Section.astro";
 
-<IsSupportedChipGroup chips={{PostgreSQL: true, MySQL: true, SQLite: true}}/>
+<IsSupportedChipGroup chips={{PostgreSQL: true, MySQL: true, SQLite: true, MSSQL: true, Cockroach: true}}/>
 
 <Prerequisites>
-- 了解如何开始使用 [PostgreSQL](/docs/get-started-postgresql)、[MySQL](/docs/get-started-mysql) 或 [SQLite](/docs/get-started-sqlite)
+- 开始使用 [PostgreSQL](/docs/get-started-postgresql), [MySQL](/docs/mysql/get-started-mysql), [SQLite](/docs/sqlite/get-started-sqlite), [MSSQL](/docs/mssql/get-started-mssql) 和 [Cockroach](/docs/cockroach/get-started-cockroach)
 - 熟悉 [一对多关系](/docs/relations#one-to-many)
 - 熟悉 [Drizzle Seed](/docs/seed-overview)
 </Prerequisites>
@@ -370,7 +369,7 @@ export const users = pgTable('users', {
 运行上述填充脚本会导致错误。
 
 ```
-Error: "users" 表存在自引用。
+错误："users" 表存在自引用。
 你不能在 users.with 对象中指定 "users" 作为参数。
 ```
 

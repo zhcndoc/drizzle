@@ -10,9 +10,9 @@ description: v1 预发布版本
 
 > 查看 RQBv1 到 RQBv2 迁移步骤的迁移指南：https://orm.drizzle.team/docs/relations-v1-v2
 
-> 查看新的 RQBv2 架构文档：https://orm.drizzle.team/docs/relations-v2 
+> 查看新的 RQBv2 schema 文档：https://orm.drizzle.team/docs/relations
 
-> 查看新的 RQBv2 查询文档：https://orm.drizzle.team/docs/rqb-v2
+> 查看新的 RQBv2 查询文档：https://orm.drizzle.team/docs/rqb
 
 # 新功能
 
@@ -178,10 +178,10 @@ const query = db
 
 新增了以下几种 MySQL 列类型：
 
-- blob: https://orm.drizzle.team/docs/column-types/mysql#blob
-- tinyblob: https://orm.drizzle.team/docs/column-types/mysql#tinyblob
-- mediumblob: https://orm.drizzle.team/docs/column-types/mysql#mediumblob
-- longblob: https://orm.drizzle.team/docs/column-types/mysql#longblob
+- [blob](/docs/mysql/column-types#blob)
+- [tinyblob](/docs/mysql/column-types#tinyblob)
+- [mediumblob](/docs/mysql/column-types#mediumblob)
+- [longblob](/docs/mysql/column-types#longblob)
 
 ## 其他更新和修复
 
@@ -195,7 +195,7 @@ const query = db
 
 > 该列表尚不完整，我们仅整理了部分问题。未来几周内还会持续更新。
 
-- [[BUG]: Drizzle-kit 将 Postgres 函数拉取为 TypeScript 方法](https://github.com/drizzle-team/drizzle-orm/issues/4916)
+- [[BUG]: Drizzle-kit 将 Postgres 函数提取为 TypeScript 方法](https://github.com/drizzle-team/drizzle-orm/issues/4916)
 
 - [[BUG]: VARCHAR 列更改为 CITEXT（自定义类型）时生成 `"undefined"."citext"` 而非 `"citext"`](https://github.com/drizzle-team/drizzle-orm/issues/4806)
 

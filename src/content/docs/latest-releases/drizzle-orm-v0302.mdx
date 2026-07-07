@@ -10,10 +10,10 @@ LibSQL 迁移已更新为使用批处理执行而不是事务。如 [文档](htt
 
 > 批处理由多个 SQL 语句组成，这些语句在隐式事务中顺序执行。后台处理事务：成功时提交所有更改，任何失败都会导致完全回滚且不进行修改。
 
-要开始使用 Turso 和 Drizzle，请参阅 [文档](/docs/get-started-sqlite#turso)。
+要开始使用 Turso 和 Drizzle，请参阅[文档](/docs/sqlite/get-started-sqlite#turso)
 
 ## 修复
 
 - [Sqlite] 修复 bun:sqlite 的 findFirst 查询 ([#1885](https://github.com/drizzle-team/drizzle-orm/pull/1885))。
 
-要开始使用 Bun SQLite 和 Drizzle，请参阅 [文档](/docs/get-started-sqlite#bun-sqlite)。
+要开始使用 Bun SQLite 和 Drizzle，请参阅[文档](/docs/sqlite/get-started-sqlite#bun-sqlite)

@@ -1,0 +1,406 @@
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
+import IsSupportedChipGroup from '@mdx/IsSupportedChipGroup.astro';
+import Callout from '@mdx/Callout.astro';
+import Section from '@mdx/Section.astro';
+
+import CodeTab from '@mdx/CodeTab.astro';
+import CodeTabs from '@mdx/CodeTabs.astro';
+
+# Drizzle 软关系
+Drizzle 关系的唯一目的，是让你以最简单、最简洁的方式查询关系型数据：
+
+<CodeTabs items={["关系查询", "带 join 的选择"]}>
+<Section>
+```ts
+import * as schema from './schema';
+import { drizzle } from 'drizzle-orm/node-mssql';
+
+const db = drizzle({ client, schema });
+
+const result = db._query.users.findMany({
+  with: {
+    posts: true,
+  },
+});
+```
+```ts
+[{
+  id: 10,
+  name: "Dan",
+  posts: [
+    {
+      id: 1,
+      content: "SQL 太棒了",
+      authorId: 10,
+    },
+    {
+      id: 2,
+      content: "但请看看关系查询",
+      authorId: 10,
+    }
+  ]
+}]
+```
+</Section>
+<Section>
+```ts
+import { drizzle } from 'drizzle-orm/node-mssql';
+import { eq } from 'drizzle-orm';
+import { posts, users } from './schema';
+
+const db = drizzle(client);
+
+const res = await db.select()
+                    .from(users)
+                    .leftJoin(posts, eq(posts.authorId, users.id))
+                    .orderBy(users.id)
+const mappedResult =  
+```
+</Section>
+</CodeTabs>
+
+
+### 一对一
+Drizzle ORM 为你提供了一个 API，用于通过 `relations` 操作符定义表之间的 `one-to-one` 关系。
+
+以下是 users 和 users 之间的一对一关系示例，其中一个用户可以邀请另一个用户（此示例使用自引用）：
+
+```typescript copy {10-15}
+import { mssqlTable, ntext, int } from 'drizzle-orm/mssql-core';
+import { relations } from 'drizzle-orm/_relations';
+
+export const users = mssqlTable('users', {
+	id: int().identity().primaryKey(),
+	name: ntext(),
+	invitedBy: int('invited_by'),
+});
+
+export const usersRelations = relations(users, ({ one }) => ({
+	invitee: one(users, {
+		fields: [users.invitedBy],
+		references: [users.id],
+	}),
+}));
+```
+
+另一个示例是用户的个人资料信息存储在单独的表中。在这种情况下，因为外键存储在 "profile_info" 表中，用户关系既没有 `fields` 也没有 `references`。这会告诉 Typescript，`user.profileInfo` 是可为空的：
+
+```typescript copy {9-17}
+import { mssqlTable, ntext, int } from 'drizzle-orm/mssql-core';
+import { relations } from 'drizzle-orm/_relations';
+
+export const users = mssqlTable('users', {
+	id: int().identity().primaryKey(),
+	name: ntext(),
+});
+
+export const usersRelations = relations(users, ({ one }) => ({
+	profileInfo: one(profileInfo),
+}));
+
+export const profileInfo = mssqlTable('profile_info', {
+	id: int().identity().primaryKey(),
+	userId: int('user_id').references(() => users.id),
+	metadata: ntext(),
+});
+
+export const profileInfoRelations = relations(profileInfo, ({ one }) => ({
+	user: one(users, { fields: [profileInfo.userId], references: [users.id] }),
+}));
+
+const user = await queryUserWithProfileInfo();
+//____^? 类型 { id: number, profileInfo: string | null  }
+```
+
+### 一对多
+Drizzle ORM 通过 `relations` 操作符为你提供了定义表之间 `一对多` 关系的 API。 
+
+下面是用户与其撰写的帖子之间 `一对多` 关系的示例：
+
+```typescript copy {9-11, 19-24}
+import { mssqlTable, ntext, int } from 'drizzle-orm/mssql-core';
+import { relations } from 'drizzle-orm/_relations';
+
+export const users = mssqlTable('users', {
+	id: int().identity().primaryKey(),
+	name: ntext(),
+});
+
+export const usersRelations = relations(users, ({ many }) => ({
+	posts: many(posts),
+}));
+
+export const posts = mssqlTable('posts', {
+	id: int().identity().primaryKey(),
+	content: ntext(),
+	authorId: int('author_id'),
+});
+
+export const postsRelations = relations(posts, ({ one }) => ({
+	author: one(users, {
+		fields: [posts.authorId],
+		references: [users.id],
+	}),
+}));
+```
+
+现在让我们为帖子添加评论：
+```typescript copy {14,17-22,24-29}
+...
+
+export const posts = mssqlTable('posts', {
+	id: int().identity().primaryKey(),
+	content: ntext(),
+	authorId: int('author_id'),
+});
+
+export const postsRelations = relations(posts, ({ one, many }) => ({
+	author: one(users, {
+		fields: [posts.authorId],
+		references: [users.id],
+	}),
+	comments: many(comments)
+}));
+
+export const comments = mssqlTable('comments', {
+	id: int().identity().primaryKey(),
+	text: ntext(),
+	authorId: int('author_id'),
+	postId: int('post_id'),
+});
+
+export const commentsRelations = relations(comments, ({ one }) => ({
+	post: one(posts, {
+		fields: [comments.postId],
+		references: [posts.id],
+	}),
+}));
+```
+
+
+### 多对多
+Drizzle ORM 提供了一个 API，用于通过所谓的 `junction` 或 `join` 表来定义表之间的 `many-to-many` 关系，
+这些表必须显式定义，并用于存储相关表之间的关联关系。  
+  
+用户和组之间的 `many-to-many` 关系示例：
+```typescript copy {9-11, 18-20, 37-46}
+import { relations } from 'drizzle-orm/_relations';
+import { int, mssqlTable, primaryKey, ntext } from 'drizzle-orm/mssql-core';
+
+export const users = mssqlTable('users', {
+  id: int().identity().primaryKey(),
+  name: ntext(),
+});
+
+export const usersRelations = relations(users, ({ many }) => ({
+  usersToGroups: many(usersToGroups),
+}));
+
+export const groups = mssqlTable('groups', {
+  id: int().identity().primaryKey(),
+  name: ntext(),
+});
+
+export const groupsRelations = relations(groups, ({ many }) => ({
+  usersToGroups: many(usersToGroups),
+}));
+
+export const usersToGroups = mssqlTable(
+  'users_to_groups',
+  {
+    userId: int('user_id')
+      .notNull()
+      .references(() => users.id),
+    groupId: int('group_id')
+      .notNull()
+      .references(() => groups.id),
+  },
+  (t) => [
+		primaryKey({ columns: [t.userId, t.groupId] })
+	],
+);
+
+export const usersToGroupsRelations = relations(usersToGroups, ({ one }) => ({
+  group: one(groups, {
+    fields: [usersToGroups.groupId],
+    references: [groups.id],
+  }),
+  user: one(users, {
+    fields: [usersToGroups.userId],
+    references: [users.id],
+  }),
+}));
+```
+
+### 外键
+
+你可能已经注意到，`relations` 看起来和外键很相似——它们甚至还有一个 `references` 属性。那么它们之间有什么区别呢？
+
+虽然外键也有类似的用途，用于定义表之间的关系，但它们所处的层级与 `relations` 不同。
+
+外键是数据库层面的约束，它们会在每次 `insert`/`update`/`delete` 操作时被检查，如果约束被违反就会抛出错误。
+另一方面，`relations` 是更高层级的抽象，它们仅用于在应用层定义表之间的关系。
+它们不会以任何方式影响数据库模式，也不会隐式创建外键。
+
+这意味着 `relations` 和外键可以一起使用，但它们彼此并不依赖。
+你可以在不使用外键的情况下定义 `relations`（反之亦然），这使得它们也可以用于不支持外键的数据库。
+
+下面两个示例在使用 Drizzle 关系查询查询数据时，表现完全相同。
+<CodeTabs items={["schema1.ts", "schema2.ts"]}>
+<CodeTab>
+```ts {15}
+export const users = mssqlTable('users', {
+  id: int().identity().primaryKey(),
+  name: ntext(),
+});
+
+export const profileInfo = mssqlTable('profile_info', {
+  id: int().identity().primaryKey(),
+  userId: int('user_id'),
+  metadata: nvarchar({ mode: 'json' }),
+});
+
+export const profileInfoRelations = relations(profileInfo, ({ one }) => ({
+  user: one(users, {
+    fields: [profileInfo.userId],
+    references: [users.id],
+  }),
+}));
+```
+</CodeTab>
+<CodeTab>
+```ts {15}
+export const users = mssqlTable('users', {
+  id: int().identity().primaryKey(),
+  name: ntext(),
+});
+
+export const profileInfoRelations = relations(profileInfo, ({ one }) => ({
+  user: one(users, {
+    fields: [profileInfo.userId],
+    references: [users.id],
+  }),
+}));
+
+export const profileInfo = mssqlTable('profile_info', {
+  id: int().identity().primaryKey(),
+  userId: int('user_id').references(() => users.id),
+  metadata: nvarchar({ mode: 'json' }),
+});
+```
+</CodeTab>
+</CodeTabs>
+
+### 外键操作
+
+有关更多信息，请查看 [MSSQL 外键文档](https://learn.microsoft.com/en-us/sql/relational-databases/tables/create-foreign-key-relationships?view=sql-server-ver17)
+
+您可以指定在父表中被引用的数据发生修改时应执行的操作。这些操作称为“外键操作”。MSSQL 为这些操作提供了几种选项。
+
+删除/更新操作
+
+- `CASCADE`：当父表中的一行被删除时，子表中所有对应的行也会被删除。这样可以确保子表中不会存在孤立行。
+
+- `NO ACTION`：这是默认操作。如果子表中存在相关行，它会阻止删除父表中的一行。父表中的 DELETE 操作将失败。
+
+- `SET DEFAULT`：如果父表中的一行被删除，子表中的外键列会被设置为其默认值（如果有默认值）。如果没有默认值，DELETE 操作将失败。
+
+- `SET NULL`：当父表中的一行被删除时，子表中的外键列会被设置为 NULL。此操作假设子表中的外键列允许 NULL 值。
+
+> 类似于 ON DELETE，还有 ON UPDATE，它会在引用列被更改（更新）时触发。可用的操作相同，只是对于 SET NULL 和 SET DEFAULT 不能指定列列表。在这种情况下，CASCADE 表示应将被引用列的更新值复制到引用行中。
+在 drizzle 中，您可以使用 `references()` 的第二个参数添加外键操作。
+
+操作类型
+
+```typescript
+export type UpdateDeleteAction = 'cascade' | 'no action' | 'set null' | 'set default';
+
+// references 接口的第二个参数
+actions?: {
+		onUpdate?: UpdateDeleteAction;
+		onDelete?: UpdateDeleteAction;
+	} | undefined
+```
+
+在下面的示例中，在 `posts` 模式的 `author` 字段上添加 `onDelete: 'cascade'`，意味着删除 `user` 时也会删除所有相关的 Post 记录。
+
+
+```typescript {11}
+import { mssqlTable, ntext, int } from 'drizzle-orm/mssql-core';
+
+export const users = mssqlTable('users', {
+	id: int().identity().primaryKey(),
+	name: ntext(),
+});
+
+export const posts = mssqlTable('posts', {
+	id: int().identity().primaryKey(),
+	name: ntext(),
+	author: int().references(() => users.id, {onDelete: 'cascade'}).notNull(),
+});
+```
+
+对于使用 `foreignKey` 操作符指定的约束，外键操作使用以下语法定义：
+
+```typescript {18-19}
+import { foreignKey, mssqlTable, ntext, int } from 'drizzle-orm/mssql-core';
+
+export const users = mssqlTable('users', {
+	id: int().identity().primaryKey(),
+	name: ntext(),
+});
+
+export const posts = mssqlTable('posts', {
+	id: int().identity().primaryKey(),
+	name: ntext(),
+	author: int().notNull(),
+}, (table) => [
+	foreignKey({
+		name: "author_fk",
+		columns: [table.author],
+		foreignColumns: [users.id],
+	})
+		.onDelete('cascade')
+		.onUpdate('cascade')
+]);
+```
+
+### 关系消歧
+
+Drizzle 还提供了 `relationName` 选项，用于在你在同两张表之间定义多个关系时消除歧义。比如，你定义了一个 `posts` 表，它包含 `author` 和 `reviewer` 这两个关系。
+
+```ts {9-12, 21-32}
+import { mssqlTable, ntext, int } from 'drizzle-orm/mssql-core';
+import { relations } from 'drizzle-orm/_relations';
+ 
+export const users = mssqlTable('users', {
+	id: int().identity().primaryKey(),
+	name: ntext(),
+});
+ 
+export const usersRelations = relations(users, ({ many }) => ({
+	author: many(posts, { relationName: 'author' }),
+	reviewer: many(posts, { relationName: 'reviewer' }),
+}));
+ 
+export const posts = mssqlTable('posts', {
+	id: int().identity().primaryKey(),
+	content: ntext(),
+	authorId: int('author_id'),
+	reviewerId: int('reviewer_id'),
+});
+ 
+export const postsRelations = relations(posts, ({ one }) => ({
+	author: one(users, {
+		fields: [posts.authorId],
+		references: [users.id],
+		relationName: 'author',
+	}),
+	reviewer: one(users, {
+		fields: [posts.reviewerId],
+		references: [users.id],
+		relationName: 'reviewer',
+	}),
+}));
+```

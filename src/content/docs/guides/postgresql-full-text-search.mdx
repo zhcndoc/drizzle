@@ -1,6 +1,5 @@
 ---
 title: PostgreSQL 全文搜索
-slug: postgresql-full-text-search
 ---
 
 import Section from "@mdx/Section.astro";
@@ -349,9 +348,9 @@ await db.select().from(posts)
 要对搜索结果进行排名，您可以使用 `ts_rank` 或 `ts_rank_cd` 函数和 `orderBy` 方法：
 
 <Callout type='warning'>
-`getColumns` available starting from `drizzle-orm@1.0.0-beta.2`(read more [here](/docs/upgrade-v1))
+`getColumns` 从 `drizzle-orm@1.0.0-beta.2` 开始可用（更多信息请参见[这里](/docs/upgrade-v1)）
 
-If you are on pre-1 version(like `0.45.1`) then use `getTableColumns`
+如果您使用的是 1 之前的版本（例如 `0.45.1`），请使用 `getTableColumns`
 </Callout>
 
 <Section>

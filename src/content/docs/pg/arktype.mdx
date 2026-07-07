@@ -1,0 +1,330 @@
+import Npm from '@mdx/Npm.astro';
+import Callout from '@mdx/Callout.astro';
+
+# arktype
+
+### 安装依赖
+
+<Npm>
+drizzle-orm@rc arktype
+</Npm>
+
+### 选择 schema
+
+定义从数据库查询出的数据形状——可用于验证 API 响应。
+
+```ts copy
+import { pgTable, text, integer } from 'drizzle-orm/pg-core';
+import { createSelectSchema } from 'drizzle-orm/arktype';
+import { ArkErrors } from "arktype";
+
+const users = pgTable('users', {
+  id: integer().generatedAlwaysAsIdentity().primaryKey(),
+  name: text().notNull(),
+  age: integer().notNull()
+});
+
+const userSelectSchema = createSelectSchema(users);
+
+const rows = await db.select({ id: users.id, name: users.name }).from(users).limit(1);
+const parsed: ArkErrors | { id: number; name: string; age: number } = userSelectSchema(rows[0]); // 错误：上面的查询未返回 `age`
+
+const rows = await db.select().from(users).limit(1);
+const parsed: ArkErrors | { id: number; name: string; age: number } = userSelectSchema(rows[0]); // 将成功解析
+```
+
+视图和枚举也受支持。
+
+```ts copy
+import { pgEnum, pgView } from 'drizzle-orm/pg-core';
+import { gt } from 'drizzle-orm';
+import { createSelectSchema } from 'drizzle-orm/arktype';
+import { ArkErrors } from "arktype";
+
+const roles = pgEnum('roles', ['admin', 'basic']);
+const rolesSchema = createSelectSchema(roles);
+const parsed: ArkErrors | 'admin' | 'basic' = rolesSchema(...);
+
+const usersView = pgView('users_view').as((qb) => qb.select().from(users).where(gt(users.age, 18)));
+const usersViewSchema = createSelectSchema(usersView);
+const parsed: ArkErrors | { id: number; name: string; age: number } = usersViewSchema(...);
+```
+
+### 插入 schema
+
+定义要插入到数据库中的数据形状——可用于验证 API 请求。
+
+```ts copy
+import { pgTable, text, integer } from 'drizzle-orm/pg-core';
+import { createInsertSchema } from 'drizzle-orm/arktype';
+import { ArkErrors } from "arktype";
+
+const users = pgTable('users', {
+  id: integer().generatedAlwaysAsIdentity().primaryKey(),
+  name: text().notNull(),
+  age: integer().notNull()
+});
+
+const userInsertSchema = createInsertSchema(users);
+
+const user = { name: 'John' };
+const parsed: ArkErrors | { name: string, age: number } = userInsertSchema(user); // 错误：未定义 `age`
+
+const user = { name: 'Jane', age: 30 };
+const parsed: ArkErrors | { name: string, age: number } = userInsertSchema(user); // 将成功解析
+
+if (parsed instanceof ArkErrors) {
+  console.error(parsed.summary);
+  process.exit(1);
+}
+
+await db.insert(users).values(parsed);
+```
+
+### 更新 schema
+
+定义要在数据库中更新的数据形状——可用于验证 API 请求。
+
+```ts copy
+import { pgTable, text, integer } from 'drizzle-orm/pg-core';
+import { createUpdateSchema } from 'drizzle-orm/arktype';
+import { eq } from "drizzle-orm";
+import { ArkErrors } from "arktype";
+
+const users = pgTable('users', {
+  id: integer().generatedAlwaysAsIdentity().primaryKey(),
+  name: text().notNull(),
+  age: integer().notNull()
+});
+
+const userUpdateSchema = createUpdateSchema(users);
+
+const user = { age: 35 };
+const parsed: ArkErrors | { name?: string | undefined, age?: number | undefined } = userUpdateSchema(user); // 将成功解析
+
+if (parsed instanceof ArkErrors) {
+  console.error(parsed.summary);
+  process.exit(1);
+}
+
+await db.update(users).set(parsed).where(eq(users.name, 'Jane'));
+```
+
+### 细化
+
+每个 create schema 函数都接受一个额外的可选参数，你可以用它来扩展、修改或完全覆盖某个字段的 schema。提供一个回调函数会进行扩展或修改，而提供一个 arktype schema 则会覆盖它。
+
+```ts copy
+import { pgTable, text, integer, json } from 'drizzle-orm/pg-core';
+import { createSelectSchema } from 'drizzle-orm/arktype';
+import { ArkErrors, type } from 'arktype';
+
+const users = pgTable('users', {
+  id: integer().generatedAlwaysAsIdentity().primaryKey(),
+  name: text().notNull(),
+  bio: text(),
+  preferences: json()
+});
+
+const userSelectSchema = createSelectSchema(users, {
+  name: (schema) => schema.atMostLength(20), // 扩展 schema
+  bio: () => type.string.atMostLength(2000), // 在变为可空/可选之前扩展 schema
+  preferences: type({ theme: 'string' }) // 覆盖该字段，包括其可空性
+});
+
+const parsed: ArkErrors | {
+  id: number;
+  name: string,
+  bio: string | null;
+  preferences: {
+    theme: string;
+  };
+} = userSelectSchema(...);
+```
+
+### 数据类型参考
+
+```ts
+pg.boolean();
+
+// Schema
+type.boolean;
+```
+
+```ts
+pgEnum('name', ['val1', 'val2']);
+
+// Schema
+type.enumerated('val1', 'val2')
+```
+
+```ts
+pg.date({ mode: 'date' });
+pg.timestamp({ mode: 'date' });
+
+// Schema
+type.Date;
+```
+
+```ts
+pg.date({ mode: 'string' });
+pg.timestamp({ mode: 'string' });
+pg.cidr();
+pg.inet();
+pg.interval();
+pg.macaddr();
+pg.macaddr8();
+pg.numeric();
+pg.text();
+pg.sparsevec();
+pg.time();
+
+// Schema
+type.string;
+```
+
+```ts
+pg.bit({ dimensions: ... });
+
+// Schema
+type(`/^[01]{${column.dimensions}}$/`);
+```
+
+```ts
+pg.uuid();
+
+// Schema
+type(/^[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}$/iu);
+```
+
+```ts
+pg.char({ length: ... });
+
+// Schema
+type.string.exactlyLength(length);
+```
+
+```ts
+pg.varchar({ length: ... });
+
+// Schema
+type.string.atMostLength(length);
+```
+
+```ts
+pg.text({ enum: ... });
+pg.char({ enum: ... });
+pg.varchar({ enum: ... });
+
+// Schema
+type.enumerated(...enum);
+```
+
+```ts
+pg.smallint();
+pg.smallserial();
+
+// Schema
+type.keywords.number.integer.atLeast(-32_768).atMost(32_767); // 16 位整数的下限和上限
+```
+
+```ts
+pg.real();
+
+// Schema
+type.number.atLeast(-8_388_608).atMost(8_388_607); // 24 位整数的下限和上限
+```
+
+```ts
+pg.integer();
+pg.serial();
+
+// Schema
+type.keywords.number.integer.atLeast(-2_147_483_648).atMost(2_147_483_647); // 32 位整数的下限和上限
+```
+
+```ts
+pg.doublePrecision();
+
+// Schema
+type.number.atLeast(-140_737_488_355_328).atMost(140_737_488_355_327); // 48 位整数的下限和上限
+```
+
+```ts
+pg.bigint({ mode: 'number' });
+pg.bigserial({ mode: 'number' });
+
+// Schema
+type.keywords.number.integer.atLeast(-9_007_199_254_740_991).atMost(9_007_199_254_740_991); // JavaScript 最小和最大安全整数
+```
+
+```ts
+pg.bigint({ mode: 'bigint' });
+pg.bigserial({ mode: 'bigint' });
+
+// Schema
+type.bigint.narrow(
+  (value, ctx) => value < -9_223_372_036_854_775_808n ? ctx.mustBe('greater than') : value > 9_223_372_036_854_775_807n ? ctx.mustBe('less than') : true
+); // 64 位整数的下限和上限
+```
+
+```ts
+pg.geometry({ type: 'point', mode: 'tuple' });
+pg.point({ mode: 'tuple' });
+
+// Schema
+type([type.number, type.number]);
+```
+
+```ts
+pg.geometry({ type: 'point', mode: 'xy' });
+pg.point({ mode: 'xy' });
+
+// Schema
+type({ x: type.number, y: type.number });
+```
+
+```ts
+pg.halfvec({ dimensions: ... });
+pg.vector({ dimensions: ... });
+
+// Schema
+type.number.array().exactlyLength(dimensions);
+```
+
+```ts
+pg.line({ mode: 'abc' });
+
+// Schema
+type({ a: type.number, b: type.number, c: type.number });
+```
+
+```ts
+pg.line({ mode: 'tuple' });
+
+// Schema
+type([type.number, type.number, type.number]);
+```
+
+```ts
+pg.json();
+pg.jsonb();
+
+// Schema
+type('string | number | boolean | null').or(type('unknown.any[] | Record<string, unknown.any>'));
+```
+
+```ts
+pg.dataType().array(...);
+
+// Schema
+baseDataTypeSchema.array().exactlyLength(size);
+```
+
+```ts
+pg.bytea();
+
+// Schema
+type.unknown.narrow((value) => value instanceof Buffer).as<Buffer>()
+```
+

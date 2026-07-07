@@ -4,9 +4,9 @@ Drizzle Kit 提供了一个 CLI 命令来检测你的数据库，并生成包含
 
 ```sql copy
 CREATE TABLE "users" (
-	"id" int4 PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "users_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"id" int4 PRIMARY KEY GENERATED ALWAYS AS IDENTITY (INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"name" varchar(255) NOT NULL,
-	"age" integer NOT NULL,
+	"age" int4 NOT NULL,
 	"email" varchar(255) NOT NULL,
 	CONSTRAINT "users_email_unique" UNIQUE("email")
 );
@@ -18,7 +18,7 @@ CREATE TABLE "users" (
 npx drizzle-kit pull --init
 ```
 
-检测的结果将会生成一个 `schema.ts` 文件，一个包含数据库 schema 快照的 `meta` 文件夹，一个包含迁移的 sql 文件，以及一个用于[关系查询](/docs/rqb)的 `relations.ts` 文件。
+检测结果会生成一个 `schema.ts` 文件、包含数据库 schema 快照的 `meta` 文件夹、带有迁移的 sql 文件，以及用于[关系查询](/docs/cockroach/rqb)的 `relations.ts` 文件。
 
 以下是生成的 `schema.ts` 文件示例：
 
@@ -26,14 +26,14 @@ npx drizzle-kit pull --init
 // 通过检测生成的表 schema
 import { cockroachTable, unique, int4, varchar } from "drizzle-orm/cockroach-core"
 
-export const users = cockroachTable("users", {
-	id: int4().primaryKey().generatedAlwaysAsIdentity({ name: "users_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 2147483647, cache: 1 }),
+export const usersTable = cockroachTable("users", {
+	id: int4().primaryKey().generatedAlwaysAsIdentity(),
 	name: varchar({ length: 255 }).notNull(),
-	age: integer().notNull(),
+	age: int4({ mode: 'number' }).notNull(),
 	email: varchar({ length: 255 }).notNull(),
 }, (table) => [
-	unique("users_email_unique").on(table.email)
+	uniqueIndex("users_email_unique").using("btree", table.email.asc()),
 ]);
 ```
 
-在[文档](/docs/drizzle-kit-pull)中了解更多关于检测的信息。
+在[文档](/docs/cockroach/drizzle-kit-pull)中了解更多关于检测的信息。

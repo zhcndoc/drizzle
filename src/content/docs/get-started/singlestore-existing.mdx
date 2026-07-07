@@ -12,63 +12,63 @@ import UpdateSchema from '@mdx/get-started/singlestore/UpdateSchema.mdx';
 import IntrospectSingleStore from '@mdx/get-started/singlestore/IntrospectSingleStore.mdx';
 import QueryDatabase from '@mdx/get-started/QueryDatabase.mdx';
 import QueryDatabaseUpdated from '@mdx/get-started/QueryDatabaseUpdated.mdx';
-import ApplyChanges from '@mdx/get-started/ApplyChanges.mdx';
+import ApplyChanges from '@mdx/get-started/singlestore/ApplyChanges.mdx';
 import RunFile from '@mdx/get-started/RunFile.mdx';
-import SetupConfig from '@mdx/get-started/SetupConfig.mdx';
+import SetupConfig from '@mdx/get-started/singlestore/SetupConfig.mdx';
 import TransferCode from '@mdx/get-started/TransferCode.mdx';
 
 <Breadcrumbs/>
 
-# Get Started with Drizzle and SingleStore in existing project
+# 在现有项目中开始使用 Drizzle 和 SingleStore
 
 <Prerequisites>  
-  - **dotenv** - package for managing environment variables - [read here](https://www.npmjs.com/package/dotenv)
-  - **tsx** - package for running TypeScript files - [read here](https://tsx.is/)
-  - **mysql2** - package for querying your SingleStore database - [read here](https://github.com/sidorares/node-mysql2)
+  - **dotenv** - 用于管理环境变量的包 - [在这里阅读](https://www.npmjs.com/package/dotenv)
+  - **tsx** - 用于运行 TypeScript 文件的包 - [在这里阅读](https://tsx.hirok.io/)
+  - **mysql2** - 用于查询你的 SingleStore 数据库的包 - [在这里阅读](https://github.com/sidorares/node-mysql2)
 </Prerequisites>
 
 <FileStructure/>
 
-#### Step 1 - Install the `mysql2` package
+#### 第 1 步 - 安装 `mysql2` 包
 
 <InstallPackages lib='mysql2'/>
 
-#### Step 2 - Setup connection variables
+#### 第 2 步 - 设置连接变量
 
 <SetupEnv env_variable='DATABASE_URL' />
 
-#### Step 3 - Setup Drizzle config file
+#### 第 3 步 - 设置 Drizzle 配置文件
 
 <SetupConfig dialect='singlestore' env_variable='DATABASE_URL'/>
 
-#### Step 4 - Introspect your database
+#### 第 4 步 - 反向解析你的数据库
 
 <IntrospectSingleStore/>
 
-#### Step 5 - Transfer code to your actual schema file
+#### 第 5 步 - 将代码转移到你实际的 schema 文件中
 
 <TransferCode/>
 
-#### Step 6 - Connect Drizzle ORM to the database
+#### 第 6 步 - 将 Drizzle ORM 连接到数据库
 
 <ConnectSingleStore/>
 
-#### Step 7 - Query the database
+#### 第 7 步 - 查询数据库
 
 <QueryDatabase dialect='singlestore' env_variable='DATABASE_URL'/>
 
-#### Step 8 - Run index.ts file
+#### 第 8 步 - 运行 index.ts 文件
 
 <RunFile/>
 
-#### Step 9 - Update your table schema (optional)
+#### 第 9 步 - 更新你的表 schema（可选）
 
 <UpdateSchema/>
 
-#### Step 10 - Applying changes to the database (optional)
+#### 第 10 步 - 将更改应用到数据库（可选）
 
 <ApplyChanges/>
 
-#### Step 11 - Query the database with a new field (optional)
+#### 第 11 步 - 使用新字段查询数据库（可选）
 
 <QueryDatabaseUpdated dialect='singlestore' env_variable='DATABASE_URL' />

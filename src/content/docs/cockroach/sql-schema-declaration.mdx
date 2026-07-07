@@ -1,0 +1,390 @@
+import Callout from '@mdx/Callout.astro';
+import SimpleLinkCards from '@mdx/SimpleLinkCards.astro';
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Section from '@mdx/Section.astro';
+import Flex from "@mdx/Flex.astro"
+import LinksList from "@mdx/LinksList.astro"
+
+# Drizzle 模式
+
+Drizzle 允许你使用 TypeScript 定义模式，并支持底层数据库中的各种模型和属性。  
+当你定义模式时，它会作为未来在查询（使用 Drizzle-ORM）和迁移（使用 Drizzle-Kit）中修改的事实来源。
+
+<Callout> 
+如果你在迁移流程中使用 Drizzle-Kit，请确保导出模式文件中定义的所有模型，以便 Drizzle-Kit 可以导入它们，并在迁移差异生成过程中使用它们。 
+</Callout>
+
+<CodeTabs items={["使用导入", "使用回调", "使用 import *"]}>
+```ts
+import { int4, cockroachTable, varchar } from "drizzle-orm/cockroach-core";
+
+export const usersTable = cockroachTable("users", {
+  id: int4().primaryKey().generatedAlwaysAsIdentity(),
+  name: varchar().notNull(),
+  age: int4().notNull(),
+  email: varchar().notNull().unique(),
+});
+```
+```ts
+import { cockroachTable } from "drizzle-orm/cockroach-core";
+
+export const usersTable = cockroachTable("users", (t) => ({
+  id: t.int4().primaryKey().generatedAlwaysAsIdentity(),
+  name: t.varchar().notNull(),
+  age: t.int4().notNull(),
+  email: t.varchar().notNull().unique(),
+}));
+```
+```ts
+import * as p from "drizzle-orm/cockroach-core";
+
+export const usersTable = p.cockroachTable("users", {
+  id: p.int4().primaryKey().generatedAlwaysAsIdentity(),
+  name: p.varchar().notNull(),
+  age: p.int4().notNull(),
+  email: p.varchar().notNull().unique(),
+});
+```
+</CodeTabs>
+
+## 组织你的 schema 文件
+你可以直接在 TypeScript 中声明你的 SQL schema，放在单个 `schema.ts` 文件里，
+或者你也可以把它们分散到不同位置——随你喜欢，完全自由！
+
+#### 单文件中的 Schema
+在 Drizzle 中声明 schema 最常见的方式，就是把所有表都放在一个 `schema.ts` 文件里。
+
+> 注意：你可以把 schema 文件命名为任何你喜欢的名字。比如，它可以是 `models.ts`，或者其他名称。
+
+如果你定义的表模型不太多，或者你希望把它们都放在一个文件里，那么这种方式会很适合
+
+示例：
+```plaintext
+📦 <project root>
+ └ 📂 src
+    └ 📂 db
+       └ 📜 schema.ts
+```
+
+在 `drizzle.config.ts` 文件中，你需要指定 schema 文件的路径。使用这个配置时，Drizzle 会
+读取 `schema.ts` 文件，并在生成迁移时使用这些信息。关于 `drizzle.config.ts` 文件以及 Drizzle 的迁移，
+请查看：[link](/docs/cockroach/drizzle-config-file)
+```ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: 'cockroach',
+  schema: './src/db/schema.ts'
+})
+```
+
+#### 多文件中的 Schema
+
+你可以把你的 Drizzle 模型——比如表、枚举、序列等——不仅放在一个文件里，也可以放在你喜欢的任何文件中。
+你必须确保的唯一一件事，就是把这些文件里的所有模型都导出，这样 Drizzle kit 才能导入
+它们并在迁移中使用它们。
+
+一种用例是把每张表拆分到各自的文件中。
+```plaintext
+📦 <project root>
+ └ 📂 src
+    └ 📂 db
+       └ 📂 schema
+          ├ 📜 users.ts
+          ├ 📜 countries.ts
+          ├ 📜 cities.ts
+          ├ 📜 products.ts
+          ├ 📜 clients.ts
+          └ 📜 etc.ts
+```
+
+在 `drizzle.config.ts` 文件中，你需要指定 schema 文件夹的路径。使用这个配置时，Drizzle 会
+读取 `schema` 文件夹，并递归查找所有文件，然后从中获取所有 drizzle 表。关于 `drizzle.config.ts`
+文件以及 Drizzle 的迁移，请查看：[link](/docs/cockroach/drizzle-config-file)
+
+```ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: 'cockroach',
+  schema: './src/db/schema'
+})
+```
+
+你也可以按任何你喜欢的方式对它们分组，例如创建用户相关表、消息相关表、产品相关表等的分组。
+```plaintext
+📦 <project root>
+ └ 📂 src
+    └ 📂 db
+       └ 📂 schema
+          ├ 📜 users.ts
+          ├ 📜 messaging.ts
+          └ 📜 products.ts
+```
+
+## 设计你的数据模式
+
+Drizzle 模式由你所使用数据库中的若干模型类型组成。使用 drizzle，你可以指定：
+- 带有列、约束等的表
+- 模式
+- 枚举
+- 序列
+- 视图
+- 实体化视图
+- 等等
+
+让我们逐一看看如何使用 drizzle 定义模式
+
+#### **表与列声明** 
+
+Drizzle 中的一个表至少应该定义 1 列，这与在数据库中应当这样做是一样的。有一件重要的事需要知道，
+drizzle 中不存在通用的表对象。你需要选择你正在使用的方言：Cockroach、MySQL、SQLite 等。
+
+![](@/assets/images/table-structure.svg)
+
+```ts copy
+import { cockroachTable, int4 } from "drizzle-orm/cockroach-core"
+
+export const users = cockroachTable('users', {
+  id: int4()
+});
+```
+
+默认情况下，Drizzle 会在数据库查询中使用 TypeScript 的键名作为列名。 
+因此，示例中的模式和查询将生成下面显示的 SQL 查询
+
+<Callout>
+此示例使用了一个 db 对象，其初始化未在本部分文档中介绍。要了解如何连接数据库，请参阅 [连接文档](/docs/cockroach/get-started-cockroach)
+</Callout>
+
+\
+**TypeScript 键 = 数据库键**
+<Section>
+```ts
+// schema.ts
+import { int4, cockroachTable, varchar } from "drizzle-orm/cockroach-core";
+
+export const users = cockroachTable('users', {
+  id: int4(),
+  first_name: varchar()
+})
+```
+```ts
+// query.ts
+await db.select().from(users);
+```
+```sql
+SELECT "id", "first_name" from users;
+```
+</Section>
+
+如果你想在 TypeScript 代码和数据库中使用不同的名称，你可以使用列别名
+
+<Section>
+```ts
+// schema.ts
+import { int4, cockroachTable, varchar } from "drizzle-orm/cockroach-core";
+
+export const users = cockroachTable('users', {
+  id: int4(),
+  firstName: varchar('first_name')
+})
+```
+```ts
+// query.ts
+await db.select().from(users);
+```
+```sql
+SELECT "id", "first_name" from users;
+```
+</Section>
+
+### 驼峰命名与蛇形命名
+
+数据库模型名称通常使用 `snake_case` 约定，而在 TypeScript 中，使用 `camelCase` 来命名模型更为常见。
+这会在模式中产生大量别名定义。为了解决这个问题，Drizzle 提供了一种通过专用构建器自动将 TypeScript 中的 `camelCase` 映射到数据库中的 `snake_case` 的方式。
+
+使用来自 `drizzle-orm/cockroach-core` 的 `snakeCase` 或 `camelCase` 构建器来声明一个表，其列键会
+自动映射到所选数据库命名约定
+
+<Section>
+```ts {2,4,11,12}
+// schema.ts
+import { snakeCase, camelCase } from 'drizzle-orm/cockroach-core';
+
+export const users = snakeCase.table('users', {
+  id: int4().primaryKey(),
+  fullName: text(),        // → 数据库中为 full_name
+  createdAt: timestamp(),  // → 数据库中为 created_at
+});
+
+// 适用于所有实体类型：
+snakeCase.table / snakeCase.view / snakeCase.materializedView / snakeCase.schema
+camelCase.table / camelCase.view / camelCase.materializedView / camelCase.schema
+```
+```ts
+// db.ts
+import { drizzle } from "drizzle-orm/cockroach";
+
+const db = drizzle({ connection: process.env.DATABASE_URL })
+```
+```ts
+// query.ts
+await db.select().from(users);
+```
+```sql
+select "id", "full_name", "created_at" from "users"
+```
+</Section>
+
+### 高级
+
+使用 Drizzle ORM 你可以运用一些技巧。只要 Drizzle 完全位于 TypeScript 文件中，
+你本质上就可以像在一个普通的 TypeScript 项目里那样对代码做任何事情。
+
+一个常见的特性是把列拆分到不同的位置，然后重复使用它们。 
+例如，考虑 `updated_at`、`created_at` 和 `deleted_at` 列。许多表/模型可能都需要这
+三个字段来跟踪和分析系统中实体的创建、删除和更新
+
+我们可以把这些列定义在一个单独的文件中，然后导入并将它们展开到你拥有的所有表对象中
+
+<Section>
+```ts
+// columns.helpers.ts
+export const timestamps = {
+  updated_at: timestamp(),
+  created_at: timestamp().defaultNow().notNull(),
+  deleted_at: timestamp(),
+}
+```
+```ts
+// users.sql.ts
+export const users = cockroachTable('users', {
+  id: int4(),
+  ...timestamps
+})
+```
+```ts
+// posts.sql.ts
+export const posts = cockroachTable('posts', {
+  id: int4(),
+  ...timestamps
+})
+```
+</Section>
+
+#### **模式**
+
+\
+在 cockroach 中，有一个名为 `schema` 的实体（我们认为它应该叫做 `folders`）。这会在 cockroach 中创建如下结构：
+
+![](@/assets/images/postgresql-db-structure.png)
+
+你可以使用 `cockroachSchema` 管理你的 cockroach 模式，并将其他任何模型放在其中。
+
+使用 Drizzle 定义你想要管理的模式
+```ts
+import { cockroachSchema } from "drizzle-orm/cockroach-core"
+
+export const customSchema = cockroachSchema('custom');
+```
+
+然后把表放到模式对象中
+```ts {5-7}
+import { int4, cockroachSchema } from "drizzle-orm/cockroach-core";
+
+export const customSchema = cockroachSchema('custom');
+
+export const users = customSchema.table('users', {
+  id: int4()
+})
+```
+
+### 示例
+
+一旦你了解了基础知识，让我们定义一个真实项目的模式示例，以便获得更好的视角和理解
+
+> 所有示例都会使用 `generateUniqueString`。其实现将在所有模式示例之后提供
+
+```ts copy
+import type { AnyCockroachColumn } from "drizzle-orm/cockroach-core";
+import { cockroachEnum, cockroachTable as table } from "drizzle-orm/cockroach-core";
+import * as t from "drizzle-orm/cockroach-core";
+
+export const rolesEnum = cockroachEnum("roles", ["guest", "user", "admin"]);
+
+export const users = table(
+  "users",
+  {
+    id: t.int4().primaryKey().generatedAlwaysAsIdentity(),
+    firstName: t.varchar("first_name", { length: 256 }),
+    lastName: t.varchar("last_name", { length: 256 }),
+    email: t.varchar().notNull(),
+    invitee: t.int4().references((): AnyCockroachColumn => users.id),
+    role: rolesEnum().default("guest"),
+  },
+  (table) => [
+    t.uniqueIndex("email_idx").on(table.email)
+  ]
+);
+
+export const posts = table(
+  "posts",
+  {
+    id: t.int4().primaryKey().generatedAlwaysAsIdentity(),
+    slug: t.varchar().$default(() => generateUniqueString(16)),
+    title: t.varchar({ length: 256 }),
+    ownerId: t.int4("owner_id").references(() => users.id),
+  },
+  (table) => [
+    t.uniqueIndex("slug_idx").on(table.slug),
+    t.index("title_idx").on(table.title),
+  ]
+);
+
+export const comments = table("comments", {
+  id: t.int4().primaryKey().generatedAlwaysAsIdentity(),
+  text: t.varchar({ length: 256 }),
+  postId: t.int4("post_id").references(() => posts.id),
+  ownerId: t.int4("owner_id").references(() => users.id),
+});
+```
+
+**`generateUniqueString` 实现：**
+```ts
+function generateUniqueString(length: number = 12): string {
+  const characters =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let uniqueString = "";
+
+  for (let i = 0; i < length; i++) {
+    const randomIndex = Math.floor(Math.random() * characters.length);
+    uniqueString += characters[randomIndex];
+  }
+
+  return uniqueString;
+}
+```
+
+#### 接下来是什么？
+<br/>
+<Flex>
+  <LinksList 
+    title='管理模式'
+    links={[
+        ["列类型", "/docs/cockroach/column-types"], 
+        ["索引和约束", "/docs/cockroach/indexes-constraints"],
+        ["数据库视图", "/docs/cockroach/views"],
+        ["数据库模式", "/docs/cockroach/schemas"],
+        ["序列", "/docs/cockroach/sequences"],
+      ]}
+  />
+  <LinksList 
+    title='从零到精通'
+    links={[
+        ["数据库连接", "/docs/cockroach/connect-overview"], 
+        ["数据查询", "/docs/cockroach/data-querying"], 
+        ["迁移", "/docs/cockroach/migrations"], 
+      ]}
+  />
+</Flex>

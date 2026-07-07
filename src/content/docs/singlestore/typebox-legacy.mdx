@@ -1,0 +1,338 @@
+import Npm from '@mdx/Npm.astro';
+import Callout from '@mdx/Callout.astro';
+
+<Callout type="error">
+从 `drizzle-orm@1.0.0-beta.15` 开始，`drizzle-typebox` 已被弃用，转而使用 Drizzle ORM 自身的一等模式生成支持
+
+你仍然可以使用 `drizzle-typebox` 包，但所有新的更新都会直接添加到 Drizzle ORM 中
+
+这个版本的 `typebox` 是基于 `@sinclair/typebox` 包的旧版本
+</Callout>
+
+# typebox-legacy
+
+### 安装依赖
+<Npm>
+drizzle-orm@rc @sinclair/typebox
+</Npm>
+
+### 选择模式
+
+定义从数据库查询出的数据形状——可用于验证 API 响应。
+
+```ts copy
+import { int, singlestoreTable, text } from 'drizzle-orm/singlestore-core';
+import { createSelectSchema } from 'drizzle-orm/typebox-legacy';
+import { Value } from '@sinclair/typebox/value';
+
+const users = singlestoreTable('users', {
+  id: int().primaryKey().autoincrement(),
+  name: text().notNull(),
+  age: int().notNull()
+});
+
+const userSelectSchema = createSelectSchema(users);
+
+const rows = await db.select({ id: users.id, name: users.name }).from(users).limit(1);
+const parsed: { id: number; name: string; age: number } = Value.Parse(userSelectSchema, rows[0]); // 错误：上面的查询中没有返回 `age`
+
+const rows = await db.select().from(users).limit(1);
+const parsed: { id: number; name: string; age: number } = Value.Parse(userSelectSchema, rows[0]); // 将成功解析
+```
+
+通过 SingleStore 表模式支持列枚举，并且可以使用生成的表模式进行验证。
+
+### 插入模式
+
+定义要插入到数据库中的数据形状——可用于验证 API 请求。
+
+```ts copy
+import { int, singlestoreTable, text } from 'drizzle-orm/singlestore-core';
+import { createInsertSchema } from 'drizzle-orm/typebox-legacy';
+import { Value } from '@sinclair/typebox/value';
+
+const users = singlestoreTable('users', {
+  id: int().primaryKey().autoincrement(),
+  name: text().notNull(),
+  age: int().notNull()
+});
+
+const userInsertSchema = createInsertSchema(users);
+
+const user = { name: 'John' };
+const parsed: { name: string, age: number } = Value.Parse(userInsertSchema, user); // 错误：未定义 `age`
+
+const user = { name: 'Jane', age: 30 };
+const parsed: { name: string, age: number } = Value.Parse(userInsertSchema, user); // 将成功解析
+await db.insert(users).values(parsed);
+```
+
+### 更新模式
+
+定义要在数据库中更新的数据形状——可用于验证 API 请求。
+
+```ts copy
+import { int, singlestoreTable, text } from 'drizzle-orm/singlestore-core';
+import { createUpdateSchema } from 'drizzle-orm/typebox-legacy';
+import { Value } from '@sinclair/typebox/value';
+
+const users = singlestoreTable('users', {
+  id: int().primaryKey().autoincrement(),
+  name: text().notNull(),
+  age: int().notNull()
+});
+
+const userUpdateSchema = createUpdateSchema(users);
+
+const user = { id: 5, name: 'John' };
+const parsed: { name?: string | undefined, age?: number | undefined } = Value.Parse(userUpdateSchema, user); // 错误：`id` 是生成列，不能更新
+
+const user = { age: 35 };
+const parsed: { name?: string | undefined, age?: number | undefined } = Value.Parse(userUpdateSchema, user); // 将成功解析
+await db.update(users).set(parsed).where(eq(users.name, 'Jane'));
+```
+
+### 细化
+
+每个创建模式函数都接受一个额外的可选参数，你可以用它来扩展、修改或完全覆盖某个字段的模式。提供回调函数会进行扩展或修改，而提供 Typebox 模式则会覆盖它。
+
+```ts copy
+import { int, json, singlestoreTable, text } from 'drizzle-orm/singlestore-core';
+import { createSelectSchema } from 'drizzle-orm/typebox-legacy';
+import { Type } from '@sinclair/typebox';
+import { Value } from '@sinclair/typebox/value';
+
+const users = singlestoreTable('users', {
+  id: int().primaryKey().autoincrement(),
+  name: text().notNull(),
+  bio: text(),
+  preferences: json()
+});
+
+const userSelectSchema = createSelectSchema(users, {
+  name: (schema) => Type.String({ ...schema, maxLength: 20 }), // 扩展模式
+  bio: (schema) => Type.String({ ...schema, maxLength: 1000 }), // 在变为可空/可选之前扩展模式
+  preferences: Type.Object({ theme: Type.String() }) // 覆盖该字段，包括其可空性
+});
+
+const parsed: {
+  id: number;
+  name: string,
+  bio?: string | undefined;
+  preferences: {
+    theme: string;
+  };
+} = Value.Parse(userSelectSchema, ...);
+```
+
+### 工厂函数
+
+对于更高级的用例，你可以使用 `createSchemaFactory` 函数。
+
+**用例：使用扩展的 Typebox 实例**
+
+```ts copy
+import { int, singlestoreTable, text } from 'drizzle-orm/singlestore-core';
+import { createSchemaFactory } from 'drizzle-orm/typebox';
+import { t } from 'elysia'; // 扩展的 Typebox 实例
+
+const users = singlestoreTable('users', {
+  id: int().primaryKey().autoincrement(),
+  name: text().notNull(),
+  age: int().notNull()
+});
+
+const { createInsertSchema } = createSchemaFactory({ typeboxInstance: t });
+
+const userInsertSchema = createInsertSchema(users, {
+  // 现在我们可以使用扩展实例
+  name: (schema) => t.Number({ ...schema }, { error: '`name` 必须是字符串' })
+});
+```
+
+### 数据类型参考
+
+```ts
+singlestore.boolean();
+
+// 模式
+Type.Boolean();
+```
+
+```ts
+singlestore.date({ mode: 'date' });
+singlestore.datetime({ mode: 'date' });
+singlestore.timestamp({ mode: 'date' });
+
+// 模式
+Type.Date();
+```
+
+```ts
+singlestore.binary();
+singlestore.date({ mode: 'string' });
+singlestore.datetime({ mode: 'string' });
+singlestore.decimal();
+singlestore.time();
+singlestore.timestamp({ mode: 'string' });
+singlestore.varbinary();
+
+// 模式
+Type.String();
+```
+
+```ts
+singlestore.char({ length: ... });
+
+// 模式
+Type.String({ minLength: length, maxLength: length });
+```
+
+```ts
+singlestore.varchar({ length: ... });
+
+// 模式
+Type.String({ maxLength: length });
+```
+
+```ts
+singlestore.text();
+
+// 模式
+Type.String({ maxLength: 65_535 }); // 无符号 16 位整数上限
+```
+
+```ts
+singlestore.text({ enum: ... });
+singlestore.char({ enum: ... });
+singlestore.varchar({ enum: ... });
+singlestore.singlestoreEnum(..., ...);
+
+// 模式
+Type.Enum(enum);
+```
+
+```ts
+singlestore.tinyint();
+
+// 模式
+Type.Integer({ minimum: -128, maximum: 127 }); // 8 位整数下限和上限
+```
+
+```ts
+singlestore.tinyint({ unsigned: true });
+
+// 模式
+Type.Integer({ minimum: 0, maximum: 255 }); // 无符号 8 位整数下限和上限
+```
+
+```ts
+singlestore.smallint();
+
+// 模式
+Type.Integer({ minimum: -32_768, maximum: 32_767 }); // 16 位整数下限和上限
+```
+
+```ts
+singlestore.smallint({ unsigned: true });
+
+// 模式
+Type.Integer({ minimum: 0, maximum: 65_535 }); // 无符号 16 位整数下限和上限
+```
+
+```ts
+singlestore.float();
+
+// 模式
+Type.Number().min(-8_388_608).max(8_388_607); // 24 位整数下限和上限
+```
+
+```ts
+singlestore.mediumint();
+
+// 模式
+Type.Integer({ minimum: -8_388_608, maximum: 8_388_607 }); // 24 位整数下限和上限
+```
+
+```ts
+singlestore.float({ unsigned: true });
+
+// 模式
+Type.Number({ minimum: 0, maximum: 16_777_215 }); // 无符号 24 位整数下限和上限
+```
+
+```ts
+singlestore.mediumint({ unsigned: true });
+
+// 模式
+Type.Integer({ minimum: 0, maximum: 16_777_215 }); // 无符号 24 位整数下限和上限
+```
+
+```ts
+singlestore.int();
+
+// 模式
+Type.Integer({ minimum: -2_147_483_648, maximum: 2_147_483_647 }); // 32 位整数下限和上限
+```
+
+```ts
+singlestore.int({ unsigned: true });
+
+// 模式
+Type.Integer({ minimum: 0, maximum: 4_294_967_295 }); // 无符号 32 位整数下限和上限
+```
+
+```ts
+singlestore.double();
+singlestore.real();
+
+// 模式
+Type.Number({ minimum: -140_737_488_355_328, maximum: 140_737_488_355_327 }); // 48 位整数下限和上限
+```
+
+```ts
+singlestore.double({ unsigned: true });
+
+// 模式
+Type.Numer({ minimum: 0, maximum: 281_474_976_710_655 }); // 无符号 48 位整数下限和上限
+```
+
+```ts
+singlestore.bigint({ mode: 'number' });
+
+// 模式
+Type.Integer({ minimum: -9_007_199_254_740_991, maximum: 9_007_199_254_740_991 }); // JavaScript 最小和最大安全整数
+```
+
+```ts
+singlestore.serial();
+
+```
+
+```ts
+singlestore.bigint({ mode: 'bigint' });
+
+// 模式
+Type.BigInt({ minimum: -9_223_372_036_854_775_808n, maximum: 9_223_372_036_854_775_807n }); // 64 位整数下限和上限
+```
+
+```ts
+singlestore.bigint({ mode: 'bigint', unsigned: true });
+
+// 模式
+Type.BigInt({ minimum: 0, maximum: 18_446_744_073_709_551_615n }); // 无符号 64 位整数下限和上限
+```
+
+```ts
+singlestore.year();
+
+// 模式
+Type.Integer({ minimum: 1_901, maximum: 2_155 });
+```
+
+```ts
+singlestore.json();
+
+// 模式
+Type.Recursive((self) => Type.Union([Type.Union([Type.String(), Type.Number(), Type.Boolean(), Type.Null()]), Type.Array(self), Type.Record(Type.String(), self)]));
+```

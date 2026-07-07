@@ -1,0 +1,96 @@
+import Section from '@mdx/Section.astro';
+import Callout from '@mdx/Callout.astro';
+
+# SQL 注释
+
+你可以使用 `.comment()` 方法为任何查询添加自定义标签。这些标签会以 [sqlcommenter](https://google.github.io/sqlcommenter) 格式的注释附加在每个查询末尾，帮助你为查询跟踪、调试和数据库流量控制附加元数据。
+
+`.comment()` 方法可用于 `select`、`insert`、`update` 和 `delete` 查询。
+
+### 字符串注释
+你可以传入一个原始字符串作为注释：
+
+<Section>
+```ts
+db.select().from(users).comment("my_first_tag");
+```
+```sql
+select `id`, `name` from `users` /*my_first_tag*/
+```
+</Section>
+
+<Section>
+```ts
+db.select().from(users).comment("key='val'");
+```
+```sql
+select `id`, `name` from `users` /*key='val'*/
+```
+</Section>
+
+### 对象注释
+你可以传入一个包含键值对的对象，用于结构化标签：
+
+<Section>
+```ts
+db.select().from(users).comment({ priority: 'high', category: 'analytics' });
+```
+```sql
+select `id`, `name` from `users` /*priority='high',category='analytics'*/
+```
+</Section>
+
+<Section>
+```ts
+db.select().from(users).comment({ trace: true, route: '/api/users', version: 2 });
+```
+```sql
+select `id`, `name` from `users` /*route='%2Fapi%2Fusers',trace='true',version='2'*/
+```
+</Section>
+
+### 与 insert、update、delete 一起使用
+
+<Section>
+```ts
+db.insert(users).values({ name: 'Dan' }).comment({ operation: 'seed' });
+```
+```sql
+insert into `users` (`name`) values ('Dan') /*operation='seed'*/
+```
+</Section>
+
+<Section>
+```ts
+db.update(users).set({ name: 'Dan' }).where(eq(users.id, 1)).comment({ operation: 'update' });
+```
+```sql
+update `users` set `name` = 'Dan' where `users`.`id` = 1 /*operation='update'*/
+```
+</Section>
+
+<Section>
+```ts
+db.delete(users).where(eq(users.id, 1)).comment({ operation: 'cleanup' });
+```
+```sql
+delete from `users` where `users`.`id` = 1 /*operation='cleanup'*/
+```
+</Section>
+
+### 限制
+在语句已经准备好之后，你不能再使用 `.comment()`。预编译语句只会编译一次 SQL 查询并在多次执行中重复使用，因此查询字符串会在准备时固定下来，之后无法再修改——包括追加注释：
+
+```ts
+// 不能使用
+const p = db.select().from(users).prepare();
+// ❌
+p.comment({ key: 'val' }).execute();
+```
+
+相反，请在准备语句之前添加注释：
+
+```ts
+// ✅
+db.select().from(users).comment({ key: "val" }).prepare();
+```

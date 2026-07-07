@@ -1,0 +1,147 @@
+import Npm from '@mdx/Npm.astro';
+import Callout from '@mdx/Callout.astro';
+
+# arktype
+
+### 安装依赖
+
+<Npm>
+arktype
+</Npm>
+
+### 选择 schema
+
+定义从数据库查询出的数据形状——可用于验证 API 响应。
+
+```ts copy
+import { int4, cockroachTable, text } from 'drizzle-orm/cockroach-core';
+import { createSelectSchema } from 'drizzle-orm/arktype';
+import type { ArkErrors } from 'arktype';
+
+const users = cockroachTable('users', {
+  id: int4().primaryKey().generatedAlwaysAsIdentity(),
+  name: text().notNull(),
+  age: int4().notNull()
+});
+
+const userSelectSchema = createSelectSchema(users);
+
+const rows = await db.select({ id: users.id, name: users.name }).from(users).limit(1);
+const parsed: ArkErrors | { id: number; name: string; age: number } = userSelectSchema(rows[0]); // 错误：上面的查询中未返回 `age`
+
+const rows = await db.select().from(users).limit(1);
+const parsed: ArkErrors | { id: number; name: string; age: number } = userSelectSchema(rows[0]); // 将会成功解析
+```
+
+同样也支持视图和枚举。
+
+```ts copy
+import { cockroachEnum, cockroachView } from 'drizzle-orm/cockroach-core';
+import { gt } from 'drizzle-orm';
+import { createSelectSchema } from 'drizzle-orm/arktype';
+import type { ArkErrors } from 'arktype';
+
+const roles = cockroachEnum('roles', ['admin', 'basic']);
+const rolesSchema = createSelectSchema(roles);
+const parsed: 'admin' | 'basic' = rolesSchema(...);
+
+const usersView = cockroachView('users_view').as((qb) => qb.select().from(users).where(gt(users.age, 18)));
+const usersViewSchema = createSelectSchema(usersView);
+const parsed: ArkErrors | { id: number; name: string; age: number } = usersViewSchema(...);
+```
+
+### 插入 schema
+
+定义要插入数据库的数据形状——可用于验证 API 请求。
+
+```ts copy
+import { int4, cockroachTable, text } from 'drizzle-orm/cockroach-core';
+import { createInsertSchema } from 'drizzle-orm/arktype';
+import { ArkErrors } from "arktype";
+
+const users = cockroachTable('users', {
+  id: int4().primaryKey().generatedAlwaysAsIdentity(),
+  name: text().notNull(),
+  age: int4().notNull()
+});
+
+const userInsertSchema = createInsertSchema(users);
+
+const user = { name: 'John' };
+const parsed: ArkErrors | { name: string, age: number } = userInsertSchema(user); // 错误：`age` 未定义
+
+const user = { name: 'Jane', age: 30 };
+const parsed: ArkErrors | { name: string, age: number } = userInsertSchema(user); // 将会成功解析
+
+if (parsed instanceof ArkErrors) {
+  console.error(parsed.summary);
+  process.exit(1);
+}
+
+await db.insert(users).values(parsed);
+```
+
+### 更新 schema
+
+定义要在数据库中更新的数据形状——可用于验证 API 请求。
+
+```ts copy
+import { int4, cockroachTable, text } from 'drizzle-orm/cockroach-core';
+import { createUpdateSchema } from 'drizzle-orm/arktype';
+import { eq } from "drizzle-orm";
+import { ArkErrors } from 'arktype';
+
+const users = cockroachTable('users', {
+  id: int4().primaryKey().generatedAlwaysAsIdentity(),
+  name: text().notNull(),
+  age: int4().notNull()
+});
+
+const userUpdateSchema = createUpdateSchema(users);
+
+const user = { age: 35 };
+const parsed: ArkErrors | { name?: string | undefined, age?: number | undefined } = userUpdateSchema(user); // 将会成功解析
+
+if (parsed instanceof ArkErrors) {
+  console.error(parsed.summary);
+  process.exit(1);
+}
+
+await db.update(users).set(parsed).where(eq(users.name, 'Jane'));
+```
+
+### 精细调整
+
+每个 create schema 函数都接受一个额外的可选参数，你可以用它来扩展、修改或完全覆盖某个字段的 schema。提供一个回调函数会进行扩展或修改，而提供一个 arktype schema 则会直接覆盖它。
+
+```ts copy
+import { int4, jsonb, cockroachTable, text } from 'drizzle-orm/cockroach-core';
+import { createSelectSchema } from 'drizzle-orm/arktype';
+import { ArkErrors, type } from 'arktype';
+
+const users = cockroachTable('users', {
+  id: int4().primaryKey().generatedAlwaysAsIdentity(),
+  name: text().notNull(),
+  bio: text(),
+  preferences: jsonb()
+});
+
+const userSelectSchema = createSelectSchema(users, {
+  name: (schema) => schema.atMostLength(20), // 扩展 schema
+  bio: () => type.string.atMostLength(2000), // 在变为可为空/可选之前扩展 schema
+  preferences: type({ theme: 'string' }) // 覆盖该字段，包括其可空性
+});
+
+const parsed: ArkErrors | {
+  id: number;
+  name: string,
+  bio: string | null;
+  preferences: {
+    theme: string;
+  };
+} = userSelectSchema(...);
+```
+
+### 数据类型参考
+
+CockroachDB 数据类型映射遵循 CockroachDB 列构建器。完整的列参考请参见 [CockroachDB 数据类型](/docs/cockroach/column-types) 页面。

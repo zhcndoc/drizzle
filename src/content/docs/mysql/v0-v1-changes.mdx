@@ -1,0 +1,282 @@
+import Callout from '@mdx/Callout.astro';
+
+# v1 中的变更
+
+此页面展示了从 `drizzle-orm@0.x`、`drizzle-kit@0.x`、`drizzle-seed@0.x` 到最新的 `drizzle-orm@1.0`、`drizzle-kit@1.0`、`drizzle-seed@1.0` 的所有变更
+
+<Callout type="info">
+在此处了解更多关于如何升级的信息 [这里](/docs/mysql/upgrade-v1)
+</Callout>
+
+## 破坏性变更
+
+#### 已移除 Relational Queries v1
+
+RQBv1 已被移除。请改用带有新 `defineRelations()` API 的 [Relational Queries v2](/docs/mysql/relations) 和新特性。你可以在 [这里](/docs/mysql/relations-v1-v2) 查看从 rqb v1 迁移到 v2 的更多详情
+
+一个基于 `defineRelations()` 构建的新关系系统：
+
+```ts
+import { defineRelations } from 'drizzle-orm';
+
+const relations = defineRelations(schema, (r) => ({
+  users: {
+    posts: r.many.posts(),
+    profile: r.one.profiles(),
+  },
+  posts: {
+    author: r.one.users({
+      from: posts.authorId,
+      to: users.id,
+    }),
+  },
+}));
+```
+
+#### 验证器包已整合到 `drizzle-orm` 中
+
+<Callout type="warning">
+你仍然可以使用 drizzle-zod/valibot/typebox/arktype 验证包，但所有新的更新都将直接添加到 Drizzle ORM 中
+</Callout>
+
+- drizzle-zod -> drizzle-orm/zod
+- drizzle-valibot -> drizzle-orm/valibot
+- drizzle-typebox -> drizzle-orm/typebox-legacy (using @sinclair/typebox)
+- drizzle-typebox -> drizzle-orm/typebox (using typebox)
+- drizzle-arktype -> drizzle-orm/arktype
+- 新增 `drizzle-orm/effect-schema` 包
+
+#### 新的大小写 API
+
+旧的 `drizzle({ casing: 'camelCase' })` 已被替换为表/视图/模式级别的 API：
+
+```ts
+import { snakeCase, camelCase } from 'drizzle-orm/mysql-core';
+
+export const users = snakeCase.table('users', {
+  id: int().primaryKey().autoincrement(),
+  fullName: text(),       // → 数据库中的 full_name
+  createdAt: timestamp(), // → 数据库中的 created_at
+});
+
+// 可用于所有实体类型：
+snakeCase.table / snakeCase.view / snakeCase.materializedView / snakeCase.schema
+camelCase.table / camelCase.view / camelCase.materializedView / camelCase.schema
+```
+
+#### `.generatedAlwaysAs()` 仅接受 SQL
+
+```ts
+// ❌ 以前 — 接受原始值
+.generatedAlwaysAs('some expression')
+
+// ✅ 现在 — 仅接受 sql`` 或 () => sql``
+.generatedAlwaysAs(sql`some expression`)
+.generatedAlwaysAs(() => sql`some expression`)
+```
+
+#### `getTableColumns` 弃用
+
+请改用 `getColumns`
+
+```ts
+// ❌ 以前
+import { getTableColumns } from 'drizzle-orm';
+
+const columns = getTableColumns(users);
+
+// ✅ 现在
+import { getColumns } from 'drizzle-orm';
+
+const columns = getColumns(users);
+```
+
+#### 新的迁移文件夹结构（v3）
+
+**关联讨论**: [#2832](https://github.com/drizzle-team/drizzle-orm/discussions/2832)
+
+<br/>
+
+- 不再有 `journal.json`
+- SQL 文件和快照分组到单独的迁移文件夹中
+- `drizzle-kit drop` 命令已移除
+
+这些更改消除了与 journal 文件潜在的 Git 冲突，并简化了删除或修复冲突迁移的流程
+
+<Callout type="info">
+在 [这里](/docs/mysql/upgrade-v1) 阅读更多升级方法
+</Callout>
+
+
+#### `drizzle-kit push --strict` 弃用
+
+`--strict` 标志已被移除——其行为现在是默认行为。除非传入 `--force` 标志，否则 `drizzle-kit push` 在执行会导致数据丢失的语句前总会提示确认。使用 [drizzle-kit push --explain](/docs/mysql/drizzle-kit-push) 可以在运行前预览将要执行的 SQL。
+
+#### Drizzle seed：UUID 生成器升级到 v4
+
+UUID 生成器现在会生成符合 RFC 4122 v4 规范的 UUID，确保与 Zod v4 验证兼容。使用 `{ version: '1' }` 可保留旧行为，或使用 `{ version: '2' | '3' }` 以使用较新的生成器。
+
+## 其他特性
+
+#### 新数据类型
+
+MySQL 方言新增了列类型：`blob`、`tinyblob`、`mediumblob` 和 `longblob`。你可以在 [这里](/docs/mysql/column-types#blob) 阅读更多内容。
+
+```ts
+import { mysqlTable, blob, tinyblob, mediumblob, longblob } from 'drizzle-orm/mysql-core';
+
+const files = mysqlTable('files', {
+  tiny: tinyblob(),
+  regular: blob(),
+  medium: mediumblob(),
+  large: longblob(),
+});
+```
+
+#### JIT 映射器（可选启用）
+
+即时编译的行映射器，使映射速度与原始驱动程序一样快。
+你可以在 [这里](/docs/mysql/jit-mappers) 了解更多。
+
+```ts {1}
+const db = drizzle({ ..., jit: true });
+```
+
+#### 新的 MSSQL 方言
+
+新增了 MSSQL 方言支持。你可以在 [这里](/docs/mssql/get-started-mssql) 阅读更多内容。
+
+#### 新的 CockroachDB 方言
+
+新增了 CockroachDB 方言支持。你可以在 [这里](/docs/cockroach/get-started-cockroach) 阅读更多内容。
+
+#### 新的 NetlifyDB 驱动
+
+新增了 NetlifyDB 驱动支持。你可以在 [这里](/docs/connect-netlify-db) 阅读更多内容。
+
+<Callout>
+注意：Netlify Database 驱动由 Netlify 团队开发和维护。
+</Callout>
+
+#### SQLcommenter 支持
+
+为查询添加自定义标签。标签会作为 SQL 注释追加到每条查询的末尾。你可以在 [这里](/docs/sql-comments) 阅读更多内容。
+
+```ts
+db.select().from(users).comment("my_first_tag");
+// select "id", "name" from "users" /*my_first_tag*/
+```
+
+#### 通过 `.as()` 使用列别名
+
+你可以在 [这里](/docs/aliases) 了解更多别名信息
+```ts
+const query = db
+  .select({ age: users.age.as('ageOfUser'), id: users.id.as('userId') })
+  .from(users)
+  .orderBy(asc(users.id.as('userId')));
+```
+
+#### `drizzle-kit` 全面重写
+
+该工具包在架构层面已重新设计：
+- 从数据库快照迁移到 DDL 快照
+- 重新设计了 diff 检测和应用
+- Schema 结构探测从约 10 秒缩短到不到 1 秒
+- 为 push 添加了查询提示和 explain 支持
+
+#### `drizzle-kit pull --init`
+
+创建 drizzle 迁移表，并将第一次拉取到的迁移标记为已应用。你可以在 [这里](/docs/drizzle-kit-pull) 阅读更多内容。
+
+#### `drizzle-kit push --explain`
+
+显示将要执行的 SQL，但不会真正运行。你可以在 [这里](/docs/drizzle-kit-push) 阅读更多内容。
+
+#### `drizzle-kit check` — 交换性检查
+
+检测分支之间不可交换的迁移——例如，两个分支修改同一列，或一个分支重命名表而另一个分支正在修改该表。
+
+其工作方式：
+- 从快照 `prevIds` 构建 DAG，以理解分支结构
+- 找出分支分叉的位置
+- 计算从父快照到每个分支叶子的 DDL diff
+- 使用足迹映射检查可能相互干扰的 DDL 语句类型冲突
+
+如果发现冲突，报告会准确告诉你哪些分支上的哪些迁移不兼容，以及哪些语句发生了冲突。
+
+#### `drizzle-kit --ignore-conflicts` 标志
+
+当你知道这些冲突是预期内的时，可跳过交换性检查。
+
+#### `drizzle-kit generate`：迁移冲突检测
+
+`drizzle-kit generate` 现在会识别[不兼容的更改](/docs/mysql/v0-v1-changes#drizzle-kit-check--commutativity-check)，跨迁移分支进行检测。可使用 `--ignore-conflicts` 进行跳过。
+
+#### 迁移表更新
+
+当你运行 `drizzle-kit up` 时，迁移表会自动升级。会新增两个列：
+
+- **`name`** —— 完整的迁移文件夹名称（例如 `20250220153045_brave_wolverine`）
+- **`applied_at`** —— 迁移执行时间的时间戳（现有记录会回填为 `NULL`）
+
+| Column | Type | v0 | v1 |
+| --- | --- | --- |:---:|
+| `id` | serial | yes | yes |
+| `hash` | text | yes | yes |
+| `created_at` | bigint | yes | yes (legacy) |
+| `name` | text | — | new |
+| `applied_at` | timestamp | — | new |
+
+现在迁移是按完整文件夹名称而不是时间戳进行匹配。即使两个迁移在同一秒内生成，名称后缀也能保证唯一性。
+
+在升级期间，现有记录会使用多步骤策略进行回填：
+1. **毫秒匹配** —— 将存储的毫秒截断到秒，并与本地文件夹时间戳匹配
+2. **哈希决胜** —— 如果多个迁移共享同一秒，则通过 SQL 哈希消歧
+3. **仅哈希回退** —— 如果毫秒匹配完全失败，则仅通过哈希匹配
+
+<br/>
+这意味着升级可以处理所有边缘情况：普通的单开发者项目、迁移时间非常接近的团队，甚至旧 journal 数据与新文件夹名称并不完全对齐的情况。
+
+#### Migrator 会应用所有缺失的迁移
+
+以前 migrator 只会查找创建日期晚于最后一次已应用迁移的本地迁移。现在它会检测并应用**所有缺失的迁移**，不受时间戳顺序影响。所有迁移都按完整文件夹名称进行匹配（14 位 UTC 时间戳 + 名称后缀）。
+
+#### drizzle 配置文件中的顶层 `await`
+
+现在在 Node.js 上，`drizzle.config.ts` 和 schema 文件中支持顶层 `await`。
+
+#### Drizzle-kit：构建系统改进
+
+- 从 `esbuild-register` 迁移到 `tsx` loader —— 无缝支持 ESM 和 CJS
+- 原生支持 Bun 和 Deno 启动
+
+#### TS Schema 文件处理
+
+仅处理以下扩展名的文件：`.js`、`.mjs`、`.cjs`、`.jsx`、`.ts`、`.mts`、`.cts`、`.tsx`。所有其他文件类型都会被忽略。
+
+#### Drizzle Seed：在细化规则中忽略列
+
+在播种时跳过特定列——将改用数据库默认值：
+
+```ts
+await seed(db, schema).refine((f) => ({
+  users: {
+    count: 5,
+    columns: {
+      name: f.fullName(),
+      photo: false, // 跳过 — 将使用数据库默认值
+    },
+  },
+}));
+```
+
+#### `min` / `max` 参数
+
+基于时间的生成器现在接受边界值：
+
+```ts
+funcs.time({ min: '13:12:13', max: '15:12:13' })
+funcs.timestamp({ min: '2024-01-01T00:00:00Z', max: '2025-01-01T00:00:00Z' })
+funcs.datetime({ min: '2024-01-01', max: '2025-01-01' })
+```

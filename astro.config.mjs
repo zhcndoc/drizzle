@@ -7,6 +7,7 @@ import react from "@astrojs/react";
 import sitemap from "@astrojs/sitemap";
 import yaml from "@rollup/plugin-yaml";
 import { codeSnippetTransformer } from "./src/transformers";
+import { redirectsPlugin } from "./src/redirects-plugin.mjs";
 import {
   transformerNotationDiff,
   transformerNotationHighlight,
@@ -27,7 +28,7 @@ export default defineConfig({
     format: "file", // mandatory due to CloudFlare Pages trailing slash problem
   },
   vite: {
-    plugins: [yaml()],
+    plugins: [yaml(), redirectsPlugin()],
     css: {
       preprocessorOptions: {
         scss: {
@@ -50,7 +51,9 @@ export default defineConfig({
     react({
       experimentalReactChildren: true,
     }),
-    ...(true ? [sitemap()] : []),
+    ...(true
+      ? [sitemap({ filter: (page) => !/\/docs\/[^/]+\/get-started\/?$/.test(page) })]
+      : []),
   ],
   markdown: {
     rehypePlugins: [

@@ -1,0 +1,54 @@
+import Npm from '@mdx/Npm.astro';
+import Callout from '@mdx/Callout.astro';
+import Tabs from '@mdx/Tabs.astro';
+import Tab from '@mdx/Tab.astro';
+import AnchorCards from '@mdx/AnchorCards.astro';
+import WhatsNextMySQL from "@mdx/WhatsNextMySQL.astro";
+import Prerequisites from "@mdx/Prerequisites.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+
+# Drizzle \<\> TiDB Serverless
+
+<Prerequisites>
+- 使用 Drizzle 进行数据库[连接基础](/docs/mysql/connect-overview)
+- TiDB 数据库 - [网站](https://docs.pingcap.com/)
+- TiDB HTTP 驱动 - [网站](https://docs.pingcap.com/developer/serverless-driver)
+- Drizzle MySQL 驱动 - [文档](/docs/mysql/get-started-mysql)
+</Prerequisites>
+
+根据 **[官方网站](https://www.pingcap.com/tidb-serverless/)**, 
+TiDB Serverless 是一款完全托管、自主的 DBaaS，具备瞬时集群配置和基于消费的定价。
+
+<Callout type="info" emoji="ℹ️">
+TiDB Serverless 与 MySQL 兼容，因此您可以使用 [MySQL 连接指南](/docs/mysql/get-started-mysql) 来连接它。
+</Callout>
+
+TiDB Serverless 为边缘环境提供了一个 [HTTP 驱动](https://docs.pingcap.com/developer/serverless-driver/)。Drizzle ORM 通过 `drizzle-orm/tidb-serverless` 包原生支持它。
+
+#### 步骤 1 - 安装包
+<Npm>
+ drizzle-orm@rc @tidbcloud/serverless
+ -D drizzle-kit@rc
+</Npm>
+
+#### 步骤 2 - 初始化驱动并执行查询
+```typescript copy filename="index.ts"
+import { drizzle } from 'drizzle-orm/tidb-serverless';
+
+const db = drizzle({ connection: { url: process.env.TIDB_URL }});
+
+const response = await db.select().from(...)
+```
+
+如果您需要提供现有的驱动程序：
+```typescript copy"
+import { connect } from '@tidbcloud/serverless';
+import { drizzle } from 'drizzle-orm/tidb-serverless';
+
+const client = connect({ url: process.env.TIDB_URL });
+const db = drizzle({ client });
+```
+
+#### 下一步？
+
+<WhatsNextMySQL/>

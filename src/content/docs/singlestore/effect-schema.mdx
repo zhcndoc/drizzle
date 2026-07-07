@@ -1,0 +1,62 @@
+import Npm from '@mdx/Npm.astro';
+import Callout from '@mdx/Callout.astro';
+
+<Callout type="error">
+Drizzle+Effect Schema 集成从 `drizzle-orm@1.0.0-beta.15` 开始可用
+</Callout>
+
+# effect-schema
+
+允许你根据 Drizzle ORM 模式生成 [effect](https://effect.website/) schemas。
+
+**特性**
+
+- 为表创建 select schema。
+- 为表创建 insert 和 update schemas。
+- 支持的方言：SingleStore。
+
+#### 用法
+
+```ts
+import { int, singlestoreTable, text, timestamp } from 'drizzle-orm/singlestore-core';
+import { createInsertSchema, createSelectSchema, createUpdateSchema } from 'drizzle-orm/effect-schema';
+import { Schema } from 'effect';
+
+const users = singlestoreTable('users', {
+	id: int('id').primaryKey().autoincrement(),
+	name: text('name').notNull(),
+	email: text('email').notNull(),
+	role: text('role', { enum: ['admin', 'user'] }).notNull(),
+	createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+// 用于插入用户的 Schema - 可用于验证 API 请求
+const UserInsert = createInsertSchema(users);
+
+// 用于更新用户的 Schema - 可用于验证 API 请求
+const UserUpdate = createUpdateSchema(users);
+
+// 用于选择用户的 Schema - 可用于验证 API 响应
+const UserSelect = createSelectSchema(users);
+
+// 覆盖字段
+const UserInsert = createInsertSchema(users, {
+	role: Schema.String,
+});
+
+// 精炼字段 - 如果你想在字段在最终 schema 中变为 nullable/optional 之前更改它们，这很有用
+const UserInsert = createInsertSchema(users, {
+	id: (schema) => schema.pipe(Schema.greaterThanOrEqualTo(0)),
+	role: Schema.String,
+});
+
+// 用法
+
+const program = Effect.gen(function*() {
+	const parsedUser = yield* Schema.validate(UserInsert)({
+		name: 'John Doe',
+		email: 'johndoe@test.com',
+		role: 'admin',
+	});
+});
+```

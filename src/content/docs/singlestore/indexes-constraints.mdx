@@ -1,0 +1,212 @@
+import Callout from '@mdx/Callout.astro';
+import Section from '@mdx/Section.astro';
+
+# 索引与约束
+
+## 约束
+
+SQL 约束是应用于表列上的规则。它们用于防止无效数据被输入到数据库中。
+
+这可以确保你数据库中数据的准确性和可靠性。
+
+### 默认值
+
+`DEFAULT` 子句指定在用户执行 `INSERT` 时，如果没有提供值，则该列使用的默认值。  
+如果某个列定义上没有显式附加 `DEFAULT` 子句，  
+那么该列的默认值就是 `NULL`。
+
+显式的 `DEFAULT` 子句可以指定默认值为 `NULL`、  
+字符串常量、blob 常量、有符号数字，或括在括号中的任何常量表达式。
+
+<Section>
+    ```typescript
+    import { sql } from "drizzle-orm";
+    import { int, time, singlestoreTable } from "drizzle-orm/singlestore-core";
+    
+    const table = singlestoreTable("table", {
+      int: int("int").default(42),
+      time: time("time").default(sql`cast("14:06:10" AS TIME)`),
+    });
+    ```
+    ```sql
+    CREATE TABLE `table` (
+      `int` int DEFAULT 42,
+      `time` time DEFAULT cast("14:06:10" AS TIME)
+    );
+    ```
+    </Section>
+
+### 非空
+
+默认情况下，列可以包含 **NULL** 值。`NOT NULL` 约束强制列 **不** 接受 **NULL** 值。  
+
+这会强制字段始终包含一个值，这意味着你不能在不为该字段添加值的情况下插入新记录，
+或者更新记录。
+
+<Section>
+      ```typescript
+      import { int, singlestoreTable } from "drizzle-orm/singlestore-core";
+
+      const table = singlestoreTable('table', {
+        int: int('int').notNull(),
+      });
+      ```
+
+      ```sql
+      CREATE TABLE `table` (
+        `int` int NOT NULL
+      );
+      ```
+    </Section>
+
+### 唯一
+
+`UNIQUE` 约束确保列中的所有值都不同。  
+
+`UNIQUE` 和 `PRIMARY KEY` 约束都为某列或某组列提供唯一性保证。
+
+`PRIMARY KEY` 约束会自动具有 `UNIQUE` 约束。  
+
+<Callout type="info" emoji="ℹ️">
+  你可以为每个表设置多个 `UNIQUE` 约束，但每个表只能有一个 `PRIMARY KEY` 约束。
+</Callout>
+
+<Section>
+      ```typescript
+      import { int, varchar, unique, singlestoreTable } from "drizzle-orm/singlestore-core";
+
+      export const user = singlestoreTable('user', {
+        id: int('id').unique(),
+      });
+
+      export const table = singlestoreTable('table', {
+        id: int('id').unique('custom_name'),
+      });
+
+      export const composite = singlestoreTable('composite_example', {
+        id: int('id'),
+        name: varchar('name', { length: 256 }),
+      }, (t) => [
+        unique().on(t.id, t.name),
+        unique('custom_name').on(t.id, t.name)
+      ]);
+      ```
+
+      ```sql
+      CREATE TABLE `user` (
+      	`id` int,
+      	CONSTRAINT `user_id_unique` UNIQUE(`id`)
+      );
+
+      CREATE TABLE `table` (
+      	`id` int,
+      	CONSTRAINT `custom_name` UNIQUE(`id`)
+      );
+
+      CREATE TABLE `composite_example` (
+        `id` int,
+        `name` varchar(256),
+        CONSTRAINT `composite_example_id_name_unique` UNIQUE(`id`,`name`),
+        CONSTRAINT `custom_name` UNIQUE(`id`,`name`)
+      );
+      ```
+    </Section>
+
+### 主键
+
+`PRIMARY KEY` 约束用于唯一标识表中的每条记录。  
+主键必须包含 `UNIQUE` 值，并且不能包含 `NULL` 值。  
+
+一个表只能有一个 **主键**；并且在该表中，这个主键可以由单个或多个列（字段）组成。
+
+<Section>
+      ```typescript
+      import { int, text, singlestoreTable } from "drizzle-orm/singlestore-core";
+
+      export const user = singlestoreTable("user", {
+        id: int("id").autoincrement().primaryKey(),
+      })
+
+      export const table = singlestoreTable("table", {
+        cuid: text("cuid").primaryKey(),
+      })
+      ```
+
+      ```sql
+      CREATE TABLE `user` (
+        `id` int AUTO_INCREMENT PRIMARY KEY NOT NULL
+      );
+
+      CREATE TABLE `table` (
+        `cuid` text PRIMARY KEY NOT NULL
+      );
+      ```
+    </Section>
+
+### 复合主键
+
+与 `PRIMARY KEY` 类似，复合主键通过使用多个字段唯一标识表中的每条记录。
+
+Drizzle ORM 为此提供了一个独立的 `primaryKey` 操作符：
+
+<Section>
+      ```typescript {18, 19}
+      import { int, text, primaryKey, singlestoreTable } from "drizzle-orm/singlestore-core";
+
+      export const user = singlestoreTable("user", {
+        id: int("id").autoincrement().primaryKey(),
+        name: text("name"),
+      });
+
+      export const book = singlestoreTable("book", {
+        id: int("id").autoincrement().primaryKey(),
+        name: text("name"),
+      });
+
+      export const booksToAuthors = singlestoreTable("books_to_authors", {
+        authorId: int("author_id"),
+        bookId: int("book_id"),
+      }, (table) => [
+        primaryKey({ columns: [table.bookId, table.authorId] }),
+        // 或者使用自定义名称的 PK
+        primaryKey({ name: 'custom_name', columns: [table.bookId, table.authorId] }),
+      ]);
+      ```
+
+      ```sql {6}
+      ...
+
+      CREATE TABLE `books_to_authors` (
+        `author_id` int,
+        `book_id` int,
+        PRIMARY KEY(`book_id`,`author_id`)
+      );
+      ```
+    </Section>
+
+## 索引
+
+Drizzle ORM 为 `index` 和 `unique index` 声明都提供了 API：
+
+<Section>
+    ```typescript copy {9-10}
+    import { int, text, index, uniqueIndex, singlestoreTable } from "drizzle-orm/singlestore-core";
+
+    export const user = singlestoreTable("user", {
+      id: int("id").primaryKey().autoincrement(),
+      name: text("name"),
+      email: text("email"),
+    }, (table) => [
+      index("name_idx").on(table.name),
+      uniqueIndex("email_idx").on(table.email),
+    ]);
+    ```
+    ```sql {5-6}
+    CREATE TABLE `user` (
+      ...
+    );
+
+    CREATE INDEX `name_idx` ON `user` (`name`);
+    CREATE UNIQUE INDEX `email_idx` ON `user` (`email`);
+    ```
+    </Section>

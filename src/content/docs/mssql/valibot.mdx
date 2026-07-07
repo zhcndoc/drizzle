@@ -1,0 +1,130 @@
+import Npm from '@mdx/Npm.astro';
+import Callout from '@mdx/Callout.astro';
+
+# valibot
+
+### 安装依赖
+
+<Npm>
+drizzle-orm@rc valibot
+</Npm>
+
+### 选择模式
+
+定义从数据库查询的数据形状，可用于验证 API 响应。
+
+```ts copy
+import { int, mssqlTable, text } from 'drizzle-orm/mssql-core';
+import { createSelectSchema } from 'drizzle-orm/valibot';
+import { parse } from 'valibot';
+
+const users = mssqlTable('users', {
+  id: int().primaryKey().identity(),
+  name: text().notNull(),
+  age: int().notNull()
+});
+
+const userSelectSchema = createSelectSchema(users);
+
+const rows = await db.select({ id: users.id, name: users.name }).top(1).from(users);
+const parsed: { id: number; name: string; age: number } = parse(userSelectSchema, rows[0]); // 错误：上面的查询未返回 `age`
+
+const rows = await db.select().top(1).from(users);
+const parsed: { id: number; name: string; age: number } = parse(userSelectSchema, rows[0]); // 将成功解析
+```
+
+视图同样受支持。
+
+```ts copy
+import { pgEnum, pgView } from 'drizzle-orm/mssql-core';
+import { gt } from 'drizzle-orm';
+import { createSelectSchema } from 'drizzle-orm/valibot';
+import { parse } from 'valibot';
+
+const usersView = mssqlView('users_view').as((qb) => qb.select().from(users).where(gt(users.age, 18)));
+const usersViewSchema = createSelectSchema(usersView);
+const parsed: { id: number; name: string; age: number } = parse(usersViewSchema, ...);
+```
+
+### 插入模式
+
+定义要插入数据库的数据形状，可用于验证 API 请求。
+
+```ts copy
+import { int, mssqlTable, text } from 'drizzle-orm/mssql-core';
+import { createInsertSchema } from 'drizzle-orm/valibot';
+import { parse } from 'valibot';
+
+const users = mssqlTable('users', {
+  id: int().primaryKey().identity(),
+  name: text().notNull(),
+  age: int().notNull()
+});
+
+const userInsertSchema = createInsertSchema(users);
+
+const user = { name: 'John' };
+const parsed: { name: string, age: number } = parse(userInsertSchema, user); // 错误：未定义 `age`
+
+const user = { name: 'Jane', age: 30 };
+const parsed: { name: string, age: number } = parse(userInsertSchema, user); // 将成功解析
+await db.insert(users).values(parsed);
+```
+
+### 更新模式
+
+定义要在数据库中更新的数据形状，可用于验证 API 请求。
+
+```ts copy
+import { int, mssqlTable, text } from 'drizzle-orm/mssql-core';
+import { createUpdateSchema } from 'drizzle-orm/valibot';
+import { parse } from 'valibot';
+
+const users = mssqlTable('users', {
+  id: int().primaryKey().identity(),
+  name: text().notNull(),
+  age: int().notNull()
+});
+
+const userUpdateSchema = createUpdateSchema(users);
+
+const user = { age: 35 };
+const parsed: { name?: string | undefined, age?: number | undefined } = parse(userUpdateSchema, user); // 将成功解析
+await db.update(users).set(parsed).where(eq(users.name, 'Jane'));
+```
+
+### 细化
+
+每个创建模式函数都接受一个额外的可选参数，你可以用它来扩展、修改或完全覆盖某个字段的模式。提供回调函数会进行扩展或修改，而提供 Valibot 模式则会覆盖它。
+
+```ts copy
+import { int, mssqlTable, text } from 'drizzle-orm/mssql-core';
+import { createSelectSchema } from 'drizzle-orm/valibot';
+import { parse, pipe, maxLength, object, string } from 'valibot';
+
+const users = mssqlTable('users', {
+  id: int().primaryKey().identity(),
+  name: text().notNull(),
+  bio: text(),
+  preferences: text()
+});
+
+const userSelectSchema = createSelectSchema(users, {
+  name: (schema) => pipe(schema, maxLength(20)), // 扩展模式
+  bio: (schema) => pipe(schema, maxLength(1000)), // 在变为可为 null/可选之前扩展模式
+  preferences: object({ theme: string() }) // 覆盖该字段，包括其可空性
+});
+
+const parsed: {
+  id: number;
+  name: string,
+  bio: string | null;
+  preferences: {
+    theme: string;
+  };
+} = parse(userSelectSchema, ...);
+```
+
+### 数据类型参考
+
+MSSQL 数据类型映射遵循 MSSQL 列构建器。完整的列参考请参见 [MSSQL 数据类型](/docs/mssql/column-types) 页面。

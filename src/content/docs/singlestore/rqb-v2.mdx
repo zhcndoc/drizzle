@@ -1,0 +1,831 @@
+import Npm from '@mdx/Npm.astro';
+import Callout from '@mdx/Callout.astro';
+import CodeTabs from '@mdx/CodeTabs.astro';
+import CodeTab from '@mdx/CodeTab.astro';
+import Section from '@mdx/Section.astro';
+
+# Drizzle 查询
+
+<Callout type='error'>
+本页面解释的是 drizzle 版本 `1.0.0-beta.1` 及更高版本中可用的概念。
+</Callout>
+
+<Npm>
+drizzle-orm@rc
+drizzle-kit@rc -D
+</Npm>
+
+<br/>
+
+Drizzle ORM 的设计目标是在 SQL 之上提供一个轻量且类型安全的层。  
+我们真心相信，我们已经设计出了从 TypeScript 操作 SQL 数据库的最佳方式，现在是时候把它变得更好了。  
+  
+关系型查询旨在为你提供出色的开发者体验，用于从 SQL 数据库中查询嵌套的关系数据，避免多次连接和复杂的数据映射。  
+
+它是对现有 schema 定义和查询构建器的扩展。  
+你可以根据自己的需求选择启用它。  
+我们确保你同时拥有一流的开发者体验和性能。  
+
+<CodeTabs items={["index.ts", "schema.ts"]}>
+	<CodeTab>
+	```typescript copy /schema/3
+	import { relations } from './schema';
+	import { drizzle } from 'drizzle-orm/...';
+
+	const db = drizzle({ relations });
+
+	const result = await db.query.users.findMany({
+		with: {
+			posts: true			
+		},
+	});
+	```
+
+	```ts
+	[{
+		id: 10,
+		name: "Dan",
+		posts: [
+			{
+				id: 1,
+				content: "SQL is awesome",
+				authorId: 10,
+			},
+			{
+				id: 2,
+				content: "But check relational queries",
+				authorId: 10,
+			}
+		]
+	}]
+	```
+	</CodeTab>
+
+	```typescript {15-25} copy
+    import { defineRelations } from "drizzle-orm";
+    import * as t from "drizzle-orm/singlestore-core";
+    
+    export const posts = t.singlestoreTable("posts", {
+      id: t.int().primaryKey().autoincrement(),
+      content: t.text().notNull(),
+      authorId: t.int("author_id").notNull(),
+    });
+    
+    export const users = t.singlestoreTable("users", {
+      id: t.int().primaryKey().autoincrement(),
+      name: t.text().notNull(),
+    });
+    
+    export const relations = defineRelations({ users, posts }, (r) => ({
+      posts: {
+        author: r.one.users({
+          from: r.posts.authorId,
+          to: r.users.id,
+        }),
+      },
+      users: {
+        posts: r.many.users(),
+      },
+    }));
+	```
+</CodeTabs>
+
+关系型查询是 Drizzle 原始 **[query builder](/docs/singlestore/select)** 的扩展。
+你需要在 `drizzle()` 初始化时提供 schema 文件/文件中的所有 `tables` 和 `relations`，然后直接使用 `db.query` API。
+<Callout type="info" emoji="ℹ️">
+	`drizzle` 的导入路径取决于你使用的 **[数据库驱动](/docs/singlestore/connect-overview)**。
+</Callout>
+<CodeTabs items={["index.ts", "schema.ts", "relations.ts"]}>
+<CodeTab>
+```ts
+import { relations } from './relations';
+import { drizzle } from 'drizzle-orm/...';
+
+const db = drizzle({ relations });
+
+await db.query.users.findMany(...);
+```
+</CodeTab>
+```typescript copy
+import { type AnyMySqlColumn, boolean, int, singlestoreTable, primaryKey, text, timestamp } from 'drizzle-orm/singlestore-core';
+
+export const users = singlestoreTable('users', {
+	id: int().primaryKey().autoincrement(),
+	name: text().notNull(),
+	invitedBy: int('invited_by').references((): AnyMySqlColumn => users.id),
+});
+
+export const groups = singlestoreTable('groups', {
+	id: int().primaryKey().autoincrement(),
+	name: text().notNull(),
+	description: text(),
+});
+
+export const usersToGroups = singlestoreTable('users_to_groups', {
+	id: int().primaryKey().autoincrement(),
+	userId: int('user_id').notNull().references(() => users.id),
+	groupId: int('group_id').notNull().references(() => groups.id),
+}, (t) => [
+	primaryKey(t.userId, t.groupId)
+]);
+
+export const posts = singlestoreTable('posts', {
+	id: int().primaryKey().autoincrement(),
+	content: text().notNull(),
+	authorId: int('author_id').references(() => users.id),
+	createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+export const comments = singlestoreTable('comments', {
+	id: int().primaryKey().autoincrement(),
+	content: text().notNull(),
+	creator: int().references(() => users.id),
+	postId: int('post_id').references(() => posts.id),
+	createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+export const commentLikes = singlestoreTable('comment_likes', {
+	id: int().primaryKey().autoincrement(),
+	creator: int().references(() => users.id),
+	commentId: int('comment_id').references(() => comments.id),
+	createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+```
+```typescript copy
+import { defineRelations } from 'drizzle-orm';
+import * as schema from './schema';
+
+export const relations = defineRelations(schema, (r) => ({
+    users: {
+      invitee: r.one.users({
+        from: r.users.invitedBy,
+        to: r.users.id,
+      }),
+      groups: r.many.groups({
+        from: r.users.id.through(r.usersToGroups.userId),
+        to: r.groups.id.through(r.usersToGroups.groupId),
+      }),
+      posts: r.many.posts(),
+    },
+    groups: {
+      users: r.many.users(),
+    },
+    posts: {
+      author: r.one.users({
+        from: r.posts.authorId,
+        to: r.users.id,
+      }),
+      comments: r.many.comments(),
+    },
+    comments: {
+      post: r.one.posts({
+        from: r.comments.postId,
+        to: r.posts.id,
+      }),
+      author: r.one.users({
+        from: r.comments.creator,
+        to: r.users.id,
+      }),
+      likes: r.many.commentLikes(),
+    },
+    commentLikes: {
+      comment: r.one.comments({
+        from: r.commentLikes.commentId,
+        to: r.comments.id,
+      }),
+      author: r.one.users({
+        from: r.commentLikes.creator,
+        to: r.users.id,
+      }),
+    },
+  })
+);
+```
+</CodeTabs>
+
+Drizzle 提供 `.findMany()` 和 `.findFirst()` API。
+### 查找多个
+<Section>
+```typescript copy
+const users = await db.query.users.findMany();
+```
+```ts
+// 结果类型
+const result: {
+	id: number;
+	name: string;
+	verified: boolean;
+	invitedBy: number | null;
+}[];
+```
+</Section>
+
+### 查找第一个
+<Callout>
+  `.findFirst()` 会向查询中添加 `limit 1`。
+</Callout>
+<Section>
+```typescript copy
+const user = await db.query.users.findFirst();
+```
+```ts
+// 结果类型
+const result: {
+	id: number;
+	name: string;
+	verified: boolean;
+	invitedBy: number | null;
+};
+```
+</Section>
+
+### 包含关联关系
+
+`With` 操作符允许你将来自多个相关表的数据组合起来，并正确聚合结果。
+
+**获取包含评论的所有帖子：**
+```typescript copy
+const posts = await db.query.posts.findMany({
+	with: {
+		comments: true,
+	},
+});
+```
+
+**获取包含评论的第一条帖子：**
+```typescript copy
+const post = await db.query.posts.findFirst({
+	with: {
+		comments: true,
+	},
+});
+```
+
+你可以根据需要无限制地链式嵌套 `with` 语句。  
+对于任何嵌套的 `with` 查询，Drizzle 都会使用 [Core Type API](/docs/singlestore/goodies#type-api) 推断类型。
+  
+**获取所有带有帖子用户。每个帖子都应包含评论列表：**
+```typescript copy
+const users = await db.query.users.findMany({
+	with: {
+		posts: {
+			with: {
+				comments: true,
+			},
+		},
+	},
+});
+```
+
+### 部分字段选择
+`columns` 参数让你可以包含或省略你想从数据库中获取的列。
+
+<Callout type="info" emoji="ℹ️">
+  Drizzle 在查询层执行部分选择，不会从数据库传输额外的数据。
+
+  请记住，**Drizzle 只会输出一条 SQL 语句。**
+</Callout>
+
+**仅获取所有 posts 的 `id`、`content` 并包含 `comments`：**
+```typescript copy
+const posts = await db.query.posts.findMany({
+	columns: {
+		id: true,
+		content: true,
+	},
+	with: {
+		comments: true,
+	}
+});
+```
+
+**获取所有 posts，但不包含 `content`：**
+```typescript copy
+const posts = await db.query.posts.findMany({
+	columns: {
+		content: false,
+	},
+});
+```
+
+<Callout type="info" emoji="ℹ️">
+当 `true` 和 `false` 选择选项同时存在时，所有 `false` 选项都会被忽略。
+</Callout>
+
+如果你包含 `name` 字段并排除 `id` 字段，`id` 的排除将是多余的，  
+除了 `name` 之外的所有字段本来就都会被排除。  
+  
+**在同一个查询中排除并包含字段：**
+<Section>
+```typescript copy
+const users = await db.query.users.findMany({
+	columns: {
+		name: true,
+		id: false //忽略
+	},
+});
+```
+```ts
+// 结果类型
+const users: {
+	name: string;
+};
+```
+</Section>
+
+**仅包含嵌套关系中的列：**
+<Section>
+```typescript copy
+const res = await db.query.users.findMany({
+	columns: {},
+	with: {
+		posts: true
+	}
+});
+```
+```ts
+// 结果类型
+const res: {
+	posts: {
+		id: number,
+		text: string
+	}
+}[];
+```
+</Section>
+
+### 嵌套部分字段选择
+就像使用 **[`部分选择`](#partial-select)** 一样，你可以包含或排除嵌套关联的列：
+```typescript copy
+const posts = await db.query.posts.findMany({
+	columns: {
+		id: true,
+		content: true,
+	},
+	with: {
+		comments: {
+			columns: {
+				authorId: false
+			}
+		}
+	}
+});
+```
+
+### 选择筛选器
+就像在我们的类似 SQL 的查询构建器中一样，  
+关系查询 API 允许你使用我们的 **[`operators`](/docs/singlestore/operators)** 列表来定义筛选器和条件。  
+
+你可以从 `drizzle-orm` 中导入它们，也可以使用回调语法：
+<Section>
+```typescript copy
+const users = await db.query.users.findMany({
+	where: {
+		id: 1
+	}
+});
+```
+```sql
+select * from users where id = 1
+```
+</Section>
+
+查找 `id=1` 的帖子，以及在特定日期之前创建的评论：
+```typescript copy
+await db.query.posts.findMany({
+  where: {
+    id: 1,
+  },
+  with: {
+    comments: {
+      where: {
+        createdAt: { lt: new Date() },
+      },
+    },
+  },
+});
+```
+
+**所有筛选运算符列表**
+```ts
+where: {
+    OR: [],
+    AND: [],
+    NOT: {},
+    RAW: (table) => sql`${table.id} = 1`,
+
+    // 按关系筛选
+    [relation]: {},
+
+	  // 按列筛选
+    [column]: {
+      OR: [],
+      AND: [],
+      NOT: {},
+      eq: 1,
+      ne: 1,
+      gt: 1,
+      gte: 1,
+      lt: 1,
+      lte: 1,
+      in: [1],
+      notIn: [1],
+      like: "",
+      notLike: "",
+      isNull: true,
+      isNotNull: true,
+    },
+},
+```
+
+**示例**
+<CodeTabs items={["简单相等", "使用 AND", "使用 OR", "使用 NOT", "使用 RAW 的复杂示例"]}>
+<CodeTab>
+```ts
+const response = db.query.users.findMany({
+  where: {
+    age: 15,
+  },
+});
+```
+```sql {3}
+select `users`.`id` as `id`, `users`.`name` as `name`
+from `users` 
+where (`users`.`age` = 15)
+```
+</CodeTab>
+<CodeTab>
+```ts
+const response = db.query.users.findMany({
+  where: {
+    age: 15,
+    name: 'John'
+  },
+});
+```
+```sql {3}
+select `users`.`id` as `id`, `users`.`name` as `name`
+from `users` 
+where (`users`.`age` = 15 and `users`.`name` = 'John')
+```
+</CodeTab>
+<CodeTab>
+```ts
+const response = await db.query.users.findMany({
+  where: {
+    OR: [
+      {
+        id: {
+          gt: 10,
+        },
+      },
+	  {
+		name: {
+          like: "John%",
+        },
+	  }
+    ],
+  },
+});
+```
+```sql {3}
+select `users`.`id` as `id`, `users`.`name` as `name` 
+from `users` 
+where (`users`.`id` > 10 or `users`.`name` like 'John%')
+```
+</CodeTab>
+<CodeTab>
+```ts
+const response = db.query.users.findMany({
+  where: {
+    NOT: {
+      id: {
+        gt: 10,
+      },
+    },
+    name: {
+      like: "John%",
+    },
+  },
+});
+```
+```sql {3}
+select `users`.`id` as `id`, `users`.`name` as `name` 
+from `users` 
+where (not `users`.`id` > 10 and `users`.`name` like 'John%')
+```
+</CodeTab>
+<CodeTab>
+```ts
+// schema.ts
+import { int, json, singlestoreTable, text, timestamp } from "drizzle-orm/singlestore-core";
+
+export const users = singlestoreTable("users", {
+  id: int("id").primaryKey().autoincrement(),
+  name: text("name"),
+  email: text("email").notNull(),
+  age: int("age"),
+  createdAt: timestamp("created_at").defaultNow(),
+  lastLogin: timestamp("last_login"),
+  subscriptionEnd: timestamp("subscription_end"),
+  lastActivity: timestamp("last_activity"),
+  preferences: json("preferences"),        // 用户设置/偏好的 JSON 列
+  interests: text("interests"),            // 以逗号分隔的用户兴趣
+});
+```
+```ts
+const response = db.query.users.findMany({
+  where: {
+    AND: [
+      {
+        OR: [
+          { RAW: (table) => sql`LOWER(${table.name}) LIKE 'john%'` },
+          { name: { like: "jane%" } },
+        ],
+      },
+      {
+        OR: [
+          { RAW: (table) => sql`JSON_EXTRACT(${table.preferences}, '$.theme') = '"dark"'` },
+          { RAW: (table) => sql`JSON_EXTRACT(${table.preferences}, '$.theme') IS NULL` },
+        ],
+      },
+      { RAW: (table) => sql`${table.age} BETWEEN 25 AND 35` },
+    ],
+  },
+});
+```
+```sql
+select `d0`.`id` as `id`, `d0`.`name` as `name`, 
+`d0`.`email` as `email`, `d0`.`age` as `age`, 
+`d0`.`created_at` as `createdAt`, `d0`.`last_login` as `lastLogin`, 
+`d0`.`subscription_end` as `subscriptionEnd`, `d0`.`last_activity` as `lastActivity`, 
+`d0`.`preferences` as `preferences`, `d0`.`interests` as `interests` 
+from `users` as `d0` 
+where ((LOWER(`d0`.`name`) LIKE 'john%' or `d0`.`name` like 'jane%') 
+and (JSON_EXTRACT(`d0`.`preferences`, '$.theme') = '"dark"' or JSON_EXTRACT(`d0`.`preferences`, '$.theme') IS NULL) 
+and `d0`.`age` BETWEEN 25 AND 35)
+```
+</CodeTab>
+</CodeTabs>
+
+### 关系筛选
+
+使用 Drizzle Relations，你不仅可以按正在查询的表进行筛选，还可以按查询中包含的任意表进行筛选。
+
+**示例：** 获取所有 ID>10 且至少有一篇内容以 "M" 开头的帖子用户 `users`
+```ts
+const usersWithPosts = await db.query.usersTable.findMany({
+  where: {
+    id: {
+      gt: 10
+    },
+    posts: {
+      content: {
+        like: 'M%'
+      }
+    }
+  },
+});
+```
+
+**示例：** 获取所有带有帖子 `posts` 的 `users`，仅当用户至少有 1 篇帖子时
+```ts
+const response = db.query.users.findMany({
+  with: {
+    posts: true,
+  },
+  where: {
+    posts: true,
+  },
+});
+```
+
+### Limit & Offset
+Drizzle ORM 为查询以及嵌套实体提供了 `limit` 和 `offset` API。
+  
+**查找 5 篇文章：**
+```typescript copy
+await db.query.posts.findMany({
+	limit: 5,
+});
+```
+
+**查找文章并最多获取 3 条评论：**
+```typescript copy
+await db.query.posts.findMany({
+	with: {
+		comments: {
+			limit: 3,
+		},
+	},
+});
+```
+
+<Callout type="warning" emoji="⚠️">
+  `offset` 现在也可以在 with 表中使用！
+</Callout>
+```typescript 
+await db.query.posts.findMany({
+	limit: 5,
+	offset: 2, // 正确 ✅
+	with: {
+		comments: {
+			offset: 3, // 正确 ✅
+			limit: 3,
+		},
+	},
+});
+```
+
+查找带有评论的文章，第 5 篇到第 10 篇文章：
+```typescript copy
+await db.query.posts.findMany({
+	with: {
+		comments: true,
+	},
+  limit: 5,
+  offset: 5,
+});
+```
+
+### 排序
+Drizzle 为关系型查询构建器提供了排序 API。  
+
+你可以使用相同的排序 **[核心 API](/docs/singlestore/select#order-by)**，也可以在回调中直接使用  
+`order by` 操作符，无需导入。  
+
+<Callout title='重要'>
+当你在同一张表上使用多个 `orderBy` 语句时，它们会按照你添加它们的相同顺序包含在查询中
+</Callout>
+
+<Section>
+```typescript copy
+await db.query.posts.findMany({
+  orderBy: {
+    id: "asc",
+  },
+});
+```
+</Section>
+
+**按 `asc` + `desc` 排序：**
+```typescript copy
+  await db.query.posts.findMany({
+    orderBy: { id: "asc" },
+    with: {
+      comments: {
+        orderBy: { id: "desc" },
+      },
+    },
+  });
+```
+
+你也可以在 order by 语句中使用自定义 `sql`：
+
+```typescript copy
+await db.query.posts.findMany({
+  orderBy: (t) => sql`${t.id} asc`,
+  with: {
+    comments: {
+      orderBy: (t, { desc }) => desc(t.id),
+    },
+  },
+});
+```
+
+### 包含自定义字段
+关系查询 API 允许你添加额外的自定义字段。 
+当你需要检索数据并对其应用额外函数时，这会非常有用。
+<Callout type="warning" emoji="⚠️">
+	截至目前，`extras` 中不支持聚合，请使用 **[`core queries`](/docs/singlestore/select)** 来实现。
+</Callout>
+
+<Section>
+```typescript copy {5}
+import { sql } from 'drizzle-orm';
+
+await db.query.users.findMany({
+	extras: {
+		loweredName: sql`lower(${users.name})`,
+	},
+})
+```
+```typescript copy {3}
+await db.query.users.findMany({
+	extras: {
+		loweredName: (users, { sql }) => sql`lower(${users.name})`,
+	},
+})
+```
+</Section>
+
+`lowerName` 作为键将被包含在返回对象的所有字段中。
+
+<Callout type="warning" emoji="⚠️">
+  如果你为任何 extras 字段指定 `.as("<alias>")` - drizzle 将会忽略它
+</Callout>
+
+要检索所有带有分组的用户，并包含 fullName 字段（它是 firstName 和 lastName 的拼接），
+你可以使用 Drizzle 关系查询构建器执行以下查询。
+
+<Section>
+```typescript copy
+const res = await db.query.users.findMany({
+	extras: {
+		fullName: (users, { sql }) => sql<string>`concat(${users.name}, " ", ${users.name})`,
+	},
+	with: {
+		usersToGroups: {
+			with: {
+				group: true,
+			},
+		},
+	},
+});
+```
+```ts
+// 结果类型
+const res: {
+	id: number;
+	name: string;
+	verified: boolean;
+	invitedBy: number | null;
+	fullName: string;
+	usersToGroups: {
+			group: {
+					id: number;
+					name: string;
+					description: string | null;
+			};
+	}[];
+}[];
+
+```
+</Section>
+
+要检索所有带有评论的帖子，并添加一个额外字段来计算帖子内容的大小以及每条评论内容的大小：
+<Section>
+```typescript copy
+const res = await db.query.posts.findMany({
+	extras: {
+		contentLength: (table, { sql }) => sql<number>`length(${table.content})`,
+	},
+	with: {
+		comments: {
+			extras: {
+				commentSize: (table, { sql }) => sql<number>`length(${table.content})`,
+			},
+		},
+	},
+});
+```
+```ts
+// 结果类型
+const res: {
+	id: number;
+	createdAt: Date;
+	content: string;
+	authorId: number | null;
+	contentLength: number;
+	comments: {
+			id: number;
+			createdAt: Date;
+			content: string;
+			creator: number | null;
+			postId: number | null;
+			commentSize: number;
+	}[];
+};
+```
+</Section>
+
+### 包含子查询
+
+你也可以在关系查询中使用子查询，以利用自定义 SQL 语法的强大功能
+
+**获取包含帖子及每个用户帖子总数的用户**
+```ts
+import { posts } from './schema';
+import { eq } from 'drizzle-orm';
+
+await db.query.users.findMany({
+  with: {
+    posts: true
+  },
+  extras: {
+    totalPostsCount: (table) => db.$count(posts, eq(posts.authorId, table.id)),
+  }
+});
+```
+```sql
+select `d0`.`id` as `id`, `d0`.`name` as `name`,
+((select coalesce(json_arrayagg(json_object('id', `d1`.`id`, 'content', `d1`.`content`, 'authorId', `d1`.`author_id`)), json_array())
+  from `posts` as `d1` where `d0`.`id` = `d1`.`author_id`)) as `posts`,
+((select count(*) from `posts` where `posts`.`author_id` = `d0`.`id`)) as `totalPostsCount`
+from `users` as `d0`
+```
+
+### 预处理语句
+预处理语句旨在大幅提升查询性能——[请看这里。](/docs/singlestore/perf-queries)
+
+在本节中，你可以学习如何定义占位符，并使用 Drizzle 关系型查询构建器执行预处理语句。

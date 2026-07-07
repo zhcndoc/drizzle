@@ -1,0 +1,322 @@
+---
+title: "使用 Vercel Postgres 的 Drizzle"
+date: "2024-06-09"
+svgs: ['<svg width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="9.63139" height="40.8516" rx="4.8157" transform="matrix(0.873028 0.48767 -0.497212 0.867629 43.4805 67.3037)" fill="currentColor"></rect><rect width="9.63139" height="40.8516" rx="4.8157" transform="matrix(0.873028 0.48767 -0.497212 0.867629 76.9395 46.5342)" fill="currentColor"></rect><rect width="9.63139" height="40.8516" rx="4.8157" transform="matrix(0.873028 0.48767 -0.497212 0.867629 128.424 46.5352)" fill="currentColor"></rect><rect width="9.63139" height="40.8516" rx="4.8157" transform="matrix(0.873028 0.48767 -0.497212 0.867629 94.957 67.3037)" fill="currentColor"></rect></svg>', <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 5L4 19H20L12 5Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>]
+---
+
+import Prerequisites from "@mdx/Prerequisites.astro";
+import Npm from '@mdx/Npm.astro';
+import Steps from '@mdx/Steps.astro';
+import Section from "@mdx/Section.astro";
+import Callout from '@mdx/Callout.astro';
+
+本教程演示如何使用 Drizzle ORM 结合 [Vercel Postgres](https://vercel.com/docs/storage/vercel-postgres)。Vercel Postgres 是一个无服务器 SQL 数据库，旨在与 Vercel Functions 和您的前端框架集成。
+
+<Prerequisites>
+- 您应该已安装 Drizzle ORM 和 [Drizzle kit](/docs/kit-overview)。您可以通过运行以下命令来做到这一点：
+<Npm>
+  drizzle-orm@rc
+  -D drizzle-kit@rc
+</Npm>
+
+- 您应该已安装 `dotenv` 包以管理环境变量。有关此包的更多信息，请阅读 [这里](https://www.npmjs.com/package/dotenv)
+<Npm>
+  dotenv
+</Npm>
+
+- 您应该已安装 `@vercel/postgres` 包。有关此包的更多信息，请阅读 [这里](https://www.npmjs.com/package/@vercel/postgres)
+<Npm>
+  @vercel/postgres
+</Npm>  
+</Prerequisites>
+
+查看 [Vercel 文档](https://vercel.com/docs/storage/vercel-postgres/using-an-orm#drizzle)，了解如何使用 Drizzle ORM 连接到数据库。
+
+## 设置 Vercel Postgres 和 Drizzle ORM
+
+<Steps>
+#### 创建新的 Vercel Postgres 数据库
+
+您可以在 [控制面板](https://vercel.com/dashboard) 中创建新的 Vercel Postgres 数据库。
+
+请查阅 Vercel Postgres [文档](https://vercel.com/docs/storage/vercel-postgres/quickstart) 以了解如何创建新的数据库。
+
+#### 设置连接字符串变量
+
+导航至您的 Vercel Postgres 数据库并从 `.env.local` 部分复制 `POSTGRES_URL`。
+
+将 `POSTGRES_URL` 添加到您的 `.env.local` 或 `.env` 文件中。
+
+```plaintext copy
+POSTGRES_URL=<YOUR_DATABASE_URL>
+```
+
+#### 将 Drizzle ORM 连接到您的数据库
+
+在 `src/db` 目录中创建一个 `index.ts` 文件，并设置您的数据库配置：
+
+```typescript copy filename="src/db/index.ts"
+import { drizzle } from 'drizzle-orm/vercel-postgres';
+import { config } from 'dotenv';
+
+config({ path: '.env.local' }); // 或 .env
+
+export const db = drizzle();
+
+```
+
+#### 创建表
+
+在 `src/db` 目录中创建一个 `schema.ts` 文件，并声明您的表：
+
+```typescript copy filename="src/db/schema.ts"
+import { integer, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
+
+export const usersTable = pgTable('users_table', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  age: integer('age').notNull(),
+  email: text('email').notNull().unique(),
+});
+
+export const postsTable = pgTable('posts_table', {
+  id: serial('id').primaryKey(),
+  title: text('title').notNull(),
+  content: text('content').notNull(),
+  userId: integer('user_id')
+    .notNull()
+    .references(() => usersTable.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at')
+    .notNull()
+    .$onUpdate(() => new Date()),
+});
+
+export type InsertUser = typeof usersTable.$inferInsert;
+export type SelectUser = typeof usersTable.$inferSelect;
+
+export type InsertPost = typeof postsTable.$inferInsert;
+export type SelectPost = typeof postsTable.$inferSelect;
+```
+
+#### 设置 Drizzle 配置文件
+
+**Drizzle 配置** - 这是由 [Drizzle Kit](/docs/kit-overview) 使用的配置文件，包含有关您的数据库连接、迁移文件夹和模式文件的所有信息。
+
+在项目根目录中创建一个 `drizzle.config.ts` 文件，并添加以下内容：
+
+```typescript copy filename="drizzle.config.ts"
+import { config } from 'dotenv';
+import { defineConfig } from 'drizzle-kit';
+
+config({ path: '.env.local' });
+
+export default defineConfig({
+  schema: './src/db/schema.ts',
+  out: './migrations',
+  dialect: 'postgresql',
+  dbCredentials: {
+    url: process.env.POSTGRES_URL!,
+  },
+});
+```
+
+#### 将更改应用于数据库
+
+您可以使用 `drizzle-kit generate` 命令生成迁移，然后使用 `drizzle-kit migrate` 命令运行它们。
+
+生成迁移：
+
+```bash copy
+npx drizzle-kit generate
+```
+
+这些迁移存储在 `drizzle/migrations` 目录中，如您在 `drizzle.config.ts` 中指定的那样。该目录将包含更新您的数据库架构所需的 SQL 文件以及一个 `meta` 文件夹，用于存储不同迁移阶段的架构快照。
+
+生成迁移的示例：
+
+```sql
+CREATE TABLE IF NOT EXISTS "posts_table" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"title" text NOT NULL,
+	"content" text NOT NULL,
+	"user_id" integer NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "users_table" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"name" text NOT NULL,
+	"age" integer NOT NULL,
+	"email" text NOT NULL,
+	CONSTRAINT "users_table_email_unique" UNIQUE("email")
+);
+--> statement-breakpoint
+DO $$ BEGIN
+ ALTER TABLE "posts_table" ADD CONSTRAINT "posts_table_user_id_users_table_id_fk" FOREIGN KEY ("user_id") REFERENCES "users_table"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+```
+
+运行迁移：
+
+```bash copy
+npx drizzle-kit migrate
+```
+
+或者，您可以使用 [Drizzle kit push 命令](/docs/kit-overview#prototyping-with-db-push) 直接将更改推送到数据库：
+
+```bash copy
+npx drizzle-kit push
+```
+
+<Callout type="warning">Push 命令适用于需要快速测试新架构设计或在本地开发环境中进行更改的情况，允许快速迭代，而无需管理迁移文件的开销。</Callout>
+
+</Steps>
+
+## 基本文件结构
+
+这是项目的基本文件结构。在 `src/db` 目录中，我们有与数据库相关的文件，包括在 `index.ts` 中的连接和在 `schema.ts` 中的模式定义。
+
+```plaintext
+📦 <project root>
+ ├ 📂 src
+ │   ├ 📂 db
+ │   │  ├ 📜 index.ts
+ │   │  └ 📜 schema.ts
+ ├ 📂 migrations
+ │   ├ 📂 meta
+ │   │  ├ 📜 _journal.json
+ │   │  └ 📜 0000_snapshot.json
+ │   └ 📜 0000_watery_spencer_smythe.sql
+ ├ 📜 .env.local
+ ├ 📜 drizzle.config.ts
+ ├ 📜 package.json
+ └ 📜 tsconfig.json
+```
+
+## 查询示例
+
+例如，我们创建 `src/db/queries` 文件夹，并为每个操作分开文件：插入、选择、更新、删除。
+
+#### 插入数据
+
+有关插入查询的更多信息，请参阅 [文档](/docs/insert)。
+
+```typescript copy filename="src/db/queries/insert.ts" {4, 8}
+import { db } from '../index';
+import { InsertPost, InsertUser, postsTable, usersTable } from '../schema';
+
+export async function createUser(data: InsertUser) {
+  await db.insert(usersTable).values(data);
+}
+
+export async function createPost(data: InsertPost) {
+  await db.insert(postsTable).values(data);
+}
+```
+
+#### 选择数据
+
+有关选择查询的更多信息，请参阅 [文档](/docs/select)。
+
+<Callout type='warning'>
+`getColumns` available starting from `drizzle-orm@1.0.0-beta.2`(read more [here](/docs/upgrade-v1))
+
+If you are on pre-1 version(like `0.45.1`) then use `getTableColumns`
+</Callout>
+
+```typescript copy filename="src/db/queries/select.ts" {5, 16, 41}
+import { asc, between, count, eq, getColumns, sql } from 'drizzle-orm';
+import { db } from '../index';
+import { SelectUser, postsTable, usersTable } from '../schema';
+
+export async function getUserById(id: SelectUser['id']): Promise<
+  Array<{
+    id: number;
+    name: string;
+    age: number;
+    email: string;
+  }>
+> {
+  return db.select().from(usersTable).where(eq(usersTable.id, id));
+}
+
+export async function getUsersWithPostsCount(
+  page = 1,
+  pageSize = 5,
+): Promise<
+  Array<{
+    postsCount: number;
+    id: number;
+    name: string;
+    age: number;
+    email: string;
+  }>
+> {
+  return db
+    .select({
+      ...getColumns(usersTable),
+      postsCount: count(postsTable.id),
+    })
+    .from(usersTable)
+    .leftJoin(postsTable, eq(usersTable.id, postsTable.userId))
+    .groupBy(usersTable.id)
+    .orderBy(asc(usersTable.id))
+    .limit(pageSize)
+    .offset((page - 1) * pageSize);
+}
+
+export async function getPostsForLast24Hours(
+  page = 1,
+  pageSize = 5,
+): Promise<
+  Array<{
+    id: number;
+    title: string;
+  }>
+> {
+  return db
+    .select({
+      id: postsTable.id,
+      title: postsTable.title,
+    })
+    .from(postsTable)
+    .where(between(postsTable.createdAt, sql`now() - interval '1 day'`, sql`now()`))
+    .orderBy(asc(postsTable.title), asc(postsTable.id))
+    .limit(pageSize)
+    .offset((page - 1) * pageSize);
+}
+```
+
+或者，您可以使用 [关系查询语法](/docs/rqb)。
+
+#### 更新数据
+
+有关更新查询的更多信息，请参阅 [文档](/docs/update)。
+
+```typescript copy filename="src/db/queries/update.ts" {5}
+import { eq } from 'drizzle-orm';
+import { db } from '../index';
+import { SelectPost, postsTable } from '../schema';
+
+export async function updatePost(id: SelectPost['id'], data: Partial<Omit<SelectPost, 'id'>>) {
+  await db.update(postsTable).set(data).where(eq(postsTable.id, id));
+}
+```
+
+#### 删除数据
+
+有关删除查询的更多信息，请参阅 [文档](/docs/delete)。
+
+```typescript copy filename="src/db/queries/delete.ts" {5}
+import { eq } from 'drizzle-orm';
+import { db } from '../index';
+import { SelectUser, usersTable } from '../schema';
+
+export async function deleteUser(id: SelectUser['id']) {
+  await db.delete(usersTable).where(eq(usersTable.id, id));
+}
+```

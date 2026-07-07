@@ -1,0 +1,121 @@
+import Npm from "@mdx/Npm.astro";
+import Callout from '@mdx/Callout.astro';
+import Steps from '@mdx/Steps.astro';
+import AnchorCards from '@mdx/AnchorCards.astro';
+import Prerequisites from "@mdx/Prerequisites.astro";
+import Section from "@mdx/Section.astro";
+
+# Drizzle HTTP 代理
+
+<Prerequisites>
+- 使用 Drizzle 的数据库[连接基础](/docs/mysql/connect-overview)
+</Prerequisites>
+
+HTTP 代理如何工作，以及为什么你可能需要它
+
+Drizzle Proxy 用于你需要实现自己与数据库的驱动通信时。 
+它可以用于多种场景，例如在现有驱动的查询阶段添加自定义逻辑。 
+最常见的用法是与 HTTP 驱动配合使用，它会将查询发送到你服务器上的数据库，执行查询， 
+并返回原始数据，之后 Drizzle ORM 可以将这些数据映射为结果
+
+<Callout collapsed="底层是如何工作的？">
+```                                  
+┌───────────────────────────┐                 ┌─────────────────────────────┐              
+│       Drizzle ORM         │                 │  带数据库的 HTTP 服务器        │             
+└─┬─────────────────────────┘                 └─────────────────────────┬───┘             
+  │                                                ^                    │
+  │-- 1. 构建查询         2. 发送构建好的查询 --│                    │
+  │                                                │                    │
+  │              ┌───────────────────────────┐     │                    │
+  └─────────────>│                           │─────┘                    │ 
+                 │      HTTP 代理驱动         │                          │
+  ┌──────────────│                           │<─────────────┬───────────┘
+  │              └───────────────────────────┘              │
+  │                                                  3. 执行查询 + 将原始结果返回
+  │-- 4. 映射数据并返回        
+  │                   
+  v
+```
+</Callout>
+
+Drizzle ORM 也支持仅使用异步回调函数来执行 SQL。
+
+- `sql` 是带占位符的查询字符串。
+- `params` 是参数数组。
+- 根据 SQL 语句，`method` 将被设置为以下值之一 - `all`、`execute`。
+
+Drizzle 始终等待返回值为 `{rows: string[][]}` 或 `{rows: string[]}`。
+
+- 当 `method` 为 `execute` 时，你应该返回 `{rows: string[]}`。
+- 否则，你应该返回 `{rows: string[][]}`。
+
+<br/>
+
+<Section>
+```typescript copy
+// 驱动实现示例
+import { drizzle } from 'drizzle-orm/mysql-proxy';
+import axios from "axios";
+
+const db = drizzle(async (sql, params, method) => {
+  try {
+    const rows = await axios.post('http://localhost:3000/query', { sql, params, method });
+
+    return { rows: rows.data };
+  } catch (e: any) {
+    console.error('来自 mysql 代理服务器的错误：', e.response.data)
+    return { rows: [] };
+  }
+});
+```
+```ts
+// 服务器实现示例
+import * as mysql from 'mysql2/promise';
+import express from 'express';
+
+const app = express();
+
+app.use(express.json());
+const port = 3000;
+
+const main = async () => {
+    const connection = await mysql.createConnection('mysql://root:mysql@127.0.0.1:5432/drizzle');
+
+    app.post('/query', async (req, res) => {
+      const { sql, params, method } = req.body;
+
+      // 防止多条查询
+      const sqlBody = sql.replace(/;/g, '');
+
+      try {
+            const result = await connection.query({
+                sql: sqlBody,
+                values: params,
+                rowsAsArray: method === 'all',
+                typeCast: function(field: any, next: any) {
+                    if (field.type === 'TIMESTAMP' || field.type === 'DATETIME' || field.type === 'DATE') {
+                        return field.string();
+                    }
+                    return next();
+                },
+            });
+      } catch (e: any) {
+        res.status(500).json({ error: e });
+      }
+
+      if (method === 'all') {
+        res.send(result[0]);
+      } else if (method === 'execute') {
+        res.send(result);
+      }
+      res.status(500).json({ error: '未知的方法值' });
+    });
+
+    app.listen(port, () => {
+      console.log(`示例应用正在端口 ${port} 上监听`);
+    });
+}
+
+main();
+```
+</Section>

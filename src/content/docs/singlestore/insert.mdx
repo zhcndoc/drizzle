@@ -1,0 +1,159 @@
+import Section from '@mdx/Section.astro';
+import Callout from '@mdx/Callout.astro';
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
+
+# SQL 插入
+Drizzle ORM 为你提供了最接近 SQL 的方式将行插入到数据库表中。
+
+使用 Drizzle 插入数据非常直接，而且很像 SQL。你可以自己看看：
+
+<Section>
+```typescript copy 
+await db.insert(users).values({ name: 'Andrew' });
+```
+```sql
+insert into `users` (`name`) values ('Andrew');
+```
+</Section>
+
+如果你需要某个特定表的插入类型，可以使用 `typeof usersTable.$inferInsert` 语法。 
+```typescript copy 
+type NewUser = typeof users.$inferInsert;
+
+const insertUser = async (user: NewUser) => {
+  return db.insert(users).values(user);
+}
+
+const newUser: NewUser = { name: "Alef" };
+await insertUser(newUser);
+```
+
+## $returningId
+SingleStore 在使用 `INSERT` 后不原生支持 `RETURNING`。只有一种方式可以在 `primary keys` 使用 `autoincrement`（或 `serial`）类型时实现这一点，在这种情况下，你可以访问 `insertId` 和 `affectedRows` 字段。我们为你准备了一种自动化方式来处理这类情况，使用 Drizzle 时可以自动接收所有插入的 ID，并将其作为独立对象返回
+
+```ts
+import { boolean, int, text, singlestoreTable } from 'drizzle-orm/singlestore-core';
+
+const usersTable = singlestoreTable('users', {
+  id: int('id').primaryKey(),
+  name: text('name').notNull(),
+  verified: boolean('verified').notNull().default(false),
+});
+
+
+const result = await db.insert(usersTable).values([{ name: 'John' }, { name: 'John1' }]).$returningId();
+//    ^? { id: number }[]
+```
+
+此外，使用 Drizzle 时，你还可以通过 `$default` 函数为 `primary key` 指定一个在运行时生成自定义主键的方式。我们也会在 `$returningId()` 调用中为你返回这些生成的键
+
+```ts
+import { varchar, text, singlestoreTable } from 'drizzle-orm/singlestore-core';
+import { createId } from '@paralleldrive/cuid2';
+
+const usersTableDefFn = singlestoreTable('users_default_fn', {
+  customId: varchar('id', { length: 256 }).primaryKey().$defaultFn(createId),
+  name: text('name').notNull(),
+});
+
+
+const result = await db.insert(usersTableDefFn).values([{ name: 'John' }, { name: 'John1' }]).$returningId();
+//  ^? { customId: string }[]
+```
+
+> 如果没有主键 -> 对于此类查询，类型将是 `{}[]`
+
+## 插入多行
+```typescript copy
+await db.insert(users).values([{ name: 'Andrew' }, { name: 'Dan' }]);
+```
+
+## Upserts 和冲突
+Drizzle ORM 为处理 upsert 和冲突提供了简单的接口。
+
+### 重复键更新
+SingleStore 支持 [`ON DUPLICATE KEY UPDATE`](https://dev.mysql.com/doc/refman/8.0/en/insert-on-duplicate.html) 而不是 `ON CONFLICT` 子句。SingleStore 会根据主键和唯一索引自动确定冲突目标，并且如果 *任何* 唯一索引发生冲突，就会更新该行。
+
+Drizzle 通过 `onDuplicateKeyUpdate` 方法支持这一点：
+
+```typescript
+// 注意 SingleStore 会根据主键和唯一索引自动确定目标
+await db.insert(users)
+  .values({ id: 1, name: 'John' })
+  .onDuplicateKeyUpdate({ set: { name: 'John' } });
+```
+
+虽然 SingleStore 不直接支持在冲突时什么都不做，但你可以通过将任意列的值设置为其自身来执行一个空操作，并达到相同效果：
+
+```typescript
+import { sql } from 'drizzle-orm';
+
+await db.insert(users)
+  .values({ id: 1, name: 'John' })
+  .onDuplicateKeyUpdate({ set: { id: sql`id` } });
+```
+
+## 插入到 ... 选择
+
+由于 SingleStore 文档遵循与 MySQL 兼容的 `INSERT ... SELECT` 行为：
+
+<Callout>
+使用 INSERT ... SELECT，你可以快速将 SELECT 语句的结果中的多行插入到表中，该 SELECT 可以从一个或多个表中选择数据
+</Callout>
+
+Drizzle 支持所有方言的当前语法，并且它们都共享相同的语法。让我们回顾一些常见场景和 API 用法。 
+在插入语句中使用 select 有几种方式，允许你选择自己偏好的方法：
+
+- 你可以在 select 函数中传入一个 query builder。
+- 你可以在回调中使用一个 query builder。
+- 你可以传入一个 SQL 模板标签，并使用你想要的任意自定义 select 查询
+
+
+<Tabs items={["Query Builder", "Callback", "SQL template tag"]}>
+<Tab>
+<Section>
+```ts
+const insertedEmployees = await db
+  .insert(employees)
+  .select(
+    db.select({ name: users.name }).from(users).where(eq(users.role, 'employee'))
+  );
+```
+```ts
+const qb = new QueryBuilder();
+await db.insert(employees).select(
+    qb.select({ name: users.name }).from(users).where(eq(users.role, 'employee'))
+);
+```
+</Section>
+</Tab>
+<Tab>
+<Section>
+```ts
+await db.insert(employees).select(
+    () => db.select({ name: users.name }).from(users).where(eq(users.role, 'employee'))
+);
+```
+```ts
+await db.insert(employees).select(
+    (qb) => qb.select({ name: users.name }).from(users).where(eq(users.role, 'employee'))
+);
+```
+</Section>
+</Tab>
+<Tab>
+<Section>
+```ts
+await db.insert(employees).select(
+    sql`select users.name as name from users where users.role = 'employee'`
+);
+```
+```ts
+await db.insert(employees).select(
+    () => sql`select users.name as name from users where users.role = 'employee'`
+);
+```
+</Section>
+</Tab>
+</Tabs>

@@ -1,0 +1,49 @@
+import Npm from "@mdx/Npm.astro";
+import Callout from '@mdx/Callout.astro';
+import AnchorCards from '@mdx/AnchorCards.astro';
+import Steps from '@mdx/Steps.astro';
+import WhatsNextPostgres from "@mdx/WhatsNextPostgres.astro";
+import Prerequisites from "@mdx/Prerequisites.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+
+# Drizzle \<\> Bun SQL
+
+<Prerequisites>
+- 数据库 [连接基础](/docs/connect-overview) 与 Drizzle
+- Bun - [网站](https://bun.zhcndoc.com)
+- Bun SQL - 用于处理 PostgreSQL 数据库的原生绑定 - [在这里阅读](https://bun.zhcndoc.com/runtime/sql)
+</Prerequisites>
+
+根据 **[官方网站](https://bun.zhcndoc.com/)**，Bun 是一个快速的全功能 JavaScript 运行时。
+
+Drizzle ORM 原生支持 **[`bun sql`](https://bun.zhcndoc.com/runtime/sql)** 模块，速度非常快 🚀
+
+#### 步骤 1 - 安装软件包
+<Npm>
+ drizzle-orm@rc
+ -D drizzle-kit@rc
+</Npm>
+
+#### 步骤 2 - 初始化驱动程序并进行查询
+```typescript copy
+import 'dotenv/config';
+import { drizzle } from 'drizzle-orm/bun-sql';
+
+const db = drizzle(process.env.DATABASE_URL);
+
+const result = await db.select().from(...);
+```
+
+如果您需要提供现有的驱动程序：
+```typescript copy
+import 'dotenv/config';
+import { drizzle } from 'drizzle-orm/bun-sql';
+import { SQL } from 'bun';
+
+const client = new SQL(process.env.DATABASE_URL!);
+const db = drizzle({ client });
+```
+
+#### 接下来是什么？
+
+<WhatsNextPostgres/>

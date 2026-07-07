@@ -1,0 +1,405 @@
+import Callout from '@mdx/Callout.astro';
+import Section from '@mdx/Section.astro';
+
+# 索引与约束
+
+## 约束
+
+SQL 约束是对表列强制执行的规则。它们用于防止无效数据被插入到数据库中。
+
+这能确保数据库中数据的准确性和可靠性。
+
+### 默认值
+
+`DEFAULT` 子句指定当用户在执行 `INSERT` 时没有提供值时，该列要使用的默认值。  
+如果列定义中没有显式附加 `DEFAULT` 子句，那么该列的默认值就是 `NULL`。
+
+显式的 `DEFAULT` 子句可以指定默认值为 `NULL`、字符串常量、blob 常量、有符号数字，或任何用括号括起的常量表达式。
+
+<Section>
+    ```typescript
+    import { sql } from "drizzle-orm";
+    import { integer, uuid, pgTable } from "drizzle-orm/pg-core";
+
+    export const table = pgTable('table', {
+      integer1: integer().default(42),
+      integer2: integer().default(sql`24`),
+      uuid1: uuid().defaultRandom(),
+      uuid2: uuid().default(sql`gen_random_uuid()`),
+    });
+    ```
+
+    ```sql
+    CREATE TABLE "table" (
+      "integer1" integer DEFAULT 42,
+      "integer2" integer DEFAULT 24,
+      "uuid1" uuid DEFAULT gen_random_uuid(),
+      "uuid2" uuid DEFAULT gen_random_uuid()
+    );
+    ```
+    </Section>
+
+### 非空
+
+默认情况下，列可以包含 **NULL** 值。`NOT NULL` 约束会强制列 **不** 接受 **NULL** 值。  
+
+这会强制字段始终包含一个值，这意味着你不能在不为该字段添加值的情况下插入新记录，
+或更新记录。
+
+<Section>
+      ```typescript copy
+      import { integer, pgTable } from "drizzle-orm/pg-core";
+
+      export const table = pgTable('table', {
+        integer: integer().notNull(),
+      });
+      ```
+
+      ```sql
+      CREATE TABLE "table" (
+        "integer" integer NOT NULL
+      );
+      ```
+    </Section>
+
+### 唯一
+
+`UNIQUE` 约束确保列中的所有值都不同。  
+
+`UNIQUE` 和 `PRIMARY KEY` 约束都能保证某一列或某些列组合的唯一性。
+
+`PRIMARY KEY` 约束会自动带有 `UNIQUE` 约束。  
+
+<Callout type="info" emoji="ℹ️">
+  每个表可以有多个 `UNIQUE` 约束，但每个表只能有一个 `PRIMARY KEY` 约束。
+</Callout>
+
+<Section>
+      ```typescript copy
+      import { integer, text, unique, pgTable } from "drizzle-orm/pg-core";
+
+      export const user = pgTable('user', {
+        id: integer().unique(),
+      });
+
+      export const table = pgTable('table', {
+        id: integer().unique('custom_name'),
+      });
+
+      export const composite = pgTable('composite_example', {
+        id: integer(),
+        name: text(),
+      }, (t) => [
+        unique().on(t.id, t.name),
+        unique('custom_name').on(t.id, t.name)
+      ]);
+
+      // 在 Postgres 15.0+ 中可使用 NULLS NOT DISTINCT
+      // 此示例展示了两种可用用法
+	export const userNulls = pgTable("user_nulls_example", {
+		id: integer(),
+		id2: integer().unique("custom_name", { nulls: "not distinct" }),
+	}, (t) => [
+		unique().on(t.id).nullsNotDistinct()
+	]);
+      ```
+
+      ```sql
+	CREATE TABLE "user" (
+		"id" integer UNIQUE
+	);
+
+	CREATE TABLE "table" (
+		"id" integer CONSTRAINT "custom_name" UNIQUE
+	);
+	
+	CREATE TABLE "composite_example" (
+		"id" integer,
+		"name" text,
+		CONSTRAINT "composite_example_id_name_unique" UNIQUE("id","name"),
+		CONSTRAINT "custom_name" UNIQUE("id","name")
+	);
+
+	CREATE TABLE "user_nulls_example" (
+		"id" integer UNIQUE NULLS NOT DISTINCT,
+		"id2" integer CONSTRAINT "custom_name" UNIQUE NULLS NOT DISTINCT
+	);
+      ```
+    </Section>
+
+### 检查
+
+`CHECK` 约束用于限制可以放入列中的值范围。
+
+如果你在列上定义 `CHECK` 约束，它将只允许该列使用某些特定值。  
+
+如果你在表上定义 `CHECK` 约束，它可以根据行中其他列的值来限制某些列中的值。
+
+<Section>
+      ```typescript copy
+      import { sql } from "drizzle-orm";
+      import { check, integer, pgTable, text, uuid } from "drizzle-orm/pg-core";
+
+      export const users = pgTable(
+        "users",
+        {
+          id: uuid().defaultRandom().primaryKey(),
+          username: text().notNull(),
+          age: integer(),
+        },
+        (table) => [
+          check("age_check1", sql`${table.age} > 21`),
+        ]
+      );
+      ```
+      ```sql
+	  CREATE TABLE "users" (
+		"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+		"username" text NOT NULL,
+		"age" integer,
+		CONSTRAINT "age_check1" CHECK ("age" > 21)
+	  );
+      ```
+    </Section>
+
+### 主键
+
+`PRIMARY KEY` 约束可唯一标识表中的每条记录。  
+主键必须包含 **UNIQUE** 值，并且不能包含 **NULL** 值。  
+
+一个表只能有 **一个** 主键；并且在表中，这个主键可以由单个列或多个列（字段）组成。
+
+<Section>
+      ```typescript copy
+      import { serial, text, pgTable } from "drizzle-orm/pg-core";
+
+      export const user = pgTable('user', {
+        id: serial('id').primaryKey(),
+      });
+
+      export const table = pgTable('table', {
+        id: text('cuid').primaryKey(),
+      });
+      ```
+
+      ```sql
+	  CREATE TABLE "user" (
+		"id" serial PRIMARY KEY
+	  );
+
+	  CREATE TABLE "table" (
+		"cuid" text PRIMARY KEY
+	  );
+      ```
+    </Section>
+
+### 复合主键
+
+与 `PRIMARY KEY` 类似，复合主键通过使用多个字段来唯一标识表中的每条记录。
+
+Drizzle ORM 为此提供了一个独立的 `primaryKey` 操作符：
+
+<Section>
+      ```typescript copy {17,19}
+      import { serial, text, integer, primaryKey, pgTable } from "drizzle-orm/pg-core";
+
+      export const user = pgTable("user", {
+        id: serial("id").primaryKey(),
+        name: text("name"),
+      });
+
+      export const book = pgTable("book", {
+        id: serial("id").primaryKey(),
+        name: text("name"),
+      });
+
+      export const booksToAuthors = pgTable("books_to_authors", {
+        authorId: integer("author_id"),
+        bookId: integer("book_id"),
+      }, (table) => [
+        primaryKey({ columns: [table.bookId, table.authorId] }),
+        // 或使用自定义名称的主键
+        primaryKey({ name: 'custom_name', columns: [table.bookId, table.authorId] }),
+      ]);
+      ```
+
+      ```sql {6,9}
+      ...
+
+      CREATE TABLE "books_to_authors" (
+        "author_id" integer,
+        "book_id" integer,
+        PRIMARY KEY("book_id","author_id")
+      );
+
+      ALTER TABLE "books_to_authors" ADD CONSTRAINT "custom_name" PRIMARY KEY("book_id","author_id");
+      ```
+    </Section>
+
+### 外键
+
+`FOREIGN KEY` 约束用于防止会破坏表之间关联的操作。  
+`FOREIGN KEY` 是一个表中的字段（或字段集合），它引用另一个表中的 `PRIMARY KEY`。  
+包含外键的表称为子表，而包含主键的表称为被引用表或父表。
+
+Drizzle ORM 提供了多种声明外键的方式。
+你可以在列声明语句中声明它们：
+
+	```typescript copy {11}
+	import { serial, text, integer, pgTable } from "drizzle-orm/pg-core";
+
+	export const user = pgTable("user", {
+		id: serial("id"),
+		name: text("name"),
+	});
+
+	export const book = pgTable("book", {
+		id: serial("id"),
+		name: text("name"),
+		authorId: integer("author_id").references(() => user.id)
+	});
+	```
+	```sql {12}
+	CREATE TABLE "user" (
+		"id" serial,
+		"name" text
+	);
+
+	CREATE TABLE "book" (
+		"id" serial,
+		"name" text,
+		"author_id" integer
+	);
+
+	ALTER TABLE "book" ADD CONSTRAINT "book_author_id_user_id_fkey" FOREIGN KEY ("author_id") REFERENCES "user"("id");
+	```
+
+
+
+如果你想进行自引用，由于 TypeScript 的限制，你需要显式
+为引用回调设置返回类型，或者使用独立的 `foreignKey` 操作符。
+
+	```typescript copy {6,16-18}
+    import { serial, text, integer, foreignKey, pgTable, type AnyPgColumn } from "drizzle-orm/pg-core";
+
+    export const user = pgTable("user", {
+      id: serial("id"),
+      name: text("name"),
+      parentId: integer("parent_id").references((): AnyPgColumn => user.id)
+    });
+
+    // 或者
+    export const user = pgTable("user", {
+      id: serial("id"),
+      name: text("name"),
+      parentId: integer("parent_id"),
+    }, (table) => [
+      foreignKey({
+        columns: [table.parentId],
+        foreignColumns: [table.id],
+        name: "custom_fk"
+      })
+    ]);
+    ```
+	```sql {7}
+	CREATE TABLE "user" (
+		"id" serial,
+		"name" text,
+		"parent_id" integer
+	);
+	
+	ALTER TABLE "user" ADD CONSTRAINT "user_parent_id_user_id_fkey" FOREIGN KEY ("parent_id") REFERENCES "user"("id");
+	```
+
+要声明多列外键，你可以使用专门的 `foreignKey` 操作符：
+
+```typescript copy {15-19}
+    import { serial, text, foreignKey, pgTable, AnyPgColumn } from "drizzle-orm/pg-core";
+
+    export const user = pgTable("user", {
+      firstName: text("firstName"),
+      lastName: text("lastName"),
+    }, (table) => [
+      primaryKey({ columns: [table.firstName, table.lastName]})
+    ]);
+
+    export const profile = pgTable("profile", {
+      id: serial("id").primaryKey(),
+      userFirstName: text("user_first_name"),
+      userLastName: text("user_last_name"),
+    }, (table) => [
+      foreignKey({
+        columns: [table.userFirstName, table.userLastName],
+        foreignColumns: [user.firstName, user.lastName],
+        name: "custom_fk"
+      })
+    ])
+    ```
+	```sql {13}
+	CREATE TABLE "user" (
+		"firstName" text,
+		"lastName" text,
+		CONSTRAINT "user_pkey" PRIMARY KEY("firstName","lastName")
+	);
+
+	CREATE TABLE "profile" (
+		"id" serial PRIMARY KEY,
+		"user_first_name" text,
+		"user_last_name" text
+	);
+	
+	ALTER TABLE "profile" ADD CONSTRAINT "custom_fk" FOREIGN KEY ("user_first_name","user_last_name") REFERENCES "user"("firstName","lastName");
+	```
+
+## 索引
+
+Drizzle ORM 为 `index` 和 `unique index` 声明都提供了 API：
+
+<Section>
+    ```typescript copy {8-9}
+    import { serial, text, index, uniqueIndex, pgTable } from "drizzle-orm/pg-core";
+
+    export const user = pgTable("user", {
+      id: serial().primaryKey(),
+      name: text(),
+      email: text(),
+    }, (table) => [
+      index("name_idx").on(table.name),
+      uniqueIndex("email_idx").on(table.email)
+    ]);
+    ```
+    ```sql {5-6}
+	CREATE TABLE "user" (
+		...
+	);
+
+	CREATE INDEX "name_idx" ON "user" ("name");
+	CREATE UNIQUE INDEX "email_idx" ON "user" ("email");
+    ```
+</Section>
+
+
+Drizzle ORM 为索引创建提供了一组参数：
+
+```ts
+// `.on()`
+index('name')
+  .on(table.column1.asc(), table.column2.nullsFirst(), ...)
+  .concurrently()
+  .where(sql``)
+  .with({ fillfactor: '70' })
+
+// `.onOnly()`
+index('name')
+  .onOnly(table.column1.asc(), table.column2.nullsFirst(), ...)
+  .concurrently()
+  .where(sql``)
+  .with({ fillfactor: '70' })
+
+// 第二个示例，使用 `.using()`
+index('name')
+  .using('btree', table.column1.asc(), sql`lower(${table.column2})`, table.column1.op('text_ops'))
+  .concurrently()
+  .where(sql``) // sql 表达式
+  .with({ fillfactor: '70' })
+```

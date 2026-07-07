@@ -45,7 +45,7 @@ Drizzle 则恰恰相反。
 并且可以完全发挥 SQL 的力量。
 
 我们带来了所有熟悉的 **[SQL 架构](/docs/sql-schema-declaration)**、**[查询](/docs/select)**、 
-**[自动迁移](/docs/migrations)** 和 **[另外一项](/docs/rqb)**。✨
+**[自动迁移](/docs/migrations)** 和 **[另一项](/docs/rqb)**。✨
 
 <CodeTabs items={["index.ts", "schema.ts", "migration.sql"]}>
 ```typescript copy
@@ -86,14 +86,14 @@ ALTER TABLE "cities" ADD CONSTRAINT "cities_country_id_countries_id_fk" FOREIGN 
 ```
 </CodeTabs>
 
-## 为什么不 SQL-like？
-我们始终在追求一个完美平衡的解决方案，虽然 SQL-like 100% 满足需求， 
-但在某些常见场景中，您可以更好地查询数据。
+## Why not SQL-like?
+We are always pursuing a perfectly balanced solution. Although SQL-like 100% meets the requirements,  
+in some common scenarios, you can query data more effectively.
 
-我们为你构建了 **[查询 API](/docs/rqb)**，这样你就可以以最便捷和高效的方式从数据库中获取关系嵌套数据，
-而无需考虑连接和数据映射。
+We built the **[Query API](/docs/rqb)** for you, so you can retrieve relational nested data from the database in the most convenient and efficient way,
+without having to think about joins and data mapping.
 
-**Drizzle 始终输出准确的 1 条 SQL 查询。** 可以放心地将其与无服务器数据库一起使用，不用担心性能或往返成本！
+**Drizzle always outputs exactly 1 SQL query.** You can safely use it with serverless databases without worrying about performance or round-trip costs!
 
 ```ts
 const result = await db.query.users.findMany({
@@ -113,9 +113,7 @@ const result = await db.query.users.findMany({
 
 Drizzle ORM 是特定于方言的，轻巧、高效，并且 **天生支持无服务器**。
 
-我们花了大量时间确保你拥有一流的 SQL 方言支持，包括 Postgres、MySQL 和其他。
-
-Drizzle 通过行业标准的数据库驱动程序原生运行。我们支持所有主要的 **[PostgreSQL](/docs/get-started-postgresql)**、**[MySQL](/docs/get-started-mysql)**、**[SQLite](/docs/get-started-sqlite)** 或 **[SingleStore](/docs/get-started-singlestore)**  驱动程序，并且我们正在 **[非常快速地](https://twitter.com/DrizzleORM/status/1653082492742647811?s=20)** 添加新的驱动程序。
+Drizzle 通过业界标准的数据库驱动程序原生运行。我们支持所有主流的 **[PostgreSQL](/docs/get-started-postgresql)**、**[MySQL](/docs/mysql/get-started-mysql)**、**[SQLite](/docs/sqlite/get-started-sqlite)** 或 **[SingleStore](/docs/singlestore/get-started-singlestore)** 驱动，并且我们还在 **[非常快速](https://twitter.com/DrizzleORM/status/1653082492742647811?s=20)** 地添加新的支持。  
 
 
 ## 欢迎加入！
@@ -123,9 +121,11 @@ Drizzle 通过行业标准的数据库驱动程序原生运行。我们支持所
 
 **我们始终在这里提供帮助，因此请随时联系我们。我们很乐意在你的 Drizzle 之旅中协助你！**
 
-我们有一个杰出的 **[Discord 社区](https://driz.link/discord)**，欢迎所有开发者加入我们的 **[Twitter](https://twitter.com/drizzleorm)**。
+我们有一个很棒的 **[Discord 社区](https://driz.link/discord)**，并欢迎所有构建者加入我们的 **[Twitter](https://twitter.com/drizzleorm)**。
+  
+现在去用 Drizzle 和你的 **[PostgreSQL](/docs/get-started-postgresql)**、**[MySQL](/docs/mysql/get-started-mysql)** 或 **[SQLite](/docs/sqlite/get-started-sqlite)** 数据库构建一些令人惊叹的东西吧。🚀
 
-现在去用 Drizzle 和你的 **[PostgreSQL](/docs/get-started-postgresql)**、**[MySQL](/docs/get-started-mysql)** 或 **[SQLite](/docs/get-started-sqlite)** 数据库构建一些令人惊叹的东西吧。🚀
+现在去用 Drizzle 和你的 **[PostgreSQL](/docs/get-started-postgresql)**、**[MySQL](/docs/mysql/get-started-mysql)** 或 **[SQLite](/docs/get-started-sqlite)** 数据库构建一些令人惊叹的东西吧。🚀
 
 ### 视频展示
 

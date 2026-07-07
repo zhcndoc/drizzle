@@ -1,0 +1,184 @@
+import Callout from '@mdx/Callout.astro';
+import CodeTabs from '@mdx/CodeTabs.astro';
+
+## Type API
+使用 Drizzle 的类型辅助工具，从 CockroachDB 表结构中推导 `select` 和 `insert` 模型。
+
+```ts
+import { string, int4, cockroachTable } from 'drizzle-orm/cockroach-core';
+import { type InferSelectModel, type InferInsertModel } from 'drizzle-orm';
+
+const users = cockroachTable('users', {
+  id: int4('id').primaryKey(),
+  name: string('name').notNull(),
+});
+
+type SelectUser = typeof users.$inferSelect;
+type InsertUser = typeof users.$inferInsert;
+
+type SelectUserAlt = InferSelectModel<typeof users>;
+type InsertUserAlt = InferInsertModel<typeof users>;
+```
+
+## 日志记录
+通过向 `drizzle` 传入 `{ logger: true }` 来启用默认查询日志记录。
+
+```ts
+import { drizzle } from "drizzle-orm/cockroach";
+
+const db = drizzle(process.env.DB_URL, { logger: true });
+```
+
+你可以通过创建一个 `DefaultLogger` 实例并为其提供自定义的 `writer` 来更改日志输出位置：
+```typescript copy
+import { DefaultLogger, type LogWriter } from "drizzle-orm/logger";
+import { drizzle } from "drizzle-orm/...";
+
+class MyLogWriter implements LogWriter {
+  write(message: string) {
+    // 写入文件、标准输出等
+  }
+}
+
+const logger = new DefaultLogger({ writer: new MyLogWriter() });
+const db = drizzle(process.env.DB_URL, { logger });
+```
+
+你也可以提供自定义的 logger。
+
+```ts
+import type { Logger } from 'drizzle-orm/logger';
+import { drizzle } from "drizzle-orm/cockroach";
+
+class MyLogger implements Logger {
+  logQuery(query: string, params: unknown[]): void {
+    console.log({ query, params });
+  }
+}
+
+const db = drizzle(process.env.DB_URL, { logger: new MyLogger() });
+```
+
+## 多项目 schema
+使用 `cockroachTableCreator` 来在多个项目共享一个数据库时自定义表名。
+
+```ts
+import { int4, string, cockroachTableCreator } from 'drizzle-orm/cockroach-core';
+
+const cockroachTable = cockroachTableCreator((name) => `project1_${name}`);
+
+export const users = cockroachTable('users', {
+  id: int4().primaryKey(),
+  name: string().notNull(),
+});
+```
+
+```ts
+import { defineConfig } from 'drizzle-kit';
+
+export default defineConfig({
+  schema: './src/schema/*',
+  out: './drizzle',
+  dialect: 'cockroach',
+  dbCredentials: {
+    url: process.env.DATABASE_URL!,
+  },
+  tablesFilter: ['project1_*'],
+});
+```
+```sql
+CREATE TABLE "project1_users" (
+        "id" int4 PRIMARY KEY,
+        "name" string NOT NULL
+);
+```
+
+## 打印 SQL 查询
+使用 `.toSQL()` 打印查询生成的 SQL。
+
+```ts
+const query = db
+  .select({ id: users.id, name: users.name })
+  .from(users)
+  .groupBy(users.id)
+  .toSQL();
+```
+
+## 原始 SQL 查询
+使用 `db.execute` 执行原始参数化 SQL。
+
+```ts
+import { sql } from 'drizzle-orm';
+
+const statement = sql`select * from ${users} where ${users.id} = ${userId}`;
+const result = await db.execute(statement);
+```
+
+## 独立查询构建器
+无需创建数据库实例即可使用 CockroachDB 查询构建器。
+
+```ts
+import { QueryBuilder } from 'drizzle-orm/cockroach-core';
+
+const qb = new QueryBuilder();
+const query = qb.select().from(users).where(eq(users.name, 'Dan'));
+const { sql, params } = query.toSQL();
+```
+
+## 获取类型化列
+使用 `getColumns` 获取一个类型化的列映射，这在从选择结果中排除字段时很有用。
+
+<CodeTabs items={["index.ts", "schema.ts"]}>
+```ts
+import { getColumns } from 'drizzle-orm';
+import { users } from './schema';
+
+const { password, role, ...rest } = getColumns(users);
+
+await db.select({ ...rest }).from(users);
+```
+```ts
+import { int4, string, pgTable } from "drizzle-orm/pg-core";
+
+export const user = pgTable("user", {
+  id: int4().primaryKey(),
+  name: string(),
+  email: string(),
+  password: string(),
+  role: string().$type<"admin" | "customer">(),
+});
+```
+</CodeTabs>
+
+## 获取表信息
+使用 `getTableConfig` 检查 CockroachDB 表元数据。
+
+```ts
+import { getTableConfig, cockroachTable } from 'drizzle-orm/cockroach-core';
+
+export const table = cockroachTable(...);
+
+const { columns, indexes, foreignKeys, checks, primaryKeys, name, schema } =
+  getTableConfig(table);
+```
+
+## 比较对象类型
+使用 `is()` 而不是 `instanceof` 来检查 Drizzle 对象类型。
+
+```ts
+import { Column, is } from 'drizzle-orm';
+
+if (is(value, Column)) {
+  // value 被缩小为 Column
+}
+```
+
+## Mock 驱动
+当你需要一个带类型的数据库对象，但不需要真实的 CockroachDB 连接时，请使用 `drizzle.mock()`。
+
+```ts
+import { drizzle } from 'drizzle-orm/node-postgres';
+import * as schema from './schema';
+
+const db = drizzle.mock({ schema });
+```

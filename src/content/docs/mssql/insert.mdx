@@ -1,0 +1,76 @@
+import Section from '@mdx/Section.astro';
+import Callout from '@mdx/Callout.astro';
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
+
+# SQL 插入
+
+<Callout type='info'>
+传递给 `.values()` 的所有值都会自动参数化。
+例如，这个查询：
+```ts
+await db.insert(users).values({ name: 'Andrew' });
+```
+将被翻译为：
+```sql
+insert into [users] ([name]) values (@par0); -- params: ['Andrew']
+```
+</Callout>
+
+<br/>
+
+Drizzle ORM 为你提供了最接近 SQL 的方式来向数据库表中插入行。
+
+使用 Drizzle 插入数据非常直接，而且很像 SQL。请看：
+
+<Section>
+```typescript copy 
+await db.insert(users).values({ name: 'Andrew' });
+```
+
+```sql
+insert into [users] ([name], [age]) values ('Andrew', default)
+```
+</Section>
+
+如果你需要某个特定表的插入类型，可以使用 `typeof usersTable.$inferInsert` 语法。 
+```typescript copy 
+type NewUser = typeof users.$inferInsert;
+
+const insertUser = async (user: NewUser) => {
+  return db.insert(users).values(user);
+}
+
+const newUser: NewUser = { name: "Alef" };
+await insertUser(newUser);
+```
+
+## 带输出的插入
+MSSQL 支持 `OUTPUT` 子句用于返回已插入的行。Drizzle 通过 `.output()` 方法提供该功能。
+
+```typescript copy
+const result = await db
+  .insert(usersTable)
+  .output({ id: usersTable.id })
+  .values([{ name: 'John' }, { name: 'John1' }]);
+//    ^? { id: number }[]
+```
+
+你也可以通过不传参数调用 `.output()` 来返回所有已插入的列。
+
+```ts
+const result = await db.insert(usersTable).output().values({ name: 'John' });
+//    ^? typeof usersTable.$inferSelect[]
+```
+
+## 插入多行
+```typescript copy
+await db.insert(users).values([{ name: 'Andrew' }, { name: 'Dan' }]);
+```
+
+## 插入更新与冲突
+MSSQL 不支持 PostgreSQL 风格的 `ON CONFLICT` 或 MySQL 风格的 `ON DUPLICATE KEY UPDATE` 子句。对于插入更新工作流，请使用带有显式 `select`/`update`/`insert` 逻辑的事务，或使用 `sql` 运算符执行特定于方言的 `MERGE` 语句。
+
+## 插入到 ... 选择
+
+目前不支持

@@ -1,0 +1,1120 @@
+import Callout from '@mdx/Callout.astro';
+import Prerequisites from "@mdx/Prerequisites.astro";
+import Section from '@mdx/Section.astro';
+import Npx from "@mdx/Npx.astro";
+import Npm from "@mdx/Npm.astro";
+import CodeTabs from '@mdx/CodeTabs.astro';
+import CodeTab from '@mdx/CodeTab.astro';
+
+# 迁移到关系查询版本 2
+
+<Npm>
+ drizzle-orm@rc
+ drizzle-kit@rc -D
+</Npm>
+
+<br/>
+
+<Prerequisites>
+- **关系基础** - [在此阅读](/docs/mysql/relations-schema-declaration)
+- **drizzle-kit pull** - [在此阅读](/docs/mysql/drizzle-kit-pull)
+</Prerequisites>
+
+<Callout>
+下面是目录。点击某一项可跳转到对应章节：
+
+- [与 v1 相比有哪些不同](#what-is-working-differently-from-v1)  
+- [v2 中的新功能](#what-is-new)  
+- [如何将关系定义从 v1 迁移到 v2](#how-to-migrate-relations-schema-definition-from-v1-to-v2)  
+- [如何将查询从 v1 迁移到 v2](#how-to-migrate-queries-from-v1-to-v2)  
+- [内部变更（imports、内部类型等）](#internal-changes)
+</Callout>
+
+### API 更改
+#### 与 v1 相比有哪些不同
+
+{/* ##### Drizzle Relations schema definition */}
+
+最大的更新之一在 **Relations Schema 定义**
+
+第一个区别是，你不再需要在不同对象中分别为每个表单独指定 `relations`，然后再将它们连同 schema 一起传给 `drizzle()`。在 Relational Queries v2 中，你现在有一个专门的位置来为所有需要的表定义所有关系。
+
+回调中的 `r` 参数提供了完整的自动补全功能——包括 schema 中的所有表，以及 `one`、`many` 和 `through` 等函数——本质上提供了你定义关系所需的一切。
+
+```ts
+// relations.ts
+import * as schema from "./schema"
+import { defineRelations } from "drizzle-orm"
+
+export const relations = defineRelations(schema, (r) => ({
+    ...
+}));
+```
+```ts
+// index.ts
+import { relations } from "./relations"
+import { drizzle } from "drizzle-orm/mysql2"
+
+const db = drizzle(process.env.DATABASE_URL, { relations })
+```
+
+##### 有什么不同？
+
+<Callout collapsed="Schema 定义">
+```ts copy
+import * as p from 'drizzle-orm/mysql-core';
+
+export const users = p.mysqlTable('users', {
+  id: p.int().primaryKey(),
+  name: p.text(),
+  invitedBy: p.int('invited_by'),
+});
+
+export const posts = p.mysqlTable('posts', {
+  id: p.int().primaryKey(),
+  content: p.text(),
+  authorId: p.int('author_id'),
+});
+```
+</Callout>
+
+**所有关系都放在一个地方**
+
+<Callout title="❌ v1">
+```ts
+import { relations } from "drizzle-orm/_relations";
+import { users, posts } from './schema';
+
+export const usersRelation = relations(users, ({ one, many }) => ({
+  invitee: one(users, {
+    fields: [users.invitedBy],
+    references: [users.id],
+  }),
+  posts: many(posts),
+}));
+
+export const postsRelation = relations(posts, ({ one, many }) => ({
+  author: one(users, {
+    fields: [posts.authorId],
+    references: [users.id],
+  }),
+}));
+```
+</Callout>
+
+<Callout title='✅ v2'>
+```ts
+import { defineRelations } from "drizzle-orm";
+import * as schema from "./schema";
+
+export const relations = defineRelations(schema, (r) => ({
+  users: {
+    invitee: r.one.users({
+      from: r.users.invitedBy,
+      to: r.users.id,
+    }),
+    posts: r.many.posts(),
+  },
+  posts: {
+    author: r.one.users({
+      from: r.posts.authorId,
+      to: r.users.id,
+    }),
+  },
+}));
+```
+</Callout>
+
+你仍然可以把它拆分成不同的 `parts`，而且这些部分的大小可以由你自由决定
+
+```ts
+import { defineRelations, defineRelationsPart } from 'drizzle-orm';
+import * as schema from "./schema";
+
+export const relations = defineRelations(schema, (r) => ({
+  users: {
+    invitee: r.one.users({
+      from: r.users.invitedBy,
+      to: r.users.id,
+    }),
+    posts: r.many.posts(),
+  }
+}));
+
+export const part = defineRelationsPart(schema, (r) => ({
+  posts: {
+    author: r.one.users({
+      from: r.posts.authorId,
+      to: r.users.id,
+    }),
+  }
+}));
+```
+
+然后你可以把它提供给 db 实例
+
+```ts
+const db = drizzle(process.env.DB_URL, { relations: { ...relations, ...part } })
+```
+
+**无需 `one` 也能定义 `many`**
+
+在 v1 中，如果你只想要关系的 `many` 这一侧，你必须在另一端显式指定 `one` 这一侧，这带来了糟糕的开发体验。
+
+在 v2 中，你可以直接使用 `many` 这一侧，无需任何额外步骤
+
+<Callout title="❌ v1">
+```ts
+import { relations } from "drizzle-orm/_relations";
+import { users, posts } from './schema';
+
+export const usersRelation = relations(users, ({ one, many }) => ({
+  posts: many(posts),
+}));
+
+export const postsRelation = relations(posts, ({ one, many }) => ({
+  author: one(users, {
+    fields: [posts.authorId],
+    references: [users.id],
+  }),
+}));
+```
+</Callout>
+
+<Callout title='✅ v2'>
+```ts
+import { defineRelations } from "drizzle-orm";
+import * as schema from "./schema";
+
+export const relations = defineRelations(schema, (r) => ({
+  users: {
+    posts: r.many.posts({
+      from: r.users.id,
+      to: r.posts.authorId,
+    }),
+  },
+}));
+```
+</Callout>
+
+**新的 `optional` 选项**
+
+类型层面的 `optional: false` 会使 `posts` 对象中的 `author` 键变为必需。  
+当你确定这个特定实体总是存在时，应使用它。
+
+<Callout title="❌ v1">
+v1 中不支持
+</Callout>
+
+<Callout title='✅ v2'>
+```ts {9}
+import { defineRelations } from "drizzle-orm";
+import * as schema from "./schema";
+
+export const relations = defineRelations(schema, (r) => ({
+  users: {
+    posts: r.one.posts({
+      from: r.users.id,
+      to: r.posts.authorId,
+      optional: false,
+    }),
+  },
+}));
+```
+</Callout>
+
+**`drizzle()` 中不再需要 modes**
+
+我们找到了一种适用于所有 MySQL 方言的相同策略，因此不需要再指定它们
+
+<Callout title="❌ v1">
+```ts
+import * as schema from './schema'
+
+const db = drizzle(process.env.DATABASE_URL, { mode: "planetscale", schema });
+// or
+const db = drizzle(process.env.DATABASE_URL, { mode: "default", schema });
+```
+</Callout>
+
+<Callout title='✅ v2'>
+```ts
+import { relations } from './relations'
+
+const db = drizzle(process.env.DATABASE_URL, { relations });
+```
+</Callout>
+
+**`from` 和 `to` 的升级**
+
+我们将 `fields` 重命名为 `from`，将 `references` 重命名为 `to`，并且两者都可以接受单个值或数组
+
+<Callout title="❌ v1">
+```ts
+...
+author: one(users, {
+  fields: [posts.authorId],
+  references: [users.id],
+}),
+...
+```
+</Callout>
+
+<Callout title='✅ v2'>
+```ts
+... 
+author: r.one.users({
+  from: r.posts.authorId,
+  to: r.users.id,
+}),
+...
+```
+```ts
+... 
+author: r.one.users({
+  from: [r.posts.authorId],
+  to: [r.users.id],
+}),
+...
+```
+</Callout>
+
+**`relationName` -> `alias`**
+
+<Callout title="❌ v1">
+```ts {8}
+import { relations } from "drizzle-orm/_relations";
+import { users, posts } from './schema';
+
+export const postsRelation = relations(posts, ({ one }) => ({
+  author: one(users, {
+    fields: [posts.authorId],
+    references: [users.id],
+	  relationName: "author_post",
+  }),
+}));
+```
+</Callout>
+
+<Callout title='✅ v2'>
+```ts {9}
+import { defineRelations } from "drizzle-orm";
+import * as schema from "./schema";
+
+export const relations = defineRelations(schema, (r) => ({
+  posts: {
+    author: r.one.users({
+      from: r.posts.authorId,
+      to: r.users.id,
+      alias: "author_post",
+    }),
+  },
+}));
+```
+</Callout>
+
+**`custom types` 新函数**
+
+自定义类型新增了一些函数，因此你可以在 Relational Queries v2 中控制数据的映射方式：
+
+<Callout collapsed='fromJson'>
+可选的映射函数，用于将数据库中转换为 JSON 后返回的数据转换为期望格式  
+例如，当通过 [RQB](/docs/rqb) 或 JSON 函数查询 bigint 列时，结果字段将以字符串表示形式返回，而不是常规查询中的 bigint  
+为了解决这个问题，我们需要一个单独的函数来处理这类字段的映射：
+```ts
+fromJson(value: string): bigint {
+	return BigInt(value);
+},
+```
+这会使返回的数据从：
+```ts
+{
+	customField: "5044565289845416380";
+}
+```
+变为：
+```ts
+{
+	customField: 5044565289845416380n;
+}
+```
+</Callout> 
+<Callout collapsed='forJsonSelect'>
+可选的选择修饰函数，用于修改 JSON 函数内部列的选择方式  
+此类场景可能需要的额外映射可以通过 fromJson 函数处理  
+由 [关系查询](/docs/rqb) 使用
+
+例如，当使用 bigint 时，我们需要将字段转换为 text 以保持数据完整性
+```ts
+forJsonSelect(identifier: SQL, sql: SQLGenerator, arrayDimensions?: number): SQL {
+	return sql`${identifier}::text`
+},
+```
+这会将查询从：
+```sql
+SELECT
+	row_to_json("t".*)
+	FROM
+	(
+		SELECT
+		"table"."custom_bigint" AS "bigint"
+		FROM
+		"table"
+	) AS "t"
+```
+变为：
+```sql
+SELECT
+	row_to_json("t".*)
+	FROM
+	(
+		SELECT
+		"table"."custom_bigint"::text AS "bigint"
+		FROM
+		"table"
+	) AS "t"
+```
+查询对象返回结果会从：
+```ts
+{
+	bigint: 5044565289845416000; // 由于直接转换为 JSON 格式，造成部分数据丢失
+}
+```
+变为：
+```ts
+{
+	bigint: "5044565289845416380"; // 由于在转换为 JSON 之前先将字段转为 text，因此数据得以保留
+}
+```
+</Callout>
+
+<Callout title='✅ v2'>
+```ts
+const customBytes = customType<{
+ 	data: Buffer;
+ 	driverData: Buffer;
+ 	jsonData: string;
+ }>({
+ 	dataType: () => 'bytea',
+ 	fromJson: (value) => {
+ 		return Buffer.from(value.slice(2, value.length), 'hex');
+ 	},
+ 	forJsonSelect: (identifier, sql, arrayDimensions) =>
+ 		sql`${identifier}::text${sql.raw('[]'.repeat(arrayDimensions ?? 0))}`,
+ });
+```
+
+</Callout>
+
+##### 什么是新的？
+
+**用于多对多关系的 `through`**
+
+以前，你需要先查询中间表，然后对每个响应手动映射出来
+
+现在你不需要这样做了！
+
+<Callout collapsed='Schema'>
+```ts
+import * as p from 'drizzle-orm/mysql-core';
+
+export const users = p.mysqlTable('users', {
+  id: p.int().primaryKey(),
+  name: p.text(),
+  verified: p.boolean().notNull(),
+});
+
+export const groups = p.mysqlTable('groups', {
+  id: p.int().primaryKey(),
+  name: p.text(),
+});
+
+export const usersToGroups = p.mysqlTable(
+  'users_to_groups',
+  {
+    userId: p
+      .int('user_id')
+      .notNull()
+      .references(() => users.id),
+    groupId: p
+      .int('group_id')
+      .notNull()
+      .references(() => groups.id),
+  },
+  (t) => [p.primaryKey({ columns: [t.userId, t.groupId] })],
+);
+
+```
+</Callout>
+
+<Callout title="❌ v1">
+```ts
+export const usersRelations = relations(users, ({ many }) => ({
+  usersToGroups: many(usersToGroups),
+}));
+
+export const groupsRelations = relations(groups, ({ many }) => ({
+  usersToGroups: many(usersToGroups),
+}));
+
+export const usersToGroupsRelations = relations(usersToGroups, ({ one }) => ({
+  group: one(groups, {
+    fields: [usersToGroups.groupId],
+    references: [groups.id],
+  }),
+  user: one(users, {
+    fields: [usersToGroups.userId],
+    references: [users.id],
+  }),
+}));
+```
+```ts
+// Query example
+const response = await db.query.users.findMany({
+  with: {
+    usersToGroups: {
+      columns: {},
+      with: {
+        group: true,
+      },
+    },
+  },
+});
+```
+</Callout>
+
+<Callout title='✅ v2'>
+```ts
+import * as schema from './schema';
+import { defineRelations } from 'drizzle-orm';
+
+export const relations = defineRelations(schema, (r) => ({
+  users: {
+    groups: r.many.groups({
+      from: r.users.id.through(r.usersToGroups.userId),
+      to: r.groups.id.through(r.usersToGroups.groupId),
+    }),
+  },
+  groups: {
+    participants: r.many.users(),
+  },
+}));
+```
+```ts
+// Query example
+const response = await db.query.users.findMany({
+  with: {
+    groups: true,
+  },
+});
+```
+</Callout>
+
+**预定义过滤器**
+
+<Callout title="❌ v1">
+v1 中不支持
+</Callout>
+
+<Callout title='✅ v2'>
+```ts {10-12}
+import * as schema from './schema';
+import { defineRelations } from 'drizzle-orm';
+
+export const relations = defineRelations(schema,
+  (r) => ({
+    groups: {
+      verifiedUsers: r.many.users({
+        from: r.groups.id.through(r.usersToGroups.groupId),
+        to: r.users.id.through(r.usersToGroups.userId),
+        where: {
+          verified: true,
+        },
+      }),
+    },
+  })
+);
+```
+```ts {4}
+// 查询示例：获取所有已验证用户所在的组
+const response = await db.query.groups.findMany({
+  with: {
+    verifiedUsers: true,
+  },
+});
+```
+</Callout>
+
+##### `where` 现在是对象
+
+<Callout title="❌ v1">
+```ts
+const response = db._query.users.findMany({
+  where: (users, { eq }) => eq(users.id, 1),
+});
+```
+</Callout>
+
+<Callout title="✅ v2">
+```ts
+const response = db.query.users.findMany({
+  where: {
+    id: 1,
+  },
+});
+```
+
+完整 API 参考请查看我们的 [Select Filters 文档](/docs/mysql/rqb#select-filters)
+</Callout>
+
+<Callout collapsed='使用 RAW 的复杂过滤示例'>
+```ts
+// schema.ts
+import { int, json, mysqlTable, text, timestamp } from 'drizzle-orm/mysql-core';
+
+export const users = mysqlTable('users', {
+  id: int().primaryKey(),
+  name: text(),
+  email: text().notNull(),
+  age: int(),
+  createdAt: timestamp('created_at').defaultNow(),
+  lastLogin: timestamp('last_login'),
+  subscriptionEnd: timestamp('subscription_end'),
+  lastActivity: timestamp('last_activity'),
+  preferences: json(), // 用户设置/偏好 的 JSON 列
+  interests: json().$type<string[]>(), // 用户兴趣的数组列
+});
+```
+```ts
+const response = await db.query.users.findMany({
+    where: {
+      AND: [
+        {
+          OR: [{ RAW: (table) => sql`${table.name} LIKE 'john%'` }, { name: { like: "jane%" } }],
+        },
+        { 
+			RAW: (table) => sql`${table.age} BETWEEN 25 AND 35` 
+		},
+      ],
+    },
+  }),
+```
+</Callout>
+
+##### `orderBy` 现在是对象
+
+<Callout title="❌ v1">
+```ts
+const response = db._query.users.findMany({
+  orderBy: (users, { asc }) => [asc(users.id)],
+});
+```
+</Callout>
+
+<Callout title="✅ v2">
+```ts
+const response = db.query.users.findMany({
+  orderBy: { id: "asc" },
+});
+```
+</Callout>
+
+##### 通过关系进行过滤
+
+<Callout title="❌ v1">
+v1 中不支持
+</Callout>
+
+<Callout title='✅ v2'>
+示例：获取所有 ID > 10 且至少有一篇内容以 “M” 开头的帖子
+
+```ts
+const usersWithPosts = await db.query.usersTable.findMany({
+  where: {
+    id: {
+      gt: 10
+    },
+    posts: {
+      content: {
+        like: 'M%'
+      }
+    }
+  },
+});
+```
+</Callout>
+
+##### 在关联对象上使用 offset
+
+<Callout title="❌ v1">
+v1 中不支持
+</Callout>
+
+<Callout title='✅ v2'>
+```ts
+await db.query.posts.findMany({
+	limit: 5,
+	offset: 2, // 正确 ✅
+	with: {
+		comments: {
+			offset: 3, // 正确 ✅
+			limit: 3,
+		},
+	},
+});
+```
+</Callout>
+
+#### 如何将 relations schema 定义从 v1 迁移到 v2
+
+##### **方案 1**：使用 `drizzle-kit pull`
+
+在新版本中，`drizzle-kit pull` 支持以新语法拉取 `relations.ts` 文件：
+
+##### 第 1 步
+
+<Npx>
+drizzle-kit pull
+</Npx>
+
+#### 第 2 步 
+
+将生成的 relations 代码从 `drizzle/relations.ts` 转移到你用于定义 relations 的文件中 
+```plaintext {4-5}
+ ├ 📂 drizzle
+ │ ├ 📂 meta
+ │ ├ 📜 migration.sql
+ │ ├ 📜 relations.ts ────────┐
+ │ └ 📜 schema.ts            |
+ ├ 📂 src                    │ 
+ │ ├ 📂 db                   │
+ │ │ ├ 📜 relations.ts <─────┘
+ │ │ └ 📜 schema.ts 
+ │ └ 📜 index.ts         
+ └ …
+```
+
+<Callout>
+`drizzle/relations.ts` 包含对 `drizzle/schema.ts` 中所有表的导入，类似这样：
+```ts
+import * as schema from './schema'
+```
+
+你可能需要将此导入改为所有 schema 表所在的文件。 
+
+如果有多个 schema 文件，你可以这样做：
+```ts
+import * as schema1 from './schema1'
+import * as schema2 from './schema2'
+...
+```
+</Callout>
+
+#### 第 3 步
+
+修改 drizzle 数据库实例创建，并提供 `relations` 对象而不是 `schema`
+
+<Callout title='Before'>
+```ts
+import * as schema from './schema'
+import { drizzle } from 'drizzle-orm/mysql2'
+
+const db = drizzle('<url>', { schema })
+```
+</Callout>
+
+<Callout title='After'>
+```ts
+// 应从第 2 步中的文件导入
+import { relations } from './relations'
+import { drizzle } from 'drizzle-orm/mysql2'
+
+const db = drizzle('<url>', { relations })
+```
+</Callout>
+
+<Callout>
+如果你使用的是 MySQL 方言，只要 v2 中不再需要 `mode`，就可以将其从 `drizzle()` 中移除
+</Callout>
+
+##### **方案 2**：手动迁移
+
+如果你想手动迁移，可以查看我们的 [Drizzle Relations 部分](/docs/mysql/relations) 获取完整 API 参考，以及一对一、一对多和多对多关系的示例。
+
+#### 如何将查询从 v1 迁移到 v2
+
+##### 迁移 `where` 语句
+
+你可以查看我们的 [Select Filters 文档](/docs/mysql/rqb#select-filters) 来查看示例和完整 API 参考。
+
+使用新语法后，你可以使用 `AND`、`OR`、`NOT` 和 `RAW`，以及之前在 Relations v1 中可用的所有过滤运算符。
+
+**示例**
+<CodeTabs items={["简单 eq", "使用 AND", "使用 OR", "使用 NOT", "使用 RAW 的复杂示例"]}>
+<CodeTab>
+```ts
+const response = await db.query.users.findMany({
+  where: {
+    age: 15,
+  },
+});
+```
+```sql {8}
+SELECT
+	`d0`.`id` AS `id`,
+	`d0`.`name` AS `name`,
+	`d0`.`age` AS `age`
+FROM
+	`users` AS `d0`
+WHERE
+	(`d0`.`age` = 15);
+```
+</CodeTab>
+<CodeTab>
+```ts
+const response = await db.query.users.findMany({
+  where: {
+    age: 15,
+    name: 'John'
+  },
+});
+```
+```sql {9-10}
+SELECT
+	`d0`.`id` AS `id`,
+	`d0`.`name` AS `name`,
+	`d0`.`age` AS `age`
+FROM
+	`users` AS `d0`
+WHERE
+	(
+		(`d0`.`age` = 15)
+		AND (`d0`.`name` = 'John')
+	);
+```
+</CodeTab>
+<CodeTab>
+```ts
+const response = await db.query.users.findMany({
+  where: {
+    OR: [
+      {
+        id: {
+          gt: 10,
+        },
+      },
+      {
+        name: {
+          like: "John%",
+        },
+      },
+    ],
+  },
+});
+```
+```sql {9-10}
+SELECT
+	`d0`.`id` AS `id`,
+	`d0`.`name` AS `name`,
+	`d0`.`age` AS `age`
+FROM
+	`users` AS `d0`
+WHERE
+	(
+		(`d0`.`id` > 10)
+		OR (`d0`.`name` LIKE 'John%')
+	);
+```
+</CodeTab>
+<CodeTab>
+```ts
+const response = await db.query.users.findMany({
+  where: {
+    NOT: {
+      id: {
+        gt: 10,
+      },
+    },
+    name: {
+      like: "John%",
+    },
+  },
+});
+```
+```sql {9-10}
+SELECT
+	`d0`.`id` AS `id`,
+	`d0`.`name` AS `name`,
+	`d0`.`age` AS `age`
+FROM
+	`users` AS `d0`
+WHERE
+	(
+		(not(`d0`.`id` > 10))
+		AND (`d0`.`name` LIKE 'John%')
+	);
+```
+</CodeTab>
+<CodeTab>
+```ts
+// schema.ts
+import { int, json, mysqlTable, text, timestamp } from "drizzle-orm/mysql-core";
+import { sql } from "drizzle-orm";
+
+export const users = mysqlTable("users", {
+  id: int().primaryKey(),
+  name: text(),
+  email: text().notNull(),
+  age: int(),
+  createdAt: timestamp("created_at").defaultNow(),
+  lastLogin: timestamp("last_login"),
+  subscriptionEnd: timestamp("subscription_end"),
+  lastActivity: timestamp("last_activity"),
+  preferences: json(), // 用户设置/偏好的 JSON 列
+  interests: json().$type<string[]>(), // 用户兴趣的数组列
+});
+```
+```ts
+const response = await db.query.users.findMany({
+    where: {
+      AND: [
+        {
+          OR: [{ RAW: (table) => sql`${table.name} LIKE 'john%'` }, { name: { like: "jane%" } }],
+        },
+        { 
+			RAW: (table) => sql`${table.age} BETWEEN 25 AND 35` 
+		},
+      ],
+    },
+  }),
+```
+```sql
+SELECT
+	`d0`.`id` AS `id`,
+	`d0`.`name` AS `name`,
+	`d0`.`email` AS `email`,
+	`d0`.`age` AS `age`,
+	`d0`.`created_at` AS `createdAt`,
+	`d0`.`last_login` AS `lastLogin`,
+	`d0`.`subscription_end` AS `subscriptionEnd`,
+	`d0`.`last_activity` AS `lastActivity`,
+	`d0`.`preferences` AS `preferences`,
+	`d0`.`interests` AS `interests`
+FROM
+	`users` AS `d0`
+WHERE
+	(
+		(
+			(
+				(`d0`.`name` LIKE 'john%')
+				OR (`d0`.`name` LIKE 'jane%')
+			)
+		)
+		AND (`d0`.`age` BETWEEN 25 AND 35)
+	);
+```
+</CodeTab>
+</CodeTabs>
+
+##### 迁移 `orderBy` 语句
+
+排序被简化为单个对象，你只需指定列和排序方向（`asc` 或 `desc`）
+
+<Callout title="❌ v1">
+```ts
+const response = db._query.users.findMany({
+  orderBy: (users, { asc }) => [asc(users.id)],
+});
+```
+</Callout>
+
+<Callout title="✅ v2">
+```ts
+const response = db.query.users.findMany({
+  orderBy: { id: "asc" },
+});
+```
+</Callout>
+
+##### 迁移 `many-to-many` 查询
+
+Relational Queries v1 管理多对多查询的方式非常复杂。
+你必须显式通过中间表进行查询，然后将这些表映射出来，就像这样：
+
+```ts
+const response = await db.query.users.findMany({
+  with: {
+    usersToGroups: {
+      columns: {},
+      with: {
+        group: true,
+      },
+    },
+  },
+});
+```
+
+升级到 Relational Queries v2 后，你的多对多关系将如下所示：
+
+```ts
+import * as schema from './schema';
+import { defineRelations } from 'drizzle-orm';
+
+export const relations = defineRelations(schema, (r) => ({
+  users: {
+    groups: r.many.groups({
+      from: r.users.id.through(r.usersToGroups.userId),
+      to: r.groups.id.through(r.usersToGroups.groupId),
+    }),
+  },
+  groups: {
+    participants: r.many.users(),
+  },
+}));
+```
+
+当你迁移查询后，它会变成这样：
+
+```ts
+// Query example
+const response = await db.query.users.findMany({
+  with: {
+    groups: true,
+  },
+});
+```
+
+### 内部更改
+
+1. 每个 `drizzle` 数据库、`session`、`migrator` 和 `transaction` 实例都更新了用于 RQB v2 查询的新泛型参数
+
+<Callout collapsed='示例'>
+**migrator**
+<Callout type='error' title='之前'>
+```ts
+export async function migrate<
+  TSchema extends Record<string, unknown>
+>(
+  db: MySql2Database<TSchema>,
+  config: MigrationConfig,
+) {
+  ...
+}
+```
+</Callout>
+<Callout title='现在'>
+```ts {1,2}
+export async function migrate<TRelations extends AnyRelations>(
+	db: MySql2Database<TRelations>,
+	config: MigrationConfig,
+) {
+  ...
+}
+```
+</Callout>
+**session**
+<Callout type='error' title='之前'>
+```ts
+export class MySql2Session<
+	TFullSchema extends Record<string, unknown>,
+	TSchema extends V1.TablesRelationalConfig,
+> extends MySqlSession<MySqlQueryResultHKT, MySql2PreparedQueryHKT, TFullSchema, TSchema>
+```
+</Callout>
+<Callout title='现在'>
+```ts {2,3}
+export class MySql2Session<
+	TRelations extends AnyRelations,
+> extends MySqlSession<MySqlQueryResultHKT, TRelations>
+```
+</Callout>
+**transaction**
+<Callout type='error' title='之前'>
+```ts
+export class MySql2Transaction<
+	TFullSchema extends Record<string, unknown>,
+	TSchema extends V1.TablesRelationalConfig,
+> extends MySqlTransaction<MySql2QueryResultHKT, MySql2PreparedQueryHKT, TFullSchema, TSchema>
+```
+</Callout>
+<Callout title='现在'>
+```ts {2,3}
+export class MySql2Transaction<
+	TRelations extends AnyRelations,
+> extends MySqlTransaction<MySql2QueryResultHKT, TRelations>
+```
+</Callout>
+**driver**
+<Callout type='error' title='之前'>
+```ts
+export class MySql2Database<
+	TSchema extends Record<string, unknown> = Record<string, never>,
+> extends MySqlDatabase<MySql2QueryResultHKT, MySql2PreparedQueryHKT, TSchema>
+```
+</Callout>
+<Callout title='现在'>
+```ts {2,3}
+export class MySql2Database<
+	TRelations extends AnyRelations = EmptyRelations,
+> extends MySqlDatabase<MySql2QueryResultHKT, TRelations>
+```
+</Callout>
+</Callout>
+
+2. 更新了 `DrizzleConfig` 的泛型，新增 `TRelations` 参数和 `relations: TRelations` 字段
+
+<Callout collapsed='示例'>
+<Callout type='error' title='之前'>
+```ts
+export interface DrizzleConfig<
+  TSchema extends Record<string, unknown> = Record<string, never>
+> {
+  logger?: boolean | Logger;
+  schema?: TSchema;
+  casing?: Casing;
+}
+```
+</Callout>
+
+<Callout title='现在'>
+```ts {2,5}
+export interface DrizzleConfig<
+	TRelationConfigs extends AnyRelations = EmptyRelations,
+> {
+	logger?: boolean | Logger | undefined;
+	relations?: TRelationConfigs | undefined;
+	cache?: Cache | undefined;
+	jit?: boolean | undefined;
+}
+```
+</Callout>
+</Callout>
+
+3. 以下实体已从 `drizzle-orm` 和 `drizzle-orm/relations` 中移除。原始导入现在包含了 Relational Queries v2 使用的新类型，因此如果你打算使用旧类型，请务必更新导入：
+
+<Callout collapsed='所有已移除实体列表'>
+- `Relations`
+- `TableRelationsKeysOnly`
+- `ExtractTableRelationsFromSchema`
+- `ExtractRelationsFromTableExtraConfigSchema`
+- `getOperators`
+- `FindTableByDBName`
+- `RelationalSchemaConfig`
+- `RelationConfig`
+- `extractTablesRelationalConfig`
+- `relations`
+- `createOne`
+- `createMany`
+- `NormalizedRelation`
+- `normalizeRelation`
+- `createTableRelationsHelpers`
+- `TableRelationsHelpers`
+</Callout>
+
+4. 同样地，`${dialect}-core/query-builders/query` 文件已更新为使用 RQB v2 的替代项
+
+<Callout collapsed='示例'>
+```ts
+import { RelationalQueryBuilder, MySqlRelationalQuery } from 'drizzle-orm/mysql-core/query-builders/query';
+```
+</Callout>

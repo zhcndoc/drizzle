@@ -1,0 +1,314 @@
+import Npm from '@mdx/Npm.astro';
+import Callout from '@mdx/Callout.astro';
+
+<Callout type="error">
+从 `drizzle-orm@1.0.0-beta.15` 开始，`drizzle-valibot` 已被弃用，转而使用 Drizzle ORM 自身的一流 schema 生成支持
+
+你仍然可以使用 `drizzle-valibot` 包，但所有新的更新都会直接添加到 Drizzle ORM 中
+</Callout>
+
+# valibot
+
+### 安装依赖
+
+<Npm>
+valibot
+</Npm>
+
+### 选择 schema
+
+定义从数据库查询出的数据形状，可用于验证 API 响应。
+
+```ts copy
+import { int, singlestoreTable, text } from 'drizzle-orm/singlestore-core';
+import { createSelectSchema } from 'drizzle-orm/valibot';
+import { parse } from 'valibot';
+
+const users = singlestoreTable('users', {
+  id: int().primaryKey().autoincrement(),
+  name: text().notNull(),
+  age: int().notNull()
+});
+
+const userSelectSchema = createSelectSchema(users);
+
+const rows = await db.select({ id: users.id, name: users.name }).from(users).limit(1);
+const parsed: { id: number; name: string; age: number } = parse(userSelectSchema, rows[0]); // 错误：上面的查询未返回 `age`
+
+const rows = await db.select().from(users).limit(1);
+const parsed: { id: number; name: string; age: number } = parse(userSelectSchema, rows[0]); // 将成功解析
+```
+
+列枚举通过 SingleStore 表 schema 支持，并且可以使用生成的表 schema 进行验证。
+
+### 插入 schema
+
+定义要插入数据库的数据形状，可用于验证 API 请求。
+
+```ts copy
+import { int, singlestoreTable, text } from 'drizzle-orm/singlestore-core';
+import { createInsertSchema } from 'drizzle-orm/valibot';
+import { parse } from 'valibot';
+
+const users = singlestoreTable('users', {
+  id: int().primaryKey().autoincrement(),
+  name: text().notNull(),
+  age: int().notNull()
+});
+
+const userInsertSchema = createInsertSchema(users);
+
+const user = { name: 'John' };
+const parsed: { name: string, age: number } = parse(userInsertSchema, user); // 错误：未定义 `age`
+
+const user = { name: 'Jane', age: 30 };
+const parsed: { name: string, age: number } = parse(userInsertSchema, user); // 将成功解析
+await db.insert(users).values(parsed);
+```
+
+### 更新 schema
+
+定义要在数据库中更新的数据形状，可用于验证 API 请求。
+
+```ts copy
+import { int, singlestoreTable, text } from 'drizzle-orm/singlestore-core';
+import { createUpdateSchema } from 'drizzle-orm/valibot';
+import { parse } from 'valibot';
+
+const users = singlestoreTable('users', {
+  id: int().primaryKey().autoincrement(),
+  name: text().notNull(),
+  age: int().notNull()
+});
+
+const userUpdateSchema = createUpdateSchema(users);
+
+const user = { id: 5, name: 'John' };
+const parsed: { name?: string | undefined, age?: number | undefined } = parse(userUpdateSchema, user); // 错误：`id` 是生成列，不能更新
+
+const user = { age: 35 };
+const parsed: { name?: string | undefined, age?: number | undefined } = parse(userUpdateSchema, user); // 将成功解析
+await db.update(users).set(parsed).where(eq(users.name, 'Jane'));
+```
+
+### 细化
+
+每个 create schema 函数都接受一个额外的可选参数，你可以用它来扩展、修改或完全覆盖某个字段的 schema。传入回调函数会进行扩展或修改，而传入 Valibot schema 则会直接覆盖。
+
+```ts copy
+import { int, json, singlestoreTable, text } from 'drizzle-orm/singlestore-core';
+import { createSelectSchema } from 'drizzle-orm/valibot';
+import { parse, pipe, maxLength, object, string } from 'valibot';
+
+const users = singlestoreTable('users', {
+  id: int().primaryKey().autoincrement(),
+  name: text().notNull(),
+  bio: text(),
+  preferences: json()
+});
+
+const userSelectSchema = createSelectSchema(users, {
+  name: (schema) => pipe(schema, maxLength(20)), // 扩展 schema
+  bio: (schema) => pipe(schema, maxLength(1000)), // 在变为 nullable/optional 之前扩展 schema
+  preferences: object({ theme: string() }) // 覆盖该字段，包括其可空性
+});
+
+const parsed: {
+  id: number;
+  name: string,
+  bio?: string | undefined;
+  preferences: {
+    theme: string;
+  };
+} = parse(userSelectSchema, ...);
+```
+
+### 数据类型参考
+
+```ts
+singlestore.boolean();
+
+// Schema
+boolean();
+```
+
+```ts
+singlestore.date({ mode: 'date' });
+singlestore.datetime({ mode: 'date' });
+singlestore.timestamp({ mode: 'date' });
+
+// Schema
+date();
+```
+
+```ts
+singlestore.binary();
+singlestore.date({ mode: 'string' });
+singlestore.datetime({ mode: 'string' });
+singlestore.decimal();
+singlestore.time();
+singlestore.timestamp({ mode: 'string' });
+singlestore.varbinary();
+
+// Schema
+string();
+```
+
+```ts
+singlestore.char({ length: ... });
+
+// Schema
+pipe(string(), length(length));
+```
+
+```ts
+singlestore.varchar({ length: ... });
+
+// Schema
+pipe(string(), maxLength(length));
+```
+
+```ts
+singlestore.text();
+
+// Schema
+pipe(string(), maxLength(65_535)); // 无符号 16 位整数上限
+```
+
+```ts
+singlestore.text({ enum: ... });
+singlestore.char({ enum: ... });
+singlestore.varchar({ enum: ... });
+singlestore.singlestoreEnum(..., ...);
+
+// Schema
+enum(enum);
+```
+
+```ts
+singlestore.tinyint();
+
+// Schema
+pipe(number(), minValue(-128), maxValue(127), int()); // 8 位整数下限和上限
+```
+
+```ts
+singlestore.tinyint({ unsigned: true });
+
+// Schema
+pipe(number(), minValue(0), maxValue(255), int()); // 无符号 8 位整数下限和上限
+```
+
+```ts
+singlestore.smallint();
+
+// Schema
+pipe(number(), minValue(-32_768), maxValue(32_767), int()); // 16 位整数下限和上限
+```
+
+```ts
+singlestore.smallint({ unsigned: true });
+
+// Schema
+pipe(number(), minValue(0), maxValue(65_535), int()); // 无符号 16 位整数下限和上限
+```
+
+```ts
+singlestore.float();
+
+// Schema
+pipe(number(), minValue(-8_388_608), maxValue(8_388_607)); // 24 位整数下限和上限
+```
+
+```ts
+singlestore.mediumint();
+
+// Schema
+pipe(number(), minValue(-8_388_608), maxValue(8_388_607), int()); // 24 位整数下限和上限
+```
+
+```ts
+singlestore.float({ unsigned: true });
+
+// Schema
+pipe(number(), minValue(0), maxValue(16_777_215)); // 无符号 24 位整数下限和上限
+```
+
+```ts
+singlestore.mediumint({ unsigned: true });
+
+// Schema
+pipe(number(), minValue(0), maxValue(16_777_215), int()); // 无符号 24 位整数下限和上限
+```
+
+```ts
+singlestore.int();
+
+// Schema
+pipe(number(), minValue(-2_147_483_648), maxValue(2_147_483_647), int()); // 32 位整数下限和上限
+```
+
+```ts
+singlestore.int({ unsigned: true });
+
+// Schema
+pipe(number(), minValue(0), maxValue(4_294_967_295), int()); // unsigned 32 位整数下限和上限
+```
+
+```ts
+singlestore.double();
+singlestore.real();
+
+// Schema
+pipe(number(), minValue(-140_737_488_355_328), maxValue(140_737_488_355_327)); // 48 位整数下限和上限
+```
+
+```ts
+singlestore.double({ unsigned: true });
+
+// Schema
+pipe(number(), minValue(0), maxValue(281_474_976_710_655)); // 无符号 48 位整数下限和上限
+```
+
+```ts
+singlestore.bigint({ mode: 'number' });
+
+// Schema
+pipe(number(), minValue(-9_007_199_254_740_991), maxValue(9_007_199_254_740_991), int()); // Javascript 最小和最大安全整数
+```
+
+```ts
+singlestore.serial();
+
+// Schema
+pipe(number(), minValue(0), maxValue(9_007_199_254_740_991), int()); // Javascript 最大安全整数
+```
+
+```ts
+singlestore.bigint({ mode: 'bigint' });
+
+// Schema
+pipe(bigint(), minValue(-9_223_372_036_854_775_808n), maxValue(9_223_372_036_854_775_807n)); // 64 位整数下限和上限
+```
+
+```ts
+singlestore.bigint({ mode: 'bigint', unsigned: true });
+
+// Schema
+pipe(bigint(), minValue(0n), maxValue(18_446_744_073_709_551_615n)); // 无符号 64 位整数下限和上限
+```
+
+```ts
+singlestore.year();
+
+// Schema
+pipe(number(), minValue(1_901), maxValue(2_155), int());
+```
+
+```ts
+singlestore.json();
+
+// Schema
+union([union([string(), number(), boolean(), null_()]), array(any()), record(string(), any())]);
+```
+

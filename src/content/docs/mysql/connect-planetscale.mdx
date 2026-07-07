@@ -1,0 +1,70 @@
+import Npm from "@mdx/Npm.astro";
+import Callout from "@mdx/Callout.astro";
+import Tabs from "@mdx/Tabs.astro";
+import Tab from "@mdx/Tab.astro";
+import AnchorCards from "@mdx/AnchorCards.astro";
+import WhatsNextMySQL from "@mdx/WhatsNextMySQL.astro";
+import Prerequisites from "@mdx/Prerequisites.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+
+# Drizzle \<\> PlanetScale MySQL
+
+<Prerequisites>
+
+- 使用 Drizzle 的数据库[连接基础](/docs/mysql/connect-overview)
+- PlanetScale 数据库 - [网站](https://planetscale.com/docs)
+- PlanetScale http 驱动 - [GitHub](https://github.com/planetscale/database-js)
+- Drizzle MySQL 驱动 - [文档](/docs/mysql/get-started-mysql)
+
+</Prerequisites>
+
+PlanetScale 提供 MySQL（Vitess）和 PostgreSQL 数据库。本页介绍如何连接 PlanetScale MySQL。
+
+关于 PlanetScale Postgres，请参阅 [PlanetScale Postgres 连接指南](/docs/connect-planetscale-postgres)。
+
+使用 Drizzle ORM，您可以通过他们官方的 **[`database-js`](https://github.com/planetscale/database-js)** 驱动，从无服务器和有服务器环境访问 PlanetScale MySQL，使用我们的 `drizzle-orm/planetscale-serverless` 包。
+
+您也可以通过 TCP 使用 `mysql2` 驱动访问 PlanetScale MySQL——**[请看这里。](/docs/mysql/get-started-mysql)**
+
+#### 步骤 1 - 安装软件包
+
+<Npm>
+ drizzle-orm@rc @planetscale/database
+ -D drizzle-kit@rc
+</Npm>
+
+#### 步骤 2 - 初始化驱动并进行查询
+
+```typescript copy"
+import { drizzle } from "drizzle-orm/planetscale-serverless";
+
+const db = drizzle({ connection: {
+  host: process.env["DATABASE_HOST"],
+  username: process.env["DATABASE_USERNAME"],
+  password: process.env["DATABASE_PASSWORD"],
+}});
+
+const response = await db.select().from(...)
+```
+
+如果您需要提供现有的驱动程序：
+
+```typescript copy"
+import { drizzle } from "drizzle-orm/planetscale-serverless";
+import { Client } from "@planetscale/database";
+
+const client = new Client({
+  host: process.env["DATABASE_HOST"],
+  username: process.env["DATABASE_USERNAME"],
+  password: process.env["DATABASE_PASSWORD"],
+});
+
+const db = drizzle({ client });
+```
+
+请务必查看 PlanetScale 官方的 **[MySQL 课程](https://planetscale.com/courses/mysql-for-developers)**，  
+我们认为它们非常精彩 🙌
+
+#### 接下来做什么？
+
+<WhatsNextMySQL />

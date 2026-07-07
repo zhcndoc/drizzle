@@ -1,0 +1,201 @@
+import Callout from '@mdx/Callout.astro';
+import CodeTabs from '@mdx/CodeTabs.astro';
+
+## Type API
+使用 Drizzle 的类型辅助工具，从 SQLite 表模式中推断 `select` 和 `insert` 模型。
+
+```ts
+import { integer, text, sqliteTable } from 'drizzle-orm/sqlite-core';
+import { type InferSelectModel, type InferInsertModel } from 'drizzle-orm'
+
+const users = sqliteTable('users', {
+  id: integer().primaryKey({ autoIncrement: true }),
+  name: text().notNull(),
+});
+
+type SelectUser = typeof users.$inferSelect;
+type InsertUser = typeof users.$inferInsert;
+
+type SelectUserAlt = InferSelectModel<typeof users>;
+type InsertUserAlt = InferInsertModel<typeof users>;
+```
+
+## 日志记录
+通过向 `drizzle` 传递 `{ logger: true }` 来启用默认查询日志记录。
+```typescript copy
+import { drizzle } from 'drizzle-orm/...'; // 依赖于驱动程序
+
+const db = drizzle({ logger: true });
+```
+
+你可以通过创建一个 `DefaultLogger` 实例，并为其提供自定义的 `writer` 来更改日志输出目标：
+```typescript copy
+import { DefaultLogger, type LogWriter } from 'drizzle-orm/logger';
+import { drizzle } from 'drizzle-orm/...'; // 依赖于驱动程序
+
+class MyLogWriter implements LogWriter {
+  write(message: string) {
+    // 写入文件、标准输出等。
+  }
+}
+
+const logger = new DefaultLogger({ writer: new MyLogWriter() });
+const db = drizzle(process.env.DB_URL, { logger });
+```
+
+你也可以提供自定义日志记录器。
+
+```ts
+import type { Logger } from 'drizzle-orm/logger';
+import { drizzle } from 'drizzle-orm/...';
+
+class MyLogger implements Logger {
+  logQuery(query: string, params: unknown[]): void {
+    console.log({ query, params });
+  }
+}
+
+const db = drizzle(process.env.DB_URL, { logger: new MyLogger() });
+```
+
+## 多项目模式
+当多个项目共享一个数据库时，使用 `sqliteTableCreator` 自定义表名。
+
+```ts {3}
+import { integer, text, sqliteTableCreator } from 'drizzle-orm/sqlite-core';
+
+const sqliteTable = sqliteTableCreator((name) => `project1_${name}`);
+
+const users = sqliteTable('users', {
+  id: integer().primaryKey({ autoIncrement: true }),
+  name: text().notNull(),
+});
+```
+```ts {10}
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  schema: "./src/schema/*",
+  out: "./drizzle",
+  dialect: "sqlite", 
+  dbCredentials: {
+    url: process.env.DATABASE_URL,
+  }
+  tablesFilter: ["project1_*"],
+});
+```
+
+```sql
+CREATE TABLE `project1_users` (
+	`id` integer PRIMARY KEY AUTOINCREMENT,
+	`name` text NOT NULL
+);
+```
+
+## 打印 SQL 查询
+使用 `.toSQL()` 从查询中打印生成的 SQL。
+
+```ts
+const query = db
+  .select({ id: users.id, name: users.name })
+  .from(users)
+  .groupBy(users.id)
+  .toSQL();
+// query:
+{
+  sql: 'select "id", "name" from "users" group by "users"."id"',
+  params: [],
+}
+```
+
+## 原始 SQL 查询
+如果你有一些复杂的查询需要执行，而 `drizzle-orm` 目前还无法处理它们，
+你可以使用 `db.run`、`db.all`、`db.values`、`db.get` 方法来执行原始的 `参数化` 查询。
+
+```ts
+import { sql } from 'drizzle-orm';
+
+const statement = sql`select * from ${users} where ${users.id} = ${userId}`;
+
+const res: unknown[] = db.all(statement)
+const res: unknown = db.get(statement)
+const res: unknown[][] = db.values(statement)
+const res: Database.RunResult = db.run(statement)
+```
+
+## 独立查询构建器
+无需创建数据库实例即可使用 SQLite 查询构建器。
+
+```ts
+import { QueryBuilder } from 'drizzle-orm/sqlite-core';
+
+const qb = new QueryBuilder();
+
+const query = qb.select().from(users).where(eq(users.name, 'Dan'));
+const { sql, params } = query.toSQL();
+```
+
+## 获取类型化列
+使用 `getColumns` 获取一个类型化的列映射，这在从选择结果中排除字段时非常有用。
+
+<CodeTabs items={["index.ts", "schema.ts"]}>
+```ts
+import { getColumns } from "drizzle-orm";
+import { users } from "./schema";
+
+const { password, role, ...rest } = getColumns(users);
+
+await db.select({ ...rest }).from(users);
+```
+```ts
+import { integer, text, sqliteTable } from "drizzle-orm/sqlite-core";
+
+export const users = sqliteTable("users", {
+  id: integer().primaryKey({ autoIncrement: true }),
+  name: text(),
+  email: text(),
+  password: text(),
+  role: text().$type<"admin" | "customer">(),
+});
+```
+</CodeTabs>
+
+## 获取表信息
+使用 `getTableConfig` 检查 SQLite 表元数据。
+
+```ts
+import { getTableConfig, sqliteTable } from 'drizzle-orm/sqlite-core';
+
+export const table = sqliteTable(...);
+
+const {
+  columns,
+  indexes,
+  foreignKeys,
+  checks,
+  primaryKeys,
+  name,
+  uniqueConstraints,
+} = getTableConfig(table);
+```
+
+## 比较对象类型
+使用 `is()` 而不是 `instanceof` 来检查 Drizzle 对象类型。
+
+```ts
+import { Column, is } from 'drizzle-orm';
+
+if (is(value, Column)) {
+  // value 的类型被缩小为 Column
+}
+```
+
+## 模拟驱动
+当你需要一个带类型的数据库对象，但不需要真实的 PostgreSQL 连接时，请使用 `drizzle.mock()`。
+
+```ts
+import { drizzle } from "drizzle-orm/...";
+import { relations } from "./relations";
+
+const db = drizzle.mock({ relations });
+```

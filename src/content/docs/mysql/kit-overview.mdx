@@ -1,0 +1,119 @@
+import CodeTab from '@mdx/CodeTab.astro';
+import CodeTabs from '@mdx/CodeTabs.astro';
+import Section from '@mdx/Section.astro';
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
+import Callout from '@mdx/Callout.astro';
+import Npm from '@mdx/Npm.astro';
+import Npx from '@mdx/Npx.astro';
+import Steps from '@mdx/Steps.astro';
+import Prerequisites from "@mdx/Prerequisites.astro"
+
+# 使用 Drizzle Kit 进行迁移
+<Prerequisites>
+- 开始使用 Drizzle 和 `drizzle-kit` - [点此阅读](/docs/mysql/get-started)
+- Drizzle 模式基础 - [点此阅读](/docs/mysql/sql-schema-declaration)
+- 数据库连接基础 - [点此阅读](/docs/mysql/connect-overview)
+- Drizzle 迁移基础 - [点此阅读](/docs/mysql/migrations)
+</Prerequisites>
+
+
+**Drizzle Kit** 是一个用于使用 Drizzle 管理 SQL 数据库迁移的 CLI 工具。
+<Npm>
+  -D drizzle-kit
+</Npm>
+<Callout type="warning">
+请先阅读 Drizzle 的 [入门指南](/docs/mysql/get-started) 和 [迁移基础](/docs/mysql/migrations)，并选择最适合你业务需求的 SQL 迁移流程。 
+</Callout>
+
+基于你的模式，Drizzle Kit 让你可以生成并运行 SQL 迁移文件、  
+直接将模式推送到数据库、从数据库拉取模式、启动 drizzle studio，并提供一些实用命令。
+<Npx>
+drizzle-kit generate
+drizzle-kit migrate
+drizzle-kit push
+drizzle-kit pull
+drizzle-kit check
+drizzle-kit up
+drizzle-kit studio
+drizzle-kit export
+</Npx>
+
+
+|                                                      |                                                                                                                                                                    |
+| :--------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`drizzle-kit generate`](/docs/mysql/drizzle-kit-generate) | 允许你根据 Drizzle 模式生成 SQL 迁移文件，无论是在声明时还是后续变更时， [点此查看](/docs/mysql/drizzle-kit-generate)。       |
+| [`drizzle-kit migrate`](/docs/mysql/drizzle-kit-migrate)   | 允许你将生成的 SQL 迁移文件应用到数据库， [点此查看](/docs/mysql/drizzle-kit-migrate)。                                                              |
+| [`drizzle-kit pull`](/docs/mysql/drizzle-kit-pull)         | 允许你拉取（反向解析）数据库模式，将其转换为 Drizzle 模式并保存到你的代码库中， [点此查看](/docs/mysql/drizzle-kit-pull)                           |
+| [`drizzle-kit push`](/docs/mysql/drizzle-kit-push)         | 允许你在声明时或后续模式变更时，将你的 Drizzle 模式推送到数据库， [点此查看](/docs/mysql/drizzle-kit-push)                          |
+| [`drizzle-kit studio`](/docs/mysql/drizzle-kit-studio)     | 将连接到你的数据库并启动 Drizzle Studio 的代理服务器，你可以使用它方便地浏览数据库， [点此查看](/docs/mysql/drizzle-kit-studio) |
+| [`drizzle-kit check`](/docs/mysql/drizzle-kit-check)       | 会遍历所有已生成的迁移，并检查生成的迁移是否存在任何竞争条件（冲突）， [点此查看](/docs/mysql/drizzle-kit-check)               |
+| [`drizzle-kit up`](/docs/mysql/drizzle-kit-up)             | 用于升级之前生成的迁移快照， [点此查看](/docs/mysql/drizzle-kit-up)                                                                     |
+| [`drizzle-kit export`](/docs/mysql/drizzle-kit-export)     | 用于将 TS 模式转换为原始 SQL DDL 并输出， [点此查看](/docs/mysql/drizzle-kit-export)                                                                     |
+<br/>
+
+Drizzle Kit 可通过 [drizzle.config.ts](/docs/mysql/drizzle-config-file) 配置文件或 CLI 参数进行配置。<br/>
+至少需要提供 SQL `dialect` 和 `schema` 路径，这样 Drizzle Kit 才知道如何生成迁移。
+```
+📦 <project root>
+ ├ 📂 drizzle
+ ├ 📂 src
+ ├ 📜 .env
+ ├ 📜 drizzle.config.ts  <--- Drizzle 配置文件
+ ├ 📜 package.json
+ └ 📜 tsconfig.json
+```
+
+<CodeTabs items={["simple config", "extended config"]}>
+```ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "mysql",
+  schema: "./src/schema.ts",
+});
+```
+```ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  out: "./drizzle",
+  dialect: "mysql",
+  schema: "./src/schema.ts",
+
+  dbCredentials: {
+    url: "./database/",
+  },
+
+  tablesFilter: "*",
+
+  introspect: {
+    casing: "camel",
+  },
+
+  migrations: {
+    table: "__drizzle_migrations__",
+  },
+
+  breakpoints: true,
+  verbose: true,
+});
+```
+</CodeTabs>
+
+你可以通过 CLI 参数提供 Drizzle Kit 配置路径，这在你有多个数据库阶段、多个数据库，或者同一项目中使用不同数据库时非常有用：
+
+<Npx>
+  drizzle-kit push --config=drizzle-dev.drizzle.config
+  drizzle-kit push --config=drizzle-prod.drizzle.config
+</Npx>
+```plaintext {5-6}
+📦 <project root>
+ ├ 📂 drizzle
+ ├ 📂 src
+ ├ 📜 .env
+ ├ 📜 drizzle-dev.config.ts
+ ├ 📜 drizzle-prod.config.ts
+ ├ 📜 package.json
+ └ 📜 tsconfig.json
+```

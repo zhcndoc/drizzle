@@ -1,0 +1,122 @@
+import CodeTabs from '@mdx/CodeTabs.astro';
+import CodeTab from '@mdx/CodeTab.astro';
+import Callout from '@mdx/Callout.astro';
+
+# 生成列
+
+1. 虚拟（或非持久化）生成列：这些列在被查询时会动态计算。它们不会占用数据库中的存储空间。
+
+2. 存储（或持久化）生成列：这些列在行被插入或更新时计算，其值存储在数据库中。这使它们可以建立索引，并且由于每次查询都无需重新计算这些值，因此可以提升查询性能。
+
+#### 数据库端
+    **类型**: `VIRTUAL`, `STORED`
+
+	当未指定类型时，默认使用 `VIRTUAL`
+
+    **工作方式**
+    - 在表结构中通过表达式定义。
+    - 虚拟列在读取操作期间计算。
+    - 存储列在写入操作期间计算并存储。
+
+    **能力**
+    - 可用于 SELECT、INSERT、UPDATE 和 DELETE 语句。
+    - 虚拟列和存储列都可以建立索引。
+    - 可以指定 NOT NULL 及其他约束。
+    
+    **限制**
+    - 不能直接向生成列插入或更新值 
+
+    更多信息请查看 [MySQL Alter Generated](https://dev.mysql.com/doc/refman/8.4/en/alter-table-generated-columns.html) 文档和 [MySQL create generated](https://dev.mysql.com/doc/refman/8.4/en/create-table-generated-columns.html) 文档
+
+    #### Drizzle 端
+    在 Drizzle 中，你可以在任何列类型上指定 `.generatedAlwaysAs()` 函数，并添加受支持的 SQL 查询，
+    这样就会为你生成该列的数据。
+
+    #### 特性 
+    该函数可以通过 2 种方式接受生成表达式：
+
+    **`sql`** 标签 - 如果你希望 drizzle 帮你转义某些值
+
+    <CodeTab>
+    ```ts {2,6}
+    export const test_1 = mysqlTable("test_1", {
+      generatedName: text("gen_name").generatedAlwaysAs(sql`'hello "world"!'`),
+    });
+    
+    export const test_2 = mysqlTable("test_2", {
+      generatedName: text("gen_name").generatedAlwaysAs(sql`'hello "world"!'`, { mode: "stored" }),
+    });
+    ```
+    ```sql {2,6}
+    CREATE TABLE `test_1` (
+        `gen_name` text GENERATED ALWAYS AS ('hello "world"!') VIRTUAL
+    );
+    
+    CREATE TABLE `test_2` (
+        `gen_name` text GENERATED ALWAYS AS ('hello "world"!') STORED
+    );
+    ```
+    </CodeTab>
+
+    **`callback`** - 如果你需要引用表中的列
+
+     <CodeTab>
+    ```ts {4,10}
+    export const test_1 = mysqlTable("test_1", {
+      name: text("first_name"),
+      generatedName: text("gen_name")
+	     .generatedAlwaysAs((): SQL => sql`concat('hi, ', ${test_1.name}, '!')`),
+    });
+    
+    export const test_2 = mysqlTable("test_2", {
+      name: text("first_name"),
+      generatedName: text("gen_name")
+	     .generatedAlwaysAs((): SQL => sql`concat('hi, ', ${test_2.name}, '!')`, { mode: "stored" }),
+    });
+    ```
+    ```sql {3,8}
+    CREATE TABLE `test_1` (
+        `first_name` text,
+        `gen_name` text GENERATED ALWAYS AS (concat('hi, ', `test_1`.`first_name`, '!')) VIRTUAL
+    );
+    
+    CREATE TABLE `test_2` (
+        `first_name` text,
+        `gen_name` text GENERATED ALWAYS AS (concat('hi, ', `test_2`.`first_name`, '!')) STORED
+    );
+    ```
+    </CodeTab>
+
+    #### 限制
+    Drizzle Kit 对 `push` 命令也会有以下限制：
+    1. 你不能通过 `push` 更改生成约束表达式和类型。Drizzle-kit 会忽略此更改。要使其生效，你需要先 `drop the column`，再 `push`，然后 `add a column with a new expression`。这样做是因为数据库端的映射较为复杂：数据库端的 schema 表达式会被修改，而在 introspection 时我们会得到一个不同的字符串。我们无法确定是你更改了这个表达式，还是它只是被数据库更改并重新格式化了。只要这些是生成列，而且 `push` 主要用于在本地数据库上进行原型开发，`drop` 和 `create` 生成列应该是很快的。由于这些列是 `generated`，所有数据都会被恢复
+    2. `generate` 不应有任何限制
+
+  <CodeTabs items={["schema.ts"]}>
+	<CodeTab>
+	```typescript copy
+    export const users = mysqlTable("users", {
+        id: int(),
+        id2: int(),
+        name: text(),
+        storedGenerated: text("stored_gen").generatedAlwaysAs(
+          (): SQL => sql`concat(${users.name}, ' ', 'hello')`,
+          { mode: "stored" }
+        ),
+        virtualGenerated: text("virtual_gen").generatedAlwaysAs(
+          (): SQL => sql`concat(${users.name}, ' ', 'hello')`,
+          { mode: "virtual" }
+        ),
+    });
+    ```
+    ```sql
+    CREATE TABLE `users` (
+      `id` int,
+      `id2` int,
+      `name` text,
+      `stored_gen` text GENERATED ALWAYS AS (concat(`users`.`name`, ' ', 'hello')) STORED,
+      `virtual_gen` text GENERATED ALWAYS AS (concat(`users`.`name`, ' ', 'hello')) VIRTUAL
+    );
+    ```
+    </CodeTab>
+  </CodeTabs>

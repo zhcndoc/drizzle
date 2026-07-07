@@ -1,0 +1,25 @@
+import Callout from '@mdx/Callout.astro';
+
+您可以直接使用 `drizzle-kit push` 命令将更改应用到数据库。这是一种方便的方法，可在本地开发环境中快速测试新的架构设计或修改，从而实现快速迭代，而无需管理迁移文件：
+
+```bash copy
+npx drizzle-kit push
+```
+
+有关 push 命令的更多信息，请参阅[文档](/docs/mssql/drizzle-kit-push)。
+
+<Callout type='info' title='提示' emoji='💡'>
+或者，您也可以使用 `drizzle-kit generate` 命令生成迁移，然后使用 `drizzle-kit migrate` 命令应用它们：
+
+生成迁移：
+```bash copy
+npx drizzle-kit generate
+```
+
+应用迁移：
+```bash copy
+npx drizzle-kit migrate
+```
+
+有关迁移流程的更多信息，请参阅[文档](/docs/mssql/kit-overview)。
+</Callout>

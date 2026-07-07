@@ -1,0 +1,63 @@
+import Callout from '@mdx/Callout.astro';
+import Section from '@mdx/Section.astro';
+
+# SQL 删除
+
+你可以删除表中的所有行：
+```typescript copy
+await db.delete(users);
+```
+你也可以使用过滤条件进行删除：
+```typescript copy
+await db.delete(users).where(eq(users.name, 'Dan'));
+```
+
+### 返回
+
+你可以在 PostgreSQL 中删除一行并将其返回：
+```typescript copy
+const deletedUser = await db.delete(users)
+  .where(eq(users.name, 'Dan'))
+  .returning();
+
+// 部分返回
+const deletedUserId = await db.delete(users)
+  .where(eq(users.name, "Dan"))
+  .returning({ deletedId: users.id });
+
+// deletedUserId: { deletedId: number | null }[]
+```
+```sql
+delete from "users" where "users"."name" = 'Dan' returning "id", "name";
+
+delete from "users" where "users"."name" = 'Dan' returning "id";
+```
+
+## WITH DELETE 子句
+
+<Callout>
+  查看如何将 WITH 语句与 [select](/docs/select#with-clause)、[insert](/docs/insert#with-insert-clause)、[update](/docs/update#with-update-clause) 一起使用
+</Callout>
+
+使用 `with` 子句可以通过将复杂查询拆分为更小的子查询（称为公用表表达式，CTEs）来帮助你简化它们：
+<Section>
+```typescript copy
+const averageAmount = db.$with('average_amount').as(
+  db.select({ value: sql`avg(${orders.amount})`.as('value') }).from(orders)
+);
+
+const result = await db
+	.with(averageAmount)
+	.delete(orders)
+	.where(gt(orders.amount, sql`(select * from ${averageAmount})`))
+	.returning({
+		id: orders.id
+	});
+```
+```sql
+with "average_amount" as (select avg("amount") as "value" from "orders") 
+delete from "orders" 
+where "orders"."amount" > (select * from "average_amount") 
+returning "id"
+```
+</Section>

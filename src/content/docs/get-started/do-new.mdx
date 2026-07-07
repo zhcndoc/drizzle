@@ -7,12 +7,12 @@ import WhatsNextPostgres from "@mdx/WhatsNextPostgres.astro";
 import Breadcrumbs from '@mdx/Breadcrumbs.astro';
 import FileStructure from '@mdx/get-started/FileStructure.mdx';
 import InstallPackages from '@mdx/get-started/InstallPackages.mdx';
-import SetupConfig from '@mdx/get-started/SetupConfig.mdx';
+import SetupConfig from '@mdx/get-started/sqlite/SetupConfig.mdx';
 import TransferCode from '@mdx/get-started/TransferCode.mdx';
 import QueryTurso from '@mdx/get-started/sqlite/QueryTurso.mdx';
 import QueryDatabaseUpdated from '@mdx/get-started/QueryDatabaseUpdated.mdx';
 import RunFile from '@mdx/get-started/RunFile.mdx';
-import ApplyChanges from '@mdx/get-started/ApplyChanges.mdx';
+import ApplyChanges from '@mdx/get-started/sqlite/ApplyChanges.mdx';
 import SetupEnv from '@mdx/get-started/SetupEnv.mdx';
 import CreateTable from '@mdx/get-started/sqlite/CreateTable.mdx';
 import ConnectLibsql from '@mdx/get-started/sqlite/ConnectLibsql.mdx';
@@ -22,10 +22,10 @@ import ConnectLibsql from '@mdx/get-started/sqlite/ConnectLibsql.mdx';
 # 使用 Drizzle 和 SQLite Durable Objects 快速入门
 
 <Prerequisites>  
-  - **dotenv** - 管理环境变量的包 - [阅读这里](https://www.npmjs.com/package/dotenv)
-  - **tsx** - 运行 TypeScript 文件的包 - [阅读这里](https://tsx.is/)
-  - **Cloudflare SQLite Durable Objects** - 嵌入于 Durable Object 中的 SQLite 数据库 - [阅读这里](https://developers.cloudflare.com/durable-objects/api/sql-storage/)
-  - **wrangler** - Cloudflare 开发者平台命令行接口 - [阅读这里](https://developers.cloudflare.com/workers/wrangler)
+  - **dotenv** - 用于管理环境变量的包 - [在此阅读](https://www.npmjs.com/package/dotenv)
+  - **tsx** - 用于运行 TypeScript 文件的包 - [在此阅读](https://tsx.hirok.io/)
+  - **Cloudflare SQLite Durable Objects** - 嵌入在 Durable Object 中的 SQLite 数据库 - [在此阅读](https://developers.cloudflare.com/durable-objects/api/sql-storage/)
+  - **wrangler** - Cloudflare Developer Platform 命令行接口 - [在此阅读](https://developers.cloudflare.com/workers/wrangler)
 </Prerequisites>
 
 <FileStructure />

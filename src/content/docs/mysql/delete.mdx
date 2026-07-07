@@ -1,0 +1,46 @@
+import Callout from '@mdx/Callout.astro';
+import Section from '@mdx/Section.astro';
+
+# SQL 删除
+你可以删除表中的所有行：
+```typescript copy
+await db.delete(users);
+```
+并且你可以带过滤条件和约束进行删除：
+```typescript copy
+await db.delete(users).where(eq(users.name, 'Dan'));
+```
+
+### 限制
+使用 `.limit()` 为查询添加 `limit` 子句 - 例如：
+<Section>
+```typescript
+await db.delete(users).where(eq(users.name, 'Dan')).limit(2);
+```
+```sql
+delete from `users` where `users`.`name` = 'Dan' limit 2;
+```
+</Section>
+
+### 排序
+使用 `.orderBy()` 为查询添加 `order by` 子句，按指定字段对结果进行排序：
+<Section>
+```typescript
+import { asc, desc } from 'drizzle-orm';
+
+await db.delete(users).where(eq(users.name, 'Dan')).orderBy(users.name);
+await db.delete(users).where(eq(users.name, 'Dan')).orderBy(desc(users.name));
+
+// 按多个字段排序
+await db.delete(users).where(eq(users.name, 'Dan')).orderBy(users.name, users.name2);
+await db.delete(users).where(eq(users.name, 'Dan')).orderBy(asc(users.name), desc(users.name2));
+```
+```sql
+delete from `users` where `users`.`name` = 'Dan' order by `users`.`name`;
+delete from `users` where `users`.`name` = 'Dan' order by `users`.`name` desc;
+
+delete from `users` where `users`.`name` = 'Dan' order by `users`.`name`, `users`.`name2`;
+delete from `users` where `users`.`name` = 'Dan' order by `users`.`name` asc, `users`.`name2` desc;
+```
+</Section>
+

@@ -11,8 +11,8 @@ import Npm from '@mdx/Npm.astro';
 </Callout>
 
 <Npm>
-drizzle-orm@beta
-drizzle-kit@beta -D
+drizzle-orm@rc
+drizzle-kit@rc -D
 </Npm>
 
 <br/>
@@ -24,7 +24,7 @@ drizzle-kit@beta -D
 
 如果需要，可以在列名中使用数据库别名，也可以使用 `casing` 参数为 Drizzle 定义映射策略。
 
-你可以在此处了解更多相关内容 [here](/docs/sql-schema-declaration#shape-your-data-schema)
+你可以在此处了解更多相关内容 [这里](/docs/sql-schema-declaration#shape-your-data-schema)
 </Callout>
 
 ### int
@@ -193,9 +193,9 @@ CREATE TABLE [table] (
 
 ### bit
 
-一种整数数据类型，值可以为 `1`、`0` 或 `NULL`
+A data type for integers, whose values can be `1`, `0`, or `NULL`
 
-Drizzle 允许使用 `true` 或 `false` 代替 `1` 和 `0`
+Drizzle allows using `true` or `false` instead of `1` and `0`
 
 <Section>
 ```typescript
@@ -399,7 +399,7 @@ CREATE TABLE [table] (
 
 ### binary
 
-定长二进制数据，长度为 n 字节，n 的取值范围为 1 到 8,000。存储大小为 n 字节。
+Fixed-length binary data, with a length of n bytes, where n ranges from 1 to 8,000. Storage size is n bytes.
 
 <Section>
 ```typescript
@@ -421,7 +421,7 @@ CREATE TABLE [table] (
 
 ### varbinary
 
-变长二进制数据。n 可以是 1 到 8,000 之间的值。max 表示最大存储大小为 2^31-1 字节。
+Variable-length binary data. n can be a value between 1 and 8,000. max means the maximum storage size is 2^31-1 bytes.
 
 <Section>
 ```typescript
@@ -448,7 +448,7 @@ CREATE TABLE [table] (
 ### numeric
 `numeric`
 
-固定精度和小数位数字。当使用最大精度时，合法值范围为 -10^38 + 1 至 10^38 - 1。
+Fixed precision and scale numeric values. When using the maximum precision, valid values range from -10^38 + 1 to 10^38 - 1.
 
 更多信息请参考 MSSQL 官方 **[文档](https://learn.microsoft.com/en-us/sql/t-sql/data-types/decimal-and-numeric-transact-sql?view=sql-server-ver17#decimal---p---s----and-numeric---p---s---)**
 

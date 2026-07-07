@@ -1,6 +1,5 @@
 ---
-title: 用外键为部分暴露的表进行数据填充
-slug: seeding-with-partially-exposed-tables
+title: 使用外键为部分暴露的表播种
 ---
 
 import IsSupportedChipGroup from "@mdx/IsSupportedChipGroup.astro";
@@ -9,10 +8,10 @@ import CodeTabs from '@mdx/CodeTabs.astro';
 import CodeTab from '@mdx/CodeTab.astro';
 import Callout from '@mdx/Callout.astro';
 
-<IsSupportedChipGroup chips={{PostgreSQL: true, MySQL: true, SQLite: true}}/>
+<IsSupportedChipGroup chips={{PostgreSQL: true, MySQL: true, SQLite: true, MSSQL: true, Cockroach: true}}/>
 
 <Prerequisites>
-- 了解如何使用 [PostgreSQL](/docs/get-started-postgresql), [MySQL](/docs/get-started-mysql) 或 [SQLite](/docs/get-started-sqlite)
+- 开始使用 [PostgreSQL](/docs/get-started-postgresql)、[MySQL](/docs/mysql/get-started-mysql)、[SQLite](/docs/sqlite/get-started-sqlite)、[MSSQL](/docs/mssql/get-started-mssql) 和 [Cockroach](/docs/cockroach/get-started-cockroach)
 - 熟悉 [Drizzle Seed](/docs/seed-overview)
 </Prerequisites>
 
@@ -66,7 +65,7 @@ export const bloodPressure = pgTable("bloodPressure", {
 ```ts 
 await seed(db, { bloodPressure, users });
 ```
-- 您可以 [改进](/docs/guides/seeding-with-partially-exposed-tables#refining-the-userid-column-generator) `userId` 列生成器；
+- 您可以 [refine](/docs/guides/seeding-with-partially-exposed-schema#refining-the-userid-column-generator) `userId` 列生成器；
 
 ## 示例 2
 
@@ -114,7 +113,7 @@ export const bloodPressure = pgTable("bloodPressure", {
 然后您将有两个选择：
 - 如果您可以接受用 Null 值填充 `userId` 列，可以忽略该警告；
 
-- 否则，您可以 [改进](/docs/guides/seeding-with-partially-exposed-tables#refining-the-userid-column-generator) `userId` 列生成器。 
+- 另外，您可以 [细化](/docs/guides/seeding-with-partially-exposed-schema#refining-the-userid-column-generator) `userId` 列生成器。 
 
 ## 改进 `userId` 列生成器
 这样做需要 `users` 表中已经有类似于 1 和 2 的 ID。

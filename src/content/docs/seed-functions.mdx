@@ -13,7 +13,7 @@ import Tabs from "@mdx/Tabs.astro";
 ### `default`
 
 <rem025 />
-每次调用生成器时会生成相同的给定值。
+每次调用生成器时都会生成相同的给定值。
 
 |  | 参数          | 默认值     | 类型
 |:-| :--------      | :--------   | :--------
@@ -80,7 +80,7 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 ### `intPrimaryKey`
 
 <rem025 />
-生成从 1 开始的顺序整数。
+Generates sequential integers starting from 1.
 
 |  | 参数      | 默认值    | 类型
 |:-| :--------  | :--------  | :--------
@@ -217,11 +217,11 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 <rem025 />
 在给定范围内生成日期
 
-|  | 参数       | 默认值                 | 类型
-|:-| :--------  | :--------------         | :--------
-|  |`minDate`   |`new Date('2020-05-08')` | `string \| Date`
-|  |`maxDate`   |`new Date('2028-05-08')` | `string \| Date`
-|  |`arraySize` |--                       |`number`
+|  | param      | default                                                                                                   | type
+|:-| :--------  | :--------------                                                                                           | :--------
+|  |`minDate`   |``` `'2024-05-08' - 4 年` - 如果未设置 maxDate``` ``` `maxDate - 8 年`  - 如果设置了 maxDate ```   |`string \| Date`
+|  |`maxDate`   |``` `'2024-05-08' + 4 年` - 如果未设置 minDate``` ``` `minDate + 8 年`  - 如果设置了 minDate ```   |`string \| Date`
+|  |`arraySize` |--                                                                                                         |`number`
 
 <Callout type='warning'>
 如果只提供了一个参数（`minDate` 或 `maxDate`），则未指定的参数将通过在指定参数上加减 8 年来计算
@@ -256,9 +256,11 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 <rem025 />
 生成 24 小时制的时间
 
-|  | 参数       | 默认值    | 类型
-|:-| :--------  | :--------  | :--------
-|  |`arraySize` |--          |`number`
+|  | param      | default             | type
+|:-| :--------  | :--------           | :--------
+|  |`min`       |`'00:00:00.000Z'`    |`string \| Date`
+|  |`max`       |`'23:59:59.999Z'`    |`string \| Date`
+|  |`arraySize` |--                   |`number`
 
 <rem025 />
 ```ts 
@@ -268,8 +270,14 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
   users: {
     columns: {
       birthTime: funcs.time({
+        // 范围的下边界。
+        min: "11:12:13.141",
+
+        // 范围的上边界。
+        max: "15:16:17.181",
+
         // 每个一维数组中的元素数量。 
-        // （如指定，将生成数组。）
+        // （如果指定，将生成数组。）
         arraySize: 3
       }),
     },
@@ -283,9 +291,11 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 <rem025 />
 生成时间戳
 
-|  | 参数       | 默认值    | 类型
-|:-| :--------  | :--------  | :--------
-|  |`arraySize` |--          |`number`
+|  | param           | default                                                                                       | type
+|:-| :--------       | :--------                                                                                     | :--------
+|  |`min`            |``` `'2024-05-08' - 2 years` - 如果未设置 max ``` ``` `max - 4 years` - 如果已设置 max ```    |`string \| Date`
+|  |`max`            |``` `'2024-05-08' + 2 years` - 如果未设置 min ``` ``` `min + 4 years` - 如果已设置 min ```    |`string \| Date`
+|  |`arraySize`      |--                                                                                             |`number`
 
 <rem025 />
 ```ts 
@@ -295,8 +305,14 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
   orders: {
     columns: {
       shippedDate: funcs.timestamp({
+        // 范围的下边界。
+        min: "2025-03-07T11:12:13.141",
+
+        // 范围的上边界。
+        max: "2025-03-08T15:16:17.181",
+
         // 每个一维数组中的元素数量。 
-        // （如指定，将生成数组。）
+        // （如果指定，将生成数组。）
         arraySize: 3
       }),
     },
@@ -310,9 +326,11 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 <rem025 />
 生成日期时间对象
 
-|  | 参数       | 默认值    | 类型
-|:-| :--------  | :--------  | :--------
-|  |`arraySize` |--          |`number`
+|  | param        | default                                                                                       | type
+|:-| :--------    | :--------                                                                                     | :--------
+|  |`min`         |``` `'2024-05-08' - 2 years` - 如果未设置 max``` ``` `max - 4 years`  - 如果已设置 max ```   |`string \| Date`
+|  |`max`         |``` `'2024-05-08' + 2 years` - 如果未设置 min``` ``` `min + 4 years`  - 如果已设置 min ```   |`string \| Date`
+|  |`arraySize`   |--                                                                                             |`number`
 <rem025 />
 ```ts 
 import { seed } from "drizzle-seed";
@@ -321,8 +339,14 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
   orders: {
     columns: {
       shippedDate: funcs.datetime({
+        // 范围下界。
+        min: "2025-03-07 13:12:13Z",
+        
+        // 范围上界。
+        max: "2025-03-09 15:12:13Z",
+
         // 每个一维数组中的元素数量。 
-        // （如指定，将生成数组。）
+        // （如果指定，将生成数组。）
         arraySize: 3
       }),
     },
@@ -361,17 +385,17 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 ### `json`
 
 <rem025 />
-生成具有固定结构的 JSON 对象
+Generate a JSON object with a fixed structure
 
 ```ts
 { email, name, isGraduated, hasJob, salary, startedWorking, visitedCountries}
 
-// 或者
+// or
 
 { email, name, isGraduated, hasJob, visitedCountries }
 ```
 
-> JSON 结构将随机选择
+> The JSON structure will be selected randomly
 
 |  | 参数       | 默认值    | 类型
 |:-| :--------  | :--------  | :--------
@@ -385,8 +409,8 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
   users: {
     columns: {
       metadata: funcs.json({
-        // 每个一维数组中的元素数量。 
-        // （如指定，将生成数组。）
+        // Number of elements in each one-dimensional array. 
+        // (If specified, an array will be generated.)
         arraySize: 3
       }),
     },
@@ -686,11 +710,11 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 ### `country`
 
 <rem025 />
-生成国家名称
+Generate country names
 
 |  | 参数       | 默认值                     | 类型
 |:-| :--------  | :--------                   | :--------
-|  |`isUnique`  |数据库列的唯一性           |`boolean`
+|  |`isUnique`  |Uniqueness of the database column           |`boolean`
 |  |`arraySize` |--                         |`number`
 
 <rem025 />
@@ -702,11 +726,11 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
   users: {
     columns: {
       country: funcs.country({
-        // `isUnique` - 属性控制生成值是否将唯一
+        // `isUnique` - This property controls whether the generated values are unique
         isUnique: false,
         
-        // 每个一维数组中的元素数量。 
-        // （如指定，将生成数组。）
+        // Number of elements in each one-dimensional array. 
+        // (If specified, an array will be generated.)
         arraySize: 3
       }),
     },
@@ -766,7 +790,7 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
   users: {
     columns: {
       streetAddress: funcs.streetAddress({
-        // `isUnique` - 属性控制生成值是否将唯一
+        // `isUnique` - 属性控制生成值是否唯一
         isUnique: false,
         
         // 每个一维数组中的元素数量。 
@@ -776,7 +800,6 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
     },
   },
 }));
-
 ```
 
 ### `jobTitle`
@@ -810,11 +833,11 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 ### `postcode`
 
 <rem025 />
-生成邮政编码
+Generate postal codes
 
 |  | 参数       | 默认值                     | 类型
 |:-| :--------  | :--------                   | :--------
-|  |`isUnique`  |数据库列的唯一性           |`boolean`
+|  |`isUnique`  |Uniqueness of the database column|`boolean`
 |  |`arraySize` |--                         |`number`
 
 <rem025 />
@@ -826,11 +849,11 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
   users: {
     columns: {
       postcode: funcs.postcode({
-        // `isUnique` - 属性控制生成值是否将唯一
+        // `isUnique` - Controls whether the generated values are unique
         isUnique: true,
 
-        // 每个一维数组中的元素数量。 
-        // （如指定，将生成数组。）
+        // Number of elements in each one-dimensional array. 
+        // (If specified, an array will be generated.)
         arraySize: 3
       }),
     },
@@ -842,7 +865,7 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 ### `state`
 
 <rem025 />
-生成美国州名
+Generate US state names
 
 |  | 参数       | 默认值    | 类型
 |:-| :--------  | :--------  | :--------
@@ -857,8 +880,8 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
   users: {
     columns: {
       state: funcs.state({
-        // 每个一维数组中的元素数量。 
-        // （如指定，将生成数组。）
+        // Number of elements in each one-dimensional array. 
+        // (If specified, an array will be generated.)
         arraySize: 3
       }),
     },
@@ -954,7 +977,7 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
   triangles: {
     columns: {
       pointCoords: funcs.point({
-        // `isUnique` - 属性控制生成值是否将唯一
+        // `isUnique` - 属性控制生成值是否唯一
         isUnique: true,
 
         // `minXValue` - x 坐标的下边界。
@@ -982,7 +1005,7 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 ### `line`
 
 <rem025 />
-生成在指定范围内的二维线的 a、b 和 c 参数。
+生成指定范围内二维直线的 a、b 和 c 参数。
 
 ```
 线方程： a*x + b*y + c = 0
@@ -1007,7 +1030,7 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
   lines: {
     columns: {
       lineParams: funcs.point({
-        // `isUnique` - 属性控制生成值是否将唯一
+        // `isUnique` - 属性控制生成值是否唯一
         isUnique: true,
 
         // `minAValue` - a 参数的下边界。
@@ -1028,8 +1051,8 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
         // `maxCValue` - c 参数的上边界。
         maxCValue: 10,
 
-        // 每个一维数组中的元素数量。 
-        // （如指定，将生成数组。）
+        // 每个一维数组中的元素数量。
+        // （如果指定，将生成数组。）
         arraySize: 3
       }),
     },
@@ -1075,7 +1098,7 @@ await seed(db, schema, { count: 1000 }).refine((funcs) => ({
 ### `inet`
 
 <rem025 />
-基于指定参数生成 IP 地址。
+根据指定参数生成 IP 地址。
 
 |  | 参数       | 默认值                                                                                 | 类型
 |:-| :--------   | :--------                                                                               | :--------

@@ -1,6 +1,5 @@
 ---
-title: 选择至少有一个相关子行的父行
-slug: select-parent-rows-with-at-least-one-related-child-row
+title: 选择至少有一条相关子行的父行
 ---
 
 import Prerequisites from "@mdx/Prerequisites.astro";
@@ -9,13 +8,13 @@ import CodeTabs from '@mdx/CodeTabs.astro';
 import CodeTab from '@mdx/CodeTab.astro';
 import Section from "@mdx/Section.astro";
 
-<IsSupportedChipGroup chips={{PostgreSQL: true, MySQL: true, SQLite: true}}/>
+<IsSupportedChipGroup chips={{PostgreSQL: true, MySQL: true, SQLite: true, MSSQL: true, Cockroach: true}}/>
 
 <Prerequisites>
-- 开始使用 [PostgreSQL](/docs/get-started-postgresql), [MySQL](/docs/get-started-mysql) 和 [SQLite](/docs/get-started-sqlite)
-- [选择语句](/docs/select) 和 [从子查询选择](/docs/select#select-from-subquery)
-- [内部连接](/docs/joins#inner-join)
-- [过滤运算符](/docs/operators) 和 [exists函数](/docs/operators#exists)
+- 从 [PostgreSQL](/docs/get-started-postgresql)、[MySQL](/docs/mysql/get-started-mysql)、[SQLite](/docs/sqlite/get-started-sqlite)、[MSSQL](/docs/mssql/get-started-mssql) 和 [Cockroach](/docs/cockroach/get-started-cockroach) 开始
+- [Select statement](/docs/select) 和 [select from subquery](/docs/select#select-from-subquery)
+- [Inner join](/docs/joins#inner-join)
+- [Filter operators](/docs/operators) 和 [exists function](/docs/operators#exists)
 </Prerequisites>
 
 本指南演示如何选择父行，条件是至少有一个相关的子行。下面是模式定义和相应的数据库数据示例：

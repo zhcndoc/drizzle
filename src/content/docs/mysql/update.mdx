@@ -1,0 +1,54 @@
+import Callout from '@mdx/Callout.astro';
+import Section from '@mdx/Section.astro';
+
+# SQL 更新
+
+```typescript copy
+await db.update(users)
+  .set({ name: 'Mr. Dan' })
+  .where(eq(users.name, 'Dan'));
+```
+
+你传递给 `update` 的对象应当包含与数据库 schema 中列名匹配的键。
+对象中的 `undefined` 值会被忽略：如果要将某一列设为 `null`，请传入 `null`。
+你也可以将 SQL 作为值传入更新对象，例如：
+
+```typescript copy
+await db.update(users)
+  .set({ updatedAt: sql`NOW()` })
+  .where(eq(users.name, 'Dan'));
+```
+
+### 限制
+使用 `.limit()` 为查询添加 `limit` 子句 - 例如：
+<Section>
+```typescript
+await db.update(usersTable).set({ verified: true }).limit(2);
+```
+```sql
+update `users` set `verified` = true limit 2
+```
+</Section>
+
+### 排序
+使用 `.orderBy()` 为查询添加 `order by` 子句，按指定字段对结果进行排序：
+<Section>
+```typescript
+import { asc, desc } from 'drizzle-orm';
+
+await db.update(usersTable).set({ verified: true }).orderBy(usersTable.name);
+await db.update(usersTable).set({ verified: true }).orderBy(desc(usersTable.name));
+
+// 按多个字段排序
+await db.update(usersTable).set({ verified: true }).orderBy(usersTable.name, usersTable.name2);
+await db.update(usersTable).set({ verified: true }).orderBy(asc(usersTable.name), desc(usersTable.name2));
+```
+```sql
+update `users` set `verified` = true order by `users`.`name`;
+update `users` set `verified` = true order by `users`.`name` desc;
+
+update `users` set `verified` = true order by `users`.`name`, `users`.`name2`;
+update `users` set `verified` = true order by `users`.`name` asc, `users`.`name2` desc;
+```
+</Section>
+

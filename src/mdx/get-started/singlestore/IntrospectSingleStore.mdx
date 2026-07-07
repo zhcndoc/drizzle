@@ -19,37 +19,24 @@ CREATE TABLE `users_table` (
 npx drizzle-kit pull --init
 ```
 
-探查的结果将是一个 `schema.ts` 文件和一个 `meta` 文件夹，其中包含您的数据库模式的快照。
+检查的结果将是一个 `schema.ts` 文件、包含数据库模式快照的 `meta` 文件夹、带有迁移的 sql 文件，以及用于[关系查询](/docs/singlestore/rqb-v2)的 `relations.ts` 文件。
 
 以下是生成的 `schema.ts` 文件的示例：
 
 ```typescript copy filename="src/db/schema.ts"
-// 由探查生成的表模式
-import {
-  singlestoreTable,
-  singlestoreSchema,
-  AnySingleStoreColumn,
-  primaryKey,
-  unique,
-  varchar,
-  int,
-} from 'drizzle-orm/singlestore-core';
-import { sql } from 'drizzle-orm';
+// 通过检查生成的表模式
+import { singlestoreTableTable, int, varchar, uniqueIndex } from "drizzle-orm/singlestore-core"
+import { sql } from "drizzle-orm"
 
-export const usersTable = singlestoreTable(
-  'users_table',
-  {
-    id: int().notNull(),
-    name: varchar({ length: 255 }).notNull(),
-    age: int().notNull(),
-    email: varchar({ length: 255 }).notNull(),
-  },
-  (table) => [
-    primaryKey({ columns: [table.id], name: 'users_table_id' }),
-    unique('id').on(table.id),
-    unique('users_table_email_unique').on(table.email),
-  ],
-);
+export const usersTable = singlestoreTable("users_table", {
+	id: int().primaryKey().notNull(),
+	name: varchar({ length: 255 }).notNull(),
+	age: int().notNull(),
+	email: varchar({ length: 255 }).notNull(),
+},
+(table) => [
+	uniqueIndex("users_table_email_unique").on(table.email),
+]);
 ```
 
-了解更多关于探查的信息，请查看 [文档](/docs/drizzle-kit-pull)。
+在[文档](/docs/singlestore/drizzle-kit-pull)中了解有关检查的更多信息。

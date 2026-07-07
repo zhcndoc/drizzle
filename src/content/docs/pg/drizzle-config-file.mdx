@@ -1,0 +1,665 @@
+import CodeTab from "@mdx/CodeTab.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Section from "@mdx/Section.astro";
+import Tab from "@mdx/Tab.astro";
+import Tabs from "@mdx/Tabs.astro";
+import Callout from "@mdx/Callout.astro";
+import SchemaFilePaths from "@mdx/SchemaFilePaths.mdx"
+import Prerequisites from "@mdx/Prerequisites.astro"
+import Dialects from "@mdx/Dialects.mdx"
+import Drivers from "@mdx/Drivers.mdx"
+import DriversExamples from "@mdx/DriversExamples.mdx"
+import Npx from "@mdx/Npx.astro"
+
+# Drizzle Kit 配置文件
+<Prerequisites>
+- 开始使用 Drizzle 和 `drizzle-kit` - [请阅读这里](/docs/get-started)
+- Drizzle schema 基础 - [请阅读这里](/docs/sql-schema-declaration)
+- 数据库连接基础 - [请阅读这里](/docs/connect-overview)
+- Drizzle migrations 基础 - [请阅读这里](/docs/migrations)
+- Drizzle Kit [概览](/docs/kit-overview) 和 [配置文件](/docs/drizzle-config-file)
+</Prerequisites>
+
+Drizzle Kit 允许你在 `TypeScript` 或 `JavaScript` 配置文件中声明配置选项。
+
+<Section>
+```plaintext {5}
+📦 <project root>
+ ├ ...
+ ├ 📂 drizzle
+ ├ 📂 src
+ ├ 📜 drizzle.config.ts
+ └ 📜 package.json
+```
+<CodeTabs items={["drizzle.config.ts", "drizzle.config.js"]}>
+<CodeTab>
+```ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "postgresql",
+  schema: "./src/schema.ts",
+  out: "./drizzle",
+});
+```
+</CodeTab>
+<CodeTab>
+```js
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "postgresql",
+  schema: "./src/schema.ts",
+  out: "./drizzle",
+});
+```
+</CodeTab>
+</CodeTabs>
+</Section>
+
+扩展配置文件示例
+```ts collapsable
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  out: "./drizzle",
+  dialect: "postgresql",
+  schema: "./src/schema.ts",
+
+  driver: "pglite",
+  dbCredentials: {
+    url: "./database/",
+  },
+
+  extensionsFilters: ["postgis"],
+  schemaFilter: "public",
+  tablesFilter: "*",
+
+  introspect: {
+    casing: "camel",
+  },
+
+  migrations: {
+    table: "__drizzle_migrations__",
+    schema: "drizzle",
+  },
+
+  entities: {
+    roles: {
+      provider: '',
+      exclude: [],
+      include: []
+    }
+  },
+
+  breakpoints: true,
+  verbose: true,
+});
+```
+
+### 多个配置文件
+你可以在项目中拥有多个配置文件，当你有多个数据库阶段、多个数据库，或者同一个项目中使用不同数据库时，这非常有用：
+<Npx>
+  drizzle-kit generate --config=drizzle-dev.config.ts
+  drizzle-kit generate --config=drizzle-prod.config.ts
+</Npx>
+```plaintext {5-6}
+📦 <project root>
+ ├ 📂 drizzle
+ ├ 📂 src
+ ├ 📜 .env
+ ├ 📜 drizzle-dev.config.ts
+ ├ 📜 drizzle-prod.config.ts
+ ├ 📜 package.json
+ └ 📜 tsconfig.json
+```
+
+### migrations 文件夹
+`out` 参数允许你定义 migrations 的文件夹，它是可选的，默认值为 `drizzle`。  
+这非常有用，因为你可以在同一个项目中为不同数据库拥有多个独立的 schema， 
+并为它们使用不同的 migration 文件夹。  
+  
+Migration 文件夹包含 `.sql` migration 文件所在的文件夹，这些文件由 `drizzle-kit` 使用
+
+<Section>
+```plaintext {3}
+📦 <project root>
+ ├ ...
+ ├ 📂 drizzle
+ │ ├ 📂 20242409125510_premium_mister_fear
+ │ ├ 📜 user.ts 
+ │ ├ 📜 post.ts 
+ │ └ 📜 comment.ts 
+ ├ 📂 src
+ ├ 📜 drizzle.config.ts
+ └ 📜 package.json
+```
+```ts {6}
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "postgresql",
+  schema: "./src/schema/*",
+  out: "./drizzle",
+});
+```
+</Section>
+
+## ---
+
+### `dialect`
+<rem025/>
+
+您正在使用的数据库方言 
+|               |                                                 |
+| :------------ | :-----------------------------------            |
+| type        | <Dialects/>                                     |
+| default        | --                                     |
+| commands    | `generate`, `push`, `pull`, `studio`,  `migrate`, `up`, `export` |
+
+<rem025/>
+```ts {4}
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "postgresql", 
+});
+```
+
+
+### `schema`
+<rem025/>
+
+[`glob`](https://www.digitalocean.com/community/tools/glob?comments=true&glob=/**/*.js&matches=false&tests=//%20This%20will%20match%20as%20it%20ends%20with%20'.js'&tests=/hello/world.js&tests=//%20This%20won't%20match!&tests=/test/some/globs)
+ 基于路径的 drizzle schema 文件或文件夹。
+|               |                      |
+| :------------ | :-----------------   |
+| type          | `string` `string[]` |
+| default        | --                    |
+| commands      | `generate`, `push`, `export`, `studio`  |
+
+<rem025/>
+<SchemaFilePaths />
+
+
+### `out`
+<rem025/>
+
+定义 SQL migration 文件、schema 的 json 快照，以及 `drizzle-kit pull` 命令生成的 `schema.ts` 的输出文件夹。
+|               |                      |
+| :------------ | :-----------------   |
+| type          | `string` `string[]` |
+| default        | `drizzle`                    |
+| commands      | `generate`, `pull`, `migrate`, `check`, `up` |
+
+<rem025/>
+```ts {4}
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  out: "./drizzle", 
+});
+```
+
+### `driver`
+<rem025/>
+
+Drizzle Kit 会根据提供的 `dialect`，自动从当前项目中选择可用的数据库驱动，  
+但某些特定厂商的数据库需要不同的连接参数子集。
+
+`driver` 选项允许你显式选择这些特殊驱动。
+
+|               |                      |
+| :------------ | :-----------------   |
+| type          | `aws-data-api`, `pglite` |
+| default        | --                    |
+| commands      | `push`, `migrate`, `pull`, `studio`  |
+
+<rem025/>
+
+
+<CodeTabs items={["AWS Data API", "PGLite"]}>
+```ts {6}
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "postgresql",
+  schema: "./src/schema.ts",
+  driver: "aws-data-api",
+  dbCredentials: {
+    database: "database",
+    resourceArn: "resourceArn",
+    secretArn: "secretArn",
+  },
+});
+```
+```ts {6}
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "postgresql",
+  schema: "./src/schema.ts",
+  driver: "pglite",
+  dbCredentials: {
+    // 内存中
+    url: ":memory:"
+    
+    // 或数据库文件夹
+    url: "./database/"
+  },
+});
+```
+</CodeTabs>
+
+## ---
+
+### `dbCredentials`
+<rem025/>
+
+以 `url`、`user:password@host:port/db` 参数或特定于方言的驱动程序（<Drivers/>）连接选项形式提供数据库连接凭据。
+
+|               |                      |
+| :------------ | :-----------------   |
+| type          | <Dialects/> |
+| default       | --                    |
+| commands      | `push`, `pull`, `migrate`, `studio` |
+
+<rem025/>
+
+<CodeTabs items={["PostgreSQL","AWS Data API", "PGLite"]}>
+<Section>
+```ts
+import { defineConfig } from 'drizzle-kit'
+
+export default defineConfig({
+  dialect: "postgresql",
+  dbCredentials: {
+    url: "postgres://user:password@host:port/db",
+  }
+});
+```
+```ts
+import { defineConfig } from 'drizzle-kit'
+
+// 通过连接参数
+export default defineConfig({
+  dialect: "postgresql",
+  dbCredentials: {
+    host: "host",
+    port: 5432,
+    user: "user",
+    password: "password",
+    database: "dbname",
+    ssl: true, // can be boolean | "require" | "allow" | "prefer" | "verify-full" | node:tls 中的选项
+  }
+});
+```
+</Section>
+```ts
+import { defineConfig } from 'drizzle-kit'
+
+export default defineConfig({
+  dialect: "postgresql",
+  driver: "aws-data-api",
+  dbCredentials: {
+    database: "database",
+    resourceArn: "resourceArn",
+    secretArn: "secretArn",
+  },
+});
+```
+```ts
+import { defineConfig } from 'drizzle-kit'
+
+export default defineConfig({
+  dialect: "postgresql",
+  driver: "pglite",
+  dbCredentials: {
+    url: "./database/", // 数据库文件夹路径
+  }
+});
+```
+</CodeTabs>
+
+### `migrations`
+<rem025/>
+
+运行 `drizzle-kit migrate` 时，drizzle 会在你的数据库中的 `drizzle` schema 里名为 `__drizzle_migrations` 的日志表中记录已成功应用的迁移。
+
+`migrations` 配置选项允许你同时更改迁移日志 `table` 名称和 `schema`。
+
+|               |                      |
+| :------------ | :-----------------   |
+| type          | `{ table: string, schema: string }` |
+| default       | `{ table: "__drizzle_migrations", schema: "drizzle" }`                    |
+| commands      | `migrate`, `push`, `pull` |
+
+<rem025/>
+
+```ts
+export default defineConfig({
+  dialect: "postgresql",
+  schema: "./src/schema.ts",
+  migrations: {
+    table: 'my-migrations-table', // 默认为 `__drizzle_migrations`
+    schema: 'my_schema', // 默认为 `drizzle`
+  },
+});
+```
+
+### `introspect`
+<rem025/>
+
+`drizzle-kit pull` 命令的配置。
+
+`casing` 负责代码中列键名的大小写格式
+
+|               |                      |
+| :------------ | :-----------------   |
+| type          | `{ casing: "preserve" \| "camel" }` |
+| default       | `{ casing: "camel" }`                    |
+| commands      | `pull`   |
+
+<rem025/>
+
+<CodeTabs items={["camel", "preserve"]}>
+<Section>
+```ts
+import * as p from "drizzle-orm/pg-core"
+
+export const users = p.pgTable("users", {
+  id: p.serial(),
+  firstName: p.text("first-name"),
+  lastName: p.text("LastName"),
+  email: p.text(),
+  phoneNumber: p.text("phone_number"),
+});
+```
+```sql
+SELECT a.attname AS column_name, format_type(a.atttypid, a.atttypmod) as data_type FROM pg_catalog.pg_attribute a;
+```
+``` 
+ column_name   | data_type        
+---------------+------------------------
+ id            | serial
+ first-name    | text
+ LastName      | text
+ email         | text
+ phone_number  | text
+```
+</Section>
+<Section>
+```ts
+import * as p from "drizzle-orm/pg-core"
+
+export const users = p.pgTable("users", {
+  id: p.serial(),
+  "first-name": p.text("first-name"),
+  LastName: p.text("LastName"),
+  email: p.text(),
+  phone_number: p.text("phone_number"),
+});
+```
+```sql
+SELECT a.attname AS column_name, format_type(a.atttypid, a.atttypmod) as data_type FROM pg_catalog.pg_attribute a;
+```
+``` 
+ column_name   | data_type        
+---------------+------------------------
+ id            | serial
+ first-name    | text
+ LastName      | text
+ email         | text
+ phone_number  | text
+```
+</Section>
+</CodeTabs>
+
+
+## --- 
+
+### `tablesFilter`
+<Callout>
+如果你想使用一个数据库运行多个项目——请查看[我们的指南](/docs/goodies#multi-project-schema)。
+</Callout>
+<rem025/>
+`drizzle-kit push` 和 `drizzle-kit pull` 默认会管理所有表。
+你可以通过 `tablesFilters`、`schemaFilter` 和 `extensionFilters` 选项配置表、模式和扩展的列表。
+
+`tablesFilter` 选项允许你指定基于 [`glob`](https://www.digitalocean.com/community/tools/glob?comments=true&glob=/**/*.js&matches=false&tests=//%20This%20will%20match%20as%20it%20ends%20with%20'.js'&tests=/hello/world.js&tests=//%20This%20won't%20match!&tests=/test/some/globs) 
+的表名过滤器，例如 `["users", "user_info"]` 或 `"user*"`
+
+|               |                      |
+| :------------ | :-----------------   |
+| type          | `string` `string[]` |
+| default       | --                    |
+| commands      | `push` `pull`   |
+
+<rem025/>
+```ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "postgresql",
+  tablesFilter: ["users", "posts", "project1_*"],
+});
+```
+
+### `schemaFilter`
+
+
+<Callout>
+如果你想使用一个数据库运行多个项目——请查看[我们的指南](/docs/goodies#multi-project-schema)。
+</Callout>
+
+`drizzle-kit push` 和 `drizzle-kit pull` 默认会管理所有模式。
+
+`schemaFilter` 选项允许你指定基于 [`glob`](https://www.digitalocean.com/community/tools/glob?comments=true&glob=/**/*.js&matches=false&tests=//%20This%20will%20match%20as%20it%20ends%20with%20'.js'&tests=/hello/world.js&tests=//%20This%20won%20't%20match!&tests=/test/some/globs) 
+的模式名称过滤器，例如 `["public", "auth"]` 或 `"tenant_*"`
+
+|               |                      |
+| :------------ | :-----------------   |
+| type          | `string[]` |
+| commands      | `push` `pull`   |
+
+<rem025/>
+
+```ts
+export default defineConfig({
+  dialect: "postgresql",
+  schemaFilter: ["public", "schema1", "schema2"],
+});
+```
+
+### `extensionsFilters`
+<rem025/>
+
+某些扩展（如 [`postgis`](https://postgis.net/)）在数据库中安装后，会在 public 模式下创建它们自己的表。 
+这些表必须被 `drizzle-kit push` 或 `drizzle-kit pull` 忽略。
+
+`extensionsFilters` 选项允许你声明已安装扩展的列表，以便 drizzle kit 忽略其在模式中的表。
+
+|               |                      |
+| :------------ | :-----------------   |
+| type          | `["postgis"]` |
+| default       | `[]`                    |
+| commands      | `push` `pull`   |
+
+<rem025/>
+
+```ts
+export default defineConfig({
+  dialect: "postgresql",
+  extensionsFilters: ["postgis"],
+});
+```
+
+## ---
+
+### `entities`
+
+此配置用于为数据库中的特定 `entities` 设置管理选项。
+
+目前它只包含 `roles`，但最终所有数据库实体都会迁移到这里，例如 `tables`、`schemas`、`extensions`、`functions`、`triggers` 等。
+
+#### `roles`
+
+<rem025/>
+
+如果你正在使用 Drizzle Kit 来管理你的 schema，尤其是已定义的 roles，那么可能会出现一些角色没有在 Drizzle schema 中定义的情况。  
+在这种情况下，你可能希望 Drizzle Kit 跳过这些 `roles`，而无需在 Drizzle schema 中为每个角色都写一遍并用 `.existing()` 标记它们。
+
+`roles` 选项允许你：
+
+- 启用或禁用 Drizzle Kit 的角色管理。
+- 从 Drizzle Kit 的管理中排除特定角色。
+- 将特定角色纳入 Drizzle Kit 的管理。
+- 为 `Neon` 和 `Supabase` 等不会管理其特定角色的提供商启用模式。
+- 组合以上所有选项
+
+|               |                       |
+| :------------ | :-----------------    |
+| type          | `boolean \| { provider: "neon" \| "supabase", include: string[], exclude: string[] }`|
+| default       | `false`                  |
+| commands      | `push` `pull` |
+
+<rem025/>
+
+默认情况下，`drizzle-kit` 不会为你管理 roles，因此你需要在 `drizzle.config.ts` 中启用它。
+```ts
+export default defineConfig({
+  dialect: "postgresql",
+  entities: {
+    roles: true
+  }
+});
+```
+
+**如果你有一个 role `admin`，并且想将其从可管理 roles 列表中排除**
+
+```ts
+// drizzle.config.ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  ...
+  entities: {
+    roles: {
+      exclude: ['admin']
+    }
+  }
+});
+```
+
+**如果你有一个 role `admin`，并且想将其包含到可管理 roles 列表中**
+
+```ts
+// drizzle.config.ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  ...
+  entities: {
+    roles: {
+      include: ['admin']
+    }
+  }
+});
+```
+
+**如果你正在使用 `Neon`，并且想排除由 `Neon` 定义的 roles，可以使用 provider 选项**
+
+```ts
+// drizzle.config.ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  ...
+  entities: {
+    roles: {
+      provider: 'neon'
+    }
+  }
+});
+```
+
+**如果你正在使用 `Supabase`，并且想排除由 `Supabase` 定义的 roles，可以使用 provider 选项**
+
+```ts
+// drizzle.config.ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  ...
+  entities: {
+    roles: {
+      provider: 'supabase'
+    }
+  }
+});
+```
+
+<Callout title='important'>
+你可能会遇到这样的情况：Drizzle 相比数据库提供商新增的 roles 略显过时，  
+因此你可能需要同时使用 `provider` 选项和 `exclude` 来排除额外的 roles。你可以很容易地在 Drizzle 中这样做：
+
+```ts
+// drizzle.config.ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  ...
+  entities: {
+    roles: {
+      provider: 'supabase',
+      exclude: ['new_supabase_role']
+    }
+  }
+});
+```
+</Callout>
+
+## ---
+
+### `verbose`
+<rem025/>
+
+在 `drizzle-kit push` 命令期间打印所有 SQL 语句。
+
+|               |                      |
+| :------------ | :-----------------   |
+| type          | `boolean` |
+| default       | `false`                    |
+| commands      | `pull`   |
+
+<rem025/>
+
+```ts
+export default defineConfig({
+  dialect: "postgresql",
+  verbose: false,
+});
+```
+
+### `breakpoints`
+<rem025/>
+
+Drizzle Kit 会自动将 `--> statement-breakpoint` 嵌入生成的 SQL 迁移文件中，  
+这对于不支持在一个事务中执行多个 DDL 交替语句的数据库（MySQL 和 SQLite）是必需的。
+
+`breakpoints` 选项标志允许你将其开启或关闭
+
+|               |                      |
+| :------------ | :-----------------   |
+| type          | `boolean` |
+| default       | `true`                    |
+| commands      | `generate` `pull`   |
+
+<rem025/>
+
+```ts
+export default defineConfig({
+  dialect: "postgresql",
+  breakpoints: false,
+});
+```

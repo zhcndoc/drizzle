@@ -1,6 +1,5 @@
 ---
-title: PostgreSQL 中的点数据类型
-slug: point-datatype-psql
+title: PostgreSQL 中的 Point 数据类型
 ---
 
 import Section from "@mdx/Section.astro";
@@ -11,8 +10,8 @@ import Callout from '@mdx/Callout.astro';
 
 <Prerequisites>
 - 开始使用 [PostgreSQL](/docs/get-started-postgresql)
-- [点数据类型](/docs/column-types/pg#point)
-- [选择语句中的过滤](/docs/select#filtering)
+- [Point 数据类型](/docs/column-types#point)
+- [select 语句中的过滤](/docs/select#filtering)
 - [sql 操作符](/docs/sql)
 </Prerequisites>
 
@@ -76,9 +75,9 @@ await db.insert(stores).values({
 要计算对象之间的距离，可以使用 `<->` 操作符。以下是如何在 Drizzle 中根据坐标查询最近位置：
 
 <Callout type='warning'>
-`getColumns` available starting from `drizzle-orm@1.0.0-beta.2`(read more [here](/docs/upgrade-v1))
+`getColumns` 从 `drizzle-orm@1.0.0-beta.2` 开始可用（更多信息请参见 [这里](/docs/upgrade-v1)）
 
-If you are on pre-1 version(like `0.45.1`) then use `getTableColumns`
+如果你使用的是 pre-1 版本（例如 `0.45.1`），请使用 `getTableColumns`
 </Callout>
 
 <Section>

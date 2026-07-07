@@ -1,0 +1,190 @@
+import CodeTab from "@mdx/CodeTab.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Section from "@mdx/Section.astro";
+import Tab from "@mdx/Tab.astro";
+import Tabs from "@mdx/Tabs.astro";
+import Callout from "@mdx/Callout.astro";
+import Prerequisites from "@mdx/Prerequisites.astro";
+import Drivers from "@mdx/Drivers.mdx"
+import Dialects from "@mdx/Dialects.mdx"
+import Npm from "@mdx/Npm.astro"
+import Npx from "@mdx/Npx.astro"
+
+# `drizzle-kit pull`
+
+<Prerequisites>
+- 开始使用 Drizzle 和 `drizzle-kit` - [在此阅读](/docs/singlestore/get-started)
+- Drizzle schema 基础 - [在此阅读](/docs/singlestore/sql-schema-declaration) 
+- 数据库连接基础 - [在此阅读](/docs/singlestore/connect-overview) 
+- Drizzle migrations 基础 - [在此阅读](/docs/singlestore/migrations) 
+- Drizzle Kit [概览](/docs/singlestore/kit-overview) 和 [配置文件](/docs/singlestore/drizzle-config-file) 文档
+</Prerequisites>
+
+`drizzle-kit pull` 让你可以直接拉取（introspect）现有数据库 schema，并生成 `schema.ts` drizzle schema 文件，  
+它旨在覆盖 Drizzle migrations 的 [database first](/docs/singlestore/migrations) 方法。
+
+<Callout collapsed="底层是如何工作的？">
+当你运行 Drizzle Kit 的 `pull` 命令时，它会：
+1. 拉取你现有数据库中的 schema（DDL）
+2. 生成 `schema.ts` drizzle schema 文件并保存到 `out` 文件夹
+
+<Section>
+```
+                                  ┌────────────────────────┐      ┌─────────────────────────┐ 
+                                  │                        │ <---  CREATE TABLE "users" (
+┌──────────────────────────┐      │                        │        `id` int auto_increment primary key,
+│ ~ drizzle-kit pull       │      │                        │        `name` varchar(255),
+└─┬────────────────────────┘      │        DATABASE        │        `email` varchar(255) unique
+  │                               │                        │       );
+  └ 拉取数据库 schema -------> │                        │
+  ┌ 生成 Drizzle         <----- │                        │
+  │ schema TypeScript 文件      └────────────────────────┘
+  │
+  v
+```
+```typescript
+import * as p from "drizzle-orm/singlestore-core";
+
+export const users = p.singlestoreTable("users", {
+  id: p.int().primaryKey().autoincrement(),
+  name: p.varchar({ length: 255 }),
+  email: p.varchar({ length: 255 }).unique(), 
+};
+```
+</Section>
+</Callout>
+
+如果你需要在 TypeScript 项目之外管理数据库 schema，或者  
+你使用的是由他人管理的数据库，这是一种非常好的方法。
+
+<br/>
+<hr/>
+<br/>
+
+`drizzle-kit pull` 需要你指定 `dialect` 以及
+数据库连接 `url` 或 `user:password@host:port/db` 参数，你可以
+通过 [drizzle.config.ts](/docs/singlestore/drizzle-config-file) 配置文件或 CLI 选项来提供它们：
+
+<CodeTabs items={["使用配置文件", "使用 CLI 选项"]}>
+<Section>
+```ts
+// drizzle.config.ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "singlestore",
+  dbCredentials: {
+    url: "mysql://user:password@host:3306/dbname",
+  },
+});
+```
+```shell
+npx drizzle-kit pull
+```
+</Section>
+
+```shell
+npx drizzle-kit pull --dialect=singlestore --url=mysql://user:password@host:3306/dbname
+```
+</CodeTabs>
+
+### 一个项目中的多个配置文件
+
+你可以在项目中拥有多个配置文件，当你有多个数据库阶段、多个数据库，或者同一项目中存在不同数据库时，这非常有用：
+
+<Npx>
+  drizzle-kit pull --config=drizzle-dev.config.ts
+  drizzle-kit pull --config=drizzle-prod.config.ts
+</Npx>
+```plaintext {5-6}
+📦 <project root>
+ ├ 📂 drizzle
+ ├ 📂 src
+ ├ 📜 .env
+ ├ 📜 drizzle-dev.config.ts
+ ├ 📜 drizzle-prod.config.ts
+ ├ 📜 package.json
+ └ 📜 tsconfig.json
+```
+
+### 指定数据库驱动
+
+Drizzle Kit 不自带预打包的数据库驱动，
+它会根据 `dialect: "singlestore"` 自动从你当前项目中选择可用的 SingleStore 驱动 - [查看讨论](https://github.com/drizzle-team/drizzle-orm/discussions/2203)。
+
+SingleStore 使用与 MySQL 兼容的连接参数，所以通常你只需要提供 `dbCredentials`。
+
+### 初始 pull
+
+<Callout type='error'>
+此功能适用于 `1.0.0-beta.2` 及更高版本。
+</Callout>
+
+<Npm>
+drizzle-orm@rc
+drizzle-kit@rc -D
+</Npm>
+
+<br/>
+
+你可以使用 `--init` 标志将拉取到的 schema 标记为数据库中已应用的 migration，  
+这样后续的所有 migrations 都会以初始 migration 为基准进行 diff
+
+```shell
+npx drizzle-kit push --init
+```
+
+### 包含哪些表
+
+默认情况下，`drizzle-kit pull` 会 introspect 所有 SingleStore 表。
+你可以通过 `tablesFilter` 来配置表列表。
+
+|                |                                                                                               |
+| :------------- | :-------------------------------------------------------------------------------------------- |
+| `tablesFilter` | 基于 `glob` 的表名过滤器，例如 `["users", "user_info"]` 或 `"user*"`。默认值为 `"*"` |
+<br/>
+
+让我们配置 drizzle-kit 来 introspect 已连接的 SingleStore 数据库中的**所有表**。
+
+<Section>
+```ts filename="drizzle.config.ts" {8}
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "singlestore",
+  dbCredentials: {
+    url: "mysql://user:password@host:3306/dbname",
+  },
+  tablesFilter: ["*"],
+});
+```
+```shell
+npx drizzle-kit pull
+```
+</Section>
+
+### 扩展配置列表
+
+我们建议通过 [drizzle.config.ts](/docs/singlestore/drizzle-config-file) 文件配置 `drizzle-kit`，  
+但如有必要，你也可以通过 CLI 提供所有配置选项，例如在 CI/CD 流水线中等。
+
+|                     |            |                                                                           |
+| :------------------ | :--------- | :------------------------------------------------------------------------ |
+| `dialect`           | `required` | 数据库方言，取值之一为 <Dialects/>                                      |
+| `out`               |            | migrations 输出文件夹路径，默认是 `./drizzle`                     |
+| `url`               |            | 数据库连接字符串                                                |
+| `user`              |            | 数据库用户                                                             |
+| `password`          |            | 数据库密码                                                         |
+| `host`              |            | 主机                                                                      |
+| `port`              |            | 端口                                                                      |
+| `database`          |            | 数据库名称                                                             |
+| `config`            |            | 配置文件路径，默认是 `drizzle.config.ts`                          |
+| `introspect-casing` |            | 用于创建列、表等 JS key 的策略。 `preserve` `camel` |
+| `tablesFilter`      |            | 表名过滤器                                                         |
+
+<Npx>
+drizzle-kit pull --dialect=singlestore --url=mysql://user:password@host:3306/dbname
+drizzle-kit pull --dialect=singlestore --tablesFilter='user*' url=mysql://user:password@host:3306/dbname
+</Npx>
+
+![](@/assets/gifs/introspect_mysql.gif)

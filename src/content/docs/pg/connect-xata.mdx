@@ -1,0 +1,52 @@
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
+import Npm from "@mdx/Npm.astro";
+import Callout from '@mdx/Callout.astro';
+import Steps from '@mdx/Steps.astro';
+import AnchorCards from '@mdx/AnchorCards.astro';
+import Prerequisites from "@mdx/Prerequisites.astro";
+import WhatsNextPostgres from "@mdx/WhatsNextPostgres.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+
+# Drizzle \<\> Xata
+
+<Prerequisites>
+- 使用 Drizzle 的数据库[连接基础](/docs/connect-overview)
+- Drizzle PostgreSQL 驱动 - [文档](/docs/get-started-postgresql)
+</Prerequisites>
+
+**[Xata](https://xata.io)** 是一个 PostgreSQL 数据库平台，旨在帮助开发者以更高的生产力和性能管理和扩展数据库。Xata 提供的功能包括即时的写时复制数据库分支、零停机架构变更、数据匿名化、AI 驱动的性能监控以及自带云（BYOC）。
+
+查看官方 **[Xata + Drizzle](https://xata.io/documentation/quickstarts/drizzle)** 文档。
+
+#### 第一步 - 安装包
+
+<Npm>
+ drizzle-orm@rc postgres
+ -D drizzle-kit@rc
+</Npm>
+
+#### 第二步 - 初始化驱动并进行查询
+
+```typescript copy filename="index.ts"
+import { drizzle } from 'drizzle-orm/postgres-js'
+
+const db = drizzle(process.env.DATABASE_URL);
+
+const allUsers = await db.select().from(...);
+```
+
+如果需要提供已有驱动：
+```typescript copy filename="index.ts"
+import { drizzle } from 'drizzle-orm/postgres-js'
+import postgres from 'postgres'
+
+const client = postgres(process.env.DATABASE_URL)
+const db = drizzle({ client });
+
+const allUsers = await db.select().from(...);
+```
+
+#### 下一步是什么？
+
+<WhatsNextPostgres/>

@@ -1,0 +1,252 @@
+import CodeTab from "@mdx/CodeTab.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Section from "@mdx/Section.astro";
+import Tab from "@mdx/Tab.astro";
+import Tabs from "@mdx/Tabs.astro";
+import Callout from "@mdx/Callout.astro";
+import Prerequisites from "@mdx/Prerequisites.astro";
+import Npx from "@mdx/Npx.astro";
+import SchemaFilePaths from "@mdx/SchemaFilePaths.mdx";
+import Drivers from "@mdx/Drivers.mdx"
+import Dialects from "@mdx/Dialects.mdx"
+import DriversExamples from "@mdx/DriversExamples.mdx"
+
+# `drizzle-kit push`
+
+<Prerequisites>
+- 开始使用 Drizzle 和 `drizzle-kit` - [点击这里阅读](/docs/singlestore/get-started)
+- Drizzle schema 基础知识 - [点击这里阅读](/docs/singlestore/sql-schema-declaration) 
+- 数据库连接基础知识 - [点击这里阅读](/docs/singlestore/connect-overview) 
+- Drizzle migrations 基础知识 - [点击这里阅读](/docs/singlestore/migrations) 
+- Drizzle Kit [概览](/docs/singlestore/kit-overview) 和 [配置文件](/docs/singlestore/drizzle-config-file) 文档
+</Prerequisites>
+
+
+`drizzle-kit push` 允许你将 schema 以及后续的 schema 变更直接推送到数据库，
+同时省略 SQL 文件生成；它旨在覆盖 Drizzle migrations 的 [code first](/docs/singlestore/migrations)
+方法。
+
+<Callout collapsed="底层是如何工作的？">
+当你运行 Drizzle Kit 的 `push` 命令时，它会：
+1. 读取你的 Drizzle schema 文件，并生成 schema 的 json 快照
+2. 拉取（introspect）数据库 schema 
+3. 基于两者之间的差异生成 SQL migrations
+4. 将 SQL migrations 应用到数据库
+
+<Section>
+```typescript filename="src/schema.ts"
+import * as p from "drizzle-orm/singlestore-core";
+
+export const users = p.singlestoreTable("users", {
+  id: p.int().primaryKey().autoincrement(),
+  name: p.varchar({ length: 255 }),
+};
+```
+```
+┌─────────────────────┐                  
+│ ~ drizzle-kit push  │                  
+└─┬───────────────────┘                  
+  │                                           ┌──────────────────────────┐
+  └ 拉取当前数据库 schema --------------------> │                          │
+                                              │                          │
+  ┌ 基于差异生成变更 <----------------------- │         DATABASE         │
+  │                                           │                          │
+  └ 将 migrations 应用到数据库 --------------> │                          │
+                                       │      └──────────────────────────┘
+                                       │
+  ┌────────────────────────────────────┴────────────────┐
+   create table users(`id` int auto_increment primary key, `name` varchar(255));
+```
+</Section>
+</Callout>
+
+这对于快速原型开发来说是最佳方案，我们已经看到数十个团队
+和独立开发者在生产应用中将其成功用作主要的 migrations 流程。
+它与蓝绿部署策略以及无服务器数据库配合得非常好，例如
+[Planetscale](https://planetscale.com)、[Neon](https://neon.tech)、[Turso](https://turso.tech/drizzle) 等。
+
+<br/>
+<hr/>
+<br/>
+
+
+`drizzle-kit push` 需要你指定 `dialect`、`schema` 文件路径，以及数据库连接 `url` 或
+`user:password@host:port/db` 参数；你可以通过 [drizzle.config.ts](/docs/singlestore/drizzle-config-file) 配置文件或 CLI 选项来提供它们：
+
+<CodeTabs items={["使用配置文件", "使用 CLI 选项"]}>
+<Section>
+```ts
+// drizzle.config.ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "singlestore",
+  schema: "./src/schema.ts",
+  dbCredentials: {
+    url: "mysql://user:password@host:3306/dbname",
+  },
+});
+```
+```shell
+npx drizzle-kit push
+```
+</Section>
+
+```shell
+npx drizzle-kit push --dialect=singlestore --schema=./src/schema.ts --url=mysql://user:password@host:3306/dbname
+```
+
+</CodeTabs>
+
+### Schema 文件路径
+
+你可以只有一个 `schema.ts` 文件，也可以在项目中分散放置任意多个 schema 文件。
+Drizzle Kit 需要你通过 `schema` 配置选项，以 [glob](https://www.digitalocean.com/community/tools/glob?comments=true&glob=/**/*.js&matches=false&tests=//%20This%20will%20match%20as%20it%20ends%20with%20'.js'&tests=/hello/world.js&tests=//%20This%20won't%20match!&tests=/test/some/globs) 的形式指定它们的路径。
+
+<SchemaFilePaths />
+
+### 一个项目中的多个配置文件
+
+你可以在项目中拥有多个配置文件，当你有多个数据库阶段、多个数据库，或者同一项目中存在不同数据库时，这非常有用：
+
+<Npx>
+  drizzle-kit push --config=drizzle-dev.config.ts
+  drizzle-kit push --config=drizzle-prod.config.ts
+</Npx>
+```plaintext {5-6}
+📦 <project root>
+ ├ 📂 drizzle
+ ├ 📂 src
+ ├ 📜 .env
+ ├ 📜 drizzle-dev.config.ts
+ ├ 📜 drizzle-prod.config.ts
+ ├ 📜 package.json
+ └ 📜 tsconfig.json
+```
+
+### 指定数据库驱动
+
+Drizzle Kit 不附带预打包的数据库驱动，
+它会根据 `dialect: "singlestore"` 自动从你当前项目中选择一个可用的 SingleStore 驱动 - [查看讨论](https://github.com/drizzle-team/drizzle-orm/discussions/2203)。
+
+SingleStore 使用与 MySQL 兼容的连接参数，因此通常你只需要提供 `dbCredentials`。
+
+### 包含表
+
+默认情况下，`drizzle-kit push` 将管理所有 SingleStore 表。
+你可以通过 `tablesFilter` 配置要处理的表列表。
+
+|                |                                                                                               |
+| :------------- | :-------------------------------------------------------------------------------------------- |
+| `tablesFilter` | 基于 `glob` 的表名过滤器，例如 `["users", "user_info"]` 或 `"user*"`。默认值为 `"*"` |
+<br/>
+
+让我们配置 drizzle-kit 以操作已连接的 SingleStore 数据库中的**所有表**。
+
+<Section>
+```ts filename="drizzle.config.ts" {9}
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "singlestore",
+  schema: "./src/schema.ts",
+  dbCredentials: {
+    url: "mysql://user:password@host:3306/dbname",
+  },
+  tablesFilter: ["*"],
+});
+```
+```shell
+npx drizzle-kit push
+```
+</Section>
+
+### 扩展配置列表
+
+`drizzle-kit push` 有一组仅限 CLI 的选项
+
+<rem025/>
+
+|           |                                                          |
+| :-------- | :---------------------------------------------------     |
+| `verbose` | 在执行前打印所有 SQL 语句              |
+| `strict`  | 在执行 SQL 语句前始终请求确认              |
+| `force`   | 自动接受所有会导致数据丢失的语句                     |
+<br/>
+<Npx>
+drizzle-kit push --strict --verbose --force
+</Npx>
+
+<br/>
+<hr/>
+<br/>
+我们建议通过 [drizzle.config.ts](/docs/singlestore/drizzle-config-file) 文件来配置 `drizzle-kit`， 
+但如果有必要，例如在 CI/CD 流水线中等，你也可以通过 CLI 提供所有配置选项。
+
+|                     |            |                                                                           |
+| :------------------ | :--------- | :------------------------------------------------------------------------ |
+| `dialect`           | `required` | 数据库方言，取值之一为 <Dialects/>                                      |
+| `schema`            | `required` | TypeScript schema 文件或包含多个 schema 文件的文件夹路径 |
+| `tablesFilter`      |            | 表名过滤器                                                         |
+| `url`               |            | 数据库连接字符串                                                |
+| `user`              |            | 数据库用户                                                             |
+| `password`          |            | 数据库密码                                                         |
+| `host`              |            | 主机                                                                      |
+| `port`              |            | 端口                                                                      |
+| `database`          |            | 数据库名称                                                             |
+| `config`            |            | 配置文件路径，默认值=`drizzle.config.ts`                             |
+
+<Npx>
+drizzle-kit push dialect=singlestore schema=src/schema.ts url=mysql://user:password@host:3306/dbname
+drizzle-kit push dialect=singlestore schema=src/schema.ts --tablesFilter='user*' url=mysql://user:password@host:3306/dbname
+</Npx>
+
+
+### 扩展示例
+
+让我们在项目中声明 drizzle schema，并通过 `drizzle-kit push` 命令将其推送到数据库
+
+```plaintext
+📦 <project root>
+ ├ 📂 src
+ │ ├ 📜 schema.ts
+ │ └ 📜 index.ts
+ ├ 📜 drizzle.config.ts
+ └ …
+```
+<CodeTabs items={["drizzle.config.ts", "src/schema.ts"]}>
+```ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "singlestore",
+  schema: "./src/schema.ts",
+  dbCredentials: {
+    url: "mysql://user:password@host:3306/dbname"
+  },
+});
+```
+```ts 
+import * as p from "drizzle-orm/singlestore-core";
+
+export const users = p.singlestoreTable("users", {
+  id: p.int().primaryKey().autoincrement(),
+  name: p.varchar({ length: 255 }),
+})
+```
+</CodeTabs>
+
+现在让我们运行
+```shell
+npx drizzle-kit push
+```
+
+它会从数据库中拉取已有的（空）schema，生成 SQL migration，并在内部将其应用
+```sql
+CREATE TABLE `users`(
+  `id` int auto_increment primary key,
+  `name` varchar(255)
+)
+```
+
+完成 ✅

@@ -1,6 +1,5 @@
 ---
-title: SQL Limit/Offset 分页
-slug: limit-offset-pagination
+title: SQL 限制/偏移分页
 ---
 
 import CodeTabs from '@mdx/CodeTabs.astro';
@@ -9,16 +8,20 @@ import Section from "@mdx/Section.astro";
 import Prerequisites from "@mdx/Prerequisites.astro";
 import IsSupportedChipGroup from "@mdx/IsSupportedChipGroup.astro";
 
-<IsSupportedChipGroup chips={{PostgreSQL: true, MySQL: true, SQLite: true}}/>
+<IsSupportedChipGroup chips={{PostgreSQL: true, MySQL: true, SQLite: true, MSSQL: true, Cockroach: true}}/>
 
 <Prerequisites>
-- 开始使用 [PostgreSQL](/docs/get-started-postgresql)，[MySQL](/docs/get-started-mysql) 和 [SQLite](/docs/get-started-sqlite)
-- [选择语句](/docs/select) 中使用 [排序子句](/docs/select#order-by) 和 [限制与偏移子句](/docs/select#limit--offset)
-- 使用 [关系查询](/docs/rqb) 的 [排序子句](/docs/rqb#order-by) 和 [限制与偏移子句](/docs/rqb#limit--offset)
+- 开始使用 [PostgreSQL](/docs/get-started-postgresql)、[MySQL](/docs/mysql/get-started-mysql)、[SQLite](/docs/sqlite/get-started-sqlite)、[MSSQL](/docs/mssql/get-started-mssql) 和 [Cockroach](/docs/cockroach/get-started-cockroach)
+- 带有 [order by 子句](/docs/select#order-by) 和 [limit & offset 子句](/docs/select#limit--offset) 的 [select 语句](/docs/select)
+- 带有 [order by 子句](/docs/rqb#order-by) 和 [limit & offset 子句](/docs/rqb#limit--offset) 的 [关系查询](/docs/rqb)
 - [动态查询构建](/docs/dynamic-query-building)
 </Prerequisites>
 
 本指南演示如何在 Drizzle 中实现 `limit/offset` 分页：
+
+### PostgreSQL, MySQL, SQLite and Cockroach
+
+要使用 Drizzle 实现 PostgreSQL、MySQL、SQLite 和 Cockroach 的 SQL Limit/Offset 分页（跳至 [MSSQL](/docs/guides/limit-offset-pagination#mssql)），可以使用以下示例：
 
 <CodeTabs items={["index.ts", "schema.ts"]}>
   <CodeTab>
@@ -272,4 +275,95 @@ await getUsers(2);
 
 因此，如果您的数据库在实时中频繁执行插入和删除操作，或者您需要对大型表进行高性能分页，您应该考虑使用 [基于游标](/docs/guides/cursor-based-pagination) 的分页。
 
-要了解有关 `延迟连接` 技术的更多信息，您可以参考以下指南：[Planetscale 分页指南](https://planetscale.com/blog/mysql-pagination) 和 [Aaron Francis 的高效分页指南](https://aaronfrancis.com/2022/efficient-pagination-using-deferred-joins)。
+要了解更多关于 `deferred join` 技术的信息，请参考以下指南：[Planetscale 分页指南](https://planetscale.com/blog/mysql-pagination) 和 [Aaron Francis 的高效分页指南](https://aaronfrancis.com/2022/efficient-pagination-using-deferred-joins)。
+
+{/*TODO finish this*/}
+### MSSQL
+
+要使用 Drizzle 实现 MSSQL 的 Limit/Offset 分页，可以参考以下示例：
+
+<CodeTabs items={["index.ts", "schema.ts"]}>
+  <CodeTab>
+    ```ts copy {9,10,11}
+    import { asc } from 'drizzle-orm';
+    import { users } from './schema';
+
+    const db = drizzle(...);
+
+    await db
+	  .select()
+	  .from(users)
+	  .orderBy(asc(users.id)) // order by 是必需的
+	  .offset(4) // 跳过的行数
+	  .fetch(4) // 获取的行数
+    ```
+
+    ```sql
+    select * from [users] order by [id] asc offset 5 rows fetch next 10 rows only;
+    ```
+
+    ```ts
+    // 返回第 5-8 行
+    [
+      {
+        id: 5,
+        firstName: 'Beth',
+        lastName: 'Davis',
+        createdAt: 2024-03-11T20:51:46.787Z
+      },
+      {
+        id: 6,
+        firstName: 'Charlie',
+        lastName: 'Miller',
+        createdAt: 2024-03-11T21:15:46.787Z
+      },
+      {
+        id: 7,
+        firstName: 'Clara',
+        lastName: 'Wilson',
+        createdAt: 2024-03-11T21:33:46.787Z
+      },
+      {
+        id: 8,
+        firstName: 'David',
+        lastName: 'Moore',
+        createdAt: 2024-03-11T21:45:46.787Z
+      }
+    ]
+    ```
+  </CodeTab>
+  <CodeTab>
+    ```ts copy
+    import { datetime2, int, mssqlTable, text } from "drizzle-orm/mssql-core";
+
+    export const users = mssqlTable("users", {
+      id: int("id").primaryKey(),
+      firstName: text("first_name").notNull(),
+      lastName: text("last_name").notNull(),
+      createdAt: datetime2("created_at", { mode: "date" }).notNull().defaultGetDate(),
+    });
+    ```
+
+    ```plaintext
+    +----+------------+-----------+----------------------------+
+    | id | first_name | last_name |         created_at         |
+    +----+------------+-----------+----------------------------+
+    |  1 | Alice      | Johnson   | 2024-03-08 12:23:55.251797 |
+    +----+------------+-----------+----------------------------+
+    |  2 | Alex       | Smith     | 2024-03-08 12:25:55.182    |
+    +----+------------+-----------+----------------------------+
+    |  3 | Aaron      | Williams  | 2024-03-08 12:28:55.182    |
+    +----+------------+-----------+----------------------------+
+    |  4 | Brian      | Brown     | 2024-03-08 12:34:55.182    |
+    +----+------------+-----------+----------------------------+
+    |  5 | Beth       | Davis     | 2024-03-08 12:40:55.182    |
+    +----+------------+-----------+----------------------------+
+    |  6 | Charlie    | Miller    | 2024-03-08 13:04:55.182    |
+    +----+------------+-----------+----------------------------+
+    |  7 | Clara      | Wilson    | 2024-03-08 13:22:55.182    |
+    +----+------------+-----------+----------------------------+
+    |  8 | David      | Moore     | 2024-03-08 13:34:55.182    |
+    +----+------------+-----------+----------------------------+
+    ```
+  </CodeTab>
+</CodeTabs>

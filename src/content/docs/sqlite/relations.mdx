@@ -1,0 +1,932 @@
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
+import IsSupportedChipGroup from '@mdx/IsSupportedChipGroup.astro';
+import Callout from '@mdx/Callout.astro';
+import Section from '@mdx/Section.astro';
+import Prerequisites from "@mdx/Prerequisites.astro";
+import CodeTab from '@mdx/CodeTab.astro';
+import CodeTabs from '@mdx/CodeTabs.astro';
+import Npm from '@mdx/Npm.astro';
+
+# Drizzle 关系
+
+<Npm>
+ drizzle-orm@rc
+ drizzle-kit@rc -D
+</Npm>
+
+<br/>
+
+<Prerequisites>  
+  - **关系基础** - 熟悉外键约束、软关系、数据库规范化等概念 - [请在这里阅读](/docs/sqlite/relations-schema-declaration)
+  - **声明 schema** - 熟悉如何定义 drizzle schema - [请在这里阅读](/docs/sqlite/sql-schema-declaration)
+  - **数据库连接** - 熟悉如何使用 drizzle 连接数据库 - [请在这里阅读](/docs/sqlite/get-started-sqlite)
+</Prerequisites>
+
+Drizzle relations 的唯一目的，是让你以最简单、最简洁的方式查询关系型数据：
+
+<CodeTabs items={["关系查询", "带 join 的选择"]}>
+<Section>
+```ts
+import { drizzle } from 'drizzle-orm/...';
+import { defineRelations } from 'drizzle-orm';
+import * as p from 'drizzle-orm/sqlite-core';
+
+export const users = p.sqliteTable('users', {
+	id: p.integer().primaryKey(),
+	name: p.text().notNull()
+});
+
+export const posts = p.sqliteTable('posts', {
+	id: p.integer().primaryKey(),
+	content: p.text().notNull(),
+	ownerId: p.integer('owner_id'),
+});
+
+const relations = defineRelations({ users, posts }, (r) => ({
+	posts: {
+		author: r.one.users({
+			from: r.posts.ownerId,
+			to: r.users.id,
+		}),
+	}
+}))
+
+const db = drizzle(process.env.DB_URL, { relations });
+
+const result = await db.query.posts.findMany({
+  with: {
+    author: true,
+  },
+});
+```
+```ts
+[{
+  id: 10,
+  content: "我的第一篇帖子！",
+  ownerId: 14,
+  author: {
+    id: 1,
+    name: "Alex"
+  }
+}]
+```
+</Section>
+<Section>
+```ts
+import { drizzle } from 'drizzle-orm/...';
+import { eq } from 'drizzle-orm';
+import { posts, users } from './schema';
+
+const db = drizzle(process.env.DB_URL);
+
+const res = await db.select()
+                    .from(posts)
+                    .leftJoin(users, eq(posts.ownerId, users.id))
+                    .orderBy(posts.id)
+
+const mappedResult = ...
+```
+</Section>
+</CodeTabs>
+
+### `one()`
+以下是 drizzle relations 中 `.one()` 可用的所有字段列表
+
+```ts {3-11}
+const relations = defineRelations({ users, posts }, (r) => ({
+	posts: {
+		author: r.one.users({
+			from: r.posts.ownerId,
+			to: r.users.id,
+			optional: false,
+      alias: 'custom_name',
+			where: {
+				verified: true,
+			}
+		}),
+	}
+}))
+```
+
+- `author` 键是一个自定义键，在使用 Drizzle 关系查询时会出现在 `posts` 对象中。
+- `r.one.users` 表示 `author` 将是来自 `users` 表的单个对象，而不是对象数组。
+- `from: r.posts.ownerId` 指定我们从哪个表建立软关系。  
+在这个例子中，关系从 `posts` 表中的 `ownerId` 列开始。
+- `to: r.users.id` 指定我们要建立软关系的目标表。  
+在这个例子中，关系指向 `users` 表中的 `id` 列。
+- 类型层面的 `optional: false` 会让 `posts` 对象中的 `author` 键变为 `required`。  
+当你确定这个特定实体一定存在时，应使用它。
+- `alias` 用于为表之间的关系添加特定别名。如果两个表之间存在多个相同关系，你应该使用 `alias` 来区分它们。
+- `where` 条件可用于多态关系。它会根据 `where` 语句获取关系数据。  
+例如，在上面的例子中，只会检索 `verified authors`。在[这里](/docs/sqlite/relations-schema-declaration#polymorphic-relations)了解更多关于多态关系的信息。
+
+### `many()`
+
+以下是 drizzle relations 中 `.many()` 可用的所有字段列表
+
+```ts {3-10}
+const relations = defineRelations({ users, posts }, (r) => ({
+	users: {
+		feed: r.many.posts({
+			from: r.users.id,
+			to: r.posts.ownerId,
+			alias: 'custom_name',
+			where: {
+				approved: true,
+			}
+		}),
+	}
+}))
+```
+
+- `feed` 键是一个自定义键，在使用 Drizzle 关系查询时会出现在 `users` 对象中。
+- `r.many.posts` 表示 `feed` 将是来自 `posts` 表的对象数组，而不仅仅是一个对象
+- `from: r.users.id` 指定我们从哪个表建立软关系。  
+在这个例子中，关系从 `users` 表中的 `id` 列开始。
+- `to: r.posts.ownerId` 指定我们要建立软关系的目标表。  
+在这个例子中，关系指向 `posts` 表中的 `ownerId` 列。
+- `alias` 用于为表之间的关系添加特定别名。如果两个表之间存在多个相同关系，你应该使用 `alias` 来区分它们。
+- `where` 条件可用于多态关系。它会根据 `where` 语句获取关系数据。  
+例如，在上面的例子中，只会检索 `approved posts`。在[这里](/docs/sqlite/relations-schema-declaration#polymorphic-relations)了解更多关于多态关系的信息。
+
+## ---
+
+### 一对一
+Drizzle ORM 提供了一个 API，通过 `defineRelations` 函数定义表之间的 `one-to-one` 关系。
+
+下面是一个 users 和 users 之间的 `one-to-one` 关系示例，其中一个用户可以邀请另一个用户（此示例使用了自引用）：
+
+```typescript copy {10-17}
+import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { defineRelations } from 'drizzle-orm';
+
+export const users = sqliteTable('users', {
+	id: integer().primaryKey(),
+	name: text(),
+	invitedBy: integer('invited_by'),
+});
+
+export const relations = defineRelations({ users }, (r) => ({
+	users: {
+		invitee: r.one.users({
+			from: r.users.invitedBy,
+			to: r.users.id,
+		})
+	}
+}));
+```
+
+另一个例子是用户的个人资料信息存储在单独的表中。在这种情况下，因为外键存储在 `"profile_info"` 表中，所以用户关系既没有 fields 也没有 references。这会告诉 Typescript `user.profileInfo` 是可空的：
+
+```typescript copy {15-22}
+import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { defineRelations } from 'drizzle-orm';
+
+export const users = sqliteTable('users', {
+	id: integer().primaryKey(),
+	name: text(),
+});
+
+export const profileInfo = sqliteTable('profile_info', {
+	id: integer().primaryKey({ autoIncrement: true }),
+	userId: integer('user_id').references(() => users.id),
+	metadata: text({ mode: 'json' }),
+});
+
+export const relations = defineRelations({ users, profileInfo }, (r) => ({
+	users: {
+		profileInfo: r.one.profileInfo({
+			from: r.users.id,
+			to: r.profileInfo.userId,
+		})
+	}
+}));
+
+const user = await db.query.users.findFirst({ with: { profileInfo: true } });
+//____^? type { id: number, name: string | null, profileInfo: { ... } | null  }
+```
+
+### 一对多
+Drizzle ORM 提供了一个 API，通过 `defineRelations` 函数定义表之间的 `one-to-many` 关系。 
+
+`users` 和他们写的 `posts` 之间的一对多关系示例：
+
+```typescript copy {15-25}
+import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { defineRelations } from 'drizzle-orm';
+
+export const users = sqliteTable('users', {
+	id: integer('id').primaryKey(),
+	name: text('name'),
+});
+
+export const posts = sqliteTable('posts', {
+	id: integer('id').primaryKey(),
+	content: text('content'),
+	authorId: integer('author_id'),
+});
+
+export const relations = defineRelations({ users, posts }, (r) => ({
+  posts: {
+    author: r.one.users({
+      from: r.posts.authorId,
+      to: r.users.id,
+    }),
+  },
+  users: {
+    posts: r.many.posts(),
+  },
+}));
+```
+
+现在让我们为 `posts` 添加评论：
+```typescript copy {9-14,22,27-32}
+...
+
+export const posts = sqliteTable('posts', {
+	id: integer('id').primaryKey(),
+	content: text('content'),
+	authorId: integer('author_id'),
+});
+
+export const comments = sqliteTable("comments", {
+  id: integer().primaryKey(),
+  text: text(),
+  authorId: integer("author_id"),
+  postId: integer("post_id"),
+});
+
+export const relations = defineRelations({ users, posts, comments }, (r) => ({
+  posts: {
+    author: r.one.users({
+      from: r.posts.authorId,
+      to: r.users.id,
+    }),
+    comments: r.many.comments(),
+  },
+  users: {
+    posts: r.many.posts(),
+  },
+  comments: {
+    post: r.one.posts({
+      from: r.comments.postId,
+      to: r.posts.id,
+    }),
+  },
+}));
+```
+
+
+### 多对多
+Drizzle ORM 提供了一个 API，通过所谓的 `junction` 或 `join` 表来定义表之间的 `many-to-many` 关系，
+这些表必须显式定义，并用于存储相关表之间的关联。  
+
+`users` 和 `groups` 之间的多对多关系示例中，我们使用 `through` 来绕过中间表的选择，并直接为每个 `user` 选择多个 `groups`。
+```typescript copy {27-39}
+import { defineRelations } from 'drizzle-orm';
+import { integer, sqliteTable, primaryKey, text } from 'drizzle-orm/sqlite-core';
+
+export const users = sqliteTable('users', {
+  id: integer().primaryKey(),
+  name: text(),
+});
+
+export const groups = sqliteTable('groups', {
+  id: integer().primaryKey(),
+  name: text(),
+});
+
+export const usersToGroups = sqliteTable(
+  'users_to_groups',
+  {
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id),
+    groupId: integer('group_id')
+      .notNull()
+      .references(() => groups.id),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.groupId] })],
+);
+
+export const relations = defineRelations({ users, groups, usersToGroups },
+  (r) => ({
+    users: {
+      groups: r.many.groups({
+        from: r.users.id.through(r.usersToGroups.userId),
+        to: r.groups.id.through(r.usersToGroups.groupId),
+      }),
+    },
+    groups: {
+      participants: r.many.users(),
+    },
+  })
+);
+```
+
+**查询示例：**
+```ts
+const res = await db.query.users.findMany({
+  with: { 
+    groups: true 
+  },
+});
+
+// 响应类型
+type Response = {
+  id: number;
+  name: string | null;
+  groups: {
+    id: number;
+    name: string | null;
+  }[];
+}[];
+```
+
+### 预定义过滤器
+
+Drizzle 关系定义中的预定义 `where` 语句是一种多态关系实现，但并不完全等同于它。本质上，它们允许你
+不仅可以通过选择特定列来连接表，还可以通过自定义 `where` 语句来连接表。让我们看一些示例：
+
+我们可以定义 `groups` 和 `users` 之间的关系，这样在查询某个 group 的 users 时，我们只会检索那些 `verified` 列设为 `true` 的用户
+<CodeTabs items={["Relations", "Schema"]}>
+<Section>
+```ts
+import { defineRelations } from "drizzle-orm";
+import * as schema from './schema';
+
+export const relations = defineRelations(schema,(r) => ({
+    groups: {
+      verifiedUsers: r.many.users({
+        from: r.groups.id.through(r.usersToGroups.groupId),
+        to: r.users.id.through(r.usersToGroups.userId),
+        where: {
+          verified: true,
+        },
+      }),
+    },
+  })
+);
+
+...
+
+await db.query.groups.findMany({
+    with: {
+      verifiedUsers: true,
+    },
+});
+```
+</Section>
+<Section>
+```ts
+import * as p from "drizzle-orm/sqlite-core";
+
+export const users = p.sqliteTable("users", {
+  id: p.integer().primaryKey(),
+  name: p.text().notNull(),
+  verified: p.integer({ mode: 'boolean' }).notNull(),
+});
+
+export const groups = p.sqliteTable("groups", {
+  id: p.integer().primaryKey(),
+  title: p.text().notNull(),
+});
+
+export const usersToGroups = p.sqliteTable(
+  "users_to_groups",
+  {
+    userId: p
+      .integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    groupId: p
+      .integer("group_id")
+      .notNull()
+      .references(() => groups.id, { onDelete: "cascade" }),
+  },
+  (t) => [p.primaryKey({ columns: [t.groupId, t.userId] })]
+);
+```
+</Section>
+</CodeTabs>
+
+<Callout type='warning'>
+你只能在目标（to）表上指定过滤条件。因此在这个示例中，where 子句将只会包含 `users` 表中的列，因为我们正在建立一个 **指向** users 的关系
+
+```ts {7}
+export const relations = defineRelations(schema,(r) => ({
+    groups: {
+      verifiedUsers: r.many.users({
+        from: r.groups.id.through(r.usersToGroups.groupId),
+        to: r.users.id.through(r.usersToGroups.userId),
+        where: {
+          verified: true,
+        },
+      }),
+    },
+  })
+);
+```
+</Callout>
+
+## ---
+
+### 关系分部
+
+如果你需要将关系配置拆分成几个部分，可以使用 `defineRelationsPart` 辅助函数
+
+```ts
+import { defineRelations, defineRelationsPart } from 'drizzle-orm';
+import * as schema from "./schema";
+
+export const relations = defineRelations(schema, (r) => ({
+  users: {
+    invitee: r.one.users({
+      from: r.users.invitedBy,
+      to: r.users.id,
+    }),
+    posts: r.many.posts(),
+  }
+}));
+
+export const part = defineRelationsPart(schema, (r) => ({
+  posts: {
+    author: r.one.users({
+      from: r.posts.authorId,
+      to: r.users.id,
+    }),
+  }
+}));
+```
+
+然后你可以将它提供给 db 实例
+
+```ts
+const db = drizzle(process.env.DB_URL, { relations: { ...relations, ...part } })
+```
+
+<Callout type='warning'>
+你需要遵循一些规则，以确保 `defineRelationsParts` 按预期工作
+
+**规则 1**：如果你使用分部方式指定关系，在将其传递给 drizzle db 函数时，需要按正确顺序指定（主关系放在前面）
+```ts
+// ✅
+const db = drizzle(process.env.DB_URL, { relations: { ...relations, ...part } })
+
+// ❌
+const db = drizzle(process.env.DB_URL, { relations: { ...part, ...relations } })
+```
+
+<Callout collapsed="为什么这很重要？">
+即使不会出现类型或运行时错误，这也是对象上 `"..."` 的工作方式。只要主关系递归推断所有表名，它就可以在自动补全中可用。下面是一个示例：
+
+```ts
+export const relations = defineRelations(schema, (r) => ({
+  users: {
+    invitee: r.one.users({
+      from: r.users.invitedBy,
+      to: r.users.id,
+    }),
+    posts: r.many.posts(),
+  }
+}));
+
+export const part = defineRelationsPart(schema, (r) => ({
+  posts: {
+    author: r.one.users({
+      from: r.posts.authorId,
+      to: r.users.id,
+    }),
+  }
+}));
+```
+
+这里 `relations` 和 `part` 可以表示为这个对象：
+```json
+// relations
+{
+  "users": {"invitee": {...}, "posts": {...}},
+  // 添加在这里，因此 schema 中所有表都会在自动补全中存在
+  "posts": {}
+}
+
+// part
+{
+  "posts": {"author": {...}}
+}
+```
+
+使用 `{ ...relations, ...part }` 将得到
+```json
+{
+  "users": {"invitee": {...}, "posts": {...}},
+  "posts": {"author": {...}}
+}
+```
+
+而使用 `{ ...relations, ...part }` 将得到
+```json
+{
+  "users": {"invitee": {...}, "posts": {...}},
+  // 如你所见，在最终对象中，posts 的关系信息将会丢失
+  "posts": {}
+}
+```
+
+</Callout>
+
+**规则 2**：你应该至少有最小关系，这样 drizzle 才能推断出所有表用于自动补全。如果你只想使用分部，那么
+你的某个分部应该是空的，像这样：
+
+```ts
+export const mainPart = defineRelationsPart(schema);
+```
+
+在这种情况下，所有表都会被正确推断，你将拥有关于 schema 的完整信息
+</Callout>
+
+## ---
+
+### 性能
+
+在使用 Drizzle ORM 处理关系时，尤其是在应用程序包含大量数据或复杂查询的情况下，优化数据库性能至关重要。  
+索引在加速数据检索方面起着关键作用，特别是在查询关联数据时。本节概述了使用 Drizzle ORM 定义的各类关系所推荐的索引策略。
+
+##### 一对一关系
+
+在一对一关系中，例如“用户邀请用户”示例或“用户拥有个人资料信息”示例，关键的性能考量是高效地关联相关表。
+
+<Callout>
+为了在一对一关系中获得最佳性能，你应该在被引用表（关系中的“目标”表）的外键列上创建索引。
+</Callout>
+
+<Callout collapsed='为什么这很重要'>
+当你查询带有关联一对一信息的数据时，Drizzle 会执行 JOIN 操作。在外键列上建立索引，能让数据库快速定位目标表中的相关行，从而显著加快 JOIN 过程。
+</Callout>
+
+**示例：**
+```typescript
+import * as p from 'drizzle-orm/sqlite-core';
+import { defineRelations } from 'drizzle-orm';
+
+export const users = p.sqliteTable('users', {
+	id: p.integer().primaryKey(),
+	name: p.text(),
+});
+
+export const profileInfo = p.sqliteTable('profile_info', {
+	id: p.integer().primaryKey(),
+	userId: p.integer('user_id').references(() => users.id),
+	metadata: p.text({ mode: 'json' }),
+});
+
+export const relations = defineRelations({ users, profileInfo }, (r) => ({
+	users: {
+		profileInfo: r.one.profileInfo({
+			from: r.users.id,
+			to: r.profileInfo.userId,
+		})
+	}
+}));
+```
+
+为了优化获取用户数据及其个人资料信息的查询，你应该在 `profile_info` 表的 `userId` 列上创建索引。
+
+```typescript {13-15}
+import * as p from 'drizzle-orm/sqlite-core';
+import { defineRelations } from 'drizzle-orm';
+
+export const users = p.sqliteTable('users', {
+	id: p.integer().primaryKey(),
+	name: p.text(),
+});
+
+export const profileInfo = p.sqliteTable('profile_info', {
+	id: p.integer().primaryKey(),
+	userId: p.integer('user_id').references(() => users.id),
+	metadata: p.text({ mode: 'json' }),
+}, (table) => [
+  p.index('profile_info_user_id_idx').on(table.userId)
+]);
+
+export const relations = defineRelations({ users, profileInfo }, (r) => ({
+	users: {
+		profileInfo: r.one.profileInfo({
+			from: r.users.id,
+			to: r.profileInfo.userId,
+		})
+	}
+}));
+```
+```sql
+CREATE INDEX `profile_info_user_id_idx` ON `profile_info` (`user_id`);
+```
+
+#### 一对多关系
+
+与一对一关系类似，一对多关系也会因索引而显著受益，从而优化 JOIN 操作。以“用户和帖子”为例，一个用户可以拥有多个帖子。
+
+<Callout>
+对于一对多关系，应在表示关系中“多”这一侧的表中的外键列上创建索引（即包含指向“1”这一侧外键的表）。
+</Callout>
+
+<Callout collapsed='为什么这很重要'>
+当你获取带有帖子信息的用户，或带有作者信息的帖子时，会执行 JOIN。对外键（`posts` 表中的 `authorId`）建立索引，可以让数据库高效地检索某个用户关联的所有帖子，或快速找到某篇帖子的作者。
+</Callout>
+
+**示例：**
+```typescript
+import * as p from "drizzle-orm/sqlite-core";
+import { defineRelations } from 'drizzle-orm';
+
+export const users = p.sqliteTable('users', {
+	id: p.integer().primaryKey(),
+	name: p.text(),
+});
+
+export const posts = p.sqliteTable('posts', {
+	id: p.integer().primaryKey(),
+	content: p.text(),
+	authorId: p.integer('author_id'),
+});
+
+export const relations = defineRelations({ users, posts }, (r) => ({
+  posts: {
+    author: r.one.users({
+      from: r.posts.authorId,
+      to: r.users.id,
+    }),
+  },
+  users: {
+    posts: r.many.posts(),
+  },
+}));
+```
+
+为了优化涉及用户及其帖子的查询，请在 `posts` 表的 `authorId` 列上创建索引。
+
+```typescript {13-15}
+import * as p from "drizzle-orm/sqlite-core";
+import { defineRelations } from 'drizzle-orm';
+
+export const users = p.sqliteTable('users', {
+	id: p.integer().primaryKey(),
+	name: p.text(),
+});
+
+export const posts = p.sqliteTable('posts', {
+	id: p.integer().primaryKey(),
+	content: p.text(),
+	authorId: p.integer('author_id'),
+}, (t) => [
+  p.index('posts_author_id_idx').on(t.authorId)
+]);
+
+export const relations = defineRelations({ users, posts }, (r) => ({
+  posts: {
+    author: r.one.users({
+      from: r.posts.authorId,
+      to: r.users.id,
+    }),
+  },
+  users: {
+    posts: r.many.posts(),
+  },
+}));
+```
+```sql
+CREATE INDEX `posts_author_id_idx` ON `posts` (`author_id`);
+```
+
+#### 多对多关系
+
+多对多关系通过连接表实现，需要稍微更细致的索引策略，以确保最佳查询性能。  
+以“用户和组”为例，其中使用 `usersToGroups` 连接表。
+
+<Callout>
+对于多对多关系，通常建议在连接表上创建以下索引：
+1.  **分别在每个外键列上建立索引：** 这可以优化基于关系单侧进行过滤或关联的查询  
+    （例如，查找某个用户的所有组，或某个组中的所有用户）。
+2.  **在两个外键列上建立复合索引：** 这对于高效解析多对多关系本身至关重要。它可以加快需要查找两个实体之间连接关系的查询。
+</Callout>
+
+<Callout collapsed='为什么这很重要'>
+在查询多对多关系时，尤其是在 Drizzle ORM 中使用 `through` 时，数据库需要高效地遍历连接表。
+
+- 对单个外键列（`usersToGroups` 中的 `userId`、`groupId`）建立索引，有助于从一侧查询另一侧时使用（例如“查找某个用户的组”）。
+- `usersToGroups` 上的 `(userId, groupId)` 复合索引对于快速查找连接表中定义的所有关系尤为重要。当 Drizzle ORM 解析 `many-to-many` 关系以获取相关实体时，会用到它。
+</Callout>
+
+**示例：**
+
+在“用户和组”示例中，`usersToGroups` 连接表连接了 `users` 和 `groups`。
+
+```typescript
+import { defineRelations } from 'drizzle-orm';
+import * as p from 'drizzle-orm/sqlite-core';
+
+export const users = p.sqliteTable('users', {
+  id: p.integer().primaryKey(),
+  name: p.text(),
+});
+
+export const groups = p.sqliteTable('groups', {
+  id: p.integer().primaryKey(),
+  name: p.text(),
+});
+
+export const usersToGroups = p.sqliteTable(
+  'users_to_groups',
+  {
+    userId: p.integer('user_id')
+      .notNull()
+      .references(() => users.id),
+    groupId: p.integer('group_id')
+      .notNull()
+      .references(() => groups.id),
+  },
+  (t) => [p.primaryKey({ columns: [t.userId, t.groupId] })],
+);
+
+export const relations = defineRelations({ users, groups, usersToGroups },
+  (r) => ({
+    users: {
+      groups: r.many.groups({
+        from: r.users.id.through(r.usersToGroups.userId),
+        to: r.groups.id.through(r.usersToGroups.groupId),
+      }),
+    },
+    groups: {
+      participants: r.many.users(),
+    },
+  })
+);
+```
+
+为了优化用户和组的查询，请按如下方式在 `usersToGroups` 表上创建索引：
+
+```typescript {26-28}
+import { defineRelations } from 'drizzle-orm';
+import * as p from 'drizzle-orm/sqlite-core';
+
+export const users = p.sqliteTable('users', {
+  id: p.integer().primaryKey(),
+  name: p.text(),
+});
+
+export const groups = p.sqliteTable('groups', {
+  id: p.integer().primaryKey(),
+  name: p.text(),
+});
+
+export const usersToGroups = p.sqliteTable(
+  'users_to_groups',
+  {
+    userId: p.integer('user_id')
+      .notNull()
+      .references(() => users.id),
+    groupId: p.integer('group_id')
+      .notNull()
+      .references(() => groups.id),
+  },
+  (t) => [
+    p.primaryKey({ columns: [t.userId, t.groupId] }),
+    p.index('users_to_groups_user_id_idx').on(t.userId),
+    p.index('users_to_groups_group_id_idx').on(t.groupId),
+    p.index('users_to_groups_composite_idx').on(t.userId, t.groupId),
+  ],
+);
+
+export const relations = defineRelations({ users, groups, usersToGroups },
+  (r) => ({
+    users: {
+      groups: r.many.groups({
+        from: r.users.id.through(r.usersToGroups.userId),
+        to: r.groups.id.through(r.usersToGroups.groupId),
+      }),
+    },
+    groups: {
+      participants: r.many.users(),
+    },
+  })
+);
+```
+```sql
+CREATE INDEX `users_to_groups_user_id_idx` ON `users_to_groups` (`user_id`);
+CREATE INDEX `users_to_groups_group_id_idx` ON `users_to_groups` (`group_id`);
+CREATE INDEX `users_to_groups_composite_idx` ON `users_to_groups` (`user_id`,`group_id`);
+```
+
+通过应用这些索引策略，你可以在处理关系型数据时显著提升 Drizzle ORM 应用程序的性能，尤其是在数据量增长、查询变得更复杂时。请记住，选择最适合你具体查询模式和应用需求的索引。
+
+## ---
+
+### 外键
+
+你可能已经注意到，`relations` 看起来和外键很相似——它们甚至还有一个 `references` 属性。那它们之间有什么区别呢？
+
+虽然外键也有类似的作用，用于定义表之间的关系，但它们所处的层级与 `relations` 不同。
+
+外键是数据库层面的约束，它们会在每次 `insert`/`update`/`delete` 操作时进行检查，如果违反约束就会抛出错误。
+另一方面，`relations` 是更高层级的抽象，它们只用于在应用层定义表之间的关系。
+它们不会以任何方式影响数据库模式，也不会隐式创建外键。
+
+这意味着 `relations` 和外键可以一起使用，但它们彼此并不依赖。
+你可以在不使用外键的情况下定义 `relations`（反之亦然），这使得它们也可以用于不支持外键的数据库。
+
+下面这两个示例在使用 Drizzle 关系查询进行数据查询时，行为完全相同。
+
+<CodeTabs items={["schema1.ts", "schema2.ts"]}>
+<CodeTab>
+```ts {15}
+export const users = p.sqliteTable("users", {
+  id: p.integer().primaryKey(),
+  name: p.text(),
+});
+
+export const profileInfo = p.sqliteTable("profile_info", {
+  id: p.integer().primaryKey(),
+  userId: p.integer("user_id"),
+  metadata: p.text({ mode: 'json' }),
+});
+
+export const relations = defineRelations({ users, profileInfo }, (r) => ({
+  users: {
+    profileInfo: r.one.profileInfo({
+      from: r.users.id,
+      to: r.profileInfo.userId,
+    }),
+  },
+}));
+```
+</CodeTab>
+<CodeTab>
+```ts {15}
+export const users = p.sqliteTable("users", {
+  id: p.integer().primaryKey(),
+  name: p.text(),
+});
+
+export const profileInfo = p.sqliteTable("profile_info", {
+  id: p.integer().primaryKey(),
+  userId: p.integer("user_id").references(() => users.id),
+  metadata: p.text({ mode: 'json' }),
+});
+
+export const relations = defineRelations({ users, profileInfo }, (r) => ({
+  users: {
+    profileInfo: r.one.profileInfo({
+      from: r.users.id,
+      to: r.profileInfo.userId,
+    }),
+  },
+}));
+```
+</CodeTab>
+</CodeTabs>
+
+### 消歧关系
+
+Drizzle 还提供了 `alias` 选项，用于在同一对表之间定义多个关系时进行消歧。
+例如，如果你定义了一个 `posts` 表，其中包含 `author` 和 `reviewer` 关系。
+
+```ts {19,22,29,34}
+import { sqliteTable, integer, text } from 'drizzle-orm/sqlite-core';
+import { defineRelations } from 'drizzle-orm';
+ 
+export const users = sqliteTable('users', {
+	id: integer().primaryKey(),
+	name: text(),
+});
+
+export const posts = sqliteTable('posts', {
+	id: integer().primaryKey(),
+	content: text(),
+	authorId: integer('author_id'),
+	reviewerId: integer('reviewer_id'),
+});
+ 
+export const relations = defineRelations({ users, posts }, (r) => ({
+  users: {
+    posts: r.many.posts({
+      alias: "author",
+    }),
+    reviewedPosts: r.many.posts({
+      alias: "reviewer",
+    }),
+  },
+  posts: {
+    author: r.one.users({
+      from: r.posts.authorId,
+      to: r.users.id,
+      alias: "author",
+    }),
+    reviewer: r.one.users({
+      from: r.posts.authorId,
+      to: r.users.id,
+      alias: "reviewer",
+    }),
+  },
+}));
+```

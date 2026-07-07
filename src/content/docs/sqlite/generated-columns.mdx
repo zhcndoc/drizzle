@@ -1,0 +1,99 @@
+import CodeTabs from '@mdx/CodeTabs.astro';
+import CodeTab from '@mdx/CodeTab.astro';
+import Callout from '@mdx/Callout.astro';
+
+# 生成列
+
+1. 虚拟（或非持久化）生成列：这类列会在每次查询时动态计算。它们不会占用数据库中的存储空间。
+
+2. 存储（或持久化）生成列：这类列会在插入或更新行时计算，其值会存储在数据库中。这使得它们可以被索引，并且由于每次查询都不需要重新计算这些值，因此可以提高查询性能。
+
+#### 数据库端
+    **类型**: `STORED`, `VIRTUAL`
+
+    **工作原理**
+    - 通过表结构中的表达式定义。
+    - 虚拟列在读取操作期间计算。
+    - 存储列在写入操作期间计算并保存。
+
+    **能力**
+    - 可用于 SELECT、INSERT、UPDATE 和 DELETE 语句。
+    - 虚拟列和存储列都可以建立索引。
+    - 可以指定 NOT NULL 和其他约束。
+    
+    **限制**
+    - 不能直接向生成列插入或更新值 
+
+    更多信息请查看 [SQLite](https://www.sqlite.org/gencol.html) 文档 
+
+    #### Drizzle 端
+    在 Drizzle 中，你可以在任意列类型上指定 `.generatedAlwaysAs()` 函数，并添加一个受支持的 SQL 查询，  
+    这样就会为你生成该列的数据。
+
+    #### 特性 
+    这个函数可以通过两种方式接收生成表达式：
+
+    **`sql`** 标签 - 如果你希望 drizzle 帮你转义某些值
+
+    ```ts
+    export const test = sqliteTable("test", {
+        id: int().primaryKey(),
+        generatedName: text("gen_name").generatedAlwaysAs(sql`'hello "world"!'`),
+    });
+    ```
+    ```sql
+    CREATE TABLE `test` (
+      `id` integer PRIMARY KEY,
+      `gen_name` text GENERATED ALWAYS AS ('hello "world"!') VIRTUAL
+    );
+    ```
+
+    **`callback`** - 如果你需要引用表中的列
+
+    ```ts
+    export const test = sqliteTable("test", {
+        name: text("first_name"),
+        generatedName: text("gen_name").generatedAlwaysAs(
+          (): SQL => sql`'hi,' || ${test.name} || '!'`
+        ),
+    });
+    ```
+    ```sql
+    CREATE TABLE `test` (
+      `first_name` text,
+      `gen_name` text GENERATED ALWAYS AS ('hi,' || "first_name" || '!') VIRTUAL
+    );
+    ```
+
+    #### Drizzle Kit 中的行为
+	`push` 和 `generate` 命令：
+    1. 更改现有表中 `stored` 列的生成表达式将导致重建表。（更改 `virtual` 表达式将导致重建列）。
+    2. 向现有列添加 `stored` 生成表达式将导致重建表。（添加 `virtual` 表达式将导致重建列）。
+    3. 将生成模式从 `virtual` 改为 `stored` 将导致重建表。（从 `stored` 切换到 `virtual` 将导致重建列）。
+
+  <CodeTabs items={["schema.ts"]}>
+	<CodeTab>
+	```typescript copy
+    export const users = sqliteTable("users", {
+      id: int(),
+      name: text(),
+      storedGenerated: text("stored_gen").generatedAlwaysAs(
+        (): SQL => sql`${users.name} || 'hello'`,
+        { mode: "stored" }
+      ),
+      virtualGenerated: text("virtual_gen").generatedAlwaysAs(
+        (): SQL => sql`${users.name} || 'hello'`,
+        { mode: "virtual" }
+      ),
+    });
+    ```
+    ```sql
+    CREATE TABLE `users` (
+	    `id` integer,
+	    `name` text,
+	    `stored_gen` text GENERATED ALWAYS AS ("name" || 'hello') STORED,
+	    `virtual_gen` text GENERATED ALWAYS AS ("name" || 'hello') VIRTUAL
+    );
+    ```
+    </CodeTab>
+  </CodeTabs>

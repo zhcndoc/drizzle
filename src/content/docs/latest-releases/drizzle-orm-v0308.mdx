@@ -15,13 +15,13 @@ const mySchema = pgSchema('mySchema');
 const colors = mySchema.enum('colors', ['red', 'green', 'blue']);
 ```
 
-了解有关 Postgres [架构](/docs/schemas) 和 [枚举](/docs/column-types/pg#enum) 的更多信息。
+了解更多关于 Postgres 的 [架构](/docs/schemas) 和 [枚举](/docs/column-types#enum)。
 
 ## 修复
 
 - 修改 D1 `migrate()` 函数以使用批处理 API ([#2137](https://github.com/drizzle-team/drizzle-orm/pull/2137))
 
-要开始使用 Drizzle 和 D1，请查看 [文档](/docs/get-started-sqlite#cloudflare-d1)。
+要开始使用 Drizzle 和 D1，请查看 [文档](/docs/sqlite/get-started-sqlite#cloudflare-d1)。
 
 - 在 Postgres 的 `.onConflictDoUpdate` 方法中将 `where` 子句拆分为 `setWhere` 和 `targetWhere` 子句，以支持 `on conflict ...` 子句中的两个 `where` 情况 (修复 [#1628](https://github.com/drizzle-team/drizzle-orm/issues/1628)， [#1302](https://github.com/drizzle-team/drizzle-orm/issues/1302) 通过 [#2056](https://github.com/drizzle-team/drizzle-orm/pull/2056))。
 

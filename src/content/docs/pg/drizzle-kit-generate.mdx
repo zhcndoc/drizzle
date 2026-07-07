@@ -1,0 +1,252 @@
+import CodeTab from "@mdx/CodeTab.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Section from "@mdx/Section.astro";
+import Tab from "@mdx/Tab.astro";
+import Tabs from "@mdx/Tabs.astro";
+import Callout from "@mdx/Callout.astro";
+import Prerequisites from "@mdx/Prerequisites.astro"
+import Npx from "@mdx/Npx.astro";
+import SchemaFilePaths from "@mdx/SchemaFilePaths.mdx"
+import Dialects from "@mdx/Dialects.mdx"
+
+# `drizzle-kit generate`
+
+<Prerequisites>
+- 开始使用 Drizzle 和 `drizzle-kit` - [点击这里阅读](/docs/get-started)
+- Drizzle 模式基础 - [点击这里阅读](/docs/sql-schema-declaration)
+- 数据库连接基础 - [点击这里阅读](/docs/connect-overview)
+- Drizzle 迁移基础 - [点击这里阅读](/docs/migrations)
+- Drizzle Kit [概述](/docs/kit-overview) 和 [配置文件](/docs/drizzle-config-file)
+</Prerequisites>
+
+
+<br/>
+
+`drizzle-kit generate` 允许您根据 Drizzle 模式在声明时或后续模式更改时生成 SQL 迁移。
+<Callout collapsed="它是如何在后台工作的？">
+Drizzle Kit `generate` 命令触发以下事件序列：
+1. 它将读取您的 Drizzle 模式文件并创建模式的 JSON 快照
+2. 它将读取您先前的迁移文件夹并将当前 JSON 快照与最新的快照进行比较
+3. 基于 JSON 差异，它将生成 SQL 迁移
+4. 保存 `migration.sql` 和 `snapshot.json` 在以当前时间戳命名的迁移文件夹中
+
+<Section>
+```typescript filename="src/schema.ts"
+import * as p from "drizzle-orm/pg-core";
+
+export const users = p.pgTable("users", {
+  id: p.serial().primaryKey(),
+  name: p.text(),
+  email: p.text().unique(), 
+});
+```
+```                                  
+┌────────────────────────┐                  
+│ $ drizzle-kit generate │                  
+└─┬──────────────────────┘                  
+  │                                           
+  └ 1. 读取先前的迁移文件夹
+    2. 找到当前和先前模式之间的差异
+    3. 如果需要，提示开发者重命名
+  ┌ 4. 生成 SQL 迁移并持久化到文件
+  │    ┌─┴───────────────────────────────────────┐  
+  │      📂 drizzle       
+  │      └ 📂 20242409125510_premium_mister_fear
+  │        ├ 📜 migration.sql
+  │        └ 📜 snapshot.json
+  v
+```
+```sql
+-- drizzle/20242409125510_premium_mister_fear/migration.sql
+
+CREATE TABLE "users" (
+ "id" SERIAL PRIMARY KEY,
+ "name" TEXT,
+ "email" TEXT UNIQUE
+);
+```
+</Section>
+</Callout>
+
+它旨在覆盖 [代码优先](/docs/migrations) 的 Drizzle 迁移管理方法。
+您可以使用 [`drizzle-kit migrate`](/docs/drizzle-kit-migrate) 应用生成的迁移，也可以使用 drizzle-orm 的 `migrate()`，
+使用外部迁移工具，如 [bytebase](https://www.bytebase.com/)，或者直接在数据库上执行迁移。
+
+`drizzle-kit generate` 命令要求您提供 `dialect` 和 `schema` 路径选项，
+您可以通过 [drizzle.config.ts](/docs/drizzle-config-file) 配置文件或通过 CLI 选项设置它们。
+<CodeTabs items={["使用配置文件", "作为 CLI 选项"]}>
+<Section>
+```ts
+// drizzle.config.ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "postgresql",
+  schema: "./src/schema.ts",
+});
+```
+```shell
+npx drizzle-kit generate
+```
+</Section>
+
+```shell
+npx drizzle-kit generate --dialect=postgresql --schema=./src/schema.ts
+```
+</CodeTabs>
+
+### 模式文件路径
+您可以有一个单独的 `schema.ts` 文件，或者在项目中拥有任意数量的模式文件。
+Drizzle Kit 要求您通过 `schema` 配置选项以 [glob](https://www.digitalocean.com/community/tools/glob?comments=true&glob=/**/*.js&matches=false&tests=//%20This%20will%20match%20as%20it%20ends%20with%20'.js'&tests=/hello/world.js&tests=//%20This%20won't%20match!&tests=/test/some/globs) 指定路径。
+
+<SchemaFilePaths/>
+
+
+### 自定义迁移文件名
+您可以通过提供 `--name` CLI 选项设置自定义迁移文件名。
+```shell
+npx drizzle-kit generate --name=init
+```
+```plaintext {4}
+📦 <项目根目录>
+ ├ 📂 drizzle
+ │ └ 📂 20242409125510_init
+ │   ├ 📜 snapshot.json
+ │   └ 📜 migration.sql
+ ├ 📂 src
+ └ …
+```
+
+### 项目中的多个配置文件
+您可以在项目中拥有多个配置文件，这在您有多个数据库阶段、多个数据库或者在同一个项目上有不同数据库时非常有用：
+<Npx>
+  drizzle-kit generate --config=drizzle-dev.config.ts
+  drizzle-kit generate --config=drizzle-prod.config.ts
+</Npx>
+```plaintext {5-6}
+📦 <项目根目录>
+ ├ 📂 drizzle
+ ├ 📂 src
+ ├ 📜 .env
+ ├ 📜 drizzle-dev.config.ts
+ ├ 📜 drizzle-prod.config.ts
+ ├ 📜 package.json
+ └ 📜 tsconfig.json
+```
+
+### 自定义迁移
+您可以生成空的迁移文件以编写自己的自定义 SQL 迁移
+用于当前不被 Drizzle Kit 支持的 DDL 更改或数据填充。有关自定义迁移的扩展文档 - [点击这里](/docs/kit-custom-migrations)
+
+```shell
+drizzle-kit generate --custom --name=seed-users
+```
+<Section>
+```plaintext {5}
+📦 <项目根目录>
+ ├ 📂 drizzle
+ │ ├ 📂 20242409125510_init
+ │ └ 📂 20242409125510_seed-users
+ ├ 📂 src
+ └ …
+```
+```sql
+-- ./drizzle/20242409125510_seed/migration.sql
+
+INSERT INTO "users" ("name") VALUES('Dan');
+INSERT INTO "users" ("name") VALUES('Andrew');
+INSERT INTO "users" ("name") VALUES('Dandrew');
+```
+</Section>
+
+### 忽略冲突
+
+如果您需要 `generate` 命令跳过可交换性检查并绕过它，可以使用 `--ignore-conflicts`。如果您想使用它，那么
+很大概率是 `drizzle-kit` 没有正确检查迁移，这是一个 bug。请将您的情况报告给我们，以便我们修复它
+
+```shell
+drizzle-kit generate --ignore-conflicts
+```
+
+### 扩展配置选项列表
+`drizzle-kit generate` 拥有一个仅供 CLI 使用的选项列表
+
+<rem025/>
+
+|               |                                                      |
+| :--------     | :--------------------------------------------------- |
+| `custom`      | 生成用于自定义迁移的空 SQL              |
+| `name`        | 生成具有自定义名称的迁移                  |
+| `ignore-conflicts` | 跳过可交换性冲突检查，默认值为 `false` |
+<rem025/>
+
+<Npx>
+drizzle-kit generate --name=init
+drizzle-kit generate --name=seed_users --custom
+drizzle-kit generate --ignore-conflicts
+</Npx>
+
+<br/>
+<hr/>
+<br/>
+我们推荐通过 [drizzle.config.ts](/docs/drizzle-config-file) 文件来配置 `drizzle-kit`，
+但如果有必要，您也可以通过 CLI 提供所有配置选项，例如在 CI/CD 管道等中。
+
+|               |            |                                                                            |
+| :------------ | :-------   | :----------------------------------------------------------------------    |
+| `dialect`     | `required` | 数据库方言，取值之一为 <Dialects/>                                       |
+| `schema`      | `required` | TypeScript 模式文件或包含多个模式文件的文件夹路径  |
+| `driver`      |            | 驱动之一：`aws-data-api`、`pglite`   |
+| `out`         |            | 迁移输出文件夹，默认值为 `./drizzle`                           |
+| `config`      |            | 配置文件路径，默认值为 `drizzle.config.ts`                    |
+| `breakpoints` |            | SQL 语句断点，默认值为 `true`                              |
+
+
+### 扩展示例
+如何创建一个名为 `0001_seed-users.sql` 的自定义 PostgreSQL 迁移文件的示例。
+Drizzle 模式位于 `./src/schema.ts`，迁移文件夹名为 `./migrations`，而不是默认的 `./drizzle`。
+
+我们还将在 `configs` 文件夹中放置 drizzle 配置文件。
+
+让我们创建配置文件：
+
+```plaintext {4}
+📦 <项目根目录>
+ ├ 📂 migrations
+ ├ 📂 configs
+ │ └ 📜 drizzle.config.ts
+ ├ 📂 src
+ └ …
+```
+```ts filename='drizzle.config.ts'
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "postgresql",
+  schema: "./src/schema.ts",
+  out: "./migrations",
+});
+```
+
+现在让我们运行：
+```shell
+npx drizzle-kit generate --config=./configs/drizzle.config.ts --name=seed-users --custom
+```
+它将成功生成：
+<Section>
+```plaintext {6}
+📦 <项目根目录>
+ ├ …
+ ├ 📂 migrations
+ │ ├ 📂 20242409125510_init
+ │ └ 📂 20242409125510_seed-users
+ └ …
+```
+```sql
+-- ./drizzle/20242409125510_seed-users/migration.sql
+
+INSERT INTO "users" ("name") VALUES('Dan');
+INSERT INTO "users" ("name") VALUES('Andrew');
+INSERT INTO "users" ("name") VALUES('Dandrew');
+```
+</Section>

@@ -1,0 +1,397 @@
+import CodeTabs from '@mdx/CodeTabs.astro';
+import CodeTab from '@mdx/CodeTab.astro';
+import Callout from '@mdx/Callout.astro';
+
+# 集合操作
+
+SQL 集合操作将多个查询块的结果合并为单个结果。  
+SQL 标准定义了以下三种集合操作：`UNION`、`INTERSECT`、`EXCEPT`、`UNION ALL`、`INTERSECT ALL`、`EXCEPT ALL`。
+
+### Union
+将两个查询块中的所有结果合并为一个结果，并省略任何重复项。
+
+从 customers 和 users 表中获取所有不重复的名称。
+
+<CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
+	<CodeTab>
+	```typescript copy
+    import { union } from 'drizzle-orm/mysql-core'
+    import { users, customers } from './schema'
+
+    const allNamesForUserQuery = db.select({ name: users.name }).from(users);
+
+    const result = await union(
+		allNamesForUserQuery,
+		db.select({ name: customers.name }).from(customers)
+	).limit(10);
+    ```
+    ```sql
+    (select `name` from `sellers`)
+    union
+    (select `name` from `customers`)
+    limit 10
+    ```
+	</CodeTab>
+    <CodeTab>
+    ```ts copy
+    import { users, customers } from './schema'
+
+    const result = await db
+      .select({ name: users.name })
+      .from(users)
+      .union(db.select({ name: customers.name }).from(customers))
+      .limit(10);
+    ```
+    ```sql
+    (select `name` from `sellers`)
+    union
+    (select `name` from `customers`)
+    limit 10
+    ```
+    </CodeTab>
+    <CodeTab>
+	```typescript copy
+    import { int, mysqlTable, text, varchar } from "drizzle-orm/mysql-core";
+
+    export const users = mysqlTable('sellers', {
+        id: int().primaryKey(),
+        name: varchar({ length: 256 }).notNull(),
+        address: text(),
+    });
+    
+    export const customers = mysqlTable('customers', {
+        id: int().primaryKey(),
+        name: varchar(, { length: 256 }).notNull(),
+        city: text(),
+        email: varchar({ length: 256 }).notNull()
+    });
+    ```
+    </CodeTab>
+  </CodeTabs>
+
+### Union All
+将两个查询块中的所有结果合并为一个结果，并保留重复项。
+
+假设你有两个表，一个代表在线销售，另一个代表门店销售。在这种情况下，你希望将这两个表中的数据合并为一个结果集。由于可能存在重复的交易，你希望保留所有记录，而不删除重复项。
+
+<CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
+	<CodeTab>
+	```typescript copy
+    import { unionAll } from 'drizzle-orm/mysql-core'
+    import { onlineSales, inStoreSales } from './schema'
+
+    const onlineTransactions = db.select({ transaction: onlineSales.transactionId }).from(onlineSales);
+    const inStoreTransactions = db.select({ transaction: inStoreSales.transactionId }).from(inStoreSales);
+
+    const result = await unionAll(onlineTransactions, inStoreTransactions);
+    ```
+    ```sql
+    (select `transaction_id` from `online_sales`)
+    union all
+    (select `transaction_id` from `in_store_sales`)
+    ```
+    </CodeTab>
+    <CodeTab>
+    ```ts copy
+    import { onlineSales, inStoreSales } from './schema'
+
+    const result = await db
+      .select({ transaction: onlineSales.transactionId })
+      .from(onlineSales)
+      .unionAll(
+        db.select({ transaction: inStoreSales.transactionId }).from(inStoreSales)
+      );
+    ```
+    ```sql
+    (select `transaction_id` from `online_sales`)
+    union all
+    (select `transaction_id` from `in_store_sales`)
+    ```
+	</CodeTab>
+    <CodeTab>
+	```typescript copy
+    import { int, mysqlTable, timestamp } from "drizzle-orm/mysql-core";
+
+    export const onlineSales = mysqlTable('online_sales', {
+        transactionId: int('transaction_id').primaryKey(),
+        productId: int('product_id').unique(),
+        quantitySold: int('quantity_sold'),
+        saleDate: timestamp('sale_date', { mode: 'date' }),
+    });
+    
+    export const inStoreSales = mysqlTable('in_store_sales', {
+        transactionId: int('transaction_id').primaryKey(),
+        productId: int('product_id').unique(),
+        quantitySold: int('quantity_sold'),
+        saleDate: timestamp('sale_date', { mode: 'date' }),
+    });
+    ```
+    </CodeTab>
+  </CodeTabs>
+
+### 交集
+仅合并两个查询块结果中共有的那些行，并省略任何重复项。
+
+假设你有两个存储学生课程选修信息的表。  
+你想找出两个不同院系之间共有的课程，  
+但你希望得到不同的课程名称，并且你不关心统计同一学生对同一课程的多次选修。
+
+在这种情况下，你想找出两个院系之间共有的课程，但又不想  
+即使同一院系的多个学生都选修了同一课程，也将该课程计算多次。
+
+<CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
+	<CodeTab>
+	```typescript copy
+    import { intersect } from 'drizzle-orm/mysql-core'
+    import { depA, depB } from './schema'
+
+    const departmentACourses = db.select({ courseName: depA.courseName }).from(depA);
+    const departmentBCourses = db.select({ courseName: depB.courseName }).from(depB);
+
+    const result = await intersect(departmentACourses, departmentBCourses);
+    ```
+    ```sql
+    (select `course_name` from `department_a_courses`)
+    intersect
+    (select `course_name` from `department_b_courses`)
+    ```
+	</CodeTab>
+    <CodeTab>
+    ```typescript copy
+    import { depA, depB } from './schema'
+
+    const result = await db
+      .select({ courseName: depA.courseName })
+      .from(depA)
+      .intersect(db.select({ courseName: depB.courseName }).from(depB));
+    ```
+    ```sql
+    (select `course_name` from `department_a_courses`)
+    intersect
+    (select `course_name` from `department_b_courses`)
+    ```
+    </CodeTab>
+    <CodeTab>
+	```typescript copy
+    import { int, mysqlTable, varchar } from "drizzle-orm/mysql-core";
+
+    export const depA = mysqlTable('department_a_courses', {
+        studentId: int('student_id'),
+        courseName: varchar('course_name', { length: 256 }).notNull(),
+    });
+    
+    export const depB = mysqlTable('department_b_courses', {
+        studentId: int('student_id'),
+        courseName: varchar('course_name', { length: 256 }).notNull(),
+    });
+    ```
+    </CodeTab>
+  </CodeTabs>
+
+### 交集全部
+仅合并两个查询块结果中共有的那些行，并保留重复项。
+
+让我们考虑这样一个场景：你有两个包含客户订单数据的表，想要识别既被普通客户又被 VIP 客户订购的产品。在这种情况下，你希望跟踪每个产品的数量，即使它被不同客户多次订购。
+
+在这个场景中，你想找出既被普通客户又被 VIP 客户订购的产品，但即使同一个产品被不同客户多次订购，你也希望保留数量信息。
+
+<CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
+	<CodeTab>
+	```typescript copy
+    import { intersectAll } from 'drizzle-orm/mysql-core'
+    import { regularCustomerOrders, vipCustomerOrders } from './schema'
+
+    const regularOrders = db.select({ 
+        productId: regularCustomerOrders.productId,
+        quantityOrdered: regularCustomerOrders.quantityOrdered }
+    ).from(regularCustomerOrders);
+
+    const vipOrders = db.select({ 
+        productId: vipCustomerOrders.productId,
+        quantityOrdered: vipCustomerOrders.quantityOrdered }
+    ).from(vipCustomerOrders);
+
+    const result = await intersectAll(regularOrders, vipOrders);
+    ```
+    ```sql
+    (select `product_id`, `quantity_ordered` from `regular_customer_orders`)
+    intersect all
+    (select `product_id`, `quantity_ordered` from `vip_customer_orders`)
+    ```
+	</CodeTab>
+    <CodeTab>
+    ```ts copy
+    import { regularCustomerOrders, vipCustomerOrders } from './schema'
+
+    const result = await db
+        .select({
+          productId: regularCustomerOrders.productId,
+          quantityOrdered: regularCustomerOrders.quantityOrdered,
+        })
+        .from(regularCustomerOrders)
+        .intersectAll(
+          db
+            .select({
+              productId: vipCustomerOrders.productId,
+              quantityOrdered: vipCustomerOrders.quantityOrdered,
+            })
+            .from(vipCustomerOrders)
+        );
+    ```
+    ```sql
+    (select `product_id`, `quantity_ordered` from `regular_customer_orders`)
+    intersect all
+    (select `product_id`, `quantity_ordered` from `vip_customer_orders`)
+    ```
+    </CodeTab>
+    <CodeTab>
+	```typescript copy
+    import { int, mysqlTable } from "drizzle-orm/mysql-core";
+
+    export const regularCustomerOrders = mysqlTable('regular_customer_orders', {
+        customerId: int('customer_id').primaryKey(),
+        productId: int('product_id').notNull(),
+        quantityOrdered: int('quantity_ordered').notNull(),
+    });
+    
+    export const vipCustomerOrders = mysqlTable('vip_customer_orders', {
+        customerId: int('customer_id').primaryKey(),
+        productId: int('product_id').notNull(),
+        quantityOrdered: int('quantity_ordered').notNull(),
+    });
+    ```
+    </CodeTab>
+  </CodeTabs>
+
+### Except
+对于两个查询块 A 和 B，返回 A 中所有也不出现在 B 中的结果，并省略任何重复项。
+
+假设你有两个表，用来存储员工项目分配的信息。  
+你想找出只属于一个部门、而不与另一个部门共享的项目，并排除重复项。
+
+在这种情况下，你想识别那些只属于一个部门、且不与另一个部门共享的项目。你不希望对同一个项目  
+计算多次，即使同一部门中的多个员工被分配到了它。
+
+<CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
+	<CodeTab>
+	```typescript copy
+    import { except } from 'drizzle-orm/mysql-core'
+    import { depA, depB } from './schema'
+
+    const departmentACourses = db.select({ courseName: depA.projectsName }).from(depA);
+    const departmentBCourses = db.select({ courseName: depB.projectsName }).from(depB);
+
+    const result = await except(departmentACourses, departmentBCourses);
+    ```
+    ```sql
+    (select `projects_name` from `department_a_projects`)
+    except
+    (select `projects_name` from `department_b_projects`)
+    ```
+	</CodeTab>
+    <CodeTab>
+    ```ts copy
+    import { depA, depB } from './schema'
+
+    const result = await db
+        .select({ courseName: depA.projectsName })
+        .from(depA)
+        .except(db.select({ courseName: depB.projectsName }).from(depB));
+    ```
+    ```sql
+    (select `projects_name` from `department_a_projects`)
+    except
+    (select `projects_name` from `department_b_projects`)
+    ```
+    </CodeTab>
+    <CodeTab>
+	```typescript 
+    import { int, mysqlTable, varchar } from "drizzle-orm/mysql-core";
+
+    export const depA = mysqlTable('department_a_projects', {
+        employeeId: int('employee_id'),
+        projectsName: varchar('projects_name', { length: 256 }).notNull(),
+    });
+    
+    export const depB = mysqlTable('department_b_projects', {
+        employeeId: int('employee_id'),
+        projectsName: varchar('projects_name', { length: 256 }).notNull(),
+    });
+    ```
+    </CodeTab>
+  </CodeTabs>
+
+### Except All
+对于两个查询块 A 和 B，返回 A 中所有不同时也出现在 B 中的结果，并保留重复项。
+
+假设有两个包含客户订单数据的表，你想识别仅由普通客户下单的产品（不包括 VIP 客户）。在这种情况下，你希望跟踪每种产品的数量，即使它被不同的普通客户多次下单。
+
+在这个场景中，你想找出仅由普通客户下单、而没有被 VIP 客户下单的产品。你希望保留数量信息，即使同一种产品被不同的普通客户多次下单。
+
+<CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
+	<CodeTab>
+	```typescript copy
+    import { exceptAll } from 'drizzle-orm/mysql-core'
+    import { regularCustomerOrders, vipCustomerOrders } from './schema'
+
+    const regularOrders = db.select({ 
+        productId: regularCustomerOrders.productId,
+        quantityOrdered: regularCustomerOrders.quantityOrdered }
+    ).from(regularCustomerOrders);
+
+    const vipOrders = db.select({ 
+        productId: vipCustomerOrders.productId,
+        quantityOrdered: vipCustomerOrders.quantityOrdered }
+    ).from(vipCustomerOrders);
+
+    const result = await exceptAll(regularOrders, vipOrders);
+    ```
+    ```sql
+    (select `product_id`, `quantity_ordered` from `regular_customer_orders`)
+    except all
+    (select `product_id`, `quantity_ordered` from `vip_customer_orders`)
+    ```
+	</CodeTab>
+    <CodeTab>
+    ```ts copy
+    import { regularCustomerOrders, vipCustomerOrders } from './schema'
+ 
+    const result = await db
+        .select({
+          productId: regularCustomerOrders.productId,
+          quantityOrdered: regularCustomerOrders.quantityOrdered,
+        })
+        .from(regularCustomerOrders)
+        .exceptAll(
+          db
+            .select({
+              productId: vipCustomerOrders.productId,
+              quantityOrdered: vipCustomerOrders.quantityOrdered,
+            })
+            .from(vipCustomerOrders)
+        );
+    ```
+    ```sql
+    (select `product_id`, `quantity_ordered` from `regular_customer_orders`)
+    except all
+    (select `product_id`, `quantity_ordered` from `vip_customer_orders`)
+    ```
+    </CodeTab>
+	<CodeTab>
+	```typescript copy
+	import { int, mysqlTable } from "drizzle-orm/mysql-core";
+
+    export const regularCustomerOrders = mysqlTable('regular_customer_orders', {
+        customerId: int('customer_id').primaryKey(),
+        productId: int('product_id').notNull(),
+        quantityOrdered: int('quantity_ordered').notNull(),
+    });
+    
+    export const vipCustomerOrders = mysqlTable('vip_customer_orders', {
+        customerId: int('customer_id').primaryKey(),
+        productId: int('product_id').notNull(),
+        quantityOrdered: int('quantity_ordered').notNull(),
+    });
+    ```
+    </CodeTab>
+  </CodeTabs>

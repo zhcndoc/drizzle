@@ -5,7 +5,7 @@ description: 添加了新功能，如 MySQL 中 bigint 的无符号选项，改�
 ---
 import Section from "@mdx/Section.astro";
 
-> Drizzle ORM 版本 `0.29.0` 将需要最低 Drizzle Kit 版本为 `0.20.0`，反之亦然。因此，当升级到较新的 Drizzle ORM 版本时，您也需要升级 Drizzle Kit。这可能导致版本之间的一些破坏性更改，特别是如果您需要升级 Drizzle Kit 而您的 Drizzle ORM 版本早于 `<0.28.0`。
+> Drizzle ORM version `0.29.0` will require a minimum Drizzle Kit version of `0.20.0`, and vice versa. Therefore, when upgrading to a newer Drizzle ORM version, you will also need to upgrade Drizzle Kit. This may result in some breaking changes between versions, especially if you need to upgrade Drizzle Kit while your Drizzle ORM version is earlier than `<0.28.0>`.
 
 ## 新功能
 
@@ -19,7 +19,7 @@ const table = mysqlTable('table', {
 });
 ```
 
-详细信息请参阅 [docs](/docs/column-types/mysql#bigint)。
+在 [文档](/docs/mysql/column-types#bigint) 中阅读更多内容
 
 ### 🎉 改进的查询构建器类型
 
@@ -64,7 +64,7 @@ let query = db.select().from(users).where(eq(users.id, 1)).$dynamic();
 query = withFriends(query);
 ```
 
-详细信息请参阅 [docs](/docs/dynamic-query-building)。
+详细信息请参阅 [文档](/docs/dynamic-query-building)。
 
 ### 🎉 指定主键和外键名称的可能性
 
@@ -84,7 +84,7 @@ const table = pgTable('table', {
 }));
 ```
 
-详细信息请参阅 [docs](/docs/indexes-constraints#composite-primary-key)。
+详细信息请参阅 [文档](/docs/indexes-constraints#composite-primary-key)。
 
 ### 🎉 读取副本支持
 
@@ -125,7 +125,7 @@ const db = withReplicas(primaryDb, [read1, read2], (replicas) => {
 
 `withReplicas` 函数在 Drizzle ORM 的所有方言中可用。
 
-详细信息请参阅 [docs](/docs/read-replicas)。
+详细信息请参阅 [文档](/docs/read-replicas)。
 
 ### 🎉 支持集合运算符 (UNION, UNION ALL, INTERSECT, INTERSECT ALL, EXCEPT, EXCEPT ALL)
 
@@ -151,7 +151,7 @@ const result = await db.select().from(users).union(db.select().from(customers));
 ```
 </Section>
 
-详细信息请参阅 [docs](/docs/set-operations)。
+详细信息请参阅 [文档](/docs/set-operations)。
 
 ### 🎉 新的 MySQL 代理驱动
 
@@ -210,7 +210,7 @@ async function main() {
 }
 ```
 
-详细信息请参阅 [docs](/docs/get-started-mysql#http-proxy)。
+在 [文档](/docs/mysql/get-started-mysql#http-proxy) 中阅读更多内容
 
 ### 🎉 新的 PostgreSQL 代理驱动
 
@@ -254,7 +254,7 @@ async function main() {
 }
 ```
 
-详细信息请参阅 [docs](/docs/get-started-postgresql#http-proxy)。
+详细信息请参阅 [文档](/docs/get-started-postgresql#http-proxy)。
 
 ### 🎉 `D1` 批处理 API 支持
 
@@ -318,7 +318,7 @@ type BatchResponse = [
 `db.insert()...`,
 ```
 
-更多用法示例请见： [integration-tests/tests/d1-batch.test.ts](https://github.com/drizzle-team/drizzle-orm/blob/beta/integration-tests/tests/d1-batch.test.ts) 和 [docs](/docs/batch-api)。
+更多用法示例请见： [integration-tests/tests/d1-batch.test.ts](https://github.com/drizzle-team/drizzle-orm/blob/beta/integration-tests/tests/d1-batch.test.ts) 和 [文档](/docs/batch-api)。
 
 ---
 ## Drizzle Kit 0.20.0

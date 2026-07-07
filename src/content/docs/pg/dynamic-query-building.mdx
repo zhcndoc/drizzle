@@ -1,0 +1,79 @@
+import Callout from '@mdx/Callout.astro';
+
+# 动态查询构建
+
+默认情况下，由于 Drizzle 中的所有查询构建器都尽量遵循 SQL 语法，大多数方法只能调用一次。
+例如，在 `SELECT` 语句中可能只有一个 `WHERE` 子句，因此你只能调用一次 `.where()`：
+
+```ts
+const query = db
+	.select()
+	.from(users)
+	.where(eq(users.id, 1))
+	.where(eq(users.name, 'John')); // ❌ 类型错误 - where() 只能调用一次
+```
+
+在之前的 ORM 版本中，当没有实现这种限制时，尤其是这个例子曾让许多用户感到困惑，因为他们原本以为查询构建器会把多次 `.where()` 调用“合并”为一个条件。
+
+这种行为对传统的查询构建很有用，也就是当你一次性创建完整查询时。
+然而，当你想要动态构建查询时，这就会成为问题，也就是当你有一个共享函数，它接收一个查询构建器并对其进行增强时。
+为了解决这个问题，Drizzle 为查询构建器提供了一种特殊的“动态”模式，它取消了方法只能调用一次的限制。
+要启用它，你需要在查询构建器上调用 `.$dynamic()`。
+
+让我们通过实现一个简单的 `withPagination` 函数来看看它是如何工作的，这个函数会根据提供的页码和可选的页面大小，为查询添加 `LIMIT` 和 `OFFSET` 子句：
+
+```ts
+function withPagination<T extends PgSelect>(
+	qb: T,
+	page: number = 1,
+	pageSize: number = 10,
+) {
+	return qb.limit(pageSize).offset((page - 1) * pageSize);
+}
+
+const query = db.select().from(users).where(eq(users.id, 1));
+withPagination(query, 1); // ❌ 类型错误 - 查询构建器不处于动态模式
+
+const dynamicQuery = query.$dynamic();
+withPagination(dynamicQuery, 1); // ✅ 正确
+```
+
+注意，`withPagination` 函数是泛型的，这使你能够修改其中查询构建器的结果类型，例如通过添加一个 join：
+
+```ts
+function withFriends<T extends PgSelect>(qb: T) {
+	return qb.leftJoin(friends, eq(friends.userId, users.id));
+}
+
+let query = db.select().from(users).where(eq(users.id, 1)).$dynamic();
+query = withFriends(query);
+```
+
+这是可行的，因为 `PgSelect` 和其他类似类型是专门为动态查询构建而设计的。它们只能在动态模式下使用。
+
+下面是可用于动态查询构建的所有可作为泛型参数的类型列表：
+
+| Query  | Type                              |
+|:--------|:-----------------------------------|
+| Select | `PgSelect` / `PgSelectQueryBuilder` |
+| Insert | `PgInsert`                        |
+| Update | `PgUpdate`                        |
+| Delete | `PgDelete`                        |
+
+<Callout type='info'>
+	`...QueryBuilder` 类型用于与 [独立查询构建器
+	实例](/docs/goodies#standalone-query-builder) 一起使用。DB 查询构建器是它们的子类，因此你也可以将其用于它们。
+
+    ```ts
+    	import { QueryBuilder } from 'drizzle-orm/pg-core';
+
+    	function withFriends<T extends PgSelectQueryBuilder>(qb: T) {
+    		return qb.leftJoin(friends, eq(friends.userId, users.id));
+    	}
+
+    	const qb = new QueryBuilder();
+    	let query = qb.select().from(users).where(eq(users.id, 1)).$dynamic();
+    	query = withFriends(query);
+    ```
+
+</Callout>

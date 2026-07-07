@@ -1,0 +1,79 @@
+import CodeTabs from '@mdx/CodeTabs.astro';
+import CodeTab from '@mdx/CodeTab.astro';
+import Callout from '@mdx/Callout.astro';
+
+# 生成列
+
+MSSQL 支持计算列。计算列是根据一个表达式计算出来的，该表达式可以引用同一张表中的其他列。
+
+1. 虚拟计算列在查询时计算，不占用存储空间。
+
+2. 持久化计算列将计算结果存储在磁盘上，并且当表达式是确定性的时可以建立索引。
+
+更多信息请参阅 Microsoft 文档中的 [计算列](https://learn.microsoft.com/en-us/sql/relational-databases/tables/specify-computed-columns-in-a-table)。
+
+#### Drizzle 端
+
+在 Drizzle 中，你可以在列上指定 `.generatedAlwaysAs()` 并传入一个 SQL 表达式。
+
+#### 虚拟计算列
+
+<CodeTab>
+```ts
+import { SQL, sql } from "drizzle-orm";
+import { mssqlTable, varchar } from "drizzle-orm/mssql-core";
+
+export const users = mssqlTable("users", {
+  firstName: varchar("first_name", { length: 256 }),
+  lastName: varchar("last_name", { length: 256 }),
+  fullName: varchar("full_name", { length: 512 }).generatedAlwaysAs(
+    (): SQL => sql`concat(${users.firstName}, ' ', ${users.lastName})`,
+  ),
+});
+```
+
+```sql
+CREATE TABLE [users] (
+  [first_name] varchar(256),
+  [last_name] varchar(256),
+  [full_name] AS (concat([users].[first_name], ' ', [users].[last_name]))
+);
+```
+</CodeTab>
+
+#### 持久化计算列
+
+当你希望 SQL Server 持久化计算值时，请使用 `{ mode: "persisted" }`。
+
+<CodeTabs items={["schema.ts", "SQL"]}>
+<CodeTab>
+```typescript copy
+import { SQL, sql } from "drizzle-orm";
+import { int, mssqlTable, varchar } from "drizzle-orm/mssql-core";
+
+export const orders = mssqlTable("orders", {
+  quantity: int("quantity"),
+  unitPrice: int("unit_price"),
+  total: int("total").generatedAlwaysAs(
+    (): SQL => sql`${orders.quantity} * ${orders.unitPrice}`,
+    { mode: "persisted" },
+  ),
+});
+```
+</CodeTab>
+<CodeTab>
+```sql
+CREATE TABLE [orders] (
+  [quantity] int,
+  [unit_price] int,
+  [total] AS ([orders].[quantity] * [orders].[unit_price]) PERSISTED
+);
+```
+</CodeTab>
+</CodeTabs>
+
+#### 限制
+
+Drizzle Kit 对 `push` 命令也有一些限制：
+1. 你不能使用 `push` 来更改生成约束表达式。Drizzle-kit 会忽略这个变更。要使其生效，你需要 `drop the column`、`push`，然后再 `add a column with a new expression`。之所以这样做，是因为数据库端的映射很复杂：模式表达式会在数据库端被修改，而在 introspection 时我们会得到一个不同的字符串。我们无法确定你是修改了这个表达式，还是它只是被数据库修改并格式化了。只要这些是生成列，而且 `push` 主要用于本地数据库上的原型验证，那么快速 `drop` 和 `create` 生成列应该是可行的。由于这些列是 `generated` 的，所有数据都会被恢复
+2. `generate` 不应有任何限制

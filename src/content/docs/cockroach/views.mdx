@@ -1,0 +1,242 @@
+import Callout from '@mdx/Callout.astro';
+import Section from '@mdx/Section.astro';
+
+# 视图
+
+使用 Drizzle ORM 可以通过几种方式声明视图。  
+
+你可以声明需要创建的视图，也可以声明数据库中已经存在的视图。 
+
+你可以使用内联的 `query builder` 语法、`standalone query builder`，以及原始的 `sql` 操作符来声明视图语句。 
+
+当视图使用内联或独立的查询构建器创建时，视图列结构会自动推断，  
+而当你使用 `sql` 时，则必须显式声明视图列结构。
+
+### 声明视图
+
+<Section>
+      ```ts filename="schema.ts" copy {14-15}
+      import { cockroachTable, cockroachView, int4, text, timestamp } from "drizzle-orm/cockroach-core";
+      import { eq } from "drizzle-orm";
+
+      export const user = cockroachTable("user", {
+        id: int4(),
+        name: text(),
+        email: text(),
+        password: text(),
+        role: text().$type<"admin" | "customer">(),
+        createdAt: timestamp("created_at"),
+        updatedAt: timestamp("updated_at"),
+      });
+
+      export const userView = cockroachView("user_view").as((qb) => qb.select().from(user));
+      export const customersView = cockroachView("customers_view").as((qb) => qb.select().from(user).where(eq(user.role, "customer")));
+      ```
+      ```sql
+      CREATE VIEW "customers_view" AS (select ... from "user" where "user"."role" = 'customer');
+      CREATE VIEW "user_view" AS (select ... from "user");
+      ```
+    </Section>
+
+你也可以使用 `standalone query builder` 来声明视图，效果完全相同：
+
+<Section>
+      ```ts filename="schema.ts" copy {4,16-17}
+      import { cockroachTable, cockroachView, int4, text, timestamp, QueryBuilder} from "drizzle-orm/cockroach-core";
+      import { eq } from "drizzle-orm";
+
+      const qb = new QueryBuilder();
+
+      export const user = cockroachTable("user", {
+        id: int4(),
+        name: text(),
+        email: text(),
+        password: text(),
+        role: text().$type<"admin" | "customer">(),
+        createdAt: timestamp("created_at"),
+        updatedAt: timestamp("updated_at"),
+      });
+
+      export const userView = cockroachView("user_view").as(qb.select().from(user));
+      export const customersView = cockroachView("customers_view").as(qb.select().from(user).where(eq(user.role, "customer")));
+      ```
+      ```sql
+      CREATE VIEW "user_view" AS (SELECT ... FROM "user");
+      CREATE VIEW "customers_view" AS (SELECT ... FROM "user" WHERE "user"."role" = 'customer');
+      ```
+    </Section>
+
+### 使用原始 SQL 声明视图
+每当你需要使用查询构建器不支持的语法来声明视图时，  
+你可以直接使用 `sql` 操作符，并显式指定视图列结构。
+
+```ts copy
+// 常规视图
+export const newYorkers = cockroachView('new_yorkers', {
+  id: int4().primaryKey(),
+  name: text().notNull(),
+  cityId: integer('city_id').notNull(),
+}).as(sql`select * from ${users} where ${eq(users.cityId, 1)}`);
+
+// 物化视图
+export const newYorkers = cockroachMaterializedView('new_yorkers', {
+  id: int4().primaryKey(),
+  name: text().notNull(),
+  cityId: integer('city_id').notNull(),
+}).as(sql`select * from ${users} where ${eq(users.cityId, 1)}`);
+```
+
+### 声明已有视图
+当你获得的是数据库中某个已有视图的只读访问权限时，你应该使用 `.existing()` 视图配置，  
+`drizzle-kit` 会忽略它，并且不会在生成的迁移中生成 `create view` 语句。
+```ts {16,23}
+export const user = cockroachTable("user", {
+  id: int4(),
+  name: text(),
+  email: text(),
+  password: text(),
+  role: text().$type<"admin" | "customer">(),
+  createdAt: timestamp("created_at"),
+  updatedAt: timestamp("updated_at"),
+});
+
+// 常规视图
+export const trimmedUser = cockroachView("trimmed_user", {
+  id: int4("id"),
+  name: text("name"),
+  email: text("email"),
+}).existing();
+
+// 物化视图不会有任何区别，不过你可以为了保持一致性而使用它
+export const trimmedUser = cockroachMaterializedView("trimmed_user", {
+  id: int4("id"),
+  name: text("name"),
+  email: text("email"),
+}).existing();
+```
+
+### 物化视图
+
+根据官方文档，CockroachDB 同时支持 **[`regular`](https://www.cockroachlabs.com/docs/v26.2/create-view.html#synopsis)**
+和 **[`materialized`](https://www.cockroachlabs.com/docs/v26.2/create-view.html#synopsis)** 视图。
+  
+CockroachDB 中的物化视图和普通视图一样使用规则系统，但会将结果以类似表的形式持久化存储。
+{/* This means that when a query is executed against a materialized view, the results are returned directly from the materialized view,
+like from a table, rather than being reconstructed by executing the query against the underlying base tables that make up the view. */}
+
+<Section>
+```ts filename="schema.ts" copy
+export const newYorkers = cockroachMaterializedView('new_yorkers').as((qb) => qb.select().from(users).where(eq(users.cityId, 1)));
+```
+```sql
+CREATE MATERIALIZED VIEW "new_yorkers" AS (SELECT ... FROM "users" WHERE "users"."city_id" = 1);
+```
+</Section>
+
+然后你可以在应用运行时刷新物化视图：
+```ts copy
+await db.refreshMaterializedView(newYorkers);
+
+await db.refreshMaterializedView(newYorkers).concurrently();
+
+await db.refreshMaterializedView(newYorkers).withNoData();
+```
+
+### 扩展示例
+<Callout type="info" emoji="ℹ️">
+查询中的所有参数都会被内联，而不是替换为 `$1`、`$2` 等。
+</Callout>
+
+```ts copy
+export const newYorkers = cockroachView('new_yorkers').as((qb) => {
+  const sq = qb.$with('sq').as(
+    qb
+      .select({
+        userId: users.id.as('users_id'),
+        cityId: cities.id.as('cities_id'),
+        homeCity: users.homeCity,
+      })
+      .from(users)
+      .leftJoin(cities, eq(cities.id, users.homeCity))
+      .where(sql`${users.age1} > 18`),
+  );
+  return qb
+    .with(sq)
+    .select()
+    .from(sq)
+    .where(sql`${sq.homeCity} = 1`);
+});
+
+// 物化视图
+export const newYorkers2 = cockroachMaterializedView('new_yorkers_2')
+  .withNoData()
+  .as((qb) => {
+    const sq = qb.$with('sq').as(
+      qb
+        .select({
+          userId: users.id.as('users_id'),
+          cityId: cities.id.as('cities_id'),
+          homeCity: users.homeCity,
+        })
+        .from(users)
+        .leftJoin(cities, eq(cities.id, users.homeCity))
+        .where(sql`${users.age1} > 18`),
+    );
+    return qb
+      .with(sq)
+      .select()
+      .from(sq)
+      .where(sql`${sq.homeCity} = 1`);
+  });
+```
+```sql
+...
+
+CREATE VIEW "new_yorkers" AS (
+	WITH
+		"sq" AS (
+			SELECT
+				"users"."id" AS "users_id",
+				"cities"."id" AS "cities_id",
+				"users"."home_city"
+			FROM
+				"users"
+				LEFT JOIN "cities" ON "cities"."id" = "users"."home_city"
+			WHERE
+				"users"."age" > 18
+		)
+	SELECT
+		"users_id",
+		"cities_id",
+		"home_city"
+	FROM
+		"sq"
+	WHERE
+		"sq"."home_city" = 1
+);
+
+CREATE MATERIALIZED VIEW "new_yorkers_2" AS (
+	WITH
+		"sq" AS (
+			SELECT
+				"users"."id" AS "users_id",
+				"cities"."id" AS "cities_id",
+				"users"."home_city"
+			FROM
+				"users"
+				LEFT JOIN "cities" ON "cities"."id" = "users"."home_city"
+			WHERE
+				"users"."age" > 18
+		)
+	SELECT
+		"users_id",
+		"cities_id",
+		"home_city"
+	FROM
+		"sq"
+	WHERE
+		"sq"."home_city" = 1
+)
+WITH
+	NO DATA;
+```

@@ -1,0 +1,393 @@
+import Callout from '@mdx/Callout.astro';
+import SimpleLinkCards from '@mdx/SimpleLinkCards.astro';
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Section from '@mdx/Section.astro';
+import Flex from "@mdx/Flex.astro"
+import LinksList from "@mdx/LinksList.astro"
+
+# Drizzle 模式
+
+Drizzle 允许您使用 TypeScript 定义模式，支持底层数据库的各种模型和属性。  
+当您定义模式时，它将作为未来查询（使用 Drizzle-ORM）和迁移（使用 Drizzle-Kit）  
+修改的真实性源。
+
+<Callout> 
+如果您使用 Drizzle-Kit 进行迁移过程，请确保从您模式文件中导出所有定义的模型，以便 Drizzle-Kit 可以导入它们并在迁移差异过程中使用。
+</Callout>
+
+<CodeTabs items={["使用导入", "使用回调", "使用 import *"]}>
+```ts
+import { integer, pgTable, varchar } from "drizzle-orm/pg-core";
+
+export const usersTable = pgTable("users", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  name: varchar().notNull(),
+  age: integer().notNull(),
+  email: varchar().notNull().unique(),
+});
+```
+```ts
+import { pgTable } from "drizzle-orm/pg-core";
+
+export const usersTable = pgTable("users", (t) => ({
+  id: t.integer().primaryKey().generatedAlwaysAsIdentity(),
+  name: t.varchar().notNull(),
+  age: t.integer().notNull(),
+  email: t.varchar().notNull().unique(),
+}));
+```
+```ts
+import * as p from "drizzle-orm/pg-core";
+
+export const usersTable = p.pgTable("users", {
+  id: p.integer().primaryKey().generatedAlwaysAsIdentity(),
+  name: p.varchar().notNull(),
+  age: p.integer().notNull(),
+  email: p.varchar().notNull().unique(),
+});
+```
+</CodeTabs>
+
+## 组织您的模式文件  
+您可以将 SQL 模式直接在 TypeScript 中声明，或者将所有内容放在一个 `schema.ts` 文件中，  
+或者您可以分散它们——随您所愿，完全没有限制！
+
+#### 单文件中的模式  
+使用 Drizzle 声明模式的最常见方法是将所有表放在一个 `schema.ts` 文件中。
+
+> 注意：您可以将模式文件命名为您喜欢的任何名称。例如，可以是 `models.ts` 或其他名称。
+
+如果您没有定义太多表模型，或者您认为将它们放在一个文件中没有问题，这种方法效果很好。
+
+示例：  
+```plaintext
+📦 <项目根目录>
+ └ 📂 src
+    └ 📂 db
+       └ 📜 schema.ts
+```
+
+在 `drizzle.config.ts` 文件中，您需要指定模式文件的路径。  
+通过此配置，Drizzle 将从 `schema.ts` 文件读取并在迁移生成过程中使用此信息。  
+有关 `drizzle.config.ts` 文件和使用 Drizzle 进行迁移的更多信息，请查看：[链接](/docs/drizzle-config-file)  
+```ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: 'postgresql',
+  schema: './src/db/schema.ts'
+})
+```
+
+#### 多文件中的模式
+
+您可以将 Drizzle 模型（例如表、枚举、序列等）放置在一个文件中，也可以放在任何您想要的文件中。  
+您需要确保从这些文件中导出所有模型，  
+以便 Drizzle kit 可以导入并在迁移中使用它们。
+
+一个常见的用例是将每个表分开到自己的文件中。  
+```plaintext
+📦 <项目根目录>
+ └ 📂 src
+    └ 📂 db
+       └ 📂 schema
+          ├ 📜 users.ts
+          ├ 📜 countries.ts
+          ├ 📜 cities.ts
+          ├ 📜 products.ts
+          ├ 📜 clients.ts
+          └ 📜 etc.ts
+```
+
+在 `drizzle.config.ts` 文件中，您需要指定模式文件夹的路径。  
+通过此配置，Drizzle 将从 `schema` 文件夹读取并递归查找所有文件，并从中获取所有 drizzle 表。  
+有关 `drizzle.config.ts` 文件和使用 Drizzle 进行迁移的更多信息，请查看：[链接](/docs/drizzle-config-file)
+
+```ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: 'postgresql',
+  schema: './src/db/schema'
+})
+```
+
+您还可以以任何您喜欢的方式对它们进行分组，例如为用户相关表、消息相关表、产品相关表等创建组。  
+```plaintext
+📦 <项目根目录>
+ └ 📂 src
+    └ 📂 db
+       └ 📂 schema
+          ├ 📜 users.ts
+          ├ 📜 messaging.ts
+          └ 📜 products.ts
+```
+
+## 塑造您的数据模式
+
+Drizzle schema 由您正在使用的数据库中的多种模型类型组成。使用 drizzle，您可以指定：
+- 带有列、约束等的表
+- 模式
+- 枚举
+- 序列
+- 视图
+- 物化视图
+- 等等
+
+让我们逐个检查模式如何使用 Drizzle 定义。
+
+#### **表和列声明**
+
+Drizzle 中的表至少应定义 1 列，这与在数据库中应当这样做是一致的。需要知道一个重要的事情是，
+drizzle 中不存在通用的表对象。您需要选择您正在使用的方言，例如 PostgreSQL、MySQL、SQLite 等。
+
+![](@/assets/images/table-structure.svg)
+
+```ts copy
+import { pgTable, integer } from "drizzle-orm/pg-core"
+
+export const users = pgTable('users', {
+  id: integer()
+});
+```
+
+默认情况下，Drizzle 将在数据库查询中使用 TypeScript 键名作为列名。  
+因此，来自示例的模式和查询将生成如下 SQL 查询。
+
+<Callout>
+此示例使用一个 db 对象，但其初始化未在本部分文档中覆盖。要了解如何连接到数据库，请参阅 [连接文档](/docs/get-started-postgresql)
+</Callout>
+
+\
+**TypeScript 键 = 数据库键**  
+<Section>
+```ts
+// schema.ts
+import { integer, pgTable, varchar } from "drizzle-orm/pg-core";
+
+export const users = pgTable('users', {
+  id: integer(),
+  first_name: varchar()
+})
+```
+```ts
+// query.ts
+await db.select().from(users);
+```
+```sql
+SELECT "id", "first_name" from users;
+```
+</Section>
+
+如果您想在 TypeScript 代码中和数据库中使用不同的名称，您可以使用列别名。
+
+<Section>
+```ts
+// schema.ts
+import { integer, pgTable, varchar } from "drizzle-orm/pg-core";
+
+export const users = pgTable('users', {
+  id: integer(),
+  firstName: varchar('first_name')
+})
+```
+```ts
+// query.ts
+await db.select().from(users);
+```
+```sql
+SELECT "id", "first_name" from users;
+```
+</Section>
+
+### 驼峰和蛇形命名
+
+数据库模型名称通常使用 `snake_case` 约定，而在 TypeScript 中，模型命名通常使用 `camelCase`。
+这会导致在模式中需要定义大量别名。为了解决这个问题，Drizzle 提供了一种通过专用构建器将 TypeScript 中的 `camelCase`
+自动映射到数据库中的 `snake_case` 的方法。
+
+使用来自 `drizzle-orm/pg-core` 的 `snakeCase` 或 `camelCase` 构建器来声明一个表，其列键会
+自动映射为所选的数据库命名约定
+
+<Section>
+```ts {2,4,11,12}
+// schema.ts
+import { snakeCase, camelCase } from 'drizzle-orm/pg-core';
+
+export const users = snakeCase.table('users', {
+  id: serial().primaryKey(),
+  fullName: text(),        // → 数据库中的 full_name
+  createdAt: timestamp(),  // → 数据库中的 created_at
+});
+
+// 可用于所有实体类型：
+snakeCase.table / snakeCase.view / snakeCase.materializedView / snakeCase.schema
+camelCase.table / camelCase.view / camelCase.materializedView / camelCase.schema
+```
+```ts
+// db.ts
+import { drizzle } from "drizzle-orm/node-postgres";
+
+const db = drizzle({ connection: process.env.DATABASE_URL })
+```
+```ts
+// query.ts
+await db.select().from(users);
+```
+```sql
+select "id", "full_name", "created_at" from "users"
+```
+</Section>
+
+### 高级
+
+使用 Drizzle ORM，您可以使用一些技巧。只要 Drizzle 完全在 TypeScript 文件中，  
+您就可以像在简单的 TypeScript 项目中一样进行任何编码。
+
+一个常见的特性是将列分离到不同的位置，然后重复使用它们。  
+例如，考虑字段 `updated_at`、`created_at` 和 `deleted_at`。  
+许多表/模型可能需要这三个字段来跟踪和分析系统中实体的创建、删除和更新。
+
+我们可以在一个单独的文件中定义这些列，然后在所有表对象中导入并展开它们。
+
+<Section>
+```ts
+// columns.helpers.ts
+export const timestamps = {
+  updated_at: timestamp(),
+  created_at: timestamp().defaultNow().notNull(),
+  deleted_at: timestamp(),
+}
+```
+```ts
+// users.sql.ts
+export const users = pgTable('users', {
+  id: integer(),
+  ...timestamps
+})
+```
+```ts
+// posts.sql.ts
+export const posts = pgTable('posts', {
+  id: integer(),
+  ...timestamps
+})
+```
+</Section>
+
+#### **模式**
+
+\
+在 PostgreSQL 中，有一个实体称为 `schema`（我们认为应该称为 `folders`）。这在 PostgreSQL 中创建了一个结构：
+
+![](@/assets/images/postgresql-db-structure.png)
+
+您可以使用 `pgSchema` 管理 PostgreSQL 模式，并将任何其他模型放入其中。
+
+使用 Drizzle 定义您想要管理的模式  
+```ts
+import { pgSchema } from "drizzle-orm/pg-core"
+
+export const customSchema = pgSchema('custom');
+```
+
+然后将表放入模式对象中  
+```ts {5-7}
+import { integer, pgSchema } from "drizzle-orm/pg-core";
+
+export const customSchema = pgSchema('custom');
+
+export const users = customSchema.table('users', {
+  id: integer()
+})
+```
+
+### 示例
+
+一旦您掌握了基础知识，让我们为一个实际项目定义一个模式示例，以获得更好的视图和理解。
+
+> 所有示例将使用 `generateUniqueString`。其实现将在所有模式示例之后提供。
+
+```ts copy
+import type { AnyPgColumn } from "drizzle-orm/pg-core";
+import { pgEnum, pgTable as table } from "drizzle-orm/pg-core";
+import * as t from "drizzle-orm/pg-core";
+
+export const rolesEnum = pgEnum("roles", ["guest", "user", "admin"]);
+
+export const users = table(
+  "users",
+  {
+    id: t.integer().primaryKey().generatedAlwaysAsIdentity(),
+    firstName: t.varchar("first_name", { length: 256 }),
+    lastName: t.varchar("last_name", { length: 256 }),
+    email: t.varchar().notNull(),
+    invitee: t.integer().references((): AnyPgColumn => users.id),
+    role: rolesEnum().default("guest"),
+  },
+  (table) => [
+    t.uniqueIndex("email_idx").on(table.email)
+  ]
+);
+
+export const posts = table(
+  "posts",
+  {
+    id: t.integer().primaryKey().generatedAlwaysAsIdentity(),
+    slug: t.varchar().$default(() => generateUniqueString(16)),
+    title: t.varchar({ length: 256 }),
+    ownerId: t.integer("owner_id").references(() => users.id),
+  },
+  (table) => [
+    t.uniqueIndex("slug_idx").on(table.slug),
+    t.index("title_idx").on(table.title),
+  ]
+);
+
+export const comments = table("comments", {
+  id: t.integer().primaryKey().generatedAlwaysAsIdentity(),
+  text: t.varchar({ length: 256 }),
+  postId: t.integer("post_id").references(() => posts.id),
+  ownerId: t.integer("owner_id").references(() => users.id),
+});
+```
+
+**`generateUniqueString` 实现：**  
+```ts
+function generateUniqueString(length: number = 12): string {
+  const characters =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let uniqueString = "";
+
+  for (let i = 0; i < length; i++) {
+    const randomIndex = Math.floor(Math.random() * characters.length);
+    uniqueString += characters[randomIndex];
+  }
+
+  return uniqueString;
+}
+```
+
+#### 接下来是什么？
+<br/>
+<Flex>
+  <LinksList 
+    title='管理模式'
+    links={[
+        ["列类型", "/docs/column-types"], 
+        ["索引和约束", "/docs/indexes-constraints"],
+        ["数据库视图", "/docs/views"],
+        ["数据库模式", "/docs/schemas"],
+        ["序列", "/docs/sequences"],
+        ["扩展", "/docs/extensions"],
+      ]}
+  />
+  <LinksList 
+    title='从零到英雄'
+    links={[
+        ["数据库连接", "/docs/connect-overview"], 
+        ["数据查询", "/docs/data-querying"], 
+        ["迁移", "/docs/migrations"], 
+      ]}
+  />
+</Flex>

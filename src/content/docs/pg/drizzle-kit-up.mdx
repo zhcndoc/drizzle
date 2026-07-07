@@ -1,0 +1,85 @@
+import CodeTab from "@mdx/CodeTab.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Section from "@mdx/Section.astro";
+import Tab from "@mdx/Tab.astro";
+import Tabs from "@mdx/Tabs.astro";
+import Callout from "@mdx/Callout.astro";
+import Prerequisites from "@mdx/Prerequisites.astro";
+import Npx from "@mdx/Npx.astro";
+import Dialects from "@mdx/Dialects.mdx"
+
+# `drizzle-kit up`
+
+<Prerequisites>
+- 开始使用 Drizzle 和 `drizzle-kit` - [阅读这里](/docs/get-started)
+- Drizzle 模式基础 - [阅读这里](/docs/sql-schema-declaration)
+- 数据库连接基础 - [阅读这里](/docs/connect-overview)
+- Drizzle 迁移基础 - [阅读这里](/docs/migrations)
+- Drizzle Kit [概述](/docs/kit-overview) 和 [配置文件](/docs/drizzle-config-file)
+- `drizzle-kit generate` 命令 - [阅读这里](/docs/drizzle-kit-generate)
+</Prerequisites>
+
+`drizzle-kit up` 命令允许您将 drizzle 模式快照升级到新版本。
+每当我们引入对模式的 json 快照的破坏性更改并升级内部版本时，都会要求使用此命令。
+
+<br/>
+<hr/>
+<br/>
+
+`drizzle-kit up` 命令要求您指定 `dialect` 参数，
+您可以通过 [drizzle.config.ts](/docs/drizzle-config-file) 配置文件或通过 CLI 选项提供它
+
+<CodeTabs items={["使用配置文件", "作为 CLI 选项"]}>
+<Section>
+```ts {5,8}
+// drizzle.config.ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "postgresql",
+});
+```
+```shell
+npx drizzle-kit up
+```
+</Section>
+```shell
+npx drizzle-kit up --dialect=postgresql
+```
+</CodeTabs>
+
+### 一个项目中的多个配置文件
+您可以在项目中拥有多个配置文件，这在您有多个数据库环境或在同一项目中使用多个数据库时非常有用：
+<Npx>
+  drizzle-kit migrate --config=drizzle-dev.config.ts
+  drizzle-kit migrate --config=drizzle-prod.config.ts
+</Npx>
+```plaintext {5-6}
+📦 <项目根目录>
+ ├ 📂 drizzle
+ ├ 📂 src
+ ├ 📜 .env
+ ├ 📜 drizzle-dev.config.ts
+ ├ 📜 drizzle-prod.config.ts
+ ├ 📜 package.json
+ └ 📜 tsconfig.json
+```
+
+### 扩展的配置选项列表
+我们推荐通过 [drizzle.config.ts](/docs/drizzle-config-file) 文件配置 `drizzle-kit`，
+但是如果需要，您也可以通过 CLI 提供所有配置选项，例如在 CI/CD 流水线中等。
+<rem025/>
+|           |            |                                                                         |
+| :-------- | :--------- | :---------------------------------------------------------------------- |
+| `dialect` | `required` | 您正在使用的数据库方言。可选值之一是 <Dialects/> |
+| `out`     |            | 迁移文件夹，默认=`./drizzle`                                  |
+| `config`  |            | 配置文件路径，默认=`drizzle.config.ts`                           |
+<br/>
+<Npx>
+drizzle-kit up --dialect=postgresql
+drizzle-kit up --dialect=postgresql --out=./migrations-folder
+</Npx>
+
+{/* TODO: update up gif */}
+![](@/assets/gifs/up_mysql.gif)
+

@@ -21,19 +21,11 @@ import SetupEnv from '@mdx/get-started/SetupEnv.mdx';
 
 # 使用 Drizzle 和 Effect PostgreSQL 快速开始
 
-<Callout type='error'>
-本页面解释了自 drizzle 版本 `1.0.0-beta.13` 及更高版本中可用的概念。
-
-Effect 目前仅支持 PostgreSQL，其他方言支持即将实现。
-
-关于升级的更多信息（详见[这里](/docs/upgrade-v1)）
-</Callout>
-
 <Prerequisites>
-  - **Effect** - Effect 是一个功能强大的 TS 库，旨在帮助开发者轻松创建复杂的同步和异步程序。 - [阅读更多](https://effect.website/docs)
-  - **dotenv** - 用于管理环境变量的包 - [阅读](https://www.npmjs.com/package/dotenv)
-  - **tsx** - 用于运行 TypeScript 文件的包 - [阅读](https://tsx.is/)
-  - **@effect/sql-pg** - Effect 的 PostgreSQL 工具包 - [阅读](https://effect-ts.github.io/effect/docs/sql-pg)
+  - **Effect** - Effect 是一个强大的 TS 库，旨在帮助开发者轻松创建复杂的同步和异步程序。- [了解更多](https://effect.website/docs)
+  - **dotenv** - 用于管理环境变量的包 - [查看这里](https://www.npmjs.com/package/dotenv)
+  - **tsx** - 用于运行 TypeScript 文件的包 - [查看这里](https://tsx.hirok.io/)
+  - **@effect/sql-pg** - 一个适用于 Effect 的 PostgreSQL 工具包 - [查看这里](https://effect-ts.github.io/effect/docs/sql-pg)
 </Prerequisites>
 
 Drizzle 原生支持使用 `@effect/sql-pg` 驱动的 Effect PostgreSQL 连接。
@@ -49,7 +41,7 @@ Drizzle 原生支持使用 `@effect/sql-pg` 驱动的 Effect PostgreSQL 连接�
 <SetupEnv env_variable='DATABASE_URL' />
 
 <Callout title='技巧'>
-如果你还没有 PostgreSQL 数据库并且想创建一个用于测试，可以参考我们的 PostgreSQL Docker 安装指南。
+如果你还没有 PostgreSQL 数据库，并且想创建一个用于测试的数据库，可以参考我们的 PostgreSQL Docker 安装指南。
 
 PostgreSQL Docker 安装指南位于[这里](/docs/guides/postgresql-local-setup)。按照指南完成设置，生成数据库 URL（指南中有详细说明），然后回来执行后续步骤。
 </Callout>

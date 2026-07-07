@@ -1,0 +1,38 @@
+import Section from '@mdx/Section.astro';
+
+# Batch API
+
+Drizzle 支持使用 Neon HTTP driver for PostgreSQL 以批量方式运行 SQL 语句。
+
+<Section>
+```ts
+const batchResponse = await db.batch([
+  db.insert(usersTable).values({ id: 1, name: 'John' }).returning({ id: usersTable.id }),
+  db.update(usersTable).set({ name: 'Dan' }).where(eq(usersTable.id, 1)),
+  db.query.usersTable.findMany({}),
+  db.select().from(usersTable).where(eq(usersTable.id, 1)),
+  db.select({ id: usersTable.id, invitedBy: usersTable.invitedBy }).from(usersTable),
+]);
+```
+
+```ts
+type BatchResponse = [
+  { id: number }[],
+  NeonHttpQueryResult,
+  { id: number; name: string; verified: number; invitedBy: number | null }[],
+  { id: number; name: string; verified: number; invitedBy: number | null }[],
+  { id: number; invitedBy: number | null }[],
+]
+```
+</Section>
+
+所有可在 `db.batch` 中使用的构建器：
+
+```ts
+db.query.<table>.findMany(),
+db.query.<table>.findFirst(),
+db.select()...,
+db.update()...,
+db.delete()...,
+db.insert()...,
+```

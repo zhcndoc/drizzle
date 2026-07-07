@@ -1,0 +1,625 @@
+import Npm from "@mdx/Npm.astro";
+import Callout from '@mdx/Callout.astro';
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Section from "@mdx/Section.astro";
+import Tab from "@mdx/Tab.astro";
+import Tabs from "@mdx/Tabs.astro";
+
+# Drizzle Seed
+
+`drizzle-seed` 是一个 TypeScript 库，帮助你生成确定性但又逼真的假数据，以填充你的数据库。通过利用可设种子的伪随机数生成器（pRNG），它确保你生成的数据在不同运行之间保持一致且可复现。这对于测试、开发和调试场景尤其有用。
+
+#### 什么是确定性数据生成？
+
+确定性数据生成意味着相同的输入总是产生相同的输出。在 `drizzle-seed` 的上下文中，当你用相同的种子数字初始化库时，它每次都会生成同样的假数据序列。这使得数据集具有可预测性和可重复性。
+
+#### 伪随机数生成器（pRNG）
+
+伪随机数生成器是一种算法，用于生成在性质上近似随机的数字序列。但由于它基于一个称为种子的初始值，你可以控制它的随机性。使用相同的种子，pRNG 会生成相同的数字序列，使你的数据生成过程可复现。
+
+#### 使用 pRNG 的好处：
+
+- 一致性：确保测试每次都使用相同的数据。
+- 调试：通过提供一致的数据集，让复现和修复错误更容易。
+- 协作：团队成员可以共享种子编号，以便使用相同的数据集。
+
+使用 drizzle-seed，你可以同时获得生成逼真假数据的能力，以及随时复现这些数据的控制权。
+
+## 安装
+
+<Npm>drizzle-seed</Npm>
+
+## 基本用法
+
+在这个示例中，我们将创建 10 个具有随机名称和 ID 的用户
+
+```ts {12}
+import { pgTable, integer, text } from "drizzle-orm/pg-core";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { seed } from "drizzle-seed";
+
+const users = pgTable("users", {
+  id: integer().primaryKey(),
+  name: text().notNull(),
+});
+
+async function main() {
+  const db = drizzle(process.env.DATABASE_URL!);
+  await seed(db, { users });
+}
+
+main();
+```
+
+## 配置选项
+
+**`count`**
+
+默认情况下，`seed` 函数会创建 10 个实体。如果测试需要更多数据，可以在 seed 的选项对象中指定
+
+```ts
+await seed(db, schema, { count: 1000 });
+```
+
+**`seed`**
+
+如果你想针对后续运行生成不同的数据集，可以在 `seed` 选项中定义一个不同的数字。不同的数字将生成唯一的数据集
+
+```ts
+await seed(db, schema, { seed: 12345 });
+```
+
+## 重置数据库
+
+使用 `drizzle-seed` 可以轻松重置数据库并用新值填充，例如在测试套件中
+
+```ts
+// 指向你想重置的 schema 文件的路径
+import * as schema from "./schema.ts";
+import { reset } from "drizzle-seed";
+
+async function main() {
+  const db = drizzle(process.env.DATABASE_URL!);
+  await reset(db, schema);
+}
+
+main();
+```
+
+不同数据库方言有不同的重置策略
+
+对于 PostgreSQL，`drizzle-seed` 包将生成带有 `CASCADE` 选项的 `TRUNCATE` 语句，以确保在运行重置函数后所有表都为空
+
+```sql
+TRUNCATE tableName1, tableName2, ... CASCADE;
+```
+
+## 精细化定制
+
+如果你需要更改 `drizzle-seed` 默认使用的种子生成函数的行为，可以指定你自己的实现，甚至自己定义值列表用于种子过程。
+
+`.refine` 是一个回调函数，会接收所有 `drizzle-seed` 中可用生成器函数的列表。它需要返回一个对象，键是你想要精细化定制的表名，值定义这些表的行为。
+每个表可以指定多个属性来简化数据库的种子过程：
+
+<rem025 />
+
+- `columns`: 通过指定所需的生成器函数来细化每一列的默认行为，或者通过指定 `false` 将该列排除在种子之外。
+- `count`: 指定要插入数据库的行数。默认值为 10。如果在 `seed()` 选项中定义了全局 `count`，这里定义的 `count` 将覆盖该设置，并仅对当前表生效。
+- `with`: 如果你想生成关联实体，可定义每个父表要创建多少个被引用实体。
+
+<Callout title='info'>
+你还可以为要创建的被引用值数量指定加权随机分布。关于该 API 的细节可以参考 [加权随机（Weighted Random）文档](#weighted-random) 部分。
+</Callout>
+
+**API**
+```ts
+await seed(db, schema).refine((f) => ({
+  users: {
+    columns: {},
+    count: 10,
+    with: {
+        posts: 10
+    }
+  },
+}));
+```
+
+下面是一些带解释的示例：
+
+```ts filename='schema.ts'
+import { pgTable, integer, text } from "drizzle-orm/pg-core";
+
+export const users = pgTable("users", {
+  id: integer().primaryKey(),
+  name: text().notNull(),
+});
+
+export const posts = pgTable("posts", {
+  id: integer().primaryKey(),
+  description: text(),
+  userId: integer().references(() => users.id),
+});
+```
+
+**示例1**：只对 `users` 表进行种子，生成 20 个实体，并对 `name` 列应用精细化的种子逻辑
+```ts filename='index.ts'
+import { drizzle } from "drizzle-orm/node-postgres";
+import { seed } from "drizzle-seed";
+import * as schema from './schema.ts'
+
+async function main() {
+  const db = drizzle(process.env.DATABASE_URL!);
+
+  await seed(db, { users: schema.users }).refine((f) => ({
+    users: {
+        columns: {
+            name: f.fullName(),
+        },
+        count: 20
+    }
+  }));
+}
+
+main();
+```
+
+**示例2**：只对 `users` 表进行种子，将 `name` 列从种子过程中排除
+```ts filename='index.ts'
+import { drizzle } from "drizzle-orm/node-postgres";
+import { seed } from "drizzle-seed";
+import * as schema from './schema.ts'
+
+async function main() {
+  const db = drizzle(process.env.DATABASE_URL!);
+
+  await seed(db, { users: schema.users }).refine((f) => ({
+    users: {
+        columns: {
+            name: false, // name 列不会被种子填充，因此数据库可以使用其默认值。
+        }
+    }
+  }));
+}
+
+main();
+```
+
+**示例3**：为 `users` 表生成 20 个实体，并通过对 `posts` 表进行种子、创建从 `posts` 到 `users` 的引用，为每个 `user` 添加 10 个 `posts`
+```ts filename='index.ts'
+import { drizzle } from "drizzle-orm/node-postgres";
+import { seed } from "drizzle-seed";
+import * as schema from './schema.ts'
+
+async function main() {
+  const db = drizzle(process.env.DATABASE_URL!);
+
+  await seed(db, schema).refine((f) => ({
+    users: {
+        count: 20,
+        with: {
+            posts: 10
+        }
+    }
+  }));
+}
+
+main();
+```
+
+**示例4**：为 `users` 表生成 5 个实体，并向数据库填充 100 个 `posts`，但不将它们与 `users` 实体关联。为 `users` 的 `id` 生成方式做精细化定制，使其取值范围为 `10000` 到 `20000` 之间的任意整数且保持唯一，并为 `posts` 定制为从自定义数组中取值
+```ts filename='index.ts'
+import { drizzle } from "drizzle-orm/node-postgres";
+import { seed } from "drizzle-seed";
+import * as schema from './schema.ts'
+
+async function main() {
+  const db = drizzle(process.env.DATABASE_URL!);
+
+  await seed(db, schema).refine((f) => ({
+    users: {
+        count: 5,
+        columns: {
+            id: f.int({
+              minValue: 10000,
+              maxValue: 20000,
+              isUnique: true,
+            }),
+        }
+    },
+    posts: {
+        count: 100,
+        columns: {
+            description: f.valuesFromArray({
+            values: [
+                "太阳落山，山后染上橙紫色的天空", 
+                "我真不敢相信这自制披萨做得这么好！", 
+                "有时候，你只需要一本好书和一个安静的角落。", 
+                "谁认为雨天是刷老电影的绝佳日子？", 
+                "今天试了条新徒步路线，发现了最棒的瀑布！",
+                // ...
+            ],
+          })
+        }
+    }
+  }));
+}
+
+main();
+```
+
+<Callout type='warning'>
+此文档中将定义更多可能性，目前你可以先浏览这些部分。查看 [生成器（Generators）](/docs/seed-functions) 部分，熟悉所有可用的生成器函数。
+
+一个特别棒的功能是可以使用加权随机，无论是针对列生成的值，还是 `drizzle-seed` 生成相关实体数量时。
+
+请参考 [加权随机（Weighted Random）文档](#weighted-random) 获取更多信息。
+</Callout>
+
+## 加权随机
+
+有时你可能需要使用多个数据集以不同优先级在种子阶段插入数据库。针对这种情况，drizzle-seed 提供了一个称作加权随机的 API。
+
+Drizzle Seed 包在以下场景支持加权随机：
+
+- 每个表的列细化中
+- `with` 属性中，用于确定要创建的相关实体数量
+
+下面给出两个示例：
+
+```ts filename="schema.ts"
+import { pgTable, integer, text, varchar, doublePrecision } from "drizzle-orm/pg-core";
+
+export const orders = pgTable(
+  "orders",
+  {
+    id: integer().primaryKey(),
+    name: text().notNull(),
+    quantityPerUnit: varchar().notNull(),
+    unitPrice: doublePrecision().notNull(),
+    unitsInStock: integer().notNull(),
+    unitsOnOrder: integer().notNull(),
+    reorderLevel: integer().notNull(),
+    discontinued: integer().notNull(),
+  }
+);
+
+export const details = pgTable(
+  "details",
+  {
+    unitPrice: doublePrecision().notNull(),
+    quantity: integer().notNull(),
+    discount: doublePrecision().notNull(),
+
+    orderId: integer()
+      .notNull()
+      .references(() => orders.id, { onDelete: "cascade" }),
+  }
+);
+```
+
+**示例1**：精细化 `unitPrice` 的生成逻辑，生成 5000 条随机价格数据，其中 30% 是 10-100 之间的价格，70% 是 100-300 之间的价格
+
+```ts filename="index.ts"
+import { drizzle } from "drizzle-orm/node-postgres";
+import { seed } from "drizzle-seed";
+import * as schema from './schema.ts'
+
+async function main() {
+  const db = drizzle(process.env.DATABASE_URL!);
+
+  await seed(db, schema).refine((f) => ({
+    orders: {
+       count: 5000,
+       columns: {
+           unitPrice: f.weightedRandom(
+               [
+                   {
+                       weight: 0.3,
+                       value: funcs.int({ minValue: 10, maxValue: 100 })
+                   },
+                   {
+                       weight: 0.7,
+                       value: funcs.number({ minValue: 100, maxValue: 300, precision: 100 })
+                   }
+               ]
+           ),
+       }
+    }
+  }));
+}
+
+main();
+```
+
+**示例2**：为每个订单生成 1 到 3 条详情的概率为 60%，生成 5 到 7 条详情概率为 30%，生成 8 到 10 条详情概率为 10%
+
+```ts filename="index.ts"
+import { drizzle } from "drizzle-orm/node-postgres";
+import { seed } from "drizzle-seed";
+import * as schema from './schema.ts'
+
+async function main() {
+  const db = drizzle(process.env.DATABASE_URL!);
+
+  await seed(db, schema).refine((f) => ({
+    orders: {
+       with: {
+           details:
+               [
+                   { weight: 0.6, count: [1, 2, 3] },
+                   { weight: 0.3, count: [5, 6, 7] },
+                   { weight: 0.1, count: [8, 9, 10] },
+               ]
+       }
+    }
+  }));
+}
+
+main();
+```
+
+## 复杂示例
+
+<CodeTabs items={["main.ts", "schema.ts"]}>
+<Section>
+```ts
+import { seed } from "drizzle-seed";
+import * as schema from "./schema.ts";
+
+const main = async () => {
+    const titlesOfCourtesy = ["女士", "夫人", "博士"];
+    const unitsOnOrders = [0, 10, 20, 30, 50, 60, 70, 80, 100];
+    const reorderLevels = [0, 5, 10, 15, 20, 25, 30];
+    const quantityPerUnit = [
+        "100 - 100 克装",
+        "100 - 250 克袋装",
+        "10 - 200 克玻璃罐",
+        "10 - 4 盎司盒装",
+        "10 - 500 克包装",
+        "10 - 500 克包装"
+    ];
+    const discounts = [0.05, 0.15, 0.2, 0.25];
+
+    await seed(db, schema).refine((funcs) => ({
+        customers: {
+            count: 10000,
+            columns: {
+                companyName: funcs.companyName(),
+                contactName: funcs.fullName(),
+                contactTitle: funcs.jobTitle(),
+                address: funcs.streetAddress(),
+                city: funcs.city(),
+                postalCode: funcs.postcode(),
+                region: funcs.state(),
+                country: funcs.country(),
+                phone: funcs.phoneNumber({ template: "(###) ###-####" }),
+                fax: funcs.phoneNumber({ template: "(###) ###-####" })
+            }
+        },
+        employees: {
+            count: 200,
+            columns: {
+                firstName: funcs.firstName(),
+                lastName: funcs.lastName(),
+                title: funcs.jobTitle(),
+                titleOfCourtesy: funcs.valuesFromArray({ values: titlesOfCourtesy }),
+                birthDate: funcs.date({ minDate: "2010-12-31", maxDate: "2010-12-31" }),
+                hireDate: funcs.date({ minDate: "2010-12-31", maxDate: "2024-08-26" }),
+                address: funcs.streetAddress(),
+                city: funcs.city(),
+                postalCode: funcs.postcode(),
+                country: funcs.country(),
+                homePhone: funcs.phoneNumber({ template: "(###) ###-####" }),
+                extension: funcs.int({ minValue: 428, maxValue: 5467 }),
+                notes: funcs.loremIpsum()
+            }
+        },
+        orders: {
+            count: 50000,
+            columns: {
+                shipVia: funcs.int({ minValue: 1, maxValue: 3 }),
+                freight: funcs.number({ minValue: 0, maxValue: 1000, precision: 100 }),
+                shipName: funcs.streetAddress(),
+                shipCity: funcs.city(),
+                shipRegion: funcs.state(),
+                shipPostalCode: funcs.postcode(),
+                shipCountry: funcs.country()
+            },
+            with: {
+                details:
+                    [
+                        { weight: 0.6, count: [1, 2, 3, 4] },
+                        { weight: 0.2, count: [5, 6, 7, 8, 9, 10] },
+                        { weight: 0.15, count: [11, 12, 13, 14, 15, 16, 17] },
+                        { weight: 0.05, count: [18, 19, 20, 21, 22, 23, 24, 25] },
+                    ]
+            }
+        },
+        suppliers: {
+            count: 1000,
+            columns: {
+                companyName: funcs.companyName(),
+                contactName: funcs.fullName(),
+                contactTitle: funcs.jobTitle(),
+                address: funcs.streetAddress(),
+                city: funcs.city(),
+                postalCode: funcs.postcode(),
+                region: funcs.state(),
+                country: funcs.country(),
+                phone: funcs.phoneNumber({ template: "(###) ###-####" })
+            }
+        },
+        products: {
+            count: 5000,
+            columns: {
+                name: funcs.companyName(),
+                quantityPerUnit: funcs.valuesFromArray({ values: quantityPerUnit }),
+                unitPrice: funcs.weightedRandom(
+                    [
+                        {
+                            weight: 0.5,
+                            value: funcs.int({ minValue: 3, maxValue: 300 })
+                        },
+                        {
+                            weight: 0.5,
+                            value: funcs.number({ minValue: 3, maxValue: 300, precision: 100 })
+                        }
+                    ]
+                ),
+                unitsInStock: funcs.int({ minValue: 0, maxValue: 125 }),
+                unitsOnOrder: funcs.valuesFromArray({ values: unitsOnOrders }),
+                reorderLevel: funcs.valuesFromArray({ values: reorderLevels }),
+                discontinued: funcs.int({ minValue: 0, maxValue: 1 })
+            }
+        },
+        details: {
+            columns: {
+                unitPrice: funcs.number({ minValue: 10, maxValue: 130 }),
+                quantity: funcs.int({ minValue: 1, maxValue: 130 }),
+                discount: funcs.weightedRandom(
+                    [
+                        { weight: 0.5, value: funcs.valuesFromArray({ values: discounts }) },
+                        { weight: 0.5, value: funcs.default({ defaultValue: 0 }) }
+                    ]
+                )
+            }
+        }
+    }));
+}
+
+main();
+
+```
+</Section>
+<Section>
+```ts
+import type { AnyPgColumn } from "drizzle-orm/pg-core";
+import { integer, numeric, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
+
+export const customers = pgTable('customer', {
+	id: varchar({ length: 256 }).primaryKey(),
+	companyName: text().notNull(),
+	contactName: text().notNull(),
+	contactTitle: text().notNull(),
+	address: text().notNull(),
+	city: text().notNull(),
+	postalCode: text(),
+	region: text(),
+	country: text().notNull(),
+	phone: text().notNull(),
+	fax: text(),
+});
+
+export const employees = pgTable(
+	'employee',
+	{
+		id: integer().primaryKey(),
+		lastName: text().notNull(),
+		firstName: text(),
+		title: text().notNull(),
+		titleOfCourtesy: text().notNull(),
+		birthDate: timestamp().notNull(),
+		hireDate: timestamp().notNull(),
+		address: text().notNull(),
+		city: text().notNull(),
+		postalCode: text().notNull(),
+		country: text().notNull(),
+		homePhone: text().notNull(),
+		extension: integer().notNull(),
+		notes: text().notNull(),
+		reportsTo: integer().references((): AnyPgColumn => employees.id),
+		photoPath: text(),
+	},
+);
+
+export const orders = pgTable('order', {
+	id: integer().primaryKey(),
+	orderDate: timestamp().notNull(),
+	requiredDate: timestamp().notNull(),
+	shippedDate: timestamp(),
+	shipVia: integer().notNull(),
+	freight: numeric().notNull(),
+	shipName: text().notNull(),
+	shipCity: text().notNull(),
+	shipRegion: text(),
+	shipPostalCode: text(),
+	shipCountry: text().notNull(),
+
+	customerId: text().notNull().references(() => customers.id, { onDelete: 'cascade' }),
+
+	employeeId: integer().notNull().references(() => employees.id, { onDelete: 'cascade' }),
+});
+
+export const suppliers = pgTable('supplier', {
+	id: integer().primaryKey(),
+	companyName: text().notNull(),
+	contactName: text().notNull(),
+	contactTitle: text().notNull(),
+	address: text().notNull(),
+	city: text().notNull(),
+	region: text(),
+	postalCode: text().notNull(),
+	country: text().notNull(),
+	phone: text().notNull(),
+});
+
+export const products = pgTable('product', {
+	id: integer().primaryKey(),
+	name: text().notNull(),
+	quantityPerUnit: text().notNull(),
+	unitPrice: numeric().notNull(),
+	unitsInStock: integer().notNull(),
+	unitsOnOrder: integer().notNull(),
+	reorderLevel: integer().notNull(),
+	discontinued: integer().notNull(),
+
+	supplierId: integer().notNull().references(() => suppliers.id, { onDelete: 'cascade' }),
+});
+
+export const details = pgTable('order_detail', {
+	unitPrice: numeric().notNull(),
+	quantity: integer().notNull(),
+	discount: numeric().notNull(),
+
+	orderId: integer().notNull().references(() => orders.id, { onDelete: 'cascade' }),
+
+	productId: integer().notNull().references(() => products.id, { onDelete: 'cascade' }),
+});
+
+```
+</Section>
+</CodeTabs>
+
+## 限制
+
+#### `with` 的类型限制
+
+由于 TypeScript 的某些限制以及 Drizzle 当前的 API，无法正确推断表之间的引用，尤其是在表之间存在循环依赖的情况下。
+
+这意味着 `with` 选项会显示 schema 中的所有表，你需要手动选择具有一对多关系的表。
+
+<Callout title='warning'>
+`with` 选项仅针对一对多关系有效。例如，如果有一个 `user` 其对应多个 `posts`，可以用 `users with posts`，但不能用 `posts with users`
+</Callout>
+
+#### 复合唯一约束
+- 当两个复合唯一约束共享同一列时，不支持 seeding：
+```ts
+const composite = pgTable(
+  "composite_example",
+  {
+    id: integer("id").notNull(),
+    name: text("name").notNull(),
+    slug: text("slug").notNull(),
+  },
+  (t) => [
+    unique("custom_name").on(t.id, t.name),
+    unique("custom_name1").on(t.name, t.slug),
+  ]
+);
+```
+不过，如果其中一个约束是单列唯一约束，则这是允许的：
+```ts
+unique("custom_name1").on(t.name);
+```
+- 你不能使用配置中不暴露 `isUnique` 选项的生成器，除非它属于始终唯一的生成器之一：`intPrimaryKey`、`email`、`phoneNumber` 或 `uuid`。

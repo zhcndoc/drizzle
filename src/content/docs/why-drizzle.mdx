@@ -85,14 +85,14 @@ ALTER TABLE "cities" ADD CONSTRAINT "cities_country_id_countries_id_fk" FOREIGN 
 ```
 </CodeTabs>
 
-## 为什么不选择 SQL 类似?
-我们始终追求一个完美平衡的解决方案，尽管 SQL 类似能够覆盖 100% 的需求，
-但在某些常见场景中，你可以更好地查询数据。  
+## Why not choose SQL-like?
+We always strive for a perfectly balanced solution. Although SQL-like can cover 100% of the requirements,
+in some common scenarios, you can query data better.  
 
-我们为你构建了 **[查询 API](/docs/rqb)**，通过最方便和高效的方式从数据库中提取关系嵌套数据，
-而无需考虑连接和数据映射。  
+We have built the **[Query API](/docs/rqb)** for you, which extracts relational nested data from the database in the most convenient and efficient way,
+without having to worry about joins and data mapping.  
 
-**Drizzle 始终输出恰好 1 条 SQL 查询。** 可以放心与无服务器数据库一起使用，永远不用担心性能或往返费用！
+**Drizzle always outputs exactly 1 SQL query.** Use it with confidence alongside serverless databases, never worrying about performance or round-trip costs!
 
 ```ts
 const result = await db.query.users.findMany({
@@ -114,7 +114,7 @@ Drizzle ORM 是方言特定的，轻量、高效，并且 **从设计上支持�
 
 我们花费了大量时间确保你拥有最优质的 SQL 方言支持，包括 PostgreSQL、MySQL 和其他。
 
-Drizzle 通过行业标准数据库驱动程序原生运行。我们支持所有主要的 **[PostgreSQL](/docs/get-started-postgresql)**、**[MySQL](/docs/get-started-mysql)** 或 **[SQLite](/docs/get-started-sqlite)** 驱动程序，并且我们正在 **[快速添加新驱动](https://twitter.com/DrizzleORM/status/1653082492742647811?s=20)**。 
+Drizzle 通过行业标准的数据库驱动程序原生运行。我们支持所有主流的 **[PostgreSQL](/docs/get-started-postgresql)**、**[MySQL](/docs/mysql/get-started-mysql)** 或 **[SQLite](/docs/sqlite/get-started-sqlite)** 驱动程序，并且我们正在 **[非常快速地](https://twitter.com/DrizzleORM/status/1653082492742647811?s=20)** 添加新的驱动程序。  
 
 
 ## 欢迎加入！
@@ -124,7 +124,7 @@ Drizzle 通过行业标准数据库驱动程序原生运行。我们支持所有
 
 我们有一个出色的 **[Discord 社区](https://driz.link/discord)**，欢迎所有开发者加入我们的 **[Twitter](https://twitter.com/drizzleorm)**。
   
-现在开始使用 Drizzle 和你的 **[PostgreSQL](/docs/get-started-postgresql)**、**[MySQL](/docs/get-started-mysql)** 或 **[SQLite](/docs/get-started-sqlite)** 数据库构建一些很棒的东西吧。 🚀
+现在就用 Drizzle 和你的 **[PostgreSQL](/docs/get-started-postgresql)**、**[MySQL](/docs/mysql/get-started-mysql)** 或 **[SQLite](/docs/sqlite/get-started-sqlite)** 数据库开始构建一些很棒的东西吧。🚀
 
 ### 视频展示
 
@@ -139,7 +139,7 @@ https://www.youtube.com/watch?v=qCLV0Iaq9zU */}
 <YoutubeCards cards={[
 	{
 		id: "vyU5mJGCJMw",
-		title: "初学者的完整 Drizzle 课程",
+		title: "初学者完整 Drizzle 课程",
 		description: "Code Genix",
 		time: "1:37:39",
 	},

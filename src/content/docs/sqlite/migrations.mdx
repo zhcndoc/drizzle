@@ -1,0 +1,404 @@
+import Callout from '@mdx/Callout.astro';
+import Steps from '@mdx/Steps.astro';
+import CodeTab from '@mdx/CodeTab.astro';
+import CodeTabs from '@mdx/CodeTabs.astro';
+import Section from '@mdx/Section.astro';
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
+import Npm from '@mdx/Npm.astro';
+import Tag from '@mdx/Tag.astro'
+
+
+# Drizzle 迁移基础
+
+SQL 数据库要求你先为将要存储的实体指定一个**严格的 schema**，并且如果（当）你需要改变这些实体的结构时，就需要通过**schema 迁移**来完成。
+
+管理数据库迁移有多种适用于生产环境的方式。  
+Drizzle 的设计目标是完美适配所有这些方式，无论你采用的是**database first**还是**codebase first**。
+
+**Database first** 是指你的数据库 schema 是事实来源。你要么直接在数据库上管理 schema，要么通过数据库迁移工具管理，然后再把数据库 schema 拉取到代码库中的应用层实体。
+
+**Codebase first** 是指你代码库中的数据库 schema 是事实来源，并受版本控制。你在 JavaScript/TypeScript 中声明和管理数据库 schema，然后再通过 Drizzle、直接操作或借助外部迁移工具把这个 schema 应用到数据库本身。
+
+#### Drizzle 能如何帮助？
+我们构建了 [**drizzle-kit**](/docs/sqlite/kit-overview)——一个用于使用 Drizzle 管理迁移的 CLI 应用。 
+```shell
+drizzle-kit migrate
+drizzle-kit generate
+drizzle-kit push
+drizzle-kit pull
+drizzle-kit export
+```
+它的设计目标是让你可以根据当前业务需求选择迁移方式。
+
+它同时适用于 database first 和 codebase first 两种方式，支持你**推送 schema**、**生成 SQL migration** 文件，或者**从数据库拉取 schema**。  
+无论你是单人开发还是团队协作，它都很适合。
+<br/>
+
+<hr/>
+<rem/>
+
+**现在让我们为你的项目选择最合适的方案：**
+<rem/>
+
+<Tag style="font-size: 12px">**选项 1**</Tag>
+> 我使用外部迁移工具或直接在数据库上运行 SQL migrations 自己管理数据库 schema。
+> 对于 Drizzle，我只需要从数据库中获取当前 schema 状态，并将其保存为 TypeScript schema 文件。
+
+<Callout collapsed="展开详情">
+这是一个 **database first** 的方式。你的数据库 schema 是**事实来源**，而  
+Drizzle 允许你使用 [`drizzle-kit pull`](/docs/sqlite/drizzle-kit-pull) 命令将数据库 schema 拉取到 TypeScript。
+
+<Section>
+```
+                                  ┌────────────────────────┐      ┌───────────────────────────────────────┐ 
+                                  │                        │ <---  CREATE TABLE `users` (
+┌──────────────────────────┐      │                        │        `id` integer primary key autoincrement,
+│ ~ drizzle-kit pull       │      │                        │        `name` TEXT,
+└─┬────────────────────────┘      │        DATABASE        │        `email` TEXT UNIQUE
+  │                               │                        │       );
+  └ 拉取数据库 schema -------> │                        │
+  ┌ 生成 Drizzle            <----- │                        │
+  │ schema TypeScript 文件        └────────────────────────┘
+  │
+  v
+```
+```typescript
+import * as p from "drizzle-orm/sqlite-core";
+
+export const users = p.sqliteTable("users", {
+	id: p.integer().primaryKey({ autoIncrement: true }),
+	name: p.text(),
+	email: p.text().unique(),
+});
+```
+</Section>
+</Callout>
+
+<rem/>
+<rem/>
+<rem/>
+
+<Tag style="font-size: 12px">**选项 2**</Tag>
+> 我想把数据库 schema 放在我的 TypeScript 代码库里， 
+> 我不想处理 SQL migration 文件。  
+> 我希望 Drizzle 直接把我的 schema “push” 到数据库
+
+<Callout collapsed="展开详情">
+这是一个 **codebase first** 的方式。你的 TypeScript Drizzle schema 是**事实来源**，而  
+Drizzle 允许你使用 [`drizzle-kit push`](/docs/sqlite/drizzle-kit-push) 命令将 schema 变更推送到数据库。
+
+这是快速原型开发的最佳方式，我们看到许多团队和独立开发者  
+都成功将其作为生产应用中的主要迁移流程。
+
+<Section>
+```typescript {6} filename="src/schema.ts"
+import * as p from "drizzle-orm/sqlite-core";
+
+export const users = p.sqliteTable("users", {
+  id: p.integer().primaryKey({ autoIncrement: true }),
+  name: p.text(),
+  email: p.text(), // <--- 新增列
+});
+```
+```
+向 `users` 表添加列                                                                          
+┌──────────────────────────┐                  
+│ + email: text()          │                  
+└─┬────────────────────────┘                  
+  │                                           
+  v                                           
+┌──────────────────────────┐                  
+│ ~ drizzle-kit push       │                  
+└─┬──────────────────────┘                  
+  │                                           ┌──────────────────────────┐
+  └ 拉取当前数据库 schema -----------------> │                          │
+                                              │                          │
+  ┌ 基于 diff 生成变更 <-------------------- │         DATABASE         │
+  │                                           │                          │
+  └ 将迁移应用到数据库 --------------------> │                          │
+                                       │      └──────────────────────────┘
+                                       │
+  ┌────────────────────────────────────┴─┐
+   ALTER TABLE `users` ADD `email` text; 
+```
+</Section>
+</Callout>
+
+<rem/>
+<rem/>
+<rem/>
+
+<Tag style="font-size: 12px">**选项 3**</Tag>
+> 我想把数据库 schema 放在我的 TypeScript 代码库里， 
+> 我希望 Drizzle 为我生成 SQL migration 文件，并把它们应用到我的数据库
+
+<Callout collapsed="展开详情">
+这是一个 **codebase first** 的方式。你的 TypeScript Drizzle schema 是事实来源，  
+Drizzle 允许你使用 [`drizzle-kit generate`](/docs/sqlite/drizzle-kit-generate) 基于 schema 变更生成 SQL migration 文件，  
+然后再使用 [`drizzle-kit migrate`](/docs/sqlite/drizzle-kit-migrate) 命令把它们应用到数据库。 
+<Section>
+```typescript filename="src/schema.ts"
+import * as p from "drizzle-orm/sqlite-core";
+
+export const users = p.sqliteTable("users", {
+  id: p.integer().primaryKey({ autoIncrement: true }),
+  name: p.text(),
+  email: p.text().unique(),
+});
+```
+```                                  
+┌────────────────────────┐                  
+│ $ drizzle-kit generate │                  
+└─┬──────────────────────┘                  
+  │                                           
+  └ 1. 读取之前的 migration 文件夹
+    2. 找出当前 schema 与之前 schema 的差异
+    3. 如有必要，提示开发者进行重命名
+  ┌ 4. 生成 SQL migration 并持久化为文件
+  │    ┌─┴───────────────────────────────────────┐  
+  │      📂 drizzle       
+  │      └ 📂 20242409125510_premium_mister_fear
+  │        ├ 📜 snapshot.json
+  │        └ 📜 migration.sql
+  v
+```
+```sql
+-- drizzle/20242409125510_premium_mister_fear/migration.sql
+
+CREATE TABLE `users` (
+	`id` integer PRIMARY KEY AUTOINCREMENT,
+	`name` text,
+	`email` text UNIQUE
+);
+```
+```
+┌───────────────────────┐                  
+│ $ drizzle-kit migrate │                  
+└─┬─────────────────────┘                  
+  │                                                         ┌──────────────────────────┐                                         
+  └ 1. 读取 migrations 文件夹中的 migration.sql 文件      │                          │
+    2. 从数据库获取 migration 历史记录 -----------------> │                          │
+  ┌ 3. 选择之前尚未应用的 migrations <------------------ │         DATABASE         │
+  └ 4. 将新的 migration 应用到数据库 --------------------> │                          │
+                                                            │                          │
+                                                            └──────────────────────────┘
+[✓] 完成！                                                 
+```
+</Section>
+</Callout>
+
+<rem/>
+<rem/>
+<rem/>
+
+<Tag style="font-size: 12px">**选项 4**</Tag>
+> 我想把数据库 schema 放在我的 TypeScript 代码库里，
+> 我希望 Drizzle 为我生成 SQL migration 文件，并且让我在运行时应用它们
+
+<Callout collapsed="展开详情">
+这是一个 **codebase first** 的方式。你的 TypeScript Drizzle schema 是事实来源，  
+Drizzle 允许你使用 [`drizzle-kit generate`](/docs/sqlite/drizzle-kit-generate) 基于 schema 变更生成 SQL migration 文件，然后  
+你可以在应用运行时将它们应用到数据库中。
+
+这种方式广泛用于**单体**应用：在零停机部署期间应用数据库迁移，并在出错时回滚 DDL 变更。  
+它也用于 **serverless** 部署，在部署流程中通过 **custom resource** 仅运行一次迁移。
+
+<Section>
+```typescript filename="src/schema.ts"
+import * as p from "drizzle-orm/sqlite-core";
+
+export const users = p.sqliteTable("users", {
+  id: p.integer().primaryKey({ autoIncrement: true }),
+  name: p.text(),
+  email: p.text().unique(),
+});
+```
+```                                  
+┌────────────────────────┐                  
+│ $ drizzle-kit generate │                  
+└─┬──────────────────────┘                  
+  │                                           
+  └ 1. 读取之前的 migration 文件夹
+    2. 找出当前 schema 与之前 schema 的差异
+    3. 如有必要，提示开发者进行重命名
+  ┌ 4. 生成 SQL migration 并持久化为文件
+  │    ┌─┴───────────────────────────────────────┐  
+  │      📂 drizzle       
+  │      └ 📂 20242409125510_premium_mister_fear
+  │        ├ 📜 snapshot.json
+  │        └ 📜 migration.sql
+  v
+```
+```sql
+-- drizzle/20242409125510_premium_mister_fear/migration.sql
+
+CREATE TABLE `users` (
+	`id` integer PRIMARY KEY AUTOINCREMENT,
+	`name` text,
+	`email` text UNIQUE
+);
+```
+```ts
+// index.ts
+import { drizzle } from "drizzle-orm/better-sqlite3"
+import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
+
+const db = drizzle(process.env.DATABASE_URL);
+
+await migrate(db);
+```
+```
+┌───────────────────────┐                  
+│ npx tsx src/index.ts  │                  
+└─┬─────────────────────┘                  
+  │                                                      
+  ├ 1. 初始化数据库连接                             ┌──────────────────────────┐                                         
+  └ 2. 读取 migrations 文件夹中的 migration.sql 文件      │                          │
+    3. 从数据库获取 migration 历史记录 -------------> │                          │
+  ┌ 4. 选择之前尚未应用的 migrations <-------------- │         DATABASE         │
+  └ 5. 将新的 migration 应用到数据库 ---------------> │                          │
+                                                            │                          │
+                                                            └──────────────────────────┘
+[✓] 完成！                                                 
+```
+</Section>
+</Callout>
+
+<rem/>
+<rem/>
+<rem/>
+
+<Tag style="font-size: 12px">**选项 5**</Tag>
+> 我想把数据库 schema 放在我的 TypeScript 代码库里，
+> 我希望 Drizzle 为我生成 SQL migration 文件，
+> 但我会自己或通过外部迁移工具把它们应用到数据库
+
+<Callout collapsed="展开详情">
+这是一个 **codebase first** 的方式。你的 TypeScript Drizzle schema 是事实来源，  
+Drizzle 允许你使用 [`drizzle-kit generate`](/docs/sqlite/drizzle-kit-generate) 基于 schema 变更生成 SQL migration 文件，然后  
+你可以直接或通过外部迁移工具将它们应用到数据库。
+
+<Section>
+```typescript filename="src/schema.ts"
+import * as p from "drizzle-orm/sqlite-core";
+
+export const users = p.sqliteTable("users", {
+  id: p.integer().primaryKey({ autoIncrement: true }),
+  name: p.text(),
+  email: p.text().unique(),
+});
+```
+```                                  
+┌────────────────────────┐                  
+│ $ drizzle-kit generate │                  
+└─┬──────────────────────┘                  
+  │                                           
+  └ 1. 读取之前的 migration 文件夹
+    2. 找出当前 schema 与之前 scheama 的差异
+    3. 如有必要，提示开发者进行重命名
+  ┌ 4. 生成 SQL migration 并持久化为文件
+  │    ┌─┴───────────────────────────────────────┐  
+  │      📂 drizzle       
+  │      └ 📂 20242409125510_premium_mister_fear
+  │        ├ 📜 snapshot.json
+  │        └ 📜 migration.sql
+  v
+```
+```sql
+-- drizzle/20242409125510_premium_mister_fear/migration.sql
+
+CREATE TABLE `users` (
+	`id` integer PRIMARY KEY AUTOINCREMENT,
+	`name` text,
+	`email` text UNIQUE
+);
+```
+```
+┌───────────────────────────────────┐                  
+│ (._.) 现在你运行你的 migrations │           
+└─┬─────────────────────────────────┘  
+  │
+  直接应用到数据库
+  │                                         ┌────────────────────┐
+  ├────────────────────────────────────┬───>│                    │  
+  │                                    │    │      Database      │           
+ 或通过外部工具                          │    │                    │   
+  │                                    │    └────────────────────┘
+  │  ┌────────────────────┐            │      
+  └──│ Bytebase           ├────────────┘         
+     ├────────────────────┤  
+     │ Liquibase          │
+     ├────────────────────┤ 
+     │ Atlas              │
+     ├────────────────────┤ 
+     │ 等等…               │
+     └────────────────────┘
+
+[✓] 完成！                                                 
+```
+</Section>
+</Callout>
+
+<rem/>
+<rem/>
+<rem/>
+
+<Tag style="font-size: 12px">**选项 6**</Tag>
+> 我想把数据库 schema 放在我的 TypeScript 代码库里，
+> 我希望 Drizzle 将我的 Drizzle schema 的 SQL 表示输出到控制台，
+> 然后我会通过 [Atlas](https://atlasgo.io/guides/orms/drizzle) 将它们应用到我的数据库
+
+<Callout collapsed="展开详情">
+这是一个 **codebase first** 的方式。你的 TypeScript Drizzle schema 是事实来源，  
+Drizzle 允许你使用 [`drizzle-kit export`](/docs/sqlite/drizzle-kit-generate) 基于 schema 变更导出 SQL 语句，然后  
+你可以通过 [Atlas](https://atlasgo.io/guides/orms/drizzle) 或其他外部 SQL 迁移工具将它们应用到数据库。
+
+<Section>
+```typescript filename="src/schema.ts"
+import * as p from "drizzle-orm/sqlite-core";
+
+export const users = p.sqliteTable("users", {
+  id: p.integer().primaryKey({ autoIncrement: true }),
+  name: p.text(),
+  email: p.text().unique(),
+});
+```
+```                                  
+┌────────────────────────┐                  
+│ $ drizzle-kit export   │                  
+└─┬──────────────────────┘                  
+  │                                           
+  └ 1. 读取你的 drizzle schema
+    2. 生成你的 schema 的 SQL 表示
+  ┌ 3. 输出到控制台
+  │    
+  │        
+  v
+```
+```sql
+CREATE TABLE `users` (
+        `id` integer PRIMARY KEY AUTOINCREMENT,
+        `name` text,
+        `email` text UNIQUE
+);
+```
+```
+┌───────────────────────────────────┐                  
+│ (._.) 现在你运行你的 migrations │           
+└─┬─────────────────────────────────┘  
+  │
+  通过 Atlas
+  │                                    ┌──────────────┐
+  │  ┌────────────────────┐            │              │
+  └──│ Atlas              ├───────────>│  数据库     │      
+     └────────────────────┘            │              │       
+                                       └──────────────┘
+
+[✓] 完成！                                                 
+```
+</Section>
+</Callout>
+
+<rem/>
+<rem/>

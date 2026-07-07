@@ -1,0 +1,347 @@
+import Callout from '@mdx/Callout.astro';
+import Section from '@mdx/Section.astro';
+
+# 索引与约束
+
+## 约束
+
+SQL 约束是施加在表列上的规则。它们用于防止无效数据被插入到数据库中。
+
+这确保了数据库中数据的准确性和可靠性。
+
+### 默认值
+
+`DEFAULT` 子句指定在用户执行 `INSERT` 时，如果没有提供值，则该列使用的默认值。  
+如果某个列定义上没有显式附加 `DEFAULT` 子句，  
+那么该列的默认值就是 `NULL`。
+
+显式的 `DEFAULT` 子句可以指定默认值为 `NULL`、  
+字符串常量、blob 常量、有符号数字，或者任何用括号括起来的常量表达式。
+
+<Section>
+    ```typescript
+    import { sql } from "drizzle-orm";
+    import { int, time, mysqlTable } from "drizzle-orm/mysql-core";
+    
+    export const table = mysqlTable("table", {
+      int: int().default(42),
+      time: time().default(sql`cast("14:06:10" AS TIME)`),
+    });
+    ```
+    ```sql
+	CREATE TABLE `table` (
+	  `int` int DEFAULT 42,
+	  `time` time DEFAULT (cast("14:06:10" AS TIME))
+	);
+    ```
+    </Section>
+
+### 非空
+
+默认情况下，列可以包含 **NULL** 值。`NOT NULL` 约束强制列 **不** 接受 **NULL** 值。  
+
+这会强制字段始终包含一个值，这意味着你不能在不为该字段添加值的情况下插入新记录，  
+或更新记录。
+
+<Section>
+      ```typescript
+      import { int, mysqlTable } from "drizzle-orm/mysql-core";
+
+      export const table = mysqlTable('table', {
+        int: int().notNull(),
+      });
+      ```
+
+      ```sql
+      CREATE TABLE `table` (
+        `int` int NOT NULL
+      );
+      ```
+    </Section>
+
+### 唯一
+
+`UNIQUE` 约束确保某一列中的所有值都不相同。  
+
+`UNIQUE` 和 `PRIMARY KEY` 约束都能保证某一列或某组列的唯一性。
+
+`PRIMARY KEY` 约束会自动具有 `UNIQUE` 约束。  
+
+<Callout type="info" emoji="ℹ️">
+  每个表可以有多个 `UNIQUE` 约束，但每个表只能有一个 `PRIMARY KEY` 约束。
+</Callout>
+
+在 MySQL 中，`unique constraint` 和 `unique index` 本质上是同一回事。  
+在底层，MySQL 将唯一约束实现为唯一索引。  
+它没有像某些其他数据库那样单独的约束对象。
+```sql
+-- 以下三个在 MySQL 中都会产生完全相同的结果：
+ALTER TABLE users ADD CONSTRAINT uq_email UNIQUE (email);
+ALTER TABLE users ADD UNIQUE INDEX uq_email (email);
+CREATE UNIQUE INDEX uq_email ON users(email);
+```
+
+删除 `unique constraint` 时，使用的语法与删除索引相同：`ALTER TABLE users DROP INDEX uq_email;`。在 MySQL 中没有单独的 `DROP CONSTRAINT statement` 来处理它。
+
+这就是为什么 Drizzle 总是将任何 `.unique()` 视为 `UNIQUE INDEX`
+
+<Section>
+      ```typescript
+      import { int, varchar, unique, mysqlTable } from "drizzle-orm/mysql-core";
+
+      export const user = mysqlTable('user', {
+        id: int().unique(),
+      });
+
+      export const table = mysqlTable('table', {
+        id: int().unique('custom_name'),
+      });
+
+      export const composite = mysqlTable('composite_example', {
+        id: int(),
+        name: varchar(, { length: 256 }),
+      }, (t) => [
+        unique().on(t.id, t.name),
+        unique('custom_name').on(t.id, t.name)
+      ]);
+      ```
+
+      ```sql
+	CREATE TABLE `user` (
+	  `id` int,
+	  CONSTRAINT `id_unique` UNIQUE INDEX(`id`)
+	);
+
+	CREATE TABLE `table` (
+	  `id` int,
+	  CONSTRAINT `custom_name` UNIQUE INDEX(`id`)
+	);
+
+	CREATE TABLE `composite_example` (
+	  `id` int,
+	  `name` varchar(256),
+	  CONSTRAINT `id_name_unique` UNIQUE INDEX(`id`,`name`),
+	  CONSTRAINT `custom_name` UNIQUE INDEX(`id`,`name`)
+	);
+      ```
+    </Section>
+
+### 检查
+
+`CHECK` 约束用于限制可以放入列中的值范围。
+
+如果你在列上定义 `CHECK` 约束，它将只允许该列取某些特定值。  
+
+如果你在表上定义 `CHECK` 约束，它可以基于行中其他列的值来限制某些列中的值。
+
+<Section>
+      ```typescript copy
+      import { sql } from "drizzle-orm";
+      import { check, int, mysqlTable, text } from "drizzle-orm/mysql-core";
+
+      export const users = mysqlTable(
+        "users",
+        {
+          id: int().primaryKey(),
+          username: text().notNull(),
+          age: int(),
+        },
+        (table) => [
+          check("age_check1", sql`${table.age} > 21`)
+        ]
+      );
+      ```
+      ```sql
+	  CREATE TABLE `users` (
+	    `id` int PRIMARY KEY,
+	    `username` text NOT NULL,
+	    `age` int,
+	    CONSTRAINT `age_check1` CHECK(`users`.`age` > 21)
+	  );
+      ```
+    </Section>
+
+### 主键
+
+`PRIMARY KEY` 约束可唯一标识表中的每条记录。  
+主键必须包含 **唯一** 值，并且不能包含 **NULL** 值。  
+
+一个表只能有 **一个** 主键；并且在该表中，这个主键可以由单列或多列（字段）组成。
+
+<Section>
+      ```typescript
+      import { int, text, mysqlTable } from "drizzle-orm/mysql-core";
+
+      export const user = mysqlTable("user", {
+        id: int().autoincrement().primaryKey(),
+      })
+
+      export const table = mysqlTable("table", {
+        cuid: text().primaryKey(),
+      })
+      ```
+
+      ```sql
+	  CREATE TABLE `user` (
+	    `id` int AUTO_INCREMENT PRIMARY KEY
+	  );
+
+	  CREATE TABLE `table` (
+	    `cuid` text PRIMARY KEY
+	  );
+      ```
+    </Section>
+
+### 复合主键
+
+与 `PRIMARY KEY` 类似，复合主键通过使用多个字段来唯一标识表中的每条记录。
+
+Drizzle ORM 为此提供了一个独立的 `primaryKey` 操作符：
+
+<Section>
+      ```typescript {18, 19}
+      import { int, text, primaryKey, mysqlTable } from "drizzle-orm/mysql-core";
+
+      export const user = mysqlTable("user", {
+        id: int("id").autoincrement().primaryKey(),
+        name: text("name"),
+      });
+
+      export const book = mysqlTable("book", {
+        id: int().autoincrement().primaryKey(),
+        name: text(),
+      });
+
+      export const booksToAuthors = mysqlTable("books_to_authors", {
+        authorId: int(),
+        bookId: int(),
+      }, (table) => [
+        primaryKey({ columns: [table.bookId, table.authorId] }),
+        // 或者使用自定义名称的主键
+        primaryKey({ name: 'custom_name', columns: [table.bookId, table.authorId] })
+      ]);
+      ```
+
+      ```sql {6}
+      ...
+
+      CREATE TABLE `books_to_authors` (
+        `author_id` int,
+        `book_id` int,
+        PRIMARY KEY(`book_id`,`author_id`)
+      );
+      ```
+    </Section>
+
+### 外键
+
+`FOREIGN KEY` 约束用于防止破坏表之间关联的操作。  
+`FOREIGN KEY` 是一个表中的字段（或字段集合），它引用另一个表中的 `PRIMARY KEY`。  
+包含外键的表称为子表，而包含主键的表称为被引用表或父表。
+
+Drizzle ORM 提供了多种声明外键的方式。  
+你可以在列声明语句中声明它们：
+
+	```typescript {11}
+    import { int, text, mysqlTable } from "drizzle-orm/mysql-core";
+
+    export const user = mysqlTable("user", {
+      id: int().primaryKey().autoincrement(),
+      name: text(),
+    });
+
+    export const book = mysqlTable("book", {
+      id: int().primaryKey().autoincrement(),
+      name: text(),
+      authorId: int("author_id").references(() => user.id)
+    });
+    ```
+
+如果你想进行自引用，由于 TypeScript 的限制，你必须显式  
+为引用回调设置返回类型，或者使用独立的 `foreignKey` 操作符。
+
+	```typescript {6,15-19}
+    import { int, text, foreignKey, type AnyMySqlColumn, mysqlTable } from "drizzle-orm/mysql-core";
+
+    export const user = mysqlTable("user", {
+      id: int().primaryKey().autoincrement(),
+      name: text(),
+      parentId: int("parent_id").references((): AnyMySqlColumn => user.id),
+    });
+
+    // 或者
+    export const user = mysqlTable("user", {
+      id: int().primaryKey().autoincrement(),
+      name: text(),
+      parentId: int("parent_id")
+    }, (table) => [
+      foreignKey({
+        columns: [table.parentId],
+        foreignColumns: [table.id],
+        name: "custom_fk"
+      })
+    ]);
+    ```
+
+要声明多列外键，你可以使用专门的 `foreignKey` 操作符：
+
+	```typescript copy {4-5,7,15-19}
+    import { int, text, primaryKey, foreignKey, mysqlTable, type AnyMySqlColumn } from "drizzle-orm/mysql-core";
+
+    export const user = mysqlTable("user", {
+      firstName: text("firstName"),
+      lastName: text("lastName"),
+    }, (table) => [
+      primaryKey({ columns: [table.firstName, table.lastName]})
+    ]);
+
+    export const profile = mysqlTable("profile", {
+      id: int().autoincrement().primaryKey(),
+      userFirstName: text("user_first_name"),
+      userLastName: text("user_last_name"),
+    }, (table) => [
+      foreignKey({
+        columns: [table.userFirstName, table.userLastName],
+        foreignColumns: [user.firstName, user.lastName],
+        name: "custom_name"
+      })
+    ]);
+    ```
+
+## 索引
+
+Drizzle ORM 为 `index` 和 `unique index` 声明都提供了 API：
+
+<Section>
+    ```typescript copy {8-9}
+    import { int, text, index, uniqueIndex, mysqlTable } from "drizzle-orm/mysql-core";
+
+    export const user = mysqlTable("user", {
+      id: int("id").primaryKey().autoincrement(),
+      name: text("name"),
+      email: text("email"),
+    }, (table) => [
+      index("name_idx").on(table.name),
+      uniqueIndex("email_idx").on(table.email),
+    ]);
+    ```
+    ```sql {5-6}
+    CREATE TABLE `user` (
+      ...
+    );
+
+    CREATE INDEX `name_idx` ON `user` (`name`);
+    CREATE UNIQUE INDEX `email_idx` ON `user` (`email`);
+    ```
+    </Section>
+
+     Drizzle ORM 为索引创建提供了一组完整的参数：
+
+    ```typescript
+    // 索引声明参考
+    index("name")
+      .on(table.name)
+      .algorithm("default") // "default" | "copy" | "inplace"
+      .using("btree") // "btree" | "hash"
+      .lock("default") // "none" | "default" | "exclusive" | "shared"
+    ```

@@ -1,0 +1,363 @@
+import Npm from '@mdx/Npm.astro';
+import Callout from '@mdx/Callout.astro';
+
+<Callout type="error">
+从 `drizzle-orm@1.0.0-beta.15` 开始，`drizzle-zod` 已被弃用，转而由 Drizzle ORM 自身提供一等公民级的 schema 生成支持
+
+你仍然可以使用 `drizzle-zod` 包，但所有新的更新都将直接添加到 Drizzle ORM 中
+</Callout>
+
+# zod
+
+### 安装依赖
+
+<Npm>
+zod
+</Npm>
+
+### 选择 schema
+
+定义从数据库查询出的数据形状——可用于验证 API 响应。
+
+```ts copy
+import { int, singlestoreTable, text } from 'drizzle-orm/singlestore-core';
+import { createSelectSchema } from 'drizzle-orm/zod';
+
+const users = singlestoreTable('users', {
+  id: int().primaryKey().autoincrement(),
+  name: text().notNull(),
+  age: int().notNull()
+});
+
+const userSelectSchema = createSelectSchema(users);
+
+const rows = await db.select({ id: users.id, name: users.name }).from(users).limit(1);
+const parsed: { id: number; name: string; age: number } = userSelectSchema.parse(rows[0]); // 错误：上面的查询中未返回 `age`
+
+const rows = await db.select().from(users).limit(1);
+const parsed: { id: number; name: string; age: number } = userSelectSchema.parse(rows[0]); // 将成功解析
+```
+
+列枚举通过 SingleStore 表 schema 提供支持，并且可以使用生成的表 schema 进行验证。
+
+### 插入 schema
+
+定义要插入数据库的数据形状——可用于验证 API 请求。
+
+```ts copy
+import { int, singlestoreTable, text } from 'drizzle-orm/singlestore-core';
+import { createInsertSchema } from 'drizzle-orm/zod';
+
+const users = singlestoreTable('users', {
+  id: int().primaryKey().autoincrement(),
+  name: text().notNull(),
+  age: int().notNull()
+});
+
+const userInsertSchema = createInsertSchema(users);
+
+const user = { name: 'John' };
+const parsed: { name: string, age: number } = userInsertSchema.parse(user); // 错误：未定义 `age`
+
+const user = { name: 'Jane', age: 30 };
+const parsed: { name: string, age: number } = userInsertSchema.parse(user); // 将成功解析
+await db.insert(users).values(parsed);
+```
+
+### 更新 schema
+
+定义要在数据库中更新的数据形状——可用于验证 API 请求。
+
+```ts copy
+import { int, singlestoreTable, text } from 'drizzle-orm/singlestore-core';
+import { createUpdateSchema } from 'drizzle-orm/zod';
+
+const users = singlestoreTable('users', {
+  id: int().primaryKey().autoincrement(),
+  name: text().notNull(),
+  age: int().notNull()
+});
+
+const userUpdateSchema = createUpdateSchema(users);
+
+const user = { id: 5, name: 'John' };
+const parsed: { name?: string | undefined, age?: number | undefined } = userUpdateSchema.parse(user); // 错误：`id` 是生成列，不能被更新
+
+const user = { age: 35 };
+const parsed: { name?: string | undefined, age?: number | undefined } = userUpdateSchema.parse(user); // 将成功解析
+await db.update(users).set(parsed).where(eq(users.name, 'Jane'));
+```
+
+### 细化
+
+每个 create schema 函数都接受一个额外的可选参数，你可以用它来扩展、修改或完全覆盖某个字段的 schema。传入回调函数会进行扩展或修改，而传入 Zod schema 则会覆盖它。
+
+```ts copy
+import { int, json, singlestoreTable, text } from 'drizzle-orm/singlestore-core';
+import { createSelectSchema } from 'drizzle-orm/zod';
+import { z } from 'zod/v4';
+
+const users = singlestoreTable('users', {
+  id: int().primaryKey(),
+  name: text().notNull(),
+  bio: text(),
+  preferences: json()
+});
+
+const userSelectSchema = createSelectSchema(users, {
+  name: (schema) => schema.max(20), // 扩展 schema
+  bio: (schema) => schema.max(1000), // 在变为可空/可选之前扩展 schema
+  preferences: z.object({ theme: z.string() }) // 覆盖该字段，包括其可空性
+});
+
+const parsed: {
+  id: number;
+  name: string,
+  bio?: string | undefined;
+  preferences: {
+    theme: string;
+  };
+} = userSelectSchema.parse(...);
+```
+
+### 工厂函数
+
+对于更高级的用例，你可以使用 `createSchemaFactory` 函数。
+
+**用例：使用扩展的 Zod 实例**
+
+```ts copy
+import { int, singlestoreTable, text } from 'drizzle-orm/singlestore-core';
+import { createSchemaFactory } from 'drizzle-orm/zod';
+import { z } from '@hono/zod-openapi'; // 扩展的 Zod 实例
+
+const users = singlestoreTable('users', {
+  id: int().primaryKey().autoincrement(),
+  name: text().notNull(),
+  age: int().notNull()
+});
+
+const { createInsertSchema } = createSchemaFactory({ zodInstance: z });
+
+const userInsertSchema = createInsertSchema(users, {
+  // 我们现在可以使用扩展实例
+  name: (schema) => schema.openapi({ example: 'John' })
+});
+```
+
+**用例：类型强制转换**
+
+```ts copy
+import { singlestoreTable, timestamp } from 'drizzle-orm/singlestore-core';
+import { createSchemaFactory } from 'drizzle-orm/zod';
+import { z } from 'zod/v4';
+
+const users = singlestoreTable('users', {
+  ...,
+  createdAt: timestamp().notNull()
+});
+
+const { createInsertSchema } = createSchemaFactory({
+  // 此配置只会强制转换日期。将 `coerce` 设为 `true` 可强制转换所有数据类型，或者指定其他类型
+  coerce: {
+    date: true
+  }
+});
+
+const userInsertSchema = createInsertSchema(users);
+// 上面的代码等同于：
+const userInsertSchema = z.object({
+  ...,
+  createdAt: z.coerce.date()
+});
+```
+
+### 数据类型参考
+
+```ts
+singlestore.boolean();
+
+// Schema
+z.boolean();
+```
+
+```ts
+singlestore.date({ mode: 'date' });
+singlestore.datetime({ mode: 'date' });
+singlestore.timestamp({ mode: 'date' });
+
+// Schema
+z.date();
+```
+
+```ts
+singlestore.binary();
+singlestore.date({ mode: 'string' });
+singlestore.datetime({ mode: 'string' });
+singlestore.decimal();
+singlestore.time();
+singlestore.timestamp({ mode: 'string' });
+singlestore.varbinary();
+
+// Schema
+z.string();
+```
+
+```ts
+singlestore.char({ length: ... });
+
+// Schema
+z.string().length(length);
+```
+
+```ts
+singlestore.varchar({ length: ... });
+
+// Schema
+z.string().max(length);
+```
+
+```ts
+singlestore.text();
+
+// Schema
+z.string().max(65_535); // 无符号 16 位整数上限
+```
+
+```ts
+singlestore.text({ enum: ... });
+singlestore.char({ enum: ... });
+singlestore.varchar({ enum: ... });
+singlestore.singlestoreEnum(..., ...);
+
+// Schema
+z.enum(enum);
+```
+
+```ts
+singlestore.tinyint();
+
+// Schema
+z.number().min(-128).max(127).int(); // 8 位整数下限和上限
+```
+
+```ts
+singlestore.tinyint({ unsigned: true });
+
+// Schema
+z.number().min(0).max(255).int(); // 无符号 8 位整数下限和上限
+```
+
+```ts
+singlestore.smallint();
+
+// Schema
+z.number().min(-32_768).max(32_767).int(); // 16 位整数下限和上限
+```
+
+```ts
+singlestore.smallint({ unsigned: true });
+
+// Schema
+z.number().min(0).max(65_535).int(); // 无符号 16 位整数下限和上限
+```
+
+```ts
+singlestore.float();
+
+// Schema
+z.number().min(-8_388_608).max(8_388_607); // 24 位整数下限和上限
+```
+
+```ts
+singlestore.mediumint();
+
+// Schema
+z.number().min(-8_388_608).max(8_388_607).int(); // 24 位整数下限和上限
+```
+
+```ts
+singlestore.float({ unsigned: true });
+
+// Schema
+z.number().min(0).max(16_777_215); // 无符号 24 位整数下限和上限
+```
+
+```ts
+singlestore.mediumint({ unsigned: true });
+
+// Schema
+z.number().min(0).max(16_777_215).int(); // 无符号 24 位整数下限和上限
+```
+
+```ts
+singlestore.int();
+
+// Schema
+z.number().min(-2_147_483_648).max(2_147_483_647).int(); // 32 位整数下限和上限
+```
+
+```ts
+singlestore.int({ unsigned: true });
+
+// Schema
+z.number().min(0).max(4_294_967_295).int(); // 无符号 32 位整数下限和上限
+```
+
+```ts
+singlestore.double();
+singlestore.real();
+
+// Schema
+z.number().min(-140_737_488_355_328).max(140_737_488_355_327); // 48 位整数下限和上限
+```
+
+```ts
+singlestore.double({ unsigned: true });
+
+// Schema
+z.number().min(0).max(281_474_976_710_655); // 无符号 48 位整数下限和上限
+```
+
+```ts
+singlestore.bigint({ mode: 'number' });
+
+// Schema
+z.number().min(-9_007_199_254_740_991).max(9_007_199_254_740_991).int(); // JavaScript 最小和最大安全整数
+```
+
+```ts
+singlestore.serial();
+
+// Schema
+z.number().min(0).max(9_007_199_254_740_991).int(); // JavaScript 最大安全整数
+```
+
+```ts
+singlestore.bigint({ mode: 'bigint' });
+
+// Schema
+z.bigint().min(-9_223_372_036_854_775_808n).max(9_223_372_036_854_775_807n); // 64 位整数下限和上限
+```
+
+```ts
+singlestore.bigint({ mode: 'bigint', unsigned: true });
+
+// Schema
+z.bigint().min(0).max(18_446_744_073_709_551_615n); // 无符号 64 位整数下限和上限
+```
+
+```ts
+singlestore.year();
+
+// Schema
+z.number().min(1_901).max(2_155).int();
+```
+
+```ts
+singlestore.json();
+
+// Schema
+z.union([z.union([z.string(), z.number(), z.boolean(), z.null()]), z.record(z.any()), z.array(z.any())]);
+```
+

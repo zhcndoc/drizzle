@@ -1,0 +1,48 @@
+# 查询性能
+谈到 **Drizzle** —— 我们是在 SQL 之上的一层轻量 TypeScript 封装，几乎没有任何开销；而要实现真正的零开销，你可以使用我们的预编译语句 API。
+  
+**当你在数据库上运行查询时，会发生以下几件事：**
+- 查询构建器的所有配置都会被拼接成 SQL 字符串
+- 该字符串和参数会被发送到数据库驱动
+- 驱动将 SQL 查询编译为二进制 SQL 可执行格式，并发送到数据库
+
+使用预编译语句时，你只需在 Drizzle ORM 这一侧做一次 SQL 拼接，然后数据库驱动就能够复用预先编译好的二进制 SQL，而不必每次都解析查询。  
+对于大型 SQL 查询来说，它具有极其显著的性能优势。  
+
+不同的数据库驱动以不同方式支持预编译语句，有时 Drizzle ORM 你可以 [**比 better-sqlite3 驱动更快。**](https://twitter.com/_alexblokh/status/1593593415907909634)
+
+## 预处理语句
+
+```typescript copy {3}
+    const db = drizzle(...);
+
+    const prepared = db.select().from(customers).prepare();
+    
+    const res1 = await prepared.execute();
+    const res2 = await prepared.execute();
+    const res3 = await prepared.execute();
+    ```
+
+## 占位符
+每当你需要嵌入一个动态运行时值时，都可以使用 `sql.placeholder(...)` API
+
+```ts copy {6,9-10,15,18}
+    import { sql } from "drizzle-orm";
+
+    const p1 = db
+      .select()
+      .from(customers)
+      .where(eq(customers.id, sql.placeholder('id')))
+      .prepare()
+
+    await p1.execute({ id: 10 }) // SELECT * FROM customers WHERE id = 10
+    await p1.execute({ id: 12 }) // SELECT * FROM customers WHERE id = 12
+
+    const p2 = db
+      .select()
+      .from(customers)
+      .where(sql`lower(${customers.name}) like ${sql.placeholder('name')}`)
+      .prepare();
+
+    await p2.execute({ name: '%an%' }) // SELECT * FROM customers WHERE lower(name) like '%an%'
+    ```

@@ -1,0 +1,378 @@
+import Callout from "@mdx/Callout.astro";
+
+# 自定义类型
+
+自定义类型允许你使用自定义的 SQL 数据类型和 JS/DB 值转换来定义自己的列类型
+
+PostgreSQL 从 `drizzle-orm/pg-core` 中导出 `customType`。
+
+## 示例
+了解 `customType` 定义如何工作的最佳方式，是查看如何使用 Drizzle ORM 中的 `customType` 函数来定义现有数据类型。
+
+#### Integer
+
+```ts
+import { customType, pgTable } from 'drizzle-orm/pg-core';
+
+const customInteger = customType<{ data: number; }>(
+  {
+    dataType() {
+      return 'integer';
+    },
+  },
+);
+
+export const users = pgTable("users", {
+  id: customInteger(),
+});
+```
+
+#### Text
+```ts
+import { customType, pgTable } from 'drizzle-orm/pg-core';
+
+const customText = customType<{ data: string }>({
+  dataType() {
+    return 'text';
+  },
+});
+
+export const users = pgTable('users', {
+  name: customText(),
+});
+```
+
+#### Timestamp
+```ts
+import { customType, pgTable } from 'drizzle-orm/pg-core';
+
+const customTimestamp = customType<{
+  data: Date;
+  driverData: string;
+  config: { withTimezone: boolean; precision?: number };
+  configRequired: false;
+}>({
+  dataType(config) {
+    const precision = typeof config?.precision !== 'undefined' ? ` (${config.precision})` : '';
+    return `timestamp${precision}${config?.withTimezone ? ' with time zone' : ''}`;
+  },
+  fromDriver(value: string): Date {
+    return new Date(value);
+  },
+  codec: (config) => {
+    if (config?.withTimezone) return 'timestamp with time zone';
+
+    return 'timestamp';
+  },
+});
+
+export const users = pgTable('users', {
+  createdAt: customTimestamp('created_at'),
+});
+```
+
+所有类型的用法都与 Drizzle ORM 中定义的函数相同。例如：
+```ts
+const usersTable = pgTable('users', {
+  id: customInteger().primaryKey(),
+  name: customText().notNull(),
+  createdAt: customTimestamp('created_at', { withTimezone: true }).notNull()
+    .default(sql`now()`),
+});
+```
+
+### 方法和泛型类型
+<br/>
+
+| 类型 | 必需 | 描述 |
+|---|---|---|
+| `data` | 是 | 选择/插入后该列对应的 TypeScript 类型。 |
+| `driverData` | 否 | 数据库驱动程序接受的该数据类型。 |
+| `driverOutput` | 否 | **已弃用** — 请改用 codec（如果使用，会绕过 JSON codec）。驱动返回的类型（如果不同于 `driverData`）。 |
+| `jsonData` | 否 | **已弃用** — 请改用 codec（如果使用，会绕过 JSON codec）。聚合为 JSON 时返回的类型。 |
+| `config` | 否 | 用于生成 `dataType` 的配置对象类型（例如 `{ length: number }`）。 |
+| `configRequired` | 否 | 是否必须传入 config 参数。默认 `false`。 |
+| `notNull` | 否 | 如果自定义类型默认应为 `notNull`，则设为 `true`。 |
+| `default` | 否 | 如果自定义类型具有默认值，则设为 `true`。 |
+
+<br/>
+
+| 方法 | 必需 | 描述 |
+|---|---|---|
+| `dataType` | 是 | 定义 SQL 类型字符串。如果数据库数据类型需要额外参数，可以通过 `config` 参数使用它们。 |
+| `toDriver` | 否 | 将输入从代码中期望使用的格式转换为适合驱动程序使用的格式。 |
+| `fromDriver` | 否 | 将驱动返回的数据转换为目标列输出格式。 |
+| `codec` | 否 | 使用哪种驱动 codec（请参见 [Codecs](/docs/codecs) 部分）。 |
+| `fromJson` | 否 | **已弃用** — 请改用 `codec`。将值从 JSON 上下文中转换出来。 |
+| `forJsonSelect` | 否 | **已弃用** — 请改用 `codec`。修改 JSON 函数中的列选择。 |
+
+<br/>
+
+## TS-doc 用于类型定义
+
+你可以查看 `ts-doc` 了解类型、参数定义和示例
+
+<Callout collapsed="Expand details">
+```ts
+interface CustomTypeValues {
+  /**
+   * 自定义列所需的类型，它将推断出正确的类型模型
+   *
+   * 示例：
+   *
+   * 如果你希望列在选择后或插入时为 `string` 类型——使用 `data: string`。例如 `text`、`varchar`
+   *
+   * 如果你希望列在选择后或插入时为 `number` 类型——使用 `data: number`。例如 `integer`
+   */
+  data: unknown;
+  /**
+   * 类型辅助器，表示数据库驱动针对特定数据库数据类型接受的类型
+   */
+  driverData?: unknown;
+  /**
+   * @deprecated 改用 codecs
+   *
+   * 类型辅助器，表示数据库驱动针对特定数据库数据类型返回的类型
+   *
+   * 仅在驱动的输出和输入类型不同的情况下需要
+   *
+   * 默认为 {@link driverData}
+   */
+  driverOutput?: unknown;
+  /**
+   * @deprecated 改用 codecs
+   *
+   * 类型辅助器，表示字段聚合为 JSON 后返回的类型
+   */
+  jsonData?: unknown;
+  /**
+   * 应该使用什么配置类型来生成 {@link CustomTypeParams} 的 `dataType`
+   */
+  config?: Record<string, any>;
+  /**
+   * config 参数是否应为必填
+   * @default false
+   */
+  configRequired?: boolean;
+  /**
+   * 如果你的自定义数据类型默认应为 notNull，可以使用 `notNull: true`
+   *
+   * @example
+   * const customSerial = customType<{ data: number, notNull: true, default: true }>({
+   * 	  dataType() {
+   * 	    return 'serial';
+   *    },
+   * });
+   */
+  notNull?: boolean;
+  /**
+   * 如果你的自定义数据类型有默认值，可以使用 `default: true`
+   *
+   * @example
+   * const customSerial = customType<{ data: number, notNull: true, default: true }>({
+   * 	  dataType() {
+   * 	    return 'serial';
+   *    },
+   * });
+   */
+  default?: boolean;
+}
+interface CustomTypeParams<T extends CustomTypeValues> {
+  /**
+   * 用于迁移的数据库数据类型字符串表示
+   * @example
+   * ```
+   * `jsonb`, `text`
+   * ```
+   *
+   * 如果数据库数据类型需要额外参数，可以从 `config` 参数中获取
+   * @example
+   * ```
+   * `varchar(256)`, `numeric(2,3)`
+   * ```
+   *
+   * 若要使 `config` 具有特定类型，请在 {@link CustomTypeValues} 中使用 config 泛型
+   *
+   * @example
+   * 使用示例
+   * ```
+   *   dataType() {
+   *     return 'boolean';
+   *   },
+   * ```
+   * 或
+   * ```
+   *   dataType(config) {
+   * 	   return typeof config.length !== 'undefined' ? `varchar(${config.length})` : `varchar`;
+   * 	 }
+   * ```
+   */
+  dataType: (config: T['config'] | (Equal<T['configRequired'], true> extends true ? never : undefined)) => string;
+  /**
+   * 可选映射函数，用于将代码中期望使用的输入格式转换为适合驱动的格式
+   * @example
+   * 例如，使用 jsonb 时，我们需要在写入数据库前将 JS/TS 对象映射为字符串
+   * ```
+   * toDriver(value: TData): string {
+   * 	 return JSON.stringify(value);
+   * }
+   * ```
+   */
+  toDriver?: (value: T['data']) => T['driverData'] | SQL;
+  /**
+   * 可选映射函数，用于将驱动返回的数据转换为所需列的输出格式
+   * @example
+   * 例如，使用 timestamp 时，我们需要将字符串形式的 Date 表示映射为 JS Date
+   * ```
+   * fromDriver(value: string): Date {
+   * 	return new Date(value);
+   * }
+   * ```
+   *
+   * 这将使返回的数据从：
+   * ```
+   * {
+   * 	customField: "2025-04-07T03:25:16.635Z";
+   * }
+   * ```
+   * 变为：
+   * ```
+   * {
+   * 	customField: new Date("2025-04-07T03:25:16.635Z");
+   * }
+   * ```
+   */
+  fromDriver?: (value: 'driverOutput' extends keyof T ? T['driverOutput'] : T['driverData']) => T['data'];
+  /**
+   * @deprecated 改用 codecs；如果使用会绕过 JSON codecs
+   *
+   * 可选映射函数，用于将转换后用于数据库 JSON 的数据转换为所需格式
+   *
+   * 由 [关系查询](https://orm.drizzle.team/docs/rqb) 使用
+   *
+   * 默认为 {@link fromDriver} 函数
+   * @example
+   * 例如，通过 [RQB](https://orm.drizzle.team/docs/rqb) 或 JSON 函数查询 bigint 列时，结果字段将以字符串形式返回，而不是常规查询中的 bigint
+   * 为了处理这种情况，我们需要一个单独的函数来处理该字段的映射：
+   * ```
+   * fromJson(value: string): bigint {
+   * 	return BigInt(value);
+   * },
+   * ```
+   *
+   * 这将使返回的数据从：
+   * ```
+   * {
+   * 	customField: "5044565289845416380";
+   * }
+   * ```
+   * 变为：
+   * ```
+   * {
+   * 	customField: 5044565289845416380n;
+   * }
+   * ```
+   */
+  fromJson?: (value: T['jsonData']) => T['data'];
+  /**
+   * @deprecated 改用 codecs；如果使用会绕过 JSON codecs
+   *
+   * 可选选择修饰函数，用于修改 JSON 函数内列的选择方式
+   *
+   * 这种场景可能需要的额外映射可通过 {@link fromJson} 函数处理
+   *
+   * 由 [关系查询](https://orm.drizzle.team/docs/rqb) 使用
+   *
+   * 以下类型默认会被转换为 text：`bytea`、`geometry`、`timestamp`、`numeric`、`bigint`
+   * @example
+   * 例如，使用 bigint 时，我们需要将字段转换为 text 以保持数据完整性
+   * ```
+   * forJsonSelect(identifier: SQL, sql: SQLGenerator, arrayDimensions?: number): SQL {
+   * 	return sql`${identifier}::text`
+   * },
+   * ```
+   *
+   * 这将把查询从：
+   * ```
+   * SELECT
+   * 	row_to_json("t".*)
+   * 	FROM
+   * 	(
+   * 		SELECT
+   * 		"table"."custom_bigint" AS "bigint"
+   * 		FROM
+   * 		"table"
+   * 	) AS "t"
+   * ```
+   * 变为：
+   * ```
+   * SELECT
+   * 	row_to_json("t".*)
+   * 	FROM
+   * 	(
+   * 		SELECT
+   * 		"table"."custom_bigint"::text AS "bigint"
+   * 		FROM
+   * 		"table"
+   * 	) AS "t"
+   * ```
+   *
+   * 查询对象返回的结果将从：
+   * ```
+   * {
+   * 	bigint: 5044565289845416000; // 由于直接转换为 JSON 格式导致部分数据丢失
+   * }
+   * ```
+   * 变为：
+   * ```
+   * {
+   * 	bigint: "5044565289845416380"; // 在转为 JSON 之前先将字段转换为 text，因此数据得以保留
+   * }
+   * ```
+   */
+  forJsonSelect?: (identifier: SQL, sql: SQLGenerator, arrayDimensions?: number) => SQL;
+  /**
+   * 选择此列将使用哪种列类型 codec
+   */
+  codec?: PostgresColumnType | undefined | ((config: T['config'] | (Equal<T['configRequired'], true> extends true ? never : undefined)) => PostgresColumnType | undefined);
+}
+```
+</Callout>
+
+## 转换层和执行顺序
+
+自定义类型有两个转换层：列级别（`toDriver`/`fromDriver`）和驱动级别（[codecs](/docs/codecs)）。两者都按特定顺序运行。你可以在 [这里](/docs/codecs#how-codecs-work-in-customtype) 了解更多关于如何在 customTypes 中使用 codecs 的信息
+
+<br/>
+
+- **写入：**（Insert/Update）先执行 `toDriver` → 再执行 codec 的 `normalizeParam`
+- **读取：**（Select）先执行 codec 的 `normalize` → 再执行 `fromDriver`
+- 如果没有设置 codec，则只运行 `toDriver`/`fromDriver`
+- 如果没有设置 `toDriver`/`fromDriver`，则只运行 codecs（如果已定义）
+- 如果两者都未设置，值将原样通过
+
+<br/>
+
+当你需要驱动级别的规范化 AND 列级别的转换时，请同时使用这两者（`toDriver`/`fromDriver` 和 `codecs`）：
+
+```ts
+// 数据库中存储为 bigint，驱动返回字符串，codec 将其转换为 BigInt，
+// 但你希望在应用代码中得到 number
+const myColumn = customType<{ data: number; driverData: string }>({
+  dataType() { return 'bigint'; },
+  codec: 'bigint',           // driver "123" → BigInt(123n)
+  fromDriver(value) {        // BigInt(123n) → Number(123)
+    return Number(value);
+  },
+});
+```
+
+但通常你可以通过选择正确的 codec 变体来简化：
+
+```ts
+// 相同结果，不需要 fromDriver
+const myColumn = customType<{ data: number; driverData: string }>({
+  dataType() { return 'bigint'; },
+  codec: 'bigint:number',    // driver "123" → Number(123) 直接转换
+});
+```

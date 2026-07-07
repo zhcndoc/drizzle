@@ -1,0 +1,26 @@
+import Callout from '@mdx/Callout.astro';
+
+# 序列
+
+PostgreSQL 中的序列是用于生成唯一标识符的特殊单行表，通常用于自增主键值。它们提供了一种线程安全的方式，用于在多个会话之间生成唯一的连续值。
+
+```ts
+import { pgSchema, pgSequence } from "drizzle-orm/pg-core";
+
+// 未指定参数
+export const customSequence = pgSequence("name");
+
+// 带参数的序列
+export const customSequence = pgSequence("name", {
+      startWith: 100,
+      maxValue: 10000,
+      minValue: 100,
+      cycle: true,
+      cache: 10,
+      increment: 2
+});
+
+// 自定义模式中的序列
+export const customSchema = pgSchema('custom_schema');
+export const customSequence = customSchema.sequence("name");
+```

@@ -1,0 +1,79 @@
+import Callout from '@mdx/Callout.astro';
+
+# 动态查询构建
+
+默认情况下，由于 Drizzle 中所有查询构建器都尽量遵循 SQL 语法，你只能调用大多数方法一次。
+例如，在 `SELECT` 语句中可能只有一个 `WHERE` 子句，所以你只能调用一次 `.where()`：
+
+```ts
+const query = db
+	.select()
+	.from(users)
+	.where(eq(users.id, 1))
+	.where(eq(users.name, 'John')); // ❌ 类型错误 - where() 只能调用一次
+```
+
+在之前的 ORM 版本中，当没有实现这种限制时，这个例子尤其会让很多用户感到困惑，因为他们期望查询构建器会把多次 `.where()` 调用“合并”为一个条件。
+
+这种行为对于常规查询构建很有用，也就是当你一次性创建整个查询时。
+但是，当你想要动态地构建查询时，这就会成为一个问题，也就是当你有一个接收查询构建器并对其进行增强的共享函数时。
+为了解决这个问题，Drizzle 为查询构建器提供了一种特殊的“动态”模式，它移除了“方法只能调用一次”的限制。
+要启用它，你需要在查询构建器上调用 `.$dynamic()`。
+
+我们来看一下它是如何工作的：通过实现一个简单的 `withPagination` 函数，根据提供的页码和可选的页面大小为查询添加 `LIMIT` 和 `OFFSET` 子句：
+
+```ts
+function withPagination<T extends SQLiteSelect>(
+	qb: T,
+	page: number = 1,
+	pageSize: number = 10,
+) {
+	return qb.limit(pageSize).offset((page - 1) * pageSize);
+}
+
+const query = db.select().from(users).where(eq(users.id, 1));
+withPagination(query, 1); // ❌ 类型错误 - 查询构建器不处于动态模式
+
+const dynamicQuery = query.$dynamic();
+withPagination(dynamicQuery, 1); // ✅ OK
+```
+
+请注意，`withPagination` 函数是泛型的，这使你可以修改其中查询构建器的结果类型，例如通过添加连接：
+
+```ts
+function withFriends<T extends SQLiteSelect>(qb: T) {
+	return qb.leftJoin(friends, eq(friends.userId, users.id));
+}
+
+let query = db.select().from(users).where(eq(users.id, 1)).$dynamic();
+query = withFriends(query);
+```
+
+之所以可以这样，是因为 `SQLiteSelect` 和其他类似类型被专门设计用于动态查询构建。它们只能在动态模式下使用。
+
+以下是可在动态查询构建中作为泛型参数使用的所有类型列表：
+
+| Query  | Type                              |
+|:--------|:-----------------------------------|
+| Select | `SQLiteSelect` / `SQLiteSelectQueryBuilder` |
+| Insert | `SQLiteInsert`                        |
+| Update | `SQLiteUpdate`                        |
+| Delete | `SQLiteDelete`                        |
+
+<Callout type='info'>
+	这些 `...QueryBuilder` 类型用于 [独立查询构建器
+	实例](/docs/sqlite/goodies#standalone-query-builder)。DB 查询构建器是它们的
+	子类，因此你也可以将它们用于此处。
+
+    ```ts
+    	import { QueryBuilder } from 'drizzle-orm/sqlite-core';
+
+    	function withFriends<T extends SQLiteSelectQueryBuilder>(qb: T) {
+    		return qb.leftJoin(friends, eq(friends.userId, users.id));
+    	}
+
+    	const qb = new QueryBuilder();
+    	let query = qb.select().from(users).where(eq(users.id, 1)).$dynamic();
+    	query = withFriends(query);
+    ```
+</Callout>

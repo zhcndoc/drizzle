@@ -7,12 +7,12 @@ import WhatsNextPostgres from "@mdx/WhatsNextPostgres.astro";
 import Breadcrumbs from '@mdx/Breadcrumbs.astro';
 import FileStructure from '@mdx/get-started/FileStructure.mdx';
 import InstallPackages from '@mdx/get-started/InstallPackages.mdx';
-import SetupConfig from '@mdx/get-started/SetupConfig.mdx';
+import SetupConfig from '@mdx/get-started/sqlite/SetupConfig.mdx';
 import TransferCode from '@mdx/get-started/TransferCode.mdx';
 import QueryDatabase from '@mdx/get-started/QueryDatabase.mdx';
 import QueryDatabaseUpdated from '@mdx/get-started/QueryDatabaseUpdated.mdx';
 import RunFile from '@mdx/get-started/RunFile.mdx';
-import ApplyChanges from '@mdx/get-started/ApplyChanges.mdx';
+import ApplyChanges from '@mdx/get-started/sqlite/ApplyChanges.mdx';
 import SetupEnv from '@mdx/get-started/SetupEnv.mdx';
 import CreateTable from '@mdx/get-started/sqlite/CreateTable.mdx';
 import ConnectLibsql from '@mdx/get-started/sqlite/ConnectLibsql.mdx';
@@ -22,14 +22,14 @@ import ConnectLibsql from '@mdx/get-started/sqlite/ConnectLibsql.mdx';
 # 开始使用 Drizzle 和 SQLite
 
 <Prerequisites>  
-  - **dotenv** - 管理环境变量的包 - [阅读这里](https://www.npmjs.com/package/dotenv)
-  - **tsx** - 运行 TypeScript 文件的包 - [阅读这里](https://tsx.is/)
-  - **libsql** - 针对低查询延迟优化的 SQLite 分支，使其适合全球应用 - [阅读这里](https://docs.turso.tech/libsql)
+  - **dotenv** - 用于管理环境变量的包 - [在这里阅读](https://www.npmjs.com/package/dotenv)
+  - **tsx** - 用于运行 TypeScript 文件的包 - [在这里阅读](https://tsx.hirok.io/)
+  - **libsql** - SQLite 的一个分支，针对低查询延迟进行了优化，适合全球应用 - [在这里阅读](https://docs.turso.tech/libsql)
 </Prerequisites>
 
-Drizzle 对 `libsql` 和 `better-sqlite3` 驱动程序的 SQLite 连接提供原生支持。
+Drizzle 原生支持使用 `libsql`、`node:sqlite` 和 `better-sqlite3` 驱动程序连接 SQLite。
 
-我们将在这个入门示例中使用 `libsql`。但是如果想了解更多连接 SQLite 的方式，请查看我们的 [SQLite 连接](/docs/get-started-sqlite) 页面。
+在这个入门示例中，我们将使用 `libsql`。但如果你想了解更多连接 SQLite 的方式，请查看我们的 [SQLite 连接](/docs/sqlite/get-started-sqlite) 页面 
 
 <FileStructure />
 

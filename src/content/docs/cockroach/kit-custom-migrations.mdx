@@ -1,0 +1,47 @@
+import CodeTab from '@mdx/CodeTab.astro';
+import CodeTabs from '@mdx/CodeTabs.astro';
+import Section from '@mdx/Section.astro';
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
+import Callout from '@mdx/Callout.astro';
+import Npm from '@mdx/Npm.astro';
+import Npx from '@mdx/Npx.astro';
+import Steps from '@mdx/Steps.astro';
+import Prerequisites from "@mdx/Prerequisites.astro"
+
+# 使用 Drizzle Kit 进行迁移
+<Prerequisites>
+- 开始使用 Drizzle 和 `drizzle-kit` - [点击这里](/docs/cockroach/get-started)
+- Drizzle schema 基础 - [点击这里](/docs/cockroach/sql-schema-declaration)
+- 数据库连接基础 - [点击这里](/docs/cockroach/connect-overview)
+- Drizzle 迁移基础 - [点击这里](/docs/cockroach/migrations)
+- Drizzle Kit [概览](/docs/cockroach/kit-overview) 和 [配置文件](/docs/cockroach/drizzle-config-file)
+- `drizzle-kit generate` 命令 - [点击这里](/docs/cockroach/drizzle-kit-generate)
+- `drizzle-kit migrate` 命令 - [点击这里](/docs/cockroach/drizzle-kit-migrate)
+</Prerequisites>
+
+Drizzle 允许你生成空的迁移文件，用于编写你自己的自定义 SQL 迁移，适用于目前 Drizzle Kit 不支持的 DDL 变更或数据初始化，然后你可以使用 [`drizzle-kit migrate`](/docs/cockroach/drizzle-kit-migrate) 命令运行它们。
+
+```shell
+drizzle-kit generate --custom --name=seed-users
+```
+<Section>
+```plaintext {4}
+📦 <project root>
+ ├ 📂 drizzle
+ │ ├ 📂 20242409125510_init_sql
+ │ └ 📂 20242409135510_seed-users
+ ├ 📂 src
+ └ …
+```
+```sql
+-- ./drizzle/20242409135510_seed-users.sql
+
+INSERT INTO "users" ("name") VALUES('Dan');
+INSERT INTO "users" ("name") VALUES('Andrew');
+INSERT INTO "users" ("name") VALUES('Dandrew');
+```
+</Section>
+
+### 运行 JavaScript 和 TypeScript 迁移
+我们将在即将发布的版本中添加运行自定义 JavaScript 和 TypeScript 迁移/数据初始化脚本的能力，你可以关注 [github discussion](https://github.com/drizzle-team/drizzle-orm/discussions/2832)。

@@ -1,0 +1,127 @@
+import Section from '@mdx/Section.astro';
+
+# 别名
+Drizzle 支持对表、列、子查询和 CTE 进行别名设置——这直接映射到 SQL 的 `AS` 关键字。
+
+### 表别名
+你可以使用 `alias` 函数为表设置别名。当你需要多次连接同一张表时，这很有用，
+例如在员工及其经理这样的自引用关系中：
+
+<Section>
+```ts copy {9}
+import { alias, cockroachTable, int4, string } from "drizzle-orm/cockroach-core";
+
+const employees = cockroachTable("employees", {
+  id: int4().primaryKey(),
+  name: string(),
+  managerId: int4("manager_id"),
+});
+
+const manager = alias(employees, "manager");
+
+await db.select({
+  employeeName: employees.name,
+  managerName: manager.name,
+})
+  .from(employees)
+  .leftJoin(manager, eq(employees.managerId, manager.id));
+```
+```sql
+select "employees"."name", "manager"."name"
+from "employees"
+left join "employees" as "manager" on "employees"."manager_id" = "manager"."id";
+```
+</Section>
+
+### 列别名
+你可以在列和 `sql` 表达式上使用 `.as()` 方法为列设置别名。
+这会直接映射到 SQL 的 `AS` 关键字，并让你控制查询结果中列的名称：
+
+<Section>
+```ts {3}
+const result = await db.select({
+  id: users.id,
+  lowerName: users.name.as("lower_name"),
+}).from(users);
+```
+```sql
+select "id", "name" as "lower_name" from "users";
+```
+</Section>
+
+你也可以将 `.as()` 用于 `sql` 表达式：
+
+<Section>
+```ts {3}
+const result = await db.select({
+  id: users.id,
+  lowerName: sql<string>`lower(${users.name})`.as("lower_name"),
+}).from(users);
+```
+```sql
+select "id", lower("name") as "lower_name" from "users";
+```
+</Section>
+
+### 子查询别名
+当把子查询作为数据源使用时，你必须使用 `.as()` 提供一个别名。
+这样你就可以在外层查询中引用该子查询的列：
+
+<Section>
+```ts
+const sq = db.select().from(users).where(eq(users.id, 42)).as('sq');
+
+const result = await db.select().from(sq);
+```
+```sql
+select "id", "name", "age" from (select "id", "name", "age" from "users" where "users"."id" = 42) "sq";
+```
+</Section>
+
+子查询也可以用于连接中：
+
+<Section>
+```ts
+const sq = db.select().from(users).where(eq(users.id, 42)).as('sq');
+
+const result = await db.select().from(users).leftJoin(sq, eq(users.id, sq.id));
+```
+```sql
+select "users"."id", "users"."name", "users"."age", "sq"."id", "sq"."name", "sq"."age"
+  from "users"
+  left join (select "id", "name", "age" from "users" where "users"."id" = 42) "sq"
+    on "users"."id" = "sq"."id";
+```
+</Section>
+
+### CTE 别名
+公共表表达式（CTE）使用 `db.$with('alias')` 进行别名设置。
+该别名名称用于在主查询中引用 CTE：
+
+<Section>
+```ts
+const sq = db.$with('sq').as(db.select().from(users).where(eq(users.id, 42)));
+
+const result = await db.with(sq).select().from(sq);
+```
+```sql
+with "sq" as (select "id", "name", "age" from "users" where "users"."id" = 42)
+select "id", "name", "age" from "sq";
+```
+</Section>
+
+当在 CTE 中使用 `sql` 表达式时，你需要用 `.as()` 为它们设置别名，才能在外层查询中引用它们：
+
+<Section>
+```ts
+const sq = db.$with('sq').as(db.select({
+  name: sql<string>`upper(${users.name})`.as('name'),
+}).from(users));
+
+const result = await db.with(sq).select({ name: sq.name }).from(sq);
+```
+```sql
+with "sq" as (select upper("name") as "name" from "users")
+select "name" from "sq";
+```
+</Section>

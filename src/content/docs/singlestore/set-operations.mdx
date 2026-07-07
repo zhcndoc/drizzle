@@ -1,0 +1,274 @@
+import CodeTabs from '@mdx/CodeTabs.astro';
+import CodeTab from '@mdx/CodeTab.astro';
+import Callout from '@mdx/Callout.astro';
+
+# 集合操作
+
+SQL 集合操作将多个查询块的结果合并为一个结果。  
+SQL 标准定义了以下六种集合操作：`UNION`、`INTERSECT`、`EXCEPT`、`UNION ALL`、`INTERSECT ALL`、`EXCEPT ALL`。
+
+### 联合
+将两个查询块中的所有结果合并为一个结果，并省略任何重复项。
+
+获取 customers 和 users 表中的所有名称，不重复。
+
+<CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
+	<CodeTab>
+	```typescript copy
+    import { union } from 'drizzle-orm/singlestore-core'
+    import { users, customers } from './schema'
+
+    const allNamesForUserQuery = db.select({ name: users.name }).from(users);
+
+    const result = await union(
+		allNamesForUserQuery,
+		db.select({ name: customers.name }).from(customers)
+	).limit(10);
+    ```
+    ```sql
+    (select `name` from `sellers`)
+    union
+    (select `name` from `customers`)
+    limit ?
+    ```
+	</CodeTab>
+    <CodeTab>
+    ```ts copy
+    import { users, customers } from './schema'
+
+    const result = await db
+      .select({ name: users.name })
+      .from(users)
+      .union(db.select({ name: customers.name }).from(customers))
+      .limit(10);
+    ```
+    ```sql
+    (select `name` from `sellers`)
+    union
+    (select `name` from `customers`)
+    limit ?
+    ```
+    </CodeTab>
+    <CodeTab>
+	```typescript copy
+    import { int, singlestoreTable, text, varchar } from "drizzle-orm/singlestore-core";
+
+    const users = singlestoreTable('sellers', {
+        id: int('id').primaryKey(),
+        name: varchar('name', { length: 256 }).notNull(),
+        address: text('address'),
+    });
+    
+    const customers = singlestoreTable('customers', {
+        id: int('id').primaryKey(),
+        name: varchar('name', { length: 256 }).notNull(),
+        city: text('city'),
+        email: varchar('email', { length: 256 }).notNull()
+    });
+    ```
+    </CodeTab>
+  </CodeTabs>
+
+### 联合全部
+将两个查询块中的所有结果合并为一个结果，包含重复项。
+
+让我们考虑这样一个场景：你有两张表，一张表示在线销售，另一张表示门店销售。在这种情况下，你希望将这两张表中的数据合并为一个结果集。由于可能存在重复交易，你希望保留所有记录，而不消除重复项。
+
+<Callout type='warning'>
+  在 UNION ALL 与 ORDER BY 行为上的表现与 MySQL 不一致：SingleStore 对 UNION ALL 后跟 ORDER BY 命令的解析方式与 MySQL 不同。在 SingleStore 中，以下查询是有效的。在 MySQL 中，它是无效的。
+  </Callout>
+  <CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
+	<CodeTab>
+	```typescript copy
+    import { unionAll } from 'drizzle-orm/singlestore-core'
+    import { onlineSales, inStoreSales } from './schema'
+
+    const onlineTransactions = db.select({ transaction: onlineSales.transactionId }).from(onlineSales);
+    const inStoreTransactions = db.select({ transaction: inStoreSales.transactionId }).from(inStoreSales);
+
+    const result = await unionAll(onlineTransactions, inStoreTransactions);
+    ```
+    ```sql
+    select `transaction_id` from `online_sales`
+    union all
+    select `transaction_id` from `in_store_sales`
+    ```
+    </CodeTab>
+    <CodeTab>
+    ```ts copy
+    import { onlineSales, inStoreSales } from './schema'
+
+    const result = await db
+      .select({ transaction: onlineSales.transactionId })
+      .from(onlineSales)
+      .unionAll(
+        db.select({ transaction: inStoreSales.transactionId }).from(inStoreSales)
+      );
+    ```
+    ```sql
+    (select `transaction_id` from `online_sales`)
+    union all 
+    (select `transaction_id` from `in_store_sales`)
+    ```
+	</CodeTab>
+    <CodeTab>
+	```typescript copy
+    import { int, singlestoreTable, text, timestamp, varchar } from "drizzle-orm/singlestore-core";
+
+    const onlineSales = singlestoreTable('online_sales', {
+        transactionId: int('transaction_id').primaryKey(),
+        productId: int('product_id').unique(),
+        quantitySold: int('quantity_sold'),
+        saleDate: timestamp('sale_date', { mode: 'date' }),
+    });
+    
+    const inStoreSales = singlestoreTable('in_store_sales', {
+        transactionId: int('transaction_id').primaryKey(),
+        productId: int('product_id').unique(),
+        quantitySold: int('quantity_sold'),
+        saleDate: timestamp('sale_date', { mode: 'date' }),
+    });
+    ```
+    </CodeTab>
+  </CodeTabs>
+
+### 交集
+仅组合两个查询块结果中共有的那些行，并省略任何重复项。
+
+假设你有两个表，用于存储学生课程选修信息。  
+你想找出两个不同院系之间共有的课程，  
+但你希望得到不同的课程名称，并且你不关心统计同一学生对同一课程的多次选修。
+
+在这种情况下，你想找出两个院系之间共有的课程，但即使同一院系的多个学生选修了同一课程，你也不希望  
+将同一课程重复计数。
+
+<CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
+	<CodeTab>
+	```typescript copy
+    import { intersect } from 'drizzle-orm/singlestore-core'
+    import { depA, depB } from './schema'
+
+    const departmentACourses = db.select({ courseName: depA.courseName }).from(depA);
+    const departmentBCourses = db.select({ courseName: depB.courseName }).from(depB);
+
+    const result = await intersect(departmentACourses, departmentBCourses);
+    ```
+    ```sql
+    select `projects_name` from `department_a_projects`
+    intersect
+    select `projects_name` from `department_b_projects`
+    ```
+	</CodeTab>
+    <CodeTab>
+    ```typescript copy
+    import { depA, depB } from './schema'
+
+    const result = await db
+      .select({ courseName: depA.courseName })
+      .from(depA)
+      .intersect(db.select({ courseName: depB.courseName }).from(depB));
+    ```
+    ```sql
+    select `projects_name` from `department_a_projects`
+    intersect
+    select `projects_name` from `department_b_projects`
+    ```
+    </CodeTab>
+    <CodeTab>
+	```typescript copy
+    import { int, singlestoreTable, varchar } from "drizzle-orm/singlestore-core";
+
+    const depA = singlestoreTable('department_a_courses', {
+        studentId: int('student_id'),
+        courseName: varchar('course_name', { length: 256 }).notNull(),
+    });
+    
+    const depB = singlestoreTable('department_b_courses', {
+        studentId: int('student_id'),
+        courseName: varchar('course_name', { length: 256 }).notNull(),
+    });
+    ```
+    </CodeTab>
+  </CodeTabs>
+
+### 交集全部
+仅组合两个查询块结果中共有的那些行，保留重复项。
+
+让我们考虑这样一个场景：你有两个包含客户订单数据的表，并且你想
+识别同时被普通客户和 VIP 客户下单的产品。在这种情况下，
+你希望跟踪每种产品的数量，即使它被不同客户多次下单也是如此。
+
+在这个场景中，你想找出同时被普通客户和 VIP 客户下单的产品，
+但你希望保留数量信息，即使同一产品被不同客户多次下单也是如此。
+
+SingleStore 不支持
+
+### Except
+对于两个查询块 A 和 B，返回 A 中所有不在 B 中出现的结果，并忽略任何重复项。
+
+假设你有两个表，存储了员工项目分配的信息。  
+你想找出某个部门独有的项目，  
+以及不与另一个部门共享的项目，并排除重复项。
+
+在这个场景中，你希望识别出某个部门独有的项目，并且
+不与另一个部门共享。你不希望统计同一个项目
+多次，即使同一部门中的多个员工被分配到了它。
+
+<CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
+	<CodeTab>
+	```typescript copy
+    import { except } from 'drizzle-orm/singlestore-core'
+    import { depA, depB } from './schema'
+
+    const departmentACourses = db.select({ courseName: depA.projectsName }).from(depA);
+    const departmentBCourses = db.select({ courseName: depB.projectsName }).from(depB);
+
+    const result = await except(departmentACourses, departmentBCourses);
+    ```
+    ```sql
+    select `projects_name` from `department_a_projects`
+    except
+    select `projects_name` from `department_b_projects`
+    ```
+	</CodeTab>
+    <CodeTab>
+    ```ts copy
+    import { depA, depB } from './schema'
+
+    const result = await db
+        .select({ courseName: depA.projectsName })
+        .from(depA)
+        .except(db.select({ courseName: depB.projectsName }).from(depB));
+    ```
+    ```sql
+    select `projects_name` from `department_a_projects`
+    except
+    select `projects_name` from `department_b_projects`
+    ```
+    </CodeTab>
+    <CodeTab>
+	```typescript 
+    import { int, singlestoreTable, varchar } from "drizzle-orm/singlestore-core";
+
+    const depA = singlestoreTable('department_a_projects', {
+        employeeId: int('employee_id'),
+        projectsName: varchar('projects_name', { length: 256 }).notNull(),
+    });
+    
+    const depB = singlestoreTable('department_b_projects', {
+        employeeId: int('employee_id'),
+        projectsName: varchar('projects_name', { length: 256 }).notNull(),
+    });
+    ```
+    </CodeTab>
+  </CodeTabs>
+
+### Except All
+对于两个查询块 A 和 B，返回 A 中所有不同时也存在于 B 中的结果，并保留重复项。
+
+让我们考虑一个场景：你有两个包含客户订单数据的表，并且你想识别仅由普通客户（不包括 VIP 客户）订购的产品。  
+在这种情况下，即使某个产品被不同的普通客户多次订购，你也希望跟踪每种产品的数量。
+
+在这个场景中，你想找出那些仅由普通客户订购、而未被 VIP 客户订购的产品。你希望保留数量信息，即使同一产品被不同的普通客户多次订购。
+
+SingleStore 不支持

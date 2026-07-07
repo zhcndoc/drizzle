@@ -11,8 +11,8 @@ import Npm from '@mdx/Npm.astro';
 </Callout>
 
 <Npm>
-drizzle-orm@beta
-drizzle-kit@beta -D
+drizzle-orm@rc
+drizzle-kit@rc -D
 </Npm>
 
 <br/>
@@ -567,8 +567,8 @@ CREATE TABLE "table" (
 ### time
 `time` `timetz` `time with timezone` `time without timezone`  
 
-`TIME` 数据类型存储 UTC 时间（时分秒）。  
-`TIMETZ` 数据类型存储带有时区偏差的 UTC 时间。
+`TIME` 数据类型存储 UTC 时间（时、分、秒）。  
+`TIMETZ` 数据类型存储带有时区偏移的 UTC 时间。
 
 更多信息请参考 CockroachDB 官方 **[文档.](https://www.cockroachlabs.com/docs/stable/time)**
 
@@ -697,7 +697,7 @@ CREATE TABLE "table" (
 ## ---
 
 ### enum 
-`enum` `enumerated types`  
+`enum` `枚举类型`  
 枚举（enum）类型是包含静态、有序值集合的数据类型。  
 它们等同于多种编程语言支持的枚举类型。  
 示例包括一周的星期几，或某项数据的一组状态值。

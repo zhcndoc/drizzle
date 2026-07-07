@@ -1,0 +1,386 @@
+import Callout from '@mdx/Callout.astro';
+import SimpleLinkCards from '@mdx/SimpleLinkCards.astro';
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Section from '@mdx/Section.astro';
+import Flex from "@mdx/Flex.astro"
+import LinksList from "@mdx/LinksList.astro"
+
+# Drizzle 模式
+
+Drizzle 允许你使用底层数据库支持的各种模型和属性，在 TypeScript 中定义一个模式。  
+当你定义模式时，它会作为未来在查询（使用 Drizzle-ORM）和迁移（使用 Drizzle-Kit）中修改的事实来源。
+
+<Callout> 
+如果你在迁移流程中使用 Drizzle-Kit，请务必导出模式文件中定义的所有模型，这样 Drizzle-Kit 才能导入它们，并在迁移差异比对过程中使用它们。 
+</Callout>
+
+<CodeTabs items={["使用导入", "使用回调", "使用 import *"]}>
+```ts
+import { int, mysqlTable, varchar } from "drizzle-orm/mysql-core";
+
+export const usersTable = mysqlTable("users", {
+  id: int().primaryKey().autoincrement(),
+  name: varchar({ length: 256 }).notNull(),
+  age: int().notNull(),
+  email: varchar({ length: 256 }).notNull().unique(),
+});
+```
+```ts
+import { mysqlTable } from "drizzle-orm/mysql-core";
+
+export const usersTable = mysqlTable("users", (t) => ({
+  id: t.int().primaryKey().autoincrement(),
+  name: t.varchar({ length: 256 }).notNull(),
+  age: t.int().notNull(),
+  email: t.varchar({ length: 256 }).notNull().unique(),
+}));
+```
+```ts
+import * as t from "drizzle-orm/mysql-core";
+
+export const usersTable = t.mysqlTable("users", {
+  id: t.int().primaryKey().autoincrement(),
+  name: t.varchar({ length: 256 }).notNull(),
+  age: t.int().notNull(),
+  email: t.varchar({ length: 256 }).notNull().unique(),
+});
+```
+</CodeTabs>
+
+## 组织你的 schema 文件 
+你可以直接在 TypeScript 中声明你的 SQL schema，使用单个 `schema.ts` 文件，
+也可以把它们分散到各处——随你喜欢，完全自由！
+
+#### 在 1 个文件中定义 Schema
+使用 Drizzle 声明 schema 最常见的方式，是把所有表都放在一个 `schema.ts` 文件中。
+
+> 注意：你可以把 schema 文件命名为任何你喜欢的名字。例如，它可以叫 `models.ts`，或者其他名称。
+
+如果你定义的表模型不多，或者你希望把它们都放在同一个文件里，这种方式会很适合。
+
+示例：
+```plaintext
+📦 <project root>
+ └ 📂 src
+    └ 📂 db
+       └ 📜 schema.ts
+```
+
+在 `drizzle.config.ts` 文件中，你需要指定 schema 文件的路径。使用这个配置后，Drizzle 会
+从 `schema.ts` 文件中读取内容，并在生成迁移时使用这些信息。有关 `drizzle.config.ts` 文件
+以及 Drizzle 迁移的更多信息，请查看：[link](/docs/mysql/drizzle-config-file)
+```ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: 'mysql',
+  schema: './src/db/schema.ts'
+})
+```
+
+#### 在多个文件中定义 Schema
+
+你可以把 Drizzle 模型——例如表、枚举、序列等——放在你喜欢的任意文件中，而不只是一个文件里。
+你必须确保的一点是：从这些文件中导出所有模型，这样 Drizzle kit 才能导入
+它们并在迁移中使用。
+
+一种使用场景是把每张表拆分到各自的文件中。
+```plaintext
+📦 <project root>
+ └ 📂 src
+    └ 📂 db
+       └ 📂 schema
+          ├ 📜 users.ts
+          ├ 📜 countries.ts
+          ├ 📜 cities.ts
+          ├ 📜 products.ts
+          ├ 📜 clients.ts
+          └ 📜 etc.ts
+```
+
+在 `drizzle.config.ts` 文件中，你需要指定 schema 文件夹的路径。使用这个配置后，Drizzle 会
+从 `schema` 文件夹中递归读取所有文件，并获取其中所有的 drizzle 表。有关 `drizzle.config.ts` 文件
+以及 Drizzle 迁移的更多信息，请查看：[link](/docs/mysql/drizzle-config-file)
+
+```ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: 'mysql',
+  schema: './src/db/schema'
+})
+```
+
+你也可以按你喜欢的任何方式进行分组，比如创建用户相关表、消息相关表、产品相关表等分组。 
+```plaintext
+📦 <project root>
+ └ 📂 src
+    └ 📂 db
+       └ 📂 schema
+          ├ 📜 users.ts
+          ├ 📜 messaging.ts
+          └ 📜 products.ts
+```
+
+## 构建你的数据模式
+
+Drizzle schema 由你正在使用的数据库中的多种模型类型组成。使用 drizzle，你可以指定：
+- 表，以及列、约束等
+- Schema，在 MySQL 中等同于数据库
+- 枚举
+- 视图
+- 等等
+
+让我们逐一来看一下，检查 schema 应该如何用 drizzle 定义
+
+#### **表和列声明** 
+
+Drizzle 中的表至少应该定义 1 个列，这与数据库中的要求相同。有一件重要的事情需要知道，
+在 drizzle 中并不存在通用的表对象。你需要选择你正在使用的方言，比如 PostgreSQL、MySQL、SQLite 等。
+
+![](@/assets/images/table-structure.svg)
+
+```ts copy
+import { mysqlTable, int } from "drizzle-orm/mysql-core"
+
+export const users = mysqlTable('users', {
+  id: int()
+});
+```
+
+默认情况下，Drizzle 会在数据库查询中使用 TypeScript 的键名作为列名。 
+因此，上面示例中的 schema 和查询会生成如下所示的 SQL 查询
+
+<Callout>
+本示例使用了一个 db 对象，其初始化内容不在本文档的这一部分中介绍。要了解如何连接数据库，请参阅 [连接文档](/docs/mysql/get-started-mysql)
+</Callout>
+
+\
+**TypeScript 键 = 数据库键**
+<Section>
+```ts
+// schema.ts
+import { int, mysqlTable, varchar } from "drizzle-orm/mysql-core";
+
+export const users = mysqlTable('users', {
+  id: int(),
+  first_name: varchar({ length: 256 })
+})
+```
+```ts
+// query.ts
+await db.select().from(users);
+```
+```sql
+SELECT `id`, `first_name` FROM `users`;
+```
+</Section>
+
+如果你想在 TypeScript 代码和数据库中使用不同的名称，可以使用列别名
+
+<Section>
+```ts
+// schema.ts
+import { int, mysqlTable, varchar } from "drizzle-orm/mysql-core";
+
+export const users = mysqlTable('users', {
+  id: int(),
+  firstName: varchar('first_name', { length: 256 })
+})
+```
+```ts
+// query.ts
+await db.select().from(users);
+```
+```sql
+SELECT `id`, `first_name` FROM `users`;
+```
+</Section>
+
+### 驼峰命名和蛇形命名
+
+数据库模型名称通常使用 `snake_case` 约定，而在 TypeScript 中，使用 `camelCase` 来命名模型很常见。 
+这可能会导致在 schema 中需要定义大量别名。为了解决这个问题，Drizzle 提供了一种通过专用构建器自动将
+TypeScript 中的 `camelCase` 映射到数据库中的 `snake_case` 的方式。
+
+使用来自 `drizzle-orm/pg-core` 的 `snakeCase` 或 `camelCase` 构建器来声明一个表，其列键会
+自动映射到所选的数据库命名约定
+
+<Section>
+```ts {2,4,11,12}
+// schema.ts
+import { snakeCase, camelCase } from 'drizzle-orm/mysql-core';
+
+export const users = snakeCase.table('users', {
+  id: int().primaryKey().autoincrement(),
+  fullName: text(), // → 数据库中的 full_name
+  createdAt: timestamp(), // → 数据库中的 created_at
+});
+
+// 适用于所有实体类型：
+snakeCase.table / snakeCase.view / snakeCase.schema
+camelCase.table / camelCase.view / camelCase.schema
+```
+```ts
+// db.ts
+import { drizzle } from "drizzle-orm/mysql2";
+
+const db = drizzle({ connection: process.env.DATABASE_URL })
+```
+```ts
+// query.ts
+await db.select().from(users);
+```
+```sql
+select `id`, `full_name`, `created_at` from `users`;
+```
+</Section>
+
+### 高级
+
+Drizzle ORM 还有一些可以使用的技巧。只要 Drizzle 完全存在于 TypeScript 文件中， 
+你基本上可以像在一个简单的 TypeScript 项目中一样对你的代码做任何事情。
+
+一个常见功能是将列拆分到不同位置，然后重复使用它们。 
+例如，考虑 `updated_at`、`created_at` 和 `deleted_at` 列。许多表/模型可能需要这 
+三个字段来跟踪和分析系统中实体的创建、删除和更新
+
+我们可以在单独的文件中定义这些列，然后导入并将它们展开到你拥有的所有表对象中
+
+<Section>
+```ts
+// columns.helpers.ts
+export const timestamps = {
+  updated_at: timestamp(),
+  created_at: timestamp().defaultNow().notNull(),
+  deleted_at: timestamp(),
+}
+```
+```ts
+// users.sql.ts
+export const users = mysqlTable('users', {
+  id: int(),
+  ...timestamps
+})
+```
+```ts
+// posts.sql.ts
+export const posts = mysqlTable('posts', {
+  id: int(),
+  ...timestamps
+})
+```
+</Section>
+
+#### **Schemas**
+
+
+在 MySQL 中，有一个名为 `Schema` 的实体，但在 MySQL 术语中，它等同于一个 `Database`。 
+
+你可以使用 `drizzle-orm` 定义它们并在查询中使用它们，但 `drizzle-kit` 不会检测到它们，也不会将它们包含在迁移流程中
+
+![](@/assets/images/mysql-db-structure.png)
+
+定义你想用 Drizzle 管理的 schema
+```ts
+import { mysqlSchema } from "drizzle-orm/mysql-core"
+
+export const customSchema = mysqlSchema('custom');
+```
+
+然后将表放入 schema 对象中
+```ts {5-7}
+import { int, mysqlSchema } from "drizzle-orm/mysql-core";
+
+export const customSchema = mysqlSchema('custom');
+
+export const users = customSchema.table('users', {
+  id: int()
+})
+```
+
+### 示例
+
+在了解了基础之后，让我们定义一个真实项目的 schema 示例，以便获得更直观的视图和理解
+
+> 所有示例都会使用 `generateUniqueString`。它的实现将在所有 schema 示例之后提供
+
+```ts copy
+import { mysqlTable as table } from "drizzle-orm/mysql-core";
+import * as t from "drizzle-orm/mysql-core";
+import type { AnyMySqlColumn } from "drizzle-orm/mysql-core";
+
+export const users = table(
+  "users",
+  {
+    id: t.int().primaryKey().autoincrement(),
+    firstName: t.varchar("first_name", { length: 256 }),
+    lastName: t.varchar("last_name", { length: 256 }),
+    email: t.varchar({ length: 256 }).notNull(),
+    invitee: t.int().references((): AnyMySqlColumn => users.id),
+    role: t.mysqlEnum(["guest", "user", "admin"]).default("guest"),
+  },
+  (table) => [
+    t.uniqueIndex("email_idx").on(table.email)
+  ]
+);
+
+export const posts = table(
+  "posts",
+  {
+    id: t.int().primaryKey().autoincrement(),
+    slug: t.varchar({ length: 256 }).$default(() => generateUniqueString(16)),
+    title: t.varchar({ length: 256 }),
+    ownerId: t.int("owner_id").references(() => users.id),
+  },
+  (table) => [
+    t.uniqueIndex("slug_idx").on(table.slug),
+    t.index("title_idx").on(table.title),
+  ]
+);
+
+export const comments = table("comments", {
+  id: t.int().primaryKey().autoincrement(),
+  text: t.varchar({ length: 256 }),
+  postId: t.int("post_id").references(() => posts.id),
+  ownerId: t.int("owner_id").references(() => users.id),
+});
+```
+
+**`generateUniqueString` 实现：**
+```ts
+function generateUniqueString(length: number = 12): string {
+  const characters =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let uniqueString = "";
+
+  for (let i = 0; i < length; i++) {
+    const randomIndex = Math.floor(Math.random() * characters.length);
+    uniqueString += characters[randomIndex];
+  }
+
+  return uniqueString;
+}
+```
+
+#### 接下来是什么？
+<br/>
+<Flex>
+  <LinksList 
+    title='管理 schema'
+    links={[
+        ["列类型", "/docs/mysql/column-types"], 
+        ["索引和约束", "/docs/mysql/indexes-constraints"],
+        ["数据库视图", "/docs/mysql/views"],
+        ["数据库 schemas", "/docs/mysql/schemas"],
+      ]}
+  />
+  <LinksList 
+    title='从零到精通'
+    links={[
+        ["数据库连接", "/docs/mysql/connect-overview"], 
+        ["数据查询", "/docs/mysql/data-querying"], 
+        ["迁移", "/docs/mysql/migrations"], 
+      ]}
+  />
+</Flex>

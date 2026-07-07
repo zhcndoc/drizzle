@@ -1,6 +1,5 @@
 ---
 title: Upsert 查询
-slug: upsert
 ---
 
 import Section from "@mdx/Section.astro";
@@ -10,18 +9,22 @@ import CodeTabs from '@mdx/CodeTabs.astro';
 import Callout from "@mdx/Callout.astro";
 import CodeTab from '@mdx/CodeTab.astro';
 
-<IsSupportedChipGroup chips={{PostgreSQL: true, MySQL: true, SQLite: true}}/>
+<IsSupportedChipGroup chips={{PostgreSQL: true, MySQL: true, SQLite: true, MSSQL: false, Cockroach: true}}/>
 
 <Prerequisites>
-- 开始使用 [PostgreSQL](/docs/get-started-postgresql), [MySQL](/docs/get-started-mysql) 和 [SQLite](/docs/get-started-sqlite)
-- [插入语句](/docs/insert), [onConflictDoUpdate 方法](/docs/insert#on-conflict-do-update) 和 [onDuplicateKeyUpdate 方法](/docs/insert#on-duplicate-key-update)
+- 从 [PostgreSQL](/docs/get-started-postgresql)、[MySQL](/docs/mysql/get-started-mysql)、[SQLite](/docs/sqlite/get-started-sqlite)、[MSSQL](/docs/mssql/get-started-mssql) 和 [Cockroach](/docs/cockroach/get-started-cockroach) 开始
+- [Insert statement](/docs/insert)、[onConflictDoUpdate method](/docs/insert#on-conflict-do-update) 和 [onDuplicateKeyUpdate method](/docs/mysql/insert#on-duplicate-key-update)
 - [复合主键](/docs/indexes-constraints#composite-primary-key)
-- [sql 操作符](/docs/sql)
+- [sql operator](/docs/sql)
 </Prerequisites>
 
-### PostgreSQL 和 SQLite
+<Callout type="warning">
+**SQL Server (MSSQL)** 不支持 ***ON CONFLICT DO UPDATE*** 语法
+</Callout>
 
-要在 PostgreSQL 和 SQLite 中实现上插入查询（跳到 [MySQL](/docs/guides/upsert#mysql)），可以使用 `.onConflictDoUpdate()` 方法：
+### PostgreSQL、Cockroach 和 SQLite
+
+要在 PostgreSQL、Cockroach 和 SQLite 中使用 Drizzle 实现 upsert 查询（跳转到 [MySQL](/docs/guides/upsert#mysql)），您可以使用 `.onConflictDoUpdate()` 方法：
 
 <Section>
 ```ts copy {8,9,10,11}
@@ -44,7 +47,7 @@ insert into users ("id", "name") values (1, 'John')
 ```
 </Section>
 
-要在 PostgreSQL 和 SQLite 中一次查询上插入多行，您可以使用 `sql 操作符` 和 `excluded` 关键词。`excluded` 是一个特殊引用，指的是因冲突而未插入的提议行。
+要在 PostgreSQL、Cockroach 和 SQLite 中一次查询上插入多行，您可以使用 `sql operator` 和 `excluded` 关键字。`excluded` 是一个特殊引用，指向原本要插入但由于冲突而未能插入的那一行。
 
 您可以这样做：
 
@@ -97,13 +100,7 @@ insert into users ("id", "name") values (1, 'John')
   ```
 </CodeTabs>
 
-Drizzle 提供了简单而灵活的 API，可以让您轻松创建自定义解决方案。这是如何针对 PostgreSQL 和 SQLite 中由于冲突而更新特定列的自定义函数：
-
-<Callout type='warning'>
-`getColumns` available starting from `drizzle-orm@1.0.0-beta.2`(read more [here](/docs/upgrade-v1))
-
-If you are on pre-1 version(like `0.45.1`) then use `getTableColumns`
-</Callout>
+Drizzle 提供了简单而灵活的 API，使您可以轻松创建自定义解决方案。以下是在 PostgreSQL、Cockroach 和 SQLite 中，针对冲突更新多行中特定列的自定义函数实现方式：
 
 <CodeTabs items={["index.ts", "schema.ts"]}>
   <CodeTab>
@@ -111,10 +108,11 @@ If you are on pre-1 version(like `0.45.1`) then use `getTableColumns`
     import { SQL, getColumns, sql } from 'drizzle-orm';
     import { PgTable } from 'drizzle-orm/pg-core';
     import { SQLiteTable } from 'drizzle-orm/sqlite-core';
+	import { CockroachTable } from "drizzle-orm/cockroach-core";
     import { users } from './schema';
 
     const buildConflictUpdateColumns = <
-      T extends PgTable | SQLiteTable,
+      T extends PgTable | CockroachTable | SQLiteTable,
       Q extends keyof T['_']['columns']
     >(
       table: T,
@@ -177,7 +175,7 @@ If you are on pre-1 version(like `0.45.1`) then use `getTableColumns`
   ```
 </CodeTabs>
 
-这是如何在 PostgreSQL 和 SQLite 中使用多个目标实现上插入查询：
+以下是如何在 PostgreSQL、Cockroach 和 SQLite 中实现带有多个目标的 upsert 查询：
 
 <Section>
 ```ts copy {8}
@@ -199,7 +197,7 @@ insert into inventory ("warehouse_id", "product_id", "quantity") values (1, 1, 1
 ```
 </Section>
 
-如果您想在 `update` 语句中实现带有 `where` 条件的上插入查询，可以使用 `setWhere` 属性在 `onConflictDoUpdate` 方法中：
+如果您想在 `update` 语句中实现带有 `where` 条件的上插入查询，可以使用 `onConflictDoUpdate` 方法中的 `setWhere` 属性：
 
 <CodeTabs items={["index.ts", "schema.ts"]}>
   <CodeTab>

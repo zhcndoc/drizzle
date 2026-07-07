@@ -1,0 +1,122 @@
+import Callout from '@mdx/Callout.astro';
+import Section from '@mdx/Section.astro';
+
+# 视图
+
+使用 Drizzle ORM 可以通过几种方式来声明视图。  
+
+你可以声明需要创建的视图，也可以声明数据库中已经存在的视图。 
+
+你可以使用内联的 `query builder` 语法、`standalone query builder`，以及原始 `sql` 操作符来声明视图语句。 
+
+当视图通过内联或独立的 query builder 创建时，视图列模式会自动推断；  
+而当你使用 `sql` 时，则必须显式声明视图列模式。
+
+### 声明视图
+
+<Section>
+      ```ts filename="schema.ts" copy {14-15}
+      import { text, mysqlTable, mysqlView, int, timestamp } from "drizzle-orm/mysql-core";
+      import { eq } from "drizzle-orm";
+
+      export const user = mysqlTable("user", {
+        id: int().primaryKey().autoincrement(),
+        name: text(),
+        email: text(),
+        password: text(),
+        role: text().$type<"admin" | "customer">(),
+        createdAt: timestamp("created_at"),
+        updatedAt: timestamp("updated_at"),
+      });
+
+      export const userView = mysqlView("user_view").as((qb) => qb.select().from(user));
+      export const customersView = mysqlView("customers_view").as((qb) => qb.select().from(user).where(eq(user.role, "customer")));
+      ```
+      ```sql
+      ...
+
+      CREATE ALGORITHM = undefined SQL SECURITY definer VIEW `customers_view` AS (select * from `user` where `user`.`role` = 'customer');
+      CREATE ALGORITHM = undefined SQL SECURITY definer VIEW `user_view` AS (select * from `user`);
+      ```
+    </Section>
+
+你也可以使用 `standalone query builder` 来声明视图，它的工作方式完全相同：
+
+<Section>
+      ```ts filename="schema.ts" copy {4,16-17}
+      import { text, mysqlTable, mysqlView, int, timestamp, QueryBuilder } from "drizzle-orm/mysql-core";
+      import { eq } from "drizzle-orm";
+
+      const qb = new QueryBuilder();
+
+      export const user = mysqlTable("user", {
+        id: int().primaryKey().autoincrement(),
+        name: text(),
+        email: text(),
+        password: text(),
+        role: text().$type<"admin" | "customer">(),
+        createdAt: timestamp("created_at"),
+        updatedAt: timestamp("updated_at"),
+      });
+
+      export const userView = mysqlView("user_view").as(qb.select().from(user));
+      export const customersView = mysqlView("customers_view").as(qb.select().from(user).where(eq(user.role, "customer")));
+      ```
+      ```sql
+	  ...
+
+      CREATE ALGORITHM = undefined SQL SECURITY definer VIEW `customers_view` AS (select * from `user` where `user`.`role` = 'customer');
+      CREATE ALGORITHM = undefined SQL SECURITY definer VIEW `user_view` AS (select * from `user`);
+      ```
+    </Section>
+
+### 使用原始 SQL 声明视图
+当你需要使用 query builder 不支持的语法来声明视图时，  
+可以直接使用 `sql` 操作符，并显式指定视图列模式。
+
+```ts copy {15}
+// 常规视图
+import { eq, sql } from "drizzle-orm";
+import { int, mysqlTable, mysqlView, text, timestamp } from "drizzle-orm/mysql-core";
+
+export const users = mysqlTable("users", {
+  id: int().primaryKey().autoincrement(),
+  name: text(),
+  cityId: int("city_id"),
+});
+
+export const newYorkers = mysqlView("new_yorkers", {
+  id: int().primaryKey().autoincrement(),
+  name: text().notNull(),
+  cityId: int("city_id").notNull(),
+}).as(sql`select * from ${users} where ${eq(users.cityId, 1)}`);
+```
+```sql
+...
+
+CREATE ALGORITHM = undefined SQL SECURITY definer VIEW `new_yorkers` AS (select * from `users` where `users`.`city_id` = 1);
+```
+
+### 声明已有视图
+当你被授予对数据库中已有视图的只读访问权限时，应使用 `.existing()` 视图配置，  
+`drizzle-kit` 会忽略它，并且不会在生成的迁移中生成 `create view` 语句。
+```ts {18}
+import { int, mysqlTable, mysqlView, text, timestamp } from "drizzle-orm/mysql-core";
+
+export const user = mysqlTable("user", {
+  id: int().primaryKey().autoincrement(),
+  name: text(),
+  email: text(),
+  password: text(),
+  role: text().$type<"admin" | "customer">(),
+  createdAt: timestamp("created_at"),
+  updatedAt: timestamp("updated_at"),
+});
+
+// 常规视图
+export const trimmedUser = mysqlView("trimmed_user", {
+  id: int("id"),
+  name: text("name"),
+  email: text("email"),
+}).existing();
+```

@@ -1,0 +1,194 @@
+import CodeTab from "@mdx/CodeTab.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Section from "@mdx/Section.astro";
+import Tab from "@mdx/Tab.astro";
+import Tabs from "@mdx/Tabs.astro";
+import Callout from "@mdx/Callout.astro";
+import Prerequisites from "@mdx/Prerequisites.astro";
+import Npx from "@mdx/Npx.astro";
+
+# `drizzle-kit migrate`
+<Prerequisites>
+- 开始使用 Drizzle 和 `drizzle-kit` - [请阅读这里](/docs/singlestore/get-started)
+- Drizzle schema 基础 - [请阅读这里](/docs/singlestore/sql-schema-declaration)
+- 数据库连接基础 - [请阅读这里](/docs/singlestore/connect-overview)
+- Drizzle migrations 基础 - [请阅读这里](/docs/singlestore/migrations)
+- Drizzle Kit [概览](/docs/singlestore/kit-overview) 和 [配置文件](/docs/singlestore/drizzle-config-file)
+- `drizzle-kit generate` 命令 - [请阅读这里](/docs/singlestore/drizzle-kit-generate)
+</Prerequisites>
+<br/>
+
+
+`drizzle-kit migrate` 允许你应用由 [`drizzle-kit generate`](/docs/singlestore/drizzle-kit-generate) 生成的 SQL migrations。 
+它旨在覆盖管理 Drizzle migrations 的 [code first（选项 3）](/docs/singlestore/migrations) 方法。 
+
+<Callout collapsed="底层是如何工作的？">
+Drizzle Kit `migrate` 命令会触发一系列事件：
+1. 遍历 migration 文件夹并读取所有 `.sql` migration 文件
+2. 连接到数据库并从 drizzle migrations 日志表中获取条目
+3. 根据之前已应用的 migrations，决定要运行哪些新的 migrations
+4. 运行 SQL migrations，并将已应用的 migrations 记录到 drizzle migrations 表中
+
+<Section>
+```plaintext
+  ├ 📂 drizzle       
+  │ ├ 📂 20242409125510_premium_mister_fear
+  │ └ 📂 20242409135510_delicate_professor_xavie
+  └ …
+```
+```plaintext
+┌───────────────────────┐                  
+│ $ drizzle-kit migrate │                  
+└─┬─────────────────────┘                  
+  │                                                         ┌──────────────────────────┐                                         
+  └ 1. 读取 migrations 文件夹中的 migration.sql 文件       │                          │
+    2. 从数据库获取 migration 历史记录 -------------> │                          │
+  ┌ 3. 选择之前尚未应用的 migrations <-------------- │         DATABASE         │
+  └ 4. 将新的 migration 应用到数据库 ---------------> │                          │
+                                                            │                          │
+                                                            └──────────────────────────┘
+[✓] 完成！        
+```
+</Section>
+</Callout>
+
+`drizzle-kit migrate` 命令要求你同时指定 `dialect` 和数据库连接凭据， 
+你可以通过 [drizzle.config.ts](/docs/singlestore/drizzle-config-file) 配置文件或通过 CLI 选项来提供它们
+
+<CodeTabs items={["使用配置文件", "作为 CLI 选项"]}>
+<Section>
+```ts {5,8}
+// drizzle.config.ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "singlestore",
+  schema: "./src/schema.ts",
+  dbCredentials: {
+    url: "mysql://user:password@host:3306/dbname"
+  },
+});
+```
+```shell
+npx drizzle-kit migrate
+```
+</Section>
+```shell
+npx drizzle-kit migrate --dialect=singlestore --url=mysql://user:password@host:3306/dbname
+```
+</CodeTabs>
+
+### 数据库中的已应用 migrations 日志
+运行 migrations 时，Drizzle Kit 会将成功应用的 migrations 记录持久化到你的数据库中。 
+它会将这些记录存储在名为 `__drizzle_migrations` 的 migrations 日志表中。
+
+你可以通过 drizzle 配置文件自定义该日志表的**表**名：
+```ts filename="drizzle.config.ts" {8-9}
+export default defineConfig({
+  dialect: "singlestore",
+  schema: "./src/schema.ts",
+  dbCredentials: {
+    url: "mysql://user:password@host:3306/dbname"
+  },
+  migrations: {
+    table: 'my-migrations-table', // 默认是 `__drizzle_migrations`
+  },
+});
+```
+
+### 忽略冲突
+
+<Callout type='warning'>
+`--ignore-conflicts` 从 `drizzle-orm@1.0.0-beta.16` 开始可用
+</Callout>
+
+如果你需要让 `migrate` 命令跳过幂等性检查并绕过它，可以使用 `--ignore-conflicts`。如果你想使用它，说明
+很大概率是 `drizzle-kit` 没有正确检查 migrations，这可能是一个 bug。请把你的情况反馈给我们，以便我们修复它
+
+```shell
+drizzle-kit migrate --ignore-conflicts
+```
+
+### 一个项目中有多个配置文件
+你可以在项目中拥有多个配置文件，这在你有多个数据库阶段或同一个项目中有多个数据库时非常有用：
+<Npx>
+  drizzle-kit migrate --config=drizzle-dev.config.ts
+  drizzle-kit migrate --config=drizzle-prod.config.ts
+</Npx>
+```plaintext {5-6}
+📦 <project root>
+ ├ 📂 drizzle
+ ├ 📂 src
+ ├ 📜 .env
+ ├ 📜 drizzle-dev.config.ts
+ ├ 📜 drizzle-prod.config.ts
+ ├ 📜 package.json
+ └ 📜 tsconfig.json
+```
+
+### 扩展示例
+让我们使用 `drizzle-kit generate` 和 `drizzle-kit migrate` 命令生成 SQL migration 并将其应用到数据库中
+
+```plaintext
+📦 <project root>
+ ├ 📂 drizzle
+ ├ 📂 src
+ │ ├ 📜 schema.ts
+ │ └ 📜 index.ts
+ ├ 📜 drizzle.config.ts
+ └ …
+```
+<CodeTabs items={["drizzle.config.ts", "src/schema.ts"]}>
+```ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "singlestore",
+  schema: "./src/schema.ts",
+  dbCredentials: {
+    url: "mysql://user:password@host:3306/dbname"
+  },
+  migrations: {
+    table: 'journal', 
+  },
+});
+```
+```ts 
+import * as p from "drizzle-orm/singlestore-core";
+
+export const users = p.singlestoreTable("users", {
+  id: p.int().primaryKey().autoincrement(),
+  name: p.varchar({ length: 255 }),
+})
+```
+</CodeTabs>
+
+现在让我们运行
+```shell
+npx drizzle-kit generate --name=init
+```
+它会生成
+<Section>
+```plaintext {5}
+📦 <project root>
+ ├ …
+ ├ 📂 migrations
+ │ ├ 📂 20242409125510_init
+ └ …
+```
+```sql
+-- ./drizzle/0000_init.sql
+
+CREATE TABLE `users`(
+  `id` int auto_increment primary key,
+  `name` varchar(255)
+)
+```
+</Section>
+
+现在让我们运行
+```shell
+npx drizzle-kit migrate
+```
+
+我们的 SQL migration 现在已经成功应用到数据库中了 ✅

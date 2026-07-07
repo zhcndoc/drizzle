@@ -1,0 +1,760 @@
+import CodeTabs from '@mdx/CodeTabs.astro';
+import Callout from '@mdx/Callout.astro';
+import Section from '@mdx/Section.astro';
+
+# SQL 查询
+Drizzle 为你提供了最接近 SQL 的方式从数据库中获取数据，同时保持类型安全和可组合性。
+它原生支持几乎所有方言的绝大多数查询特性和能力，
+而它尚未支持的部分，用户可以通过强大的 [sql](/docs/mssql/sql) 运算符自行添加。
+
+对于下面的示例，假设你有一个像这样定义的 `users` 表：
+
+```typescript
+import { mssqlTable, text, int } from 'drizzle-orm/mssql-core';
+
+export const users = mssqlTable('users', {
+  id: int().primaryKey().identity(),
+  name: text().notNull(),
+  age: int(),
+});
+```
+
+### 基本查询
+从表中选择所有行，包括所有列：
+
+<Section>
+```typescript
+const result = await db.select().from(users);
+/*
+  {
+    id: number;
+    name: string;
+    age: number | null;
+  }[]
+*/
+```
+```sql
+select [id], [name], [age] from [users];
+```
+</Section>
+
+请注意，结果类型会根据表定义自动推断，包括列的可空性。
+
+<Callout type="info">
+Drizzle 始终会在 `select` 子句中显式列出列，而不是使用 `select *`。<br />
+这样做在内部是为了保证查询结果中的字段顺序，同时这通常也被视为一种良好实践。
+</Callout>
+
+### 部分查询
+在某些情况下，你可能只想从表中选择部分列。
+你可以通过向 `.select()` 方法提供一个选择对象来实现：
+<Section>
+```typescript copy
+const result = await db.select({
+  field1: users.id,
+  field2: users.name,
+}).from(users);
+
+const { field1, field2 } = result[0];
+```
+```sql
+select [id], [name] from [users];
+```
+</Section>
+
+像在 SQL 中一样，你可以将任意表达式作为选择字段，而不只是表列：
+
+<Section>
+```typescript
+const result = await db.select({
+  id: users.id,
+  lowerName: sql<string>`lower(${users.name})`,
+}).from(users);
+```
+```sql
+select [id], lower([name]) from [users];
+```
+</Section>
+
+<Callout type="warning">
+通过指定 `sql<string>`，你是在告诉 Drizzle 该字段的**预期**类型是 `string`。<br />
+如果你指定错误（例如，对一个实际返回为字符串的字段使用 `sql<number>`），运行时值将不会与预期类型匹配。
+Drizzle 无法根据提供的泛型类型进行任何类型转换，因为这些信息在运行时不可用。
+
+如果你需要对返回值应用运行时转换，可以使用 [`.mapWith()`](/docs/mssql/sql#sqlmapwith) 方法。
+</Callout>
+
+### 条件查询
+
+你可以根据某些条件动态构建选择对象：
+
+```typescript
+async function selectUsers(withName: boolean) {
+  return db
+    .select({
+      id: users.id,
+      ...(withName ? { name: users.name } : {}),
+    })
+    .from(users);
+}
+
+const result = await selectUsers(true);
+```
+
+### 去重查询
+
+你可以使用 `.selectDistinct()` 代替 `.select()`，从数据集中只检索唯一行：
+<Section>
+```ts
+await db.selectDistinct().from(users).orderBy(users.id, users.name);
+
+await db.selectDistinct({ id: users.id }).from(users).orderBy(users.id);
+```
+```sql
+select distinct [id], [name] from [users] order by [id], [name];
+
+select distinct [id] from [users] order by [id];
+```
+</Section>
+
+### 高级查询
+借助 TypeScript，Drizzle API 让你可以用多种灵活方式构建查询。
+
+高级部分查询的快速预览，如需更详细的高级用法示例，请参见我们的 [专门指南](/docs/mssql/guides/include-or-exclude-columns)。
+
+<CodeTabs items={["示例 1", "示例 2", "示例 3", "示例 4"]}>
+```ts
+import { getColumns, sql } from 'drizzle-orm';
+
+await db.select({
+    ...getColumns(posts),
+    titleLength: sql<number>`length(${posts.title})`,
+  }).from(posts);
+```
+```ts
+import { getColumns } from 'drizzle-orm';
+
+const { content, ...rest } = getColumns(posts); // 排除 "content" 列
+await db.select({ ...rest }).from(posts); // 选择所有其他列
+```
+```ts
+await db._query.posts.findMany({
+  columns: {
+    title: true,
+  },
+});
+```
+```ts
+await db._query.posts.findMany({
+  columns: {
+    content: false,
+  },
+});
+```
+</CodeTabs>
+
+## ---
+
+### 过滤器
+
+你可以在 `.where()` 方法中使用 [过滤器运算符](/docs/mssql/operators) 来过滤查询结果：
+
+<Section>
+```typescript copy
+import { eq, lt, gte, ne } from 'drizzle-orm';
+
+await db.select().from(users).where(eq(users.id, 42));
+await db.select().from(users).where(lt(users.id, 42));
+await db.select().from(users).where(gte(users.id, 42));
+await db.select().from(users).where(ne(users.id, 42));
+...
+```
+```sql
+select [id], [name], [age] from [users] where [users].[id] = 42;
+select [id], [name], [age] from [users] where [users].[id] < 42;
+select [id], [name], [age] from [users] where [users].[id] >= 42;
+select [id], [name], [age] from [users] where [users].[id] <> 42;
+```
+</Section>
+
+所有过滤器运算符都是使用 [`sql`](/docs/mssql/sql) 函数实现的。
+你也可以自己用它来编写任意 SQL 过滤条件，或者构建你自己的运算符。
+作为参考，你可以查看 Drizzle 提供的运算符是如何 [实现的](https://github.com/drizzle-team/drizzle-orm/blob/main/drizzle-orm/src/sql/expressions/conditions.ts)。
+<Section>
+```typescript copy
+import { sql } from 'drizzle-orm';
+import type { MsSqlColumn } from 'drizzle-orm/mssql-core';
+
+function equals42(col: MsSqlColumn) {
+  return sql`${col} = 42`;
+}
+
+await db.select().from(users).where(sql`${users.id} < 42`);
+await db.select().from(users).where(sql`${users.id} = 42`);
+await db.select().from(users).where(equals42(users.id));
+await db.select().from(users).where(sql`${users.id} >= 42`);
+await db.select().from(users).where(sql`${users.id} <> 42`);
+await db.select().from(users).where(sql`lower(${users.name}) = 'aaron'`);
+```
+```sql
+select [id], [name], [age] from [users] where [users].[id] < 42;
+select [id], [name], [age] from [users] where [users].[id] = 42;
+select [id], [name], [age] from [users] where [users].[id] = 42;
+select [id], [name], [age] from [users] where [users].[id] >= 42;
+select [id], [name], [age] from [users] where [users].[id] <> 42;
+select [id], [name], [age] from [users] where lower([users].[name]) = 'aaron';
+```
+</Section>
+
+<Callout type='info'>
+传递给过滤器运算符和 `sql` 函数的所有值都会自动参数化。
+例如，这个查询：
+```ts
+await db.select().from(users).where(eq(users.id, 42));
+```
+会被翻译为：
+```sql
+select [id], [name], [age] from [users] where [users].[id] = @par0; -- params: [42]
+```
+</Callout>
+
+使用 `not` 运算符反转条件：
+<Section>
+```typescript copy
+import { eq, not, sql } from 'drizzle-orm';
+
+await db.select().from(users).where(not(eq(users.id, 42)));
+await db.select().from(users).where(sql`not ${users.id} = 42`);
+```
+```sql
+select [id], [name], [age] from [users] where not ([users].[id] = 42);
+select [id], [name], [age] from [users] where not [users].[id] = 42;
+```
+</Section>
+
+<Callout type="info">
+你可以安全地更改 schema、重命名表和列，
+并且它会因为模板插值自动反映到你的查询中，
+而不是像编写原始 SQL 时那样硬编码列名或表名。
+</Callout>
+
+### 组合过滤器
+你可以使用 `and()` 和 `or()` 运算符来逻辑组合过滤器：
+<Section>
+```typescript copy
+import { eq, and, sql } from 'drizzle-orm';
+
+await db.select().from(users).where(
+  and(
+    eq(users.id, 42),
+    eq(users.name, 'Dan')
+  )
+);
+await db.select().from(users).where(sql`${users.id} = 42 and ${users.name} = 'Dan'`);
+```
+```sql
+select [id], [name], [age] from [users] where (([users].[id] = 42) and ([users].[name] = 'Dan'));
+select [id], [name], [age] from [users] where [users].[id] = 42 and [users].[name] = 'Dan';
+```
+</Section>
+
+<Section>
+```typescript copy
+import { eq, or, sql } from 'drizzle-orm';
+
+await db.select().from(users).where(
+  or(
+    eq(users.id, 42), 
+    eq(users.name, 'Dan')
+  )
+);
+await db.select().from(users).where(sql`${users.id} = 42 or ${users.name} = 'Dan'`);
+```
+```sql
+select [id], [name], [age] from [users] where (([users].[id] = 42) or ([users].[name] = 'Dan'));
+select [id], [name], [age] from [users] where [users].[id] = 42 or [users].[name] = 'Dan';
+```
+</Section>
+
+### 高级过滤器
+结合 TypeScript，Drizzle API 为你提供了强大而灵活的方式来在查询中组合过滤器。
+
+条件过滤功能抢先看，更多详细的高级用法示例请参阅我们的 [专门指南](/docs/mssql/guides/conditional-filters-in-query)。
+<CodeTabs items={["示例 1", "示例 2"]}>
+```ts
+const searchPosts = async (term?: string) => {
+  await db
+    .select()
+    .from(posts)
+    .where(term ? like(posts.title, term) : undefined);
+};
+await searchPosts();
+await searchPosts('AI');
+```
+```ts
+const searchPosts = async (filters: SQL[]) => {
+  await db
+    .select()
+    .from(posts)
+    .where(and(...filters));
+};
+const filters: SQL[] = [];
+filters.push(like(posts.title, 'AI'));
+filters.push(inArray(posts.category, ['Tech', 'Art', 'Science']));
+filters.push(gt(posts.views, 200));
+await searchPosts(filters);
+```
+</CodeTabs>
+
+## ---
+
+### Fetch & offset
+
+在 MSSQL 中，`FETCH` 和 `OFFSET` 是 `ORDER BY` 子句的一部分，因此它们只能在 `.orderBy()` 函数之后使用
+
+```ts
+await db.select().from(users).orderBy(asc(users.id)).offset(5);
+await db.select().from(users).orderBy(asc(users.id)).offset(5).fetch(10);
+```
+```sql
+select [id], [name], [age] from [users] offset 5 rows;
+select [id], [name], [age] from [users] offset 5 rows fetch next 10 rows;
+```
+
+### Top
+
+将查询结果集中返回的行数限制为指定数量的行
+
+```ts
+await db.select().top(10).from(users);
+```
+```sql
+select top (10) [id], [name], [age] from [users];
+```
+
+### Order By
+使用 `.orderBy()` 为查询添加 `order by` 子句，并按指定字段对结果排序：
+<Section>
+```typescript
+import { asc, desc } from 'drizzle-orm';
+
+await db.select().from(users).orderBy(users.name);
+await db.select().from(users).orderBy(desc(users.name));
+
+// order by multiple fields
+await db.select().from(users).orderBy(users.name, users.name2);
+await db.select().from(users).orderBy(asc(users.name), desc(users.name2));
+```
+```sql
+select [id], [name], [name2], [age] from [users] order by [users].[name];
+select [id], [name], [name2], [age] from [users] order by [users].[name] desc;
+
+select [id], [name], [name2], [age] from [users] order by [users].[name], [users].[name];
+select [id], [name], [name2], [age] from [users] order by [users].[name] asc, [users].[name2] desc;
+```
+</Section>
+
+### 高级分页
+借助 TypeScript，Drizzle API 让你可以实现所有可能的 SQL 分页和排序方式。
+
+先睹为快，了解高级分页；更多高级用法示例请参阅我们专门的 [limit offset pagination](/docs/mssql/guides/limit-offset-pagination)
+和 [cursor pagination](/docs/mssql/guides/cursor-based-pagination) 指南。
+
+<CodeTabs items={["example 1", "example 2", "example 3", "example 4"]}>
+```ts
+await db
+  .select()
+  .from(users)
+  .orderBy(asc(users.id)) // order by 是必需的
+  .offset(4) // 要跳过的行数
+  .fetch(4) // 要获取的行数
+```
+```ts
+const getUsers = async (page = 1, pageSize = 3) => {
+  return await db._query.users.findMany({
+    orderBy: (users, { asc }) => asc(users.id),
+    limit: pageSize,
+    offset: (page - 1) * pageSize,
+  });
+};
+await getUsers();
+```
+```ts
+const getUsers = async (page = 1, pageSize = 10) => {
+   const sq = db
+    .select({ id: users.id })
+    .from(users)
+    .orderBy(asc(users.id)) // order by 是必需的
+    .offset(pageSize) // 要跳过的行数
+    .fetch((page - 1) * pageSize) // 要获取的行数
+    .as('subquery');
+   return await db.select().from(users).innerJoin(sq, eq(users.id, sq.id)).orderBy(users.id);
+};
+```
+```ts
+const nextUserPage = async (cursor?: number, pageSize = 3) => {
+  return await db
+    .select()
+	.top(pageSize)
+    .from(users)
+    .where(cursor ? gt(users.id, cursor) : undefined) // 如果提供了游标，则获取其后的行
+    .orderBy(asc(users.id)); // 排序
+};
+// 传入上一页最后一行的游标（id）
+await nextUserPage(3);
+```
+</CodeTabs>
+
+## ---
+
+### WITH 子句
+
+使用 `with` 子句可以通过将复杂查询拆分为更小的子查询（称为公共表表达式，CTE）来帮助你简化查询：
+<Section>
+```typescript copy
+const sq = db.$with('sq').as(db.select().from(users).where(eq(users.id, 42)));
+
+const result = await db.with(sq).select().from(sq);
+```
+```sql
+with [sq] as (select [id], [name], [age] from [users] where [users].[id] = 42)
+select [id], [name], [age] from [sq];
+```
+</Section>
+
+
+要在 CTE 中将任意 SQL 值作为字段选出，并在其他 CTE 或主查询中引用它们，
+你需要为它们添加别名：
+```typescript copy
+
+const sq = db.$with('sq').as(db.select({ 
+  name: sql<string>`upper(${users.name})`.as('name'),
+})
+.from(users));
+
+const result = await db.with(sq).select({ name: sq.name }).from(sq);
+```
+如果你没有提供别名，该字段类型将变为 `DrizzleTypeError`，你将无法在其他查询中引用它。
+如果你忽略类型错误并仍然尝试使用该字段，
+你会得到一个运行时错误，因为在没有别名的情况下无法引用该字段。
+
+### 从子查询中选择
+和 SQL 一样，你可以使用子查询 API 将查询嵌入到其他查询中：
+<Section>
+```typescript copy
+const sq = db.select().from(users).where(eq(users.id, 42)).as('sq');
+const result = await db.select().from(sq);
+```
+```sql
+select [id], [name], [age] from (select [id], [name], [age] from [users] where [users].[id] = 42) [sq];
+```
+</Section>
+
+子查询可以用于任何可以使用表的地方，例如在 join 中：
+<Section>
+```typescript copy
+const sq = db.select().from(users).where(eq(users.id, 42)).as('sq');
+const result = await db.select().from(users).leftJoin(sq, eq(users.id, sq.id));
+```
+```sql
+select [users].[id], [users].[name], [users].[age], [sq].[id], [sq].[name], [sq].[age] from [users]
+  left join (select [id], [name], [age] from [users] where [users].[id] = 42) [sq]
+    on [users].[id] = [sq].[id];
+```
+</Section>
+
+## ---
+
+### 聚合
+使用 Drizzle，你可以通过 `.groupBy()` 和 `.having()` 对结果进行分组和过滤，像在原生 SQL 中一样，使用 `sum`、`count`、`avg` 等函数来进行聚合：
+
+<Section>
+```typescript
+import { gt, sql } from "drizzle-orm";
+
+await db.select({
+  age: users.age,
+  count: sql<number>`cast(count(${users.id}) as int)`,
+})
+  .from(users)
+  .groupBy(users.age);
+
+await db.select({
+  age: users.age,
+  count: sql<number>`cast(count(${users.id}) as int)`,
+})
+  .from(users)
+  .groupBy(users.age)
+  .having(({ count }) => gt(count, 1));
+```
+```sql
+select [age], cast(count([id]) as int)
+  from [users]
+  group by [users].[age];
+
+select [age], cast(count([id]) as int)
+  from [users]
+  group by [users].[age]
+  having cast(count([users].[id]) as int) > 1;
+```
+</Section>
+
+<Callout type="info">
+作为 `cast(... as int)` 的替代方案，你可以使用 [`.mapWith(Number)`](/docs/mssql/sql#sqlmapwith) 在运行时将值转换为数字。
+
+如果你需要 count 聚合——我们推荐使用我们的 [$count](/docs/mssql/select#count) API
+</Callout>
+
+### 聚合辅助函数
+
+Drizzle 提供了一组封装好的 `sql` 函数，因此在应用中遇到常见情况时，你不需要手写
+`sql` 模板
+
+<Callout type="info">
+ 记住，聚合函数通常与 SELECT 语句中的 GROUP BY 子句一起使用。 
+ 因此，如果你在一个查询中同时选择聚合函数和其他列， 
+ 请务必使用 `.groupBy` 子句
+</Callout>
+
+**count**
+
+返回 `expression` 中值的数量。
+<Section>
+```ts
+import { count } from 'drizzle-orm'
+
+await db.select({ value: count() }).from(users);
+await db.select({ value: count(users.id) }).from(users);
+```
+```sql
+select count(*) from [users];
+select count([id]) from [users];
+```
+```ts
+// 它等价于这样写
+await db.select({ 
+  value: sql`count(*)`.mapWith(Number) 
+}).from(users);
+
+await db.select({ 
+  value: sql`count(${users.id})`.mapWith(Number) 
+}).from(users);
+```
+</Section>
+
+**countDistinct**
+
+返回 `expression` 中非重复值的数量。
+<Section>
+```ts
+import { countDistinct } from 'drizzle-orm'
+
+await db.select({ value: countDistinct(users.id) }).from(users);
+```
+```sql
+select count(distinct [id]) from [users];
+```
+```ts
+// 它等价于这样写
+await db.select({ 
+  value: sql`count(distinct ${users.id})`.mapWith(Number) 
+}).from(users);
+```
+</Section>
+
+**avg**
+
+返回 `expression` 中所有非空值的平均值（算术平均数）。
+<Section>
+```ts
+import { avg } from 'drizzle-orm'
+
+await db.select({ value: avg(users.id) }).from(users);
+```
+```sql
+select avg([id]) from [users];
+```
+```ts
+// 它等价于这样写
+await db.select({ 
+  value: sql`avg(${users.id})`.mapWith(String) 
+}).from(users);
+```
+</Section>
+
+**avgDistinct**
+
+返回 `expression` 中所有非空值的平均值（算术平均数）。
+<Section>
+```ts
+import { avgDistinct } from 'drizzle-orm'
+
+await db.select({ value: avgDistinct(users.id) }).from(users);
+```
+```sql
+select avg(distinct [id]) from [users];
+```
+```ts
+// 它等价于这样写
+await db.select({ 
+  value: sql`avg(distinct ${users.id})`.mapWith(String) 
+}).from(users);
+```
+</Section>
+
+**sum**
+
+返回 `expression` 中所有非空值的总和。
+<Section>
+```ts
+import { sum } from 'drizzle-orm'
+
+await db.select({ value: sum(users.id) }).from(users);
+```
+```sql
+select sum([id]) from [users];
+```
+```ts
+// 它等价于这样写
+await db.select({ 
+  value: sql`sum(${users.id})`.mapWith(String) 
+}).from(users);
+```
+</Section>
+
+**sumDistinct**
+
+返回 `expression` 中所有非空且非重复值的总和。
+<Section>
+```ts
+import { sumDistinct } from 'drizzle-orm'
+
+await db.select({ value: sumDistinct(users.id) }).from(users);
+```
+```sql
+select sum(distinct [id]) from [users];
+```
+```ts
+// 它等价于这样写
+await db.select({ 
+  value: sql`sum(distinct ${users.id})`.mapWith(String) 
+}).from(users);
+```
+</Section>
+
+**max**
+
+返回 `expression` 中的最大值。
+<Section>
+```ts
+import { max } from 'drizzle-orm'
+
+await db.select({ value: max(users.id) }).from(users);
+```
+```sql
+select max([id]) from [users];
+```
+```ts
+// 它等价于这样写
+await db.select({ 
+  value: sql`max(${expression})`.mapWith(users.id) 
+}).from(users);
+```
+</Section>
+
+**min**
+
+返回 `expression` 中的最小值。
+<Section>
+```ts
+import { min } from 'drizzle-orm'
+
+await db.select({ value: min(users.id) }).from(users);
+```
+```sql
+select min([id]) from [users];
+```
+```ts
+// 它等价于这样写
+await db.select({ 
+  value: sql`min(${users.id})`.mapWith(users.id) 
+}).from(users);
+```
+</Section>
+
+一个更高级的示例：
+
+```typescript copy
+const orders = mssqlTable('order', {
+  id: int('id').primaryKey(),
+  orderDate: datetime2('order_date').notNull(),
+  requiredDate: datetime2('required_date').notNull(),
+  shippedDate: datetime2('shipped_date'),
+  shipVia: int('ship_via').notNull(),
+  freight: numeric('freight').notNull(),
+  shipName: nvarchar('ship_name', { length: 256 }).notNull(),
+  shipCity: nvarchar('ship_city', { length: 256 }).notNull(),
+  shipRegion: nvarchar('ship_region', { length: 256 }),
+  shipPostalCode: nvarchar('ship_postal_code', { length: 256 }),
+  shipCountry: nvarchar('ship_country', { length: 256 }).notNull(),
+  customerId: nvarchar('customer_id', { length: 256 }).notNull(),
+  employeeId: int('employee_id').notNull(),
+});
+
+const details = mssqlTable('order_detail', {
+  unitPrice: numeric('unit_price').notNull(),
+  quantity: int('quantity').notNull(),
+  discount: numeric('discount').notNull(),
+  orderId: int('order_id').notNull(),
+  productId: int('product_id').notNull(),
+});
+await db.select({
+  id: orders.id,
+  shippedDate: orders.shippedDate,
+  shipName: orders.shipName,
+  shipCity: orders.shipCity,
+  shipCountry: orders.shipCountry,
+  productsCount: sql<number>`cast(count(${details.productId}) as int)`,
+  quantitySum: sql<number>`sum(${details.quantity})`,
+  totalPrice: sql<number>`sum(${details.quantity} * ${details.unitPrice})`,
+})
+  .from(orders)
+  .leftJoin(details, eq(orders.id, details.orderId))
+  .groupBy(
+    orders.id,
+    orders.shipName,
+    orders.shippedDate,
+    orders.shipCity,
+    orders.shipCountry,
+  )
+  .orderBy(asc(orders.id));
+```
+
+### $count
+
+目前不支持
+
+## ---
+
+### 迭代器
+
+如果你需要从查询中返回大量行，并且不想将它们全部加载到内存中，可以使用 `.iterator()` 将查询转换为异步迭代器：
+
+```ts copy
+const iterator = db.select().from(users).iterator();
+
+for await (const row of iterator) {
+  console.log(row);
+}
+```
+
+它也适用于预处理语句：
+
+```ts copy
+const query = db.select().from(users).prepare();
+const iterator = query.iterator();
+
+for await (const row of iterator) {
+  console.log(row);
+}
+```

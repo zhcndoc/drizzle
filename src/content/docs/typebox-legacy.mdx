@@ -2,21 +2,21 @@ import Npm from '@mdx/Npm.astro';
 import Callout from '@mdx/Callout.astro';
 
 <Callout type="error">
-从 `drizzle-orm@1.0.0-beta.15` 开始，`drizzle-typebox` 被弃用，建议使用 Drizzle ORM 自身内置的一级架构生成支持
+从 `drizzle-orm@1.0.0-beta.15` 开始，`drizzle-typebox` 已被弃用，建议使用 Drizzle ORM 自身内置的一级架构生成支持
 
 你仍然可以使用 `drizzle-typebox` 包，但是所有新的更新将直接添加到 Drizzle ORM 中
 
-此版本的 `typebox` 是基于使用 `@sinclair/typebox` 包的传统版本
+此版本的 `typebox` 基于使用 `@sinclair/typebox` 包的传统版本
 </Callout>
 
 # typebox-legacy
 
 ### 安装依赖
 <Npm>
-drizzle-orm @sinclair/typebox
+drizzle-orm@rc @sinclair/typebox
 </Npm>
 
-### Select schema
+### 选择模式
 
 定义从数据库查询到的数据形状 - 可用于验证 API 响应。
 
@@ -56,7 +56,7 @@ const usersViewSchema = createSelectSchema(usersView);
 const parsed: { id: number; name: string; age: number } = Value.Parse(usersViewSchema, ...);
 ```
 
-### Insert schema
+### 插入模式
 
 定义插入到数据库中的数据形状 - 可用于验证 API 请求。
 
@@ -81,7 +81,7 @@ const parsed: { name: string, age: number } = Value.Parse(userInsertSchema, user
 await db.insert(users).values(parsed);
 ```
 
-### Update schema
+### 更新模式
 
 定义在数据库中更新的数据形状 - 可用于验证 API 请求。
 
@@ -106,7 +106,7 @@ const parsed: { name?: string | undefined, age?: number | undefined } = Value.Pa
 await db.update(users).set(parsed).where(eq(users.name, 'Jane'));
 ```
 
-### Refinements
+### 细化
 
 每个创建 schema 的函数都接受一个可选的额外参数，可以用来扩展、修改或完全覆盖字段的 schema。定义回调函数则是扩展或修改，提供 Typebox schema 则是覆盖。
 

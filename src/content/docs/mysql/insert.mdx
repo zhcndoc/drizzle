@@ -1,0 +1,159 @@
+import Section from '@mdx/Section.astro';
+import Callout from '@mdx/Callout.astro';
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
+
+# SQL 插入
+Drizzle ORM 为你提供了最接近 SQL 的方式来向数据库表中插入行。
+
+使用 Drizzle 插入数据非常直接，而且很像 SQL。自己看看：
+
+<Section>
+```typescript copy 
+await db.insert(users).values({ name: 'Andrew' });
+```
+```sql
+insert into `users` (`name`) values ('Andrew');
+```
+</Section>
+
+如果你需要某个特定表的插入类型，可以使用 `typeof usersTable.$inferInsert` 语法。 
+```typescript copy 
+type NewUser = typeof users.$inferInsert;
+
+const insertUser = async (user: NewUser) => {
+  return db.insert(users).values(user);
+}
+
+const newUser: NewUser = { name: "Alef" };
+await insertUser(newUser);
+```
+
+## $returningId
+MySQL 本身在使用 `INSERT` 后并不原生支持 `RETURNING`。对于带有 `autoincrement`（或 `serial`）类型的 `primary keys`，只有一种方式可以实现这一点：你可以访问 `insertId` 和 `affectedRows` 字段。我们已经为你准备了一种自动化方式来处理这类情况，使用 Drizzle 可以自动接收所有插入的 ID，并将其作为单独的对象返回。
+
+```ts
+import { boolean, int, text, mysqlTable } from 'drizzle-orm/mysql-core';
+
+const usersTable = mysqlTable('users', {
+  id: int().autoincrement().primaryKey(),
+  name: text().notNull(),
+  verified: boolean().notNull().default(false),
+});
+
+
+const result = await db.insert(usersTable).values([{ name: 'John' }, { name: 'John1' }]).$returningId();
+//    ^? { id: number }[]
+```
+
+另外，在 Drizzle 中，你还可以使用 `$default` 函数为 `primary key` 指定一个在运行时生成自定义主键的方式。我们也会在调用 `$returningId()` 时为你返回这些生成的键。
+
+```ts
+import { varchar, text, mysqlTable } from 'drizzle-orm/mysql-core';
+import { createId } from '@paralleldrive/cuid2';
+
+const usersTableDefFn = mysqlTable('users_default_fn', {
+  customId: varchar({ length: 256 }).primaryKey().$defaultFn(createId),
+  name: text().notNull(),
+});
+
+
+const result = await db.insert(usersTableDefFn).values([{ name: 'John' }, { name: 'John1' }]).$returningId();
+//  ^? { customId: string }[]
+```
+
+> 如果没有主键 -> 这类查询的类型将是 `{}[]`
+
+## 插入多行
+```typescript copy
+await db.insert(users).values([{ name: 'Andrew' }, { name: 'Dan' }]);
+```
+
+## Upserts 和冲突
+Drizzle ORM 提供了用于处理 upsert 和冲突的简单接口。
+
+### 重复键更新
+MySQL 支持 [`ON DUPLICATE KEY UPDATE`](https://dev.mysql.com/doc/refman/8.0/en/insert-on-duplicate.html) 而不是 `ON CONFLICT` 子句。MySQL 会根据主键和唯一索引自动确定冲突目标，并且如果 *任何* 唯一索引发生冲突，就会更新该行。
+
+Drizzle 通过 `onDuplicateKeyUpdate` 方法支持这一功能：
+
+```typescript
+// 注意 MySQL 会根据主键和唯一索引自动确定目标
+await db.insert(users)
+  .values({ id: 1, name: 'John' })
+  .onDuplicateKeyUpdate({ set: { name: 'John' } });
+```
+
+虽然 MySQL 不直接支持在冲突时不执行任何操作，但你可以通过将任意列的值设置为其自身来实现无操作，从而达到相同效果：
+
+```typescript
+import { sql } from 'drizzle-orm';
+
+await db.insert(users)
+  .values({ id: 1, name: 'John' })
+  .onDuplicateKeyUpdate({ set: { id: sql`id` } });
+```
+
+## 插入到 ... select
+
+正如 MySQL 文档所提到的：
+
+<Callout>
+使用 INSERT ... SELECT，你可以通过 SELECT 语句的结果快速向表中插入多行，该 SELECT 语句可以从一个或多个表中进行选择
+</Callout>
+
+Drizzle 支持所有方言的当前语法，而且它们都共享相同的语法。让我们来回顾一些常见场景和 API 用法。 
+在插入语句中有多种使用 select 的方式，你可以选择自己偏好的方法：
+
+- 你可以在 select 函数中传入一个 query builder。
+- 你可以在回调函数中使用 query builder。
+- 你可以传入一个 SQL 模板标签，以及你想使用的任何自定义 select 查询
+
+
+<Tabs items={["Query Builder", "Callback", "SQL template tag"]}>
+<Tab>
+<Section>
+```ts
+const insertedEmployees = await db
+  .insert(employees)
+  .select(
+    db.select({ id: users.id, name: users.name }).from(users).where(eq(users.role, 'employee'))
+  );
+```
+```ts
+const qb = new QueryBuilder();
+await db.insert(employees).select(
+    qb.select({ id: users.id, name: users.name }).from(users).where(eq(users.role, 'employee'))
+);
+```
+</Section>
+</Tab>
+<Tab>
+<Section>
+```ts
+await db.insert(employees).select(
+    () => db.select({ id: users.id, name: users.name }).from(users).where(eq(users.role, 'employee'))
+);
+```
+```ts
+await db.insert(employees).select(
+    (qb) => qb.select({ id: users.id, name: users.name }).from(users).where(eq(users.role, 'employee'))
+);
+```
+</Section>
+</Tab>
+<Tab>
+<Section>
+```ts
+await db.insert(employees).select(
+    sql`select users.id as id, users.name as name from users where users.role = 'employee'`
+);
+```
+```ts
+await db.insert(employees).select(
+    () => sql`select users.id as id, users.name as name from users where users.role = 'employee'`
+);
+```
+</Section>
+</Tab>
+</Tabs>

@@ -1,0 +1,232 @@
+import Section from '@mdx/Section.astro';
+import Callout from '@mdx/Callout.astro';
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
+
+# SQL 插入
+
+<Callout type='info'>
+传递给 `.values()` 的所有值都会自动参数化。
+例如，这个查询：
+```ts
+await db.insert(users).values({ name: 'Andrew' });
+```
+将被翻译为：
+```sql
+insert into "users" ("id", "name") values (default, $1) -- params: ['Andrew']
+```
+</Callout>
+
+<br/>
+
+Drizzle ORM 为你提供了最接近 SQL 的方式来向数据库表中插入行。
+
+使用 Drizzle 插入数据非常直接，而且很像 SQL。请看：
+
+<Section>
+```typescript copy 
+await db.insert(users).values({ name: 'Andrew' });
+```
+
+```sql
+insert into "users" ("id", "name", "age") values (default, 'Andrew', default)
+```
+</Section>
+
+如果你需要某个特定表的插入类型，可以使用 `typeof usersTable.$inferInsert` 语法。 
+```typescript copy 
+type NewUser = typeof users.$inferInsert;
+
+const insertUser = async (user: NewUser) => {
+  return db.insert(users).values(user);
+}
+
+const newUser: NewUser = { name: "Alef" };
+await insertUser(newUser);
+```
+
+## 返回
+
+你可以在 CockroachDB 中插入一行并将其取回，如下所示：
+```typescript copy
+await db.insert(users).values({ name: "Dan" }).returning();
+
+// 部分返回
+await db.insert(users).values({ name: "Partial Dan" }).returning({ insertedId: users.id });
+```
+
+## 插入多行
+```typescript copy
+await db.insert(users).values([{ name: 'Andrew' }, { name: 'Dan' }]);
+```
+
+## Upserts 和冲突
+Drizzle ORM 提供了用于处理 upsert 和冲突的简单接口。
+
+### 冲突时不执行任何操作
+
+`onConflictDoNothing` 会在发生冲突时取消插入：
+
+```typescript copy
+await db.insert(users)
+  .values({ id: 1, name: 'John' })
+  .onConflictDoNothing();
+
+// 显式指定冲突目标
+await db.insert(users)
+  .values({ id: 1, name: 'John' })
+  .onConflictDoNothing({ target: users.id });
+```
+
+### 冲突时更新
+
+`onConflictDoUpdate` 会在发生冲突时更新该行：
+```typescript
+await db.insert(users)
+  .values({ id: 1, name: 'Dan' })
+  .onConflictDoUpdate({ target: users.id, set: { name: 'John' } });
+```
+
+#### `where` 子句
+
+`on conflict do update` 可以在两个不同的位置包含 `where` 子句 -
+作为冲突目标的一部分（即用于部分索引），或者作为 `update` 子句的一部分：
+
+```sql
+insert into "employees" ("employee_id", "name") 
+values (123, 'John Doe') 
+on conflict ("employee_id") where name <> 'John Doe' 
+do update set "name" = excluded.name;
+
+insert into "employees" ("employee_id", "name") 
+values (123, 'John Doe') 
+on conflict ("employee_id") do update set "name" = 'John Doe' 
+where name <> 'John Doe';
+```
+
+要在 Drizzle 中指定这些条件，你可以使用 `setWhere` 和 `targetWhere` 子句：
+
+```typescript
+await db.insert(employees)
+  .values({ employeeId: 123, name: 'John Doe' })
+  .onConflictDoUpdate({
+    target: employees.employeeId,
+    targetWhere: sql`name <> 'John Doe'`,
+    set: { name: sql`excluded.name` }
+  });
+
+await db.insert(employees)
+  .values({ employeeId: 123, name: 'John Doe' })
+  .onConflictDoUpdate({
+    target: employees.employeeId,
+    set: { name: 'John Doe' },
+    setWhere: sql`name <> 'John Doe'`
+  });
+```
+
+使用复合索引，或用于 `onConflictDoUpdate` 的复合主键进行 upsert：
+
+```typescript
+await db.insert(users)
+  .values({ firstName: 'John', lastName: 'Doe' })
+  .onConflictDoUpdate({
+    target: [users.firstName, users.lastName],
+    set: { firstName: 'John1' }
+  });
+```
+
+## `with insert` 子句
+
+<Callout>
+  查看如何在 [select](/docs/cockroach/select#with-clause)、[update](/docs/cockroach/update#with-update-clause)、[delete](/docs/cockroach/delete#with-delete-clause) 中使用 WITH 语句
+</Callout>
+
+使用 `with` 子句可以通过将复杂查询拆分为更小的子查询（称为公用表表达式，CTE）来帮助你简化它们：
+<Section>
+```typescript copy
+const userCount = db.$with('user_count').as(
+	db.select({ value: sql`count(*)`.as('value') }).from(users)
+);
+
+const result = await db.with(userCount)
+	.insert(users)
+	.values([
+		{ username: 'user1', admin: sql`((select * from ${userCount}) = 0)` }
+	])
+	.returning({
+		admin: users.admin
+	});
+```
+```sql
+with "user_count" as (select count(*) as "value" from "users") 
+insert into "users" ("username", "admin") 
+values ('user1', ((select * from "user_count") = 0)) 
+returning "admin"
+```
+</Section>
+
+## 插入到 ... select
+
+正如 CockroachDB 文档所述：
+<Callout>
+提供要插入的行的查询（SELECT 语句）
+</Callout>
+
+Drizzle 支持所有方言的当前语法，并且它们都共享相同的语法。让我们回顾一些常见场景和 API 用法。 
+在插入语句中使用 select 有几种方式，可以让你选择自己偏好的方法：
+
+- 你可以在 select 函数中传入一个查询构建器。
+- 你可以在回调中使用一个查询构建器。
+- 你可以传入一个 SQL 模板标签，并使用你想要的任何自定义 select 查询
+
+<Tabs items={["Query Builder", "Callback", "SQL template tag"]}>
+<Tab>
+<Section>
+```ts
+const insertedEmployees = await db
+  .insert(employees)
+  .select(
+    db.select({ id: users.id, name: users.name }).from(users).where(eq(users.role, 'employee'))
+  )
+  .returning({
+    id: employees.id,
+    name: employees.name
+  });
+```
+```ts
+const qb = new QueryBuilder();
+await db.insert(employees).select(
+    qb.select({ id: users.id, name: users.name }).from(users).where(eq(users.role, 'employee'))
+);
+```
+</Section>
+</Tab>
+<Tab>
+<Section>
+```ts
+await db.insert(employees).select(
+    () => db.select({ id: users.id, name: users.name }).from(users).where(eq(users.role, 'employee'))
+);
+```
+```ts
+await db.insert(employees).select(
+    (qb) => qb.select({ id: users.id, name: users.name }).from(users).where(eq(users.role, 'employee'))
+);
+```
+</Section>
+</Tab>
+<Tab>
+<Section>
+```ts
+await db.insert(employees).select(
+    sql`select "users"."id" as "id", "users"."name" as "name" from "users" where "users"."role" = 'employee'`
+);
+```
+```ts
+await db.insert(employees).select(
+    () => sql`select "users"."id" as "id", "users"."name" as "name" from "users" where "users"."role" = 'employee'`
+);
+```
+</Section>
+</Tab>
+</Tabs>

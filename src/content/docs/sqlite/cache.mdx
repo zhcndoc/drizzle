@@ -1,0 +1,351 @@
+import Callout from '@mdx/Callout.astro';
+import Npm from '@mdx/Npm.astro';
+
+# 缓存
+
+默认情况下，Drizzle 会将每个查询直接发送到你的数据库。没有隐藏操作，没有自动缓存
+或失效处理——你始终会准确看到实际运行的内容。如果你想要缓存，必须主动启用。
+
+默认情况下，Drizzle 使用 `explicit` 缓存策略（即 `global: false`），因此除非你明确要求，否则不会缓存任何内容。
+这可以避免应用程序中出现意外情况或隐藏的性能陷阱。
+另外，你也可以开启 `all` 缓存（`global: true`），这样每次 select 都会先查缓存。
+
+## 快速开始
+
+### Upstash 集成
+
+Drizzle 开箱即提供 `upstashCache()` 辅助函数。默认情况下，如果设置了环境变量，它会使用带有自动配置的 Upstash Redis。
+
+```ts
+import { upstashCache } from "drizzle-orm/cache/upstash";
+import { drizzle } from "drizzle-orm/...";
+
+const db = drizzle(process.env.DB_URL!, {
+  cache: upstashCache({ token: process.env.UPSTASH_TOKEN, url: process.env.UPSTASH_URL }),
+});
+```
+
+你也可以显式定义你的 Upstash 凭据，默认情况下为所有查询启用全局缓存，或者传入自定义缓存选项：
+
+```ts
+import { upstashCache } from "drizzle-orm/cache/upstash";
+import { drizzle } from "drizzle-orm/...";
+
+const db = drizzle(process.env.DB_URL!, {
+  cache: upstashCache({
+    // 👇 Redis 凭据（可选 — 也可以从环境变量中获取）
+    url: '<UPSTASH_URL>',
+    token: '<UPSTASH_TOKEN>',
+
+    // 👇 默认情况下为所有查询启用缓存（可选）
+    global: true,
+
+    // 👇 默认缓存行为（可选）
+    config: { ex: 60 }
+  })
+});
+```
+
+## 缓存配置参考
+
+Drizzle 为 Upstash 支持以下缓存配置选项：
+
+```ts
+export type CacheConfig = {
+  /**
+   * 过期时间（秒，正整数）
+   */
+  ex?: number;
+  /**
+   * 为给定哈希键的一个或多个字段设置过期时间（TTL 或存活时间）。
+   * 用于 HEXPIRE 命令
+   */
+  hexOptions?: "NX" | "nx" | "XX" | "xx" | "GT" | "gt" | "LT" | "lt";
+};
+```
+
+## 缓存使用示例
+
+在你配置好缓存之后，下面是缓存的行为方式：
+
+**情况 1：带有 `global: false` 的 Drizzle（默认，按需启用缓存）**
+
+```ts
+import { upstashCache } from "drizzle-orm/cache/upstash";
+import { drizzle } from "drizzle-orm/...";
+
+const db = drizzle(process.env.DB_URL!, {
+  // 👇 未传入 `global: true`，默认是 false
+  cache: upstashCache({ url: "", token: "" }),
+});
+```
+
+在这种情况下，以下查询不会从缓存中读取
+
+```ts
+const res = await db.select().from(users);
+
+// 任何 mutate 操作仍然会触发缓存的 onMutate 处理器
+// 并尝试使涉及受影响表的任何已缓存查询失效
+await db.insert(users).value({ email: "cacheman@upstash.com" });
+```
+
+要让这个查询从缓存中读取，调用 `.$withCache()`
+
+```ts
+const res = await db.select().from(users).$withCache();
+```
+
+`.$withCache` 有一组可用于管理和配置该特定查询策略的选项
+
+```ts
+// 为这个特定查询重写配置
+.$withCache({ config: {} })
+
+// 为这个查询指定一个自定义缓存键（而不是在底层对 query+params 进行哈希）
+.$withCache({ tag: 'custom_key' })
+
+// 关闭该查询的自动失效
+// 注意：这会导致最终一致性（下面会解释）
+.$withCache({ autoInvalidate: false })
+```
+
+<Callout>
+**最终一致性示例**
+
+此示例仅在你手动设置 `autoInvalidate: false` 时相关。默认情况下，`autoInvalidate` 是启用的。 
+
+如果出现以下情况，你可能会想关闭 `autoInvalidate`：
+- 你的数据变化不频繁，并且可以接受轻微的陈旧数据（例如商品列表、博客文章）
+- 你手动处理缓存失效
+
+在这些情况下，关闭它可以减少不必要的缓存失效。不过在大多数情况下，我们仍建议保持默认启用。
+
+示例：假设你在 `usersTable` 上缓存了以下查询，并设置了 3 秒的 TTL：
+
+``` ts
+const recent = await db
+  .select().from(usersTable)
+  .$withCache({ config: { ex: 3 }, autoInvalidate: false });
+```
+
+如果有人执行 `db.insert(usersTable)...`，缓存不会立即失效。在最多 3 秒内，你仍会看到旧数据，直到它最终变为一致。
+</Callout>
+
+**情况 2：带有 `global: true` 选项的 Drizzle**
+
+```ts
+import { upstashCache } from "drizzle-orm/cache/upstash";
+import { drizzle } from "drizzle-orm/...";
+
+const db = drizzle(process.env.DB_URL!, {
+  cache: upstashCache({ url: "", token: "", global: true }),
+});
+```
+
+在这种情况下，以下查询会从缓存中读取
+
+```ts
+const res = await db.select().from(users);
+```
+
+如果你想为这个特定查询禁用缓存，调用 `.$withCache(false)`
+
+```ts
+// 为此查询禁用缓存
+const res = await db.select().from(users).$withCache(false);
+```
+
+你也可以使用 `db` 的缓存实例来使特定表或标签失效
+
+```ts
+// 使所有使用 `users` 表的查询失效。你可以通过 Drizzle 实例来做到这一点。
+await db.$cache.invalidate({ tables: users });
+// 或者
+await db.$cache.invalidate({ tables: [users, posts] });
+
+// 使所有使用 `usersTable` 的查询失效。你可以仅通过表名来做到这一点。
+await db.$cache.invalidate({ tables: "usersTable" });
+// 或者
+await db.$cache.invalidate({ tables: ["usersTable", "postsTable"] });
+
+// 你也可以使任何先前执行过的 select 查询中定义的自定义标签失效。
+await db.$cache.invalidate({ tags: "custom_key" });
+// 或者
+await db.$cache.invalidate({ tags: ["custom_key", "custom_key1"] });
+```
+
+## 自定义缓存
+
+这个示例展示了如何在 Drizzle 中接入自定义 `cache`：你需要提供从缓存中读取数据、将结果写回缓存，以及在发生 mutation 时使缓存条目失效的函数。
+
+缓存扩展提供以下配置选项
+```ts
+export type CacheConfig = {
+  /** 过期时间，单位为秒 */
+  ex?: number;
+  /** 过期时间，单位为毫秒 */
+  px?: number;
+  /** 键将过期的 Unix 时间（秒） */
+  exat?: number;
+  /** 键将过期的 Unix 时间（毫秒） */
+  pxat?: number;
+  /** 更新键时保留现有 TTL */
+  keepTtl?: boolean;
+  /** HEXPIRE（哈希字段 TTL）的选项 */
+  hexOptions?: 'NX' | 'XX' | 'GT' | 'LT' | 'nx' | 'xx' | 'gt' | 'lt';
+};
+```
+
+```ts
+const db = drizzle(process.env.DB_URL!, { cache: new TestGlobalCache() });
+```
+
+```ts
+import Keyv from "keyv";
+
+export class TestGlobalCache extends Cache {
+  private globalTtl: number = 1000;
+  // 这个对象将用于存储某个表使用了哪些查询键
+  // 这样我们之后就可以用它来做失效处理。
+  private usedTablesPerKey: Record<string, string[]> = {};
+
+  constructor(private kv: Keyv = new Keyv()) {
+    super();
+  }
+
+  // 对于策略，我们有两个选项：
+  // - 'explicit'：只有在查询中添加 .$withCache() 时才会使用缓存。
+  // - 'all'：所有查询都会全局缓存。
+  // 默认行为是 'explicit'。
+  override strategy(): "explicit" | "all" {
+    return "all";
+  }
+
+  // 这个函数接收已被缓存到 key 参数中的查询和参数，
+  // 让你能够从缓存中获取该查询的响应值。
+  override async get(key: string): Promise<any[] | undefined> {
+    const res = (await this.kv.get(key)) ?? undefined;
+    return res;
+  }
+
+  // 这个函数接收若干选项，用于定义缓存数据的存储方式：
+  // - 'key'：经过哈希处理的查询和参数。
+  // - 'response'：Drizzle 从数据库返回的值数组。
+  // - 'tables'：参与 select 查询的表数组。该信息用于缓存失效处理。
+  // - 'isTag'：一个布尔标志，表示此缓存条目是否代表基于标签的查询。
+  //    当为 true 时，该条目会关联到特定标签，而不是基于表级别的失效，
+  //    这样你就可以按标签名称使缓存查询失效。参见 UpstashCache：
+  //    https://github.com/drizzle-team/drizzle-orm/blob/beta/drizzle-orm/src/cache/upstash/cache.ts 作为示例
+  //
+  // 例如，如果某个查询使用了 "users" 和 "posts" 表，你可以存储这些信息。之后，当应用在这些表上执行
+  // 任何 mutation 语句时，你就可以从缓存中删除对应的 key。
+  // 如果你能接受查询的最终一致性，可以跳过这个选项。
+  override async put(
+    key: string,
+    response: any,
+    tables: string[],
+    isTag: boolean = false,
+    config?: CacheConfig,
+  ): Promise<void> {
+    const ttl = config?.px ?? (config?.ex ? config.ex * 1000 : this.globalTtl);
+
+    await this.kv.set(key, response, ttl);
+
+    for (const table of tables) {
+      const keys = this.usedTablesPerKey[table];
+      if (keys === undefined) {
+        this.usedTablesPerKey[table] = [key];
+      } else {
+        keys.push(key);
+      }
+    }
+  }
+
+  // 当执行 insert、update 或 delete 语句时，会调用这个函数。
+  // 你可以选择跳过这一步，或者使使用了受影响表的查询失效。
+  //
+  // 该函数接收一个包含两个键的对象：
+  // - 'tags'：用于带有特定标签的查询，允许你按该标签使缓存失效。
+  // - 'tables'：insert、update 或 delete 语句实际影响到的表，
+  //   帮助你跟踪自上次缓存更新以来哪些表发生了变化。
+  override async onMutate(params: {
+    tags: string | string[];
+    tables: string | string[] | Table<any> | Table<any>[];
+  }): Promise<void> {
+    const tagsArray = params.tags
+      ? Array.isArray(params.tags)
+        ? params.tags
+        : [params.tags]
+      : [];
+    const tablesArray = params.tables
+      ? Array.isArray(params.tables)
+        ? params.tables
+        : [params.tables]
+      : [];
+
+    const keysToDelete = new Set<string>();
+
+    for (const table of tablesArray) {
+      const tableName = is(table, Table)
+        ? getTableName(table)
+        : (table as string);
+      const keys = this.usedTablesPerKey[tableName] ?? [];
+      for (const key of keys) keysToDelete.add(key);
+    }
+
+    if (keysToDelete.size > 0 || tagsArray.length > 0) {
+      for (const tag of tagsArray) {
+        await this.kv.delete(tag);
+      }
+
+      for (const key of keysToDelete) {
+        await this.kv.delete(key);
+        for (const table of tablesArray) {
+          const tableName = is(table, Table)
+            ? getTableName(table)
+            : (table as string);
+          this.usedTablesPerKey[tableName] = [];
+        }
+      }
+    }
+  }
+}
+```
+
+## 限制
+
+#### `cache` 扩展不会处理的查询：
+
+- 使用 cache 处理原始查询，例如：
+
+```ts
+db.all(sql`select 1`);
+```
+
+- 在 `d1` 和 `libsql` 中使用带有 `batch` 功能的 cache
+
+```ts
+db.batch([
+    db.insert(users).values(...),
+    db.update(users).set(...).where()
+])
+```
+
+- 在事务中使用 cache
+```ts
+await db.transaction(async (tx) => {
+  await tx.update(accounts).set(...).where(...);
+  await tx.update...
+});
+```
+
+#### 临时限制，将很快得到处理：
+
+- 将 cache 与 Drizzle Relational Queries 一起使用
+```ts
+await db.query.users.findMany();
+```
+
+- 将 cache 与 `better-sqlite3`、`Durable Objects`、`expo sqlite` 一起使用
+- 将 cache 与视图一起使用

@@ -1,18 +1,17 @@
 ---
 title: SQL 切换值
-slug: toggling-a-boolean-field
 ---
 import Section from "@mdx/Section.astro";
 import IsSupportedChipGroup from "@mdx/IsSupportedChipGroup.astro";
 import Prerequisites from "@mdx/Prerequisites.astro";
 
-<IsSupportedChipGroup chips={{PostgreSQL: true, MySQL: true, SQLite: true}}/>
+<IsSupportedChipGroup chips={{PostgreSQL: true, MySQL: true, SQLite: true, MSSQL: true, Cockroach: true}}/>
 
 <Prerequisites>
-- 开始使用 [PostgreSQL](/docs/get-started-postgresql), [MySQL](/docs/get-started-mysql) 和 [SQLite](/docs/get-started-sqlite)
+- 从 [PostgreSQL](/docs/get-started-postgresql)、[MySQL](/docs/mysql/get-started-mysql)、[SQLite](/docs/sqlite/get-started-sqlite)、[MSSQL](/docs/mssql/get-started-mssql) 和 [Cockroach](/docs/cockroach/get-started-cockroach) 开始
 - [更新语句](/docs/update)
-- [过滤器](/docs/operators) 和 [非操作符](/docs/operators#not)
-- [MySQL](/docs/column-types/mysql#boolean) 和 [SQLite](/docs/column-types/sqlite#boolean) 中的布尔数据类型
+- [过滤器](/docs/operators) 和 [not 运算符](/docs/operators#not)
+- [MySQL](/docs/mysql/column-types#boolean) 和 [SQLite](/docs/sqlite/column-types#boolean) 中的布尔数据类型
 </Prerequisites>
 
 要切换列值，可以使用 `update().set()` 方法，如下所示：

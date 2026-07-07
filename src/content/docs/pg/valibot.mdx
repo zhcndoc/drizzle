@@ -1,0 +1,314 @@
+import Npm from '@mdx/Npm.astro';
+import Callout from '@mdx/Callout.astro';
+
+# valibot
+
+### 安装依赖
+
+<Npm>
+drizzle-orm@rc valibot
+</Npm>
+
+### 选择 schema
+
+定义从数据库查询出的数据形状——可用于验证 API 响应。
+
+```ts copy
+import { pgTable, text, integer } from 'drizzle-orm/pg-core';
+import { createSelectSchema } from 'drizzle-orm/valibot';
+import { parse } from 'valibot';
+
+const users = pgTable('users', {
+  id: integer().generatedAlwaysAsIdentity().primaryKey(),
+  name: text().notNull(),
+  age: integer().notNull()
+});
+
+const userSelectSchema = createSelectSchema(users);
+
+const rows = await db.select({ id: users.id, name: users.name }).from(users).limit(1);
+const parsed: { id: number; name: string; age: number } = parse(userSelectSchema, rows[0]); // 错误：上面的查询未返回 `age`
+
+const rows = await db.select().from(users).limit(1);
+const parsed: { id: number; name: string; age: number } = parse(userSelectSchema, rows[0]); // 将成功解析
+```
+
+也支持视图和枚举。
+
+```ts copy
+import { pgEnum, pgView } from 'drizzle-orm/pg-core';
+import { gt } from 'drizzle-orm';
+import { createSelectSchema } from 'drizzle-orm/valibot';
+import { parse } from 'valibot';
+
+const roles = pgEnum('roles', ['admin', 'basic']);
+const rolesSchema = createSelectSchema(roles);
+const parsed: 'admin' | 'basic' = parse(rolesSchema, ...);
+
+const usersView = pgView('users_view').as((qb) => qb.select().from(users).where(gt(users.age, 18)));
+const usersViewSchema = createSelectSchema(usersView);
+const parsed: { id: number; name: string; age: number } = parse(usersViewSchema, ...);
+```
+
+### 插入 schema
+
+定义要插入到数据库中的数据形状——可用于验证 API 请求。
+
+```ts copy
+import { pgTable, text, integer } from 'drizzle-orm/pg-core';
+import { createInsertSchema } from 'drizzle-orm/valibot';
+import { parse } from 'valibot';
+
+const users = pgTable('users', {
+  id: integer().generatedAlwaysAsIdentity().primaryKey(),
+  name: text().notNull(),
+  age: integer().notNull()
+});
+
+const userInsertSchema = createInsertSchema(users);
+
+const user = { name: 'John' };
+const parsed: { name: string, age: number } = parse(userInsertSchema, user); // 错误：未定义 `age`
+
+const user = { name: 'Jane', age: 30 };
+const parsed: { name: string, age: number } = parse(userInsertSchema, user); // 将成功解析
+await db.insert(users).values(parsed);
+```
+
+### 更新 schema
+
+定义要在数据库中更新的数据形状——可用于验证 API 请求。
+
+```ts copy
+import { pgTable, text, integer } from 'drizzle-orm/pg-core';
+import { createUpdateSchema } from 'drizzle-orm/valibot';
+import { parse } from 'valibot';
+
+const users = pgTable('users', {
+  id: integer().generatedAlwaysAsIdentity().primaryKey(),
+  name: text().notNull(),
+  age: integer().notNull()
+});
+
+const userUpdateSchema = createUpdateSchema(users);
+
+const user = { age: 35 };
+const parsed: { name?: string | undefined, age?: number | undefined } = parse(userUpdateSchema, user); // 将成功解析
+await db.update(users).set(parsed).where(eq(users.name, 'Jane'));
+```
+
+### 细化
+
+每个 create schema 函数都接受一个额外的可选参数，你可以用它来扩展、修改或完全覆盖某个字段的 schema。传入回调函数会进行扩展或修改，而提供 Valibot schema 则会覆盖它。
+
+```ts copy
+import { pgTable, text, integer, json } from 'drizzle-orm/pg-core';
+import { createSelectSchema } from 'drizzle-orm/valibot';
+import { parse, pipe, maxLength, object, string } from 'valibot';
+
+const users = pgTable('users', {
+  id: integer().generatedAlwaysAsIdentity().primaryKey(),
+  name: text().notNull(),
+  bio: text(),
+  preferences: json()
+});
+
+const userSelectSchema = createSelectSchema(users, {
+  name: (schema) => pipe(schema, maxLength(20)), // 扩展 schema
+  bio: (schema) => pipe(schema, maxLength(1000)), // 在变为可空/可选之前扩展 schema
+  preferences: object({ theme: string() }) // 覆盖该字段，包括其可空性
+});
+
+const parsed: {
+  id: number;
+  name: string;
+  bio: string | null;
+  preferences: {
+      theme: string;
+  };
+} = parse(userSelectSchema, ...);
+```
+
+### 数据类型参考
+
+```ts
+pg.boolean();
+
+// Schema
+boolean();
+```
+
+```ts
+pgEnum('name', ['val1', 'val2']);
+
+// Schema
+enum({ val1: "val1", val2: "val2" });
+```
+
+```ts
+pg.date({ mode: 'date' });
+pg.timestamp({ mode: 'date' });
+
+// Schema
+date();
+```
+
+```ts
+pg.date({ mode: 'string' });
+pg.timestamp({ mode: 'string' });
+pg.cidr();
+pg.inet();
+pg.interval();
+pg.macaddr();
+pg.macaddr8();
+pg.numeric();
+pg.text();
+pg.sparsevec();
+pg.time();
+
+// Schema
+string();
+```
+
+```ts
+pg.bit({ dimensions: ... });
+
+// Schema
+pipe(string(), regex(/^[01]+$/), maxLength(dimensions));
+```
+
+```ts
+pg.uuid();
+
+// Schema
+pipe(string(), uuid());
+```
+
+```ts
+pg.char({ length: ... });
+
+// Schema
+pipe(string(), length(length));
+```
+
+```ts
+pg.varchar({ length: ... });
+
+// Schema
+pipe(string(), maxLength(length));
+```
+
+```ts
+pg.text({ enum: ... });
+pg.char({ enum: ... });
+pg.varchar({ enum: ... });
+
+// Schema
+enum(enum);
+```
+
+```ts
+pg.smallint();
+pg.smallserial();
+
+// Schema
+pipe(number(), minValue(-32_768), maxValue(32_767), integer()); // 16 位整数下限和上限
+```
+
+```ts
+pg.real();
+
+// Schema
+pipe(number(), minValue(-8_388_608), maxValue(8_388_607)); // 24 位整数下限和上限
+```
+
+```ts
+pg.integer();
+pg.serial();
+
+// Schema
+pipe(number(), minValue(-2_147_483_648), maxValue(2_147_483_647), integer()); // 32 位整数下限和上限
+```
+
+```ts
+pg.doublePrecision();
+
+// Schema
+pipe(number(), minValue(-140_737_488_355_328), maxValue(140_737_488_355_327)); // 48 位整数下限和上限
+```
+
+```ts
+pg.bigint({ mode: 'number' });
+pg.bigserial({ mode: 'number' });
+
+// Schema
+pipe(number(), minValue(-9_007_199_254_740_991), maxValue(9_007_199_254_740_991), integer()); // JavaScript 最小和最大安全整数
+```
+
+```ts
+pg.bigint({ mode: 'bigint' });
+pg.bigserial({ mode: 'bigint' });
+
+// Schema
+pipe(bigint(), minValue(-9_223_372_036_854_775_808n), maxValue(9_223_372_036_854_775_807n)); // 64 位整数下限和上限
+```
+
+```ts
+pg.geometry({ type: 'point', mode: 'tuple' });
+pg.point({ mode: 'tuple' });
+
+// Schema
+tuple([number(), number()]);
+```
+
+```ts
+pg.geometry({ type: 'point', mode: 'xy' });
+pg.point({ mode: 'xy' });
+
+// Schema
+object({ x: number(), y: number() });
+```
+
+```ts
+pg.halfvec({ dimensions: ... });
+pg.vector({ dimensions: ... });
+
+// Schema
+pipe(array(number()), length(dimensions));
+```
+
+```ts
+pg.line({ mode: 'abc' });
+
+// Schema
+object({ a: number(), b: number(), c: number() });
+```
+
+```ts
+pg.line({ mode: 'tuple' });
+
+// Schema
+tuple([number(), number(), number()]);
+```
+
+```ts
+pg.json();
+pg.jsonb();
+
+// Schema
+union([union([string(), number(), boolean(), null_()]), array(any()), record(string(), any())]);
+```
+
+```ts
+pg.dataType().array(...);
+
+// Schema
+pipe(array(baseDataTypeSchema), length(size));
+```
+
+```ts
+pg.bytea();
+
+// Schema
+custom<Buffer>((v) => v instanceof Buffer)
+```

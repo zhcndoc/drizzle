@@ -1,0 +1,780 @@
+import CodeTabs from '@mdx/CodeTabs.astro';
+import Callout from '@mdx/Callout.astro';
+import Section from '@mdx/Section.astro';
+import $count from '@mdx/$count-cockroach.mdx';
+
+# SQL 选择
+Drizzle 为你提供了最接近 SQL 的方式从数据库中获取数据，同时保持类型安全和可组合性。
+它原生支持几乎所有方言的大多数查询特性和能力，
+而它暂时还不支持的内容，用户可以借助强大的 [sql](/docs/cockroach/sql) 操作符来添加。
+
+对于下面的示例，我们假设你定义了一个 `users` 表，如下所示：
+
+```typescript
+import { cockroachTable, serial, string } from 'drizzle-orm/cockroach-core';
+
+export const users = cockroachTable('users', {
+  id: int4().primaryKey(),
+  name: string().notNull(),
+  age: int4(),
+});
+```
+
+### 基础选择
+选择表中的所有行，包括所有列：
+
+<Section>
+```typescript
+const result = await db.select().from(users);
+/*
+  {
+    id: number;
+    name: string;
+    age: number | null;
+  }[]
+*/
+```
+```sql
+select "id", "name", "age" from "users";
+```
+</Section>
+
+请注意，结果类型会根据表定义自动推断，包括列的可空性。
+
+<Callout type="info">
+Drizzle 总是在 `select` 子句中显式列出列，而不是使用 `select *`。<br />
+这在内部是必需的，以保证查询结果中字段的顺序，并且这通常也被认为是一个良好的实践。
+</Callout>
+
+### 部分选择
+在某些情况下，你可能只想选择表中一部分列。
+你可以通过向 `.select()` 方法提供一个选择对象来实现：
+<Section>
+```typescript copy
+const result = await db.select({
+  field1: users.id,
+  field2: users.name,
+}).from(users);
+
+const { field1, field2 } = result[0];
+```
+```sql
+select "id", "name" from "users";
+```
+</Section>
+
+像在 SQL 中一样，你可以把任意表达式作为选择字段，而不只是表列：
+
+<Section>
+```typescript
+const result = await db.select({
+  id: users.id,
+  lowerName: sql<string>`lower(${users.name})`,
+}).from(users);
+```
+```sql
+select "id", lower("name") from "users";
+```
+</Section>
+
+<Callout type="warning">
+通过指定 `sql<string>`，你是在告诉 Drizzle 该字段的**预期**类型是 `string`。<br />
+如果你指定错了（例如，对一个运行时会以字符串返回的字段使用 `sql<number>`），运行时的值就不会与预期类型匹配。
+Drizzle 无法根据提供的类型泛型执行任何类型转换，因为这些信息在运行时不可用。
+
+如果你需要对返回值应用运行时转换，可以使用 [`.mapWith()`](/docs/cockroach/sql#sqlmapwith) 方法。
+</Callout>
+
+### 条件选择
+
+你可以根据某个条件动态构建选择对象：
+
+```typescript
+async function selectUsers(withName: boolean) {
+  return db
+    .select({
+      id: users.id,
+      ...(withName ? { name: users.name } : {}),
+    })
+    .from(users);
+}
+
+const result = await selectUsers(true);
+```
+
+### 去重选择
+
+你可以使用 `.selectDistinct()` 代替 `.select()`，从数据集中只检索唯一的行：
+<Section>
+```ts
+await db.selectDistinct().from(users).orderBy(users.id, users.name);
+
+await db.selectDistinct({ id: users.id }).from(users).orderBy(users.id);
+```
+```sql
+select distinct "id", "name", "age" from "users" order by "users"."id", "users"."name";
+
+select distinct "id" from "users" order by "users"."id";
+```
+</Section>
+
+在 CockroachDB 中，你还可以使用 `distinct on` 子句来指定如何确定唯一行：
+<Section>
+```ts
+await db.selectDistinctOn([users.id]).from(users).orderBy(users.id);
+await db.selectDistinctOn([users.name], { name: users.name }).from(users).orderBy(users.name);
+```
+```sql
+select distinct on ("users"."id") "id", "name", "age" from "users" order by "users"."id";
+select distinct on ("users"."name") "name" from "users" order by "users"."name";
+```
+</Section>
+
+### 高级选择
+借助 TypeScript，Drizzle API 让你能够以多种灵活方式构建选择查询。
+
+高级部分选择的预览，更多详细的高级用法示例请参见我们的 [专门指南](/docs/cockroach/guides/include-or-exclude-columns)。
+
+<CodeTabs items={["示例 1", "示例 2", "示例 3", "示例 4"]}>
+```ts
+import { getColumns, sql } from 'drizzle-orm';
+
+await db.select({
+    ...getColumns(posts),
+    titleLength: sql<number>`length(${posts.title})`,
+  }).from(posts);
+```
+```ts
+import { getColumns } from 'drizzle-orm';
+
+const { content, ...rest } = getColumns(posts); // 排除 "content" 列
+await db.select({ ...rest }).from(posts); // 选择所有其他列
+```
+```ts
+await db.query.posts.findMany({
+  columns: {
+    title: true,
+  },
+});
+```
+```ts
+await db.query.posts.findMany({
+  columns: {
+    content: false,
+  },
+});
+```
+</CodeTabs>
+
+## ---
+
+### 过滤器
+
+你可以在 `.where()` 方法中使用 [过滤运算符](/docs/cockroach/operators) 来筛选查询结果：
+
+<Section>
+```typescript copy
+import { eq, lt, gte, ne } from 'drizzle-orm';
+
+await db.select().from(users).where(eq(users.id, 42));
+await db.select().from(users).where(lt(users.id, 42));
+await db.select().from(users).where(gte(users.id, 42));
+await db.select().from(users).where(ne(users.id, 42));
+...
+```
+```sql
+select "id", "name", "age" from "users" where "users"."id" = 42;
+select "id", "name", "age" from "users" where "users"."id" < 42;
+select "id", "name", "age" from "users" where "users"."id" >= 42;
+select "id", "name", "age" from "users" where "users"."id" <> 42;
+```
+</Section>
+
+所有过滤运算符都是使用 [`sql`](/docs/cockroach/sql) 函数实现的。
+你也可以自己使用它来编写任意 SQL 过滤条件，或者构建你自己的运算符。
+作为参考，你可以查看 Drizzle 提供的运算符是如何[实现](https://github.com/drizzle-team/drizzle-orm/blob/main/drizzle-orm/src/sql/expressions/conditions.ts)的。
+<Section>
+```typescript copy
+import { sql } from 'drizzle-orm';
+import type { CockroachColumn } from "drizzle-orm/cockroach-core";
+
+function equals42(col: CockroachColumn) {
+  return sql`${col} = 42`;
+}
+
+await db.select().from(users).where(sql`${users.id} < 42`);
+await db.select().from(users).where(sql`${users.id} = 42`);
+await db.select().from(users).where(equals42(users.id));
+await db.select().from(users).where(sql`${users.id} >= 42`);
+await db.select().from(users).where(sql`${users.id} <> 42`);
+await db.select().from(users).where(sql`lower(${users.name}) = 'aaron'`);
+```
+```sql
+select "id", "name", "age" from "users" where "users"."id" < 42;
+select "id", "name", "age" from "users" where "users"."id" = 42;
+select "id", "name", "age" from "users" where "users"."id" = 42;
+select "id", "name", "age" from "users" where "users"."id" >= 42;
+select "id", "name", "age" from "users" where "users"."id" <> 42;
+select "id", "name", "age" from "users" where lower("users"."name") = 'aaron';
+```
+</Section>
+
+<Callout type='info'>
+传递给过滤运算符和 `sql` 函数的所有值都会自动参数化。
+例如，这个查询：
+```ts
+await db.select().from(users).where(eq(users.id, 42));
+```
+将被翻译为：
+```sql
+select "id", "name", "age" from "users" where "users"."id" = $1; -- params: [42]
+```
+</Callout>
+
+使用 `not` 运算符反转条件：
+<Section>
+```typescript copy
+import { eq, not, sql } from 'drizzle-orm';
+
+await db.select().from(users).where(not(eq(users.id, 42)));
+await db.select().from(users).where(sql`not ${users.id} = 42`);
+```
+```sql
+select "id", "name", "age" from "users" where not ("users"."id" = 42);
+select "id", "name", "age" from "users" where not "users"."id" = 42;
+```
+</Section>
+
+<Callout type="info">
+你可以安全地更改 schema、重命名表和列，
+这些更改会因为模板插值而自动反映到你的查询中，
+这与在编写原始 SQL 时硬编码列名或表名不同。
+</Callout>
+
+### 组合过滤器
+你可以使用 `and()` 和 `or()` 运算符在逻辑上组合过滤运算符：
+<Section>
+```typescript copy
+import { eq, and, sql } from 'drizzle-orm';
+
+await db.select().from(users).where(
+  and(
+    eq(users.id, 42),
+    eq(users.name, 'Dan')
+  )
+);
+await db.select().from(users).where(sql`${users.id} = 42 and ${users.name} = 'Dan'`);
+```
+```sql
+select "id", "name", "age" from "users" where (("users"."id" = 42) and ("users"."name" = 'Dan'));
+select "id", "name", "age" from "users" where "users"."id" = 42 and "users"."name" = 'Dan';
+```
+</Section>
+
+<Section>
+```typescript copy
+import { eq, or, sql } from 'drizzle-orm';
+
+await db.select().from(users).where(
+  or(
+    eq(users.id, 42), 
+    eq(users.name, 'Dan')
+  )
+);
+await db.select().from(users).where(sql`${users.id} = 42 or ${users.name} = 'Dan'`);
+```
+```sql
+select "id", "name", "age" from "users" where (("users"."id" = 42) or ("users"."name" = 'Dan'));
+select "id", "name", "age" from "users" where "users"."id" = 42 or "users"."name" = 'Dan';
+```
+</Section>
+
+### 高级过滤器
+结合 TypeScript，Drizzle API 为你提供了强大且灵活的方式来在查询中组合过滤条件。
+
+条件过滤的快速预览；更多详细的高级使用示例，请参阅我们的[专门指南](/docs/cockroach/guides/conditional-filters-in-query)。
+<CodeTabs items={["示例 1", "示例 2"]}>
+```ts
+const searchPosts = async (term?: string) => {
+  await db
+    .select()
+    .from(posts)
+    .where(term ? ilike(posts.title, term) : undefined);
+};
+await searchPosts();
+await searchPosts('AI');
+```
+```ts
+const searchPosts = async (filters: SQL[]) => {
+  await db
+    .select()
+    .from(posts)
+    .where(and(...filters));
+};
+const filters: SQL[] = [];
+filters.push(ilike(posts.title, 'AI'));
+filters.push(inArray(posts.category, ['Tech', 'Art', 'Science']));
+filters.push(gt(posts.views, 200));
+await searchPosts(filters);
+```
+</CodeTabs>
+
+## ---
+
+### 限制与偏移
+使用 `.limit()` 和 `.offset()` 为查询添加 limit 和 offset 子句——例如，用于实现分页：
+
+```ts
+await db.select().from(users).limit(10);
+await db.select().from(users).limit(10).offset(10);
+```
+
+```sql
+select "id", "name", "age" from "users" limit 10;
+select "id", "name", "age" from "users" limit 10 offset 10;
+```
+
+### 排序
+使用 `.orderBy()` 为查询添加 `order by` 子句，按指定字段对结果进行排序：
+<Section>
+```typescript
+import { asc, desc } from 'drizzle-orm';
+
+await db.select().from(users).orderBy(users.name);
+await db.select().from(users).orderBy(desc(users.name));
+
+// 按多个字段排序
+await db.select().from(users).orderBy(users.name, users.name2);
+await db.select().from(users).orderBy(asc(users.name), desc(users.name2));
+```
+```sql
+select "id", "name", "name2", "age" from "users" order by "users"."name";
+select "id", "name", "name2", "age" from "users" order by "users"."name" desc;
+
+select "id", "name", "name2", "age" from "users" order by "users"."name", "users"."name";
+select "id", "name", "name2", "age" from "users" order by "users"."name" asc, "users"."name2" desc;
+```
+</Section>
+
+### 高级分页
+借助 TypeScript，Drizzle API 让你能够实现所有可能的 SQL 分页和排序方式。
+
+高级分页快速预览；如需更详细的高级使用示例，请参阅我们专门的 [limit offset pagination](/docs/cockroach/guides/limit-offset-pagination)
+和 [cursor pagination](/docs/cockroach/guides/cursor-based-pagination) 指南。
+
+<CodeTabs items={["示例 1", "示例 2", "示例 3", "示例 4"]}>
+```ts
+await db
+  .select()
+  .from(users)
+  .orderBy(asc(users.id)) // order by 是必需的
+  .limit(4) // 要返回的行数
+  .offset(4); // 要跳过的行数
+```
+```ts
+const getUsers = async (page = 1, pageSize = 3) => {
+  return await db.query.users.findMany({
+    orderBy: (users, { asc }) => asc(users.id),
+    limit: pageSize,
+    offset: (page - 1) * pageSize,
+  });
+};
+await getUsers();
+```
+```ts
+const getUsers = async (page = 1, pageSize = 10) => {
+   const sq = db
+    .select({ id: users.id })
+    .from(users)
+    .orderBy(users.id)
+    .limit(pageSize)
+    .offset((page - 1) * pageSize)
+    .as('subquery');
+   return await db.select().from(users).innerJoin(sq, eq(users.id, sq.id)).orderBy(users.id);
+};
+```
+```ts
+const nextUserPage = async (cursor?: number, pageSize = 3) => {
+  return await db
+    .select()
+    .from(users)
+    .where(cursor ? gt(users.id, cursor) : undefined) // 如果提供了游标，则获取其后的行
+    .limit(pageSize) // 要返回的行数
+    .orderBy(asc(users.id)); // 排序
+};
+// 传入上一页最后一行的游标（id）
+await nextUserPage(3);
+```
+</CodeTabs>
+
+## ---
+
+### WITH 子句
+
+<Callout>
+  查看如何在 [insert](/docs/cockroach/insert#with-insert-clause)、[update](/docs/cockroach/update#with-update-clause)、[delete](/docs/cockroach/delete#with-delete-clause) 中使用 WITH 语句
+</Callout>
+
+使用 `with` 子句可以通过将复杂查询拆分为更小的子查询（称为通用表表达式，CTE）来帮助你简化它们：
+<Section>
+```typescript copy
+const sq = db.$with('sq').as(db.select().from(users).where(eq(users.id, 42)));
+
+const result = await db.with(sq).select().from(sq);
+```
+```sql
+with "sq" as (select "id", "name", "age" from "users" where "users"."id" = 42)
+select "id", "name", "age" from "sq";
+```
+</Section>
+
+你也可以在 `with` 中提供 `insert`、`update` 和 `delete` 语句
+
+<Section>
+```typescript copy
+const sq = db.$with('sq').as(
+    db.insert(users).values({ name: 'John' }).returning(),
+);
+
+const result = await db.with(sq).select().from(sq);
+```
+```sql
+with "sq" as (insert into "users" ("id", "name", "age") values (default, 'John', default) returning "id", "name", "age")
+select "id", "name", "age" from "sq";
+```
+</Section>
+
+<Section>
+```typescript copy
+const sq = db.$with('sq').as(
+    db.update(users).set({ age: 25 }).where(eq(users.name, 'John')).returning(),
+);
+const result = await db.with(sq).select().from(sq);
+```
+```sql
+with "sq" as (update "users" set "age" = 25 where "users"."name" = 'John' returning "id", "name", "age") 
+select "id", "name", "age" from "sq";
+```
+</Section>
+
+<Section>
+```typescript copy
+const sq = db.$with('sq').as(
+  db.delete(users).where(eq(users.name, 'John')).returning(),
+);
+
+const result = await db.with(sq).select().from(sq);
+```
+```sql
+with "sq" as (delete from "users" where "users"."name" = $1 returning "id", "name", "age") 
+select "id", "name", "age" from "sq";
+```
+</Section>
+
+要在 CTE 中将任意 SQL 值选择为字段并在其他 CTE 或主查询中引用它们，
+你需要为它们添加别名：
+```typescript copy
+
+const sq = db.$with('sq').as(db.select({ 
+  name: sql<string>`upper(${users.name})`.as('name'),
+})
+.from(users));
+
+const result = await db.with(sq).select({ name: sq.name }).from(sq);
+```
+如果你不提供别名，字段类型将变为 `DrizzleTypeError`，并且你将无法在其他查询中引用它。
+如果你忽略类型错误并仍然尝试使用该字段，
+你将得到运行时错误，因为没有办法在没有别名的情况下引用该字段。
+
+### 从子查询中选择
+与 SQL 中一样，你可以使用子查询 API 将查询嵌入到其他查询中：
+<Section>
+```typescript copy
+const sq = db.select().from(users).where(eq(users.id, 42)).as('sq');
+const result = await db.select().from(sq);
+```
+```sql
+select "id", "name", "age" from (select "id", "name", "age" from "users" where "users"."id" = 42) "sq";
+```
+</Section>
+
+子查询可以用于任何可以使用表的地方，例如在连接中：
+<Section>
+```typescript copy
+const sq = db.select().from(users).where(eq(users.id, 42)).as('sq');
+const result = await db.select().from(users).leftJoin(sq, eq(users.id, sq.id));
+```
+```sql
+select "users"."id", "users"."name", "users"."age", "sq"."id", "sq"."name", "sq"."age" from "users"
+  left join (select "id", "name", "age" from "users" where "users"."id" = 42) "sq"
+    on "users"."id" = "sq"."id";
+```
+</Section>
+
+## ---
+
+### 聚合
+使用 Drizzle，你可以通过 `.groupBy()` 和 `.having()` 进行分组和过滤，从而使用 `sum`、`count`、`avg` 等函数进行聚合，这与在原始 SQL 中的做法相同：
+
+<Section>
+```typescript
+import { gt, sql } from "drizzle-orm";
+
+await db.select({
+  age: users.age,
+  count: sql<number>`cast(count(${users.id}) as int)`,
+})
+  .from(users)
+  .groupBy(users.age);
+
+await db.select({
+  age: users.age,
+  count: sql<number>`cast(count(${users.id}) as int)`,
+})
+  .from(users)
+  .groupBy(users.age)
+  .having(({ count }) => gt(count, 1));
+```
+```sql
+select "age", cast(count("id") as int)
+  from "users"
+  group by "users"."age";
+
+select "age", cast(count("id") as int)
+  from "users"
+  group by "users"."age"
+  having cast(count("users"."id") as int) > 1;
+```
+</Section>
+
+<Callout type="info">
+或者，你也可以使用 [`.mapWith(Number)`](/docs/cockroach/sql#sqlmapwith) 在运行时将值转换为数字。
+
+如果你需要 count 聚合，我们建议使用我们的 [$count](/docs/cockroach/select#count) API
+</Callout>
+
+### 聚合辅助函数
+
+Drizzle 提供了一组封装好的 `sql` 函数，因此在应用中处理常见场景时，你不需要编写
+`sql` 模板
+
+<Callout type="info">
+ 记住，聚合函数通常与 SELECT 语句的 GROUP BY 子句一起使用。 
+ 因此，如果你在一个查询中同时使用聚合函数和其他列进行选择， 
+ 一定要使用 `.groupBy` 子句
+</Callout>
+
+**count**
+
+返回 `expression` 中值的数量。
+<Section>
+```ts
+import { count } from 'drizzle-orm'
+
+await db.select({ value: count() }).from(users);
+await db.select({ value: count(users.id) }).from(users);
+```
+```sql
+select count(*) from "users";
+select count("id") from "users";
+```
+```ts
+// 它相当于编写
+await db.select({ 
+  value: sql`count(*)`.mapWith(Number) 
+}).from(users);
+
+await db.select({ 
+  value: sql`count(${users.id})`.mapWith(Number) 
+}).from(users);
+```
+</Section>
+
+**countDistinct**
+
+返回 `expression` 中非重复值的数量。
+<Section>
+```ts
+import { countDistinct } from 'drizzle-orm'
+
+await db.select({ value: countDistinct(users.id) }).from(users);
+```
+```sql
+select count(distinct "id") from "users";
+```
+```ts
+// 它相当于编写
+await db.select({ 
+  value: sql`count(distinct ${users.id})`.mapWith(Number) 
+}).from(users);
+```
+</Section>
+
+**avg**
+
+返回 `expression` 中所有非空值的平均值（算术平均数）。
+<Section>
+```ts
+import { avg } from 'drizzle-orm'
+
+await db.select({ value: avg(users.id) }).from(users);
+```
+```sql
+select avg("id") from "users";
+```
+```ts
+// 它相当于编写
+await db.select({ 
+  value: sql`avg(${users.id})`.mapWith(String) 
+}).from(users);
+```
+</Section>
+
+**avgDistinct**
+
+返回 `expression` 中所有非空值的平均值（算术平均数）。
+<Section>
+```ts
+import { avgDistinct } from 'drizzle-orm'
+
+await db.select({ value: avgDistinct(users.id) }).from(users);
+```
+```sql
+select avg(distinct "id") from "users";
+```
+```ts
+// 它相当于编写
+await db.select({ 
+  value: sql`avg(distinct ${users.id})`.mapWith(String) 
+}).from(users);
+```
+</Section>
+
+**sum**
+
+返回 `expression` 中所有非空值的总和。
+<Section>
+```ts
+import { sum } from 'drizzle-orm'
+
+await db.select({ value: sum(users.id) }).from(users);
+```
+```sql
+select sum("id") from "users";
+```
+```ts
+// 它相当于编写
+await db.select({ 
+  value: sql`sum(${users.id})`.mapWith(String) 
+}).from(users);
+```
+</Section>
+
+**sumDistinct**
+
+返回 `expression` 中所有非空且非重复值的总和。
+<Section>
+```ts
+import { sumDistinct } from 'drizzle-orm'
+
+await db.select({ value: sumDistinct(users.id) }).from(users);
+```
+```sql
+select sum(distinct "id") from "users";
+```
+```ts
+// 它相当于编写
+await db.select({ 
+  value: sql`sum(distinct ${users.id})`.mapWith(String) 
+}).from(users);
+```
+</Section>
+
+**max**
+
+返回 `expression` 中的最大值。
+<Section>
+```ts
+import { max } from 'drizzle-orm'
+
+await db.select({ value: max(users.id) }).from(users);
+```
+```sql
+select max("id") from "users";
+```
+```ts
+// 它相当于编写
+await db.select({ 
+  value: sql`max(${expression})`.mapWith(users.id) 
+}).from(users);
+```
+</Section>
+
+**min**
+
+返回 `expression` 中的最小值。
+<Section>
+```ts
+import { min } from 'drizzle-orm'
+
+await db.select({ value: min(users.id) }).from(users);
+```
+```sql
+select min("id") from "users";
+```
+```ts
+// 它相当于编写
+await db.select({ 
+  value: sql`min(${users.id})`.mapWith(users.id) 
+}).from(users);
+```
+</Section>
+
+一个更高级的示例：
+
+```typescript copy
+const orders = cockroachTable("order", {
+  id: int4().primaryKey(),
+  orderDate: timestamp("order_date", { withTimezone: true }).notNull(),
+  requiredDate: timestamp("required_date", { withTimezone: true }).notNull(),
+  shippedDate: timestamp("shipped_date", { withTimezone: true }),
+  shipVia: int4("ship_via").notNull(),
+  freight: numeric("freight").notNull(),
+  shipName: string("ship_name").notNull(),
+  shipCity: string("ship_city").notNull(),
+  shipRegion: string("ship_region"),
+  shipPostalCode: string("ship_postal_code"),
+  shipCountry: string("ship_country").notNull(),
+  customerId: string("customer_id").notNull(),
+  employeeId: int4("employee_id").notNull(),
+});
+
+const details = cockroachTable("order_detail", {
+  unitPrice: numeric("unit_price").notNull(),
+  quantity: int4("quantity").notNull(),
+  discount: numeric("discount").notNull(),
+  orderId: int4("order_id").notNull(),
+  productId: int4("product_id").notNull(),
+});
+
+
+await db
+  .select({
+    id: orders.id,
+    shippedDate: orders.shippedDate,
+    shipName: orders.shipName,
+    shipCity: orders.shipCity,
+    shipCountry: orders.shipCountry,
+    productsCount: sql<number>`cast(count(${details.productId}) as int)`,
+    quantitySum: sql<number>`sum(${details.quantity})`,
+    totalPrice: sql<number>`sum(${details.quantity} * ${details.unitPrice})`,
+  })
+  .from(orders)
+  .leftJoin(details, eq(orders.id, details.orderId))
+  .groupBy(orders.id)
+  .orderBy(asc(orders.id))
+```
+
+### $count
+
+<$count/>

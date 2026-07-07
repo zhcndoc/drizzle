@@ -11,8 +11,8 @@ import FileStructure from '@mdx/get-started/FileStructure.mdx';
 import InstallPackages from '@mdx/get-started/InstallPackages.mdx';
 import ConnectSQLiteCloud from '@mdx/get-started/sqlite/ConnectSQLiteCloud.mdx'
 import CreateTable from '@mdx/get-started/sqlite/CreateTable.mdx'
-import SetupConfig from '@mdx/get-started/SetupConfig.mdx';
-import ApplyChanges from '@mdx/get-started/ApplyChanges.mdx';
+import SetupConfig from '@mdx/get-started/sqlite/SetupConfig.mdx';
+import ApplyChanges from '@mdx/get-started/sqlite/ApplyChanges.mdx';
 import RunFile from '@mdx/get-started/RunFile.mdx';
 import QueryDatabase from '@mdx/get-started/QueryDatabase.mdx';
 import SetupEnv from '@mdx/get-started/SetupEnv.mdx';
@@ -22,25 +22,25 @@ import SetupEnv from '@mdx/get-started/SetupEnv.mdx';
 # 使用 Drizzle 和 SQLite Cloud 快速开始
 
 <Prerequisites>
-  - **dotenv** - 管理环境变量的包 - [查看这里](https://www.npmjs.com/package/dotenv)
-  - **tsx** - 运行 TypeScript 文件的包 - [查看这里](https://tsx.is/)
-  - **SQLite Cloud 数据库** - [查看这里](https://docs.sqlitecloud.io/docs/overview)
-  - **SQLite Cloud 驱动** - [查看这里](https://docs.sqlitecloud.io/docs/sdk-js-introduction) & [GitHub](https://github.com/sqlitecloud/sqlitecloud-js)
+  - **dotenv** - 用于管理环境变量的包 - [在此阅读](https://www.npmjs.com/package/dotenv)
+  - **tsx** - 用于运行 TypeScript 文件的包 - [在此阅读](https://tsx.hirok.io/)
+  - **SQLite Cloud database** - [在此阅读](https://docs.sqlitecloud.io/docs/overview)
+  - **SQLite Cloud driver** - [在此阅读](https://docs.sqlitecloud.io/docs/sdk-js-introduction) & [GitHub](https://github.com/sqlitecloud/sqlitecloud-js)
 </Prerequisites>
 
 <FileStructure/>
 
 #### 第 1 步 - 安装所需包
 <Npm>
-  drizzle-orm@beta @sqlitecloud/drivers dotenv
-  -D drizzle-kit@beta tsx
+    drizzle-orm@rc @sqlitecloud/drivers dotenv
+    -D drizzle-kit@rc tsx
 </Npm>
 
 #### 第 2 步 - 设置连接变量
 
 <SetupEnv env_variable='SQLITE_CLOUD_CONNECTION_STRING' />
 
-#### 第 3 步 - 连接 Drizzle ORM 到数据库
+#### 第 3 步 - 将 Drizzle ORM 连接到数据库
 
 <ConnectSQLiteCloud/>
 

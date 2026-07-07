@@ -1,0 +1,93 @@
+import CodeTab from "@mdx/CodeTab.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Section from "@mdx/Section.astro";
+import Tab from "@mdx/Tab.astro";
+import Tabs from "@mdx/Tabs.astro";
+import Callout from "@mdx/Callout.astro";
+import Prerequisites from "@mdx/Prerequisites.astro";
+import Npm from "@mdx/Npm.astro";
+import Npx from "@mdx/Npx.astro";
+import Dialects from "@mdx/Dialects.mdx"
+
+# `drizzle-kit check`
+
+<Prerequisites>
+- 开始使用 Drizzle 和 `drizzle-kit` - [查看这里](/docs/get-started)
+- Drizzle schema 基础知识 - [查看这里](/docs/sql-schema-declaration)
+- 数据库连接基础知识 - [查看这里](/docs/connect-overview)
+- Drizzle 迁移基础知识 - [查看这里](/docs/migrations)
+- Drizzle Kit [概述](/docs/kit-overview) 和 [配置文件](/docs/drizzle-config-file)
+- `drizzle-kit generate` 命令 - [查看这里](/docs/drizzle-kit-generate)
+</Prerequisites>
+
+`drizzle-kit check` 命令可以让你检查生成的 SQL 迁移历史的一致性。
+
+当多个开发者在项目中工作并在不同的分支上更改数据库模式时，
+这非常有用 - 了解更多有关 [团队迁移](/docs/kit-migrations-for-teams)。
+
+<br/>
+<hr/>
+<br/>
+
+`drizzle-kit check` 命令需要你指定 `dialect`，
+你可以通过 [drizzle.config.ts](/docs/drizzle-config-file) 配置文件或 CLI 选项来提供它
+
+<CodeTabs items={["使用配置文件", "作为 CLI 选项"]}>
+<Section>
+```ts {5,8}
+// drizzle.config.ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "postgresql",
+});
+```
+```shell
+npx drizzle-kit check
+```
+</Section>
+```shell
+npx drizzle-kit check --dialect=postgresql
+```
+</CodeTabs>
+
+### 在一个项目中使用多个配置文件
+你可以在项目中拥有多个配置文件，当你有多个数据库阶段或在同一项目中有多个数据库时，这非常有用：
+<Npx>
+  drizzle-kit check --config=drizzle-dev.config.ts
+  drizzle-kit check --config=drizzle-prod.config.ts
+</Npx>
+```plaintext {5-6}
+📦 <项目根目录>
+ ├ 📂 drizzle
+ ├ 📂 src
+ ├ 📜 .env
+ ├ 📜 drizzle-dev.config.ts
+ ├ 📜 drizzle-prod.config.ts
+ ├ 📜 package.json
+ └ 📜 tsconfig.json
+```
+
+### 忽略冲突
+
+如果你需要 `check` 命令跳过交换律检查并直接绕过它，可以使用 `--ignore-conflicts`。如果你遇到需要使用它的情况，那么
+很大概率是 `drizzle-kit` 没有正确检查迁移，这是一个 bug。请把你的情况反馈给我们，这样我们可以修复它
+
+```shell
+drizzle-kit check --ignore-conflicts
+```
+
+### 配置项扩展列表
+我们建议通过 [drizzle.config.ts](/docs/drizzle-config-file) 文件来配置 `drizzle-kit`，
+但在必要时你也可以通过 CLI 提供所有配置选项，例如在 CI/CD 流水线中等。
+<rem025/>
+|           |            |                                                                         |
+| :-------- | :--------- | :---------------------------------------------------------------------- |
+| `dialect` | `required` | 你正在使用的数据库方言。可以是 <Dialects/> 中的任意一种 |
+| `out`     |            | 迁移文件夹，默认=`./drizzle`                                         |
+| `config`  |            | 配置文件路径，默认=`drizzle.config.ts`                           |
+<br/>
+<Npx>
+drizzle-kit check --dialect=postgresql
+drizzle-kit check --dialect=postgresql --out=./migrations-folder
+</Npx>

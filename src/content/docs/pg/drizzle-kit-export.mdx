@@ -1,0 +1,155 @@
+import CodeTab from "@mdx/CodeTab.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Section from "@mdx/Section.astro";
+import Tab from "@mdx/Tab.astro";
+import Tabs from "@mdx/Tabs.astro";
+import Callout from "@mdx/Callout.astro";
+import Prerequisites from "@mdx/Prerequisites.astro"
+import Npx from "@mdx/Npx.astro";
+import SchemaFilePaths from "@mdx/SchemaFilePaths.mdx"
+import Dialects from "@mdx/Dialects.mdx"
+
+# `drizzle-kit export`
+
+<Prerequisites>
+- 开始使用 Drizzle 和 `drizzle-kit` - [阅读这里](/docs/get-started)
+- Drizzle 架构基础 - [阅读这里](/docs/sql-schema-declaration)
+- 数据库连接基础 - [阅读这里](/docs/connect-overview)
+- Drizzle 迁移基础 - [阅读这里](/docs/migrations)
+- Drizzle Kit [概述](/docs/kit-overview) 和 [配置文件](/docs/drizzle-config-file)
+</Prerequisites>
+
+<br/>
+
+`drizzle-kit export` 允许你导出 Drizzle 架构的 SQL 表示，并在控制台中打印 SQL DDL 表示。
+<Callout collapsed="底层是如何工作的？">
+Drizzle Kit `export` 命令会触发一系列事件：
+1. 它会读取你的 Drizzle 架构文件并生成架构的 json 快照
+2. 基于当前的 json 快照，它会生成 SQL DDL 语句
+3. 将 SQL DDL 语句输出到控制台
+</Callout>
+
+它旨在覆盖 [代码优先](/docs/migrations) 的 Drizzle 迁移管理方法。  
+你可以导出 Drizzle 架构的 SQL 表示，允许像 Atlas 这样的外部工具为你处理所有迁移。
+
+`drizzle-kit export` 命令要求你提供 `dialect` 和 `schema` 路径选项，  
+你可以通过 [drizzle.config.ts](/docs/drizzle-config-file) 配置文件或通过 CLI 选项设置它们。
+<CodeTabs items={["使用配置文件", "作为 CLI 选项"]}>
+<Section>
+```ts
+// drizzle.config.ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "postgresql",
+  schema: "./src/schema.ts",
+});
+```
+```shell
+npx drizzle-kit export
+```
+</Section>
+
+```shell
+npx drizzle-kit export --dialect=postgresql --schema=./src/schema.ts
+```
+</CodeTabs>
+
+### 架构文件路径
+你可以拥有一个 `schema.ts` 文件，或者根据需要在项目中分布多个架构文件。  
+Drizzle Kit 要求你通过 `schema` 配置选项指定文件路径，可以使用 [glob](https://www.digitalocean.com/community/tools/glob?comments=true&glob=/**/*.js&matches=false&tests=//%20This%20will%20match%20as%20it%20ends%20with%20'.js'&tests=/hello/world.js&tests=//%20This%20won't%20match!&tests=/test/some/globs) 来指定路径。
+
+<SchemaFilePaths/>
+
+### 一个项目中的多个配置文件
+你可以在项目中使用多个配置文件，这在有多个数据库阶段或多个数据库，或同一项目中使用不同数据库时非常有用：
+<Npx>
+  drizzle-kit export --config=drizzle-dev.config.ts
+  drizzle-kit export --config=drizzle-prod.config.ts
+</Npx>
+```plaintext {5-6}
+📦 <项目根目录>
+ ├ 📂 drizzle
+ ├ 📂 src
+ ├ 📜 .env
+ ├ 📜 drizzle-dev.config.ts
+ ├ 📜 drizzle-prod.config.ts
+ ├ 📜 package.json
+ └ 📜 tsconfig.json
+```
+
+### 可用配置项的扩展列表
+`drizzle-kit export` 有一个仅限 CLI 的选项列表
+
+<rem025/>
+
+|               |                                                      |
+| :--------     | :--------------------------------------------------- |
+| `--sql`       | 生成 Drizzle 架构的 SQL 表示                              |
+
+默认情况下，Drizzle Kit 输出 SQL 文件，但未来我们希望支持不同的格式
+
+<rem025/>
+
+<Npx>
+drizzle-kit export --sql=true
+</Npx>
+
+<br/>
+<hr/>
+<br/>
+我们推荐通过 [drizzle.config.ts](/docs/drizzle-config-file) 文件配置 `drizzle-kit`，  
+但如果需要，也可以通过 CLI 提供所有配置选项，例如在 CI/CD 管道中等。
+
+|               |            |                                                                            |
+| :------------ | :-------   | :----------------------------------------------------------------------    |
+| `dialect`     | `必需`     | 数据库方言，可选值见 <Dialects/>                                       |
+| `schema`      | `必需`     | TypeScript 架构文件或包含多个架构文件的文件夹路径                        |
+| `config`      |            | 配置文件路径，默认是 `drizzle.config.ts`                                |
+
+### 示例
+如何将 Drizzle 架构导出到控制台，Drizzle 架构位于 `./src/schema.ts`
+
+我们还将把 Drizzle 配置文件放在 `configs` 文件夹中。
+
+让我们创建配置文件：
+
+```plaintext {4}
+📦 <项目根目录>
+ ├ 📂 configs
+ │ └ 📜 drizzle.config.ts
+ ├ 📂 src
+ │ └ 📜 schema.ts
+ └ …
+```
+```ts filename='drizzle.config.ts'
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "postgresql",
+  schema: "./src/schema.ts",
+});
+```
+
+```ts filename='schema.ts'
+import { pgTable, serial, text } from 'drizzle-orm/pg-core'
+
+export const users = pgTable('users', {
+	id: serial('id').primaryKey(),
+	email: text('email').notNull(),
+	name: text('name')
+});
+```
+
+现在让我们运行：
+```shell
+npx drizzle-kit export --config=./configs/drizzle.config.ts
+```
+它将成功输出 Drizzle 架构的 SQL 表示：
+```bash
+CREATE TABLE "users" (
+        "id" serial PRIMARY KEY,
+        "email" text NOT NULL,
+        "name" text
+);
+```

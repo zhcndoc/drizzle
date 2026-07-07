@@ -1,6 +1,5 @@
 ---
 title: PostGIS 几何点
-slug: postgis-geometry-point
 ---
 
 import Section from "@mdx/Section.astro";
@@ -10,11 +9,11 @@ import Callout from "@mdx/Callout.astro";
 import CodeTab from '@mdx/CodeTab.astro';
 
 <Prerequisites>
-- 了解如何使用 [PostgreSQL](/docs/get-started-postgresql)
-- [Postgis 扩展](/docs/extensions/pg#postgis)
+- 从 [PostgreSQL](/docs/get-started-postgresql) 开始
+- [Postgis 扩展](/docs/extensions#postgis)
 - [索引](/docs/indexes-constraints#indexes)
-- [选择语句中的过滤](/docs/select#filtering)
-- [SQL 操作符](/docs/sql)
+- [select 语句中的过滤](/docs/select#filtering)
+- [sql 操作符](/docs/sql)
 </Prerequisites>
 
 `PostGIS` 通过支持存储、索引和查询地理空间数据来扩展 PostgreSQL 关系数据库的能力。
@@ -88,9 +87,9 @@ await db.insert(stores).values({
 要计算对象之间的距离，您可以使用 `<->` 操作符和 `ST_Distance()` 函数，对于 `geometry types` 返回两个几何形状之间的最小平面距离。这是您如何在 Drizzle 中通过 PostGIS 查询最近的位置：
 
 <Callout type='warning'>
-`getColumns` available starting from `drizzle-orm@1.0.0-beta.2`(read more [here](/docs/upgrade-v1))
+`getColumns` 从 `drizzle-orm@1.0.0-beta.2` 开始可用（更多信息请[见此](/docs/upgrade-v1)）
 
-If you are on pre-1 version(like `0.45.1`) then use `getTableColumns`
+如果您使用的是 1 之前的版本（如 `0.45.1`），则请使用 `getTableColumns`
 </Callout>
 
 <Section>

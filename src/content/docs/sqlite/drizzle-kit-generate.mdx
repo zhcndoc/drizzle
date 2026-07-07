@@ -1,0 +1,251 @@
+import CodeTab from "@mdx/CodeTab.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Section from "@mdx/Section.astro";
+import Tab from "@mdx/Tab.astro";
+import Tabs from "@mdx/Tabs.astro";
+import Callout from "@mdx/Callout.astro";
+import Prerequisites from "@mdx/Prerequisites.astro"
+import Npx from "@mdx/Npx.astro";
+import SchemaFilePaths from "@mdx/SchemaFilePaths.mdx"
+import Dialects from "@mdx/Dialects.mdx"
+
+# `drizzle-kit generate` 
+
+<Prerequisites>
+- 开始使用 Drizzle 和 `drizzle-kit` - [在此阅读](/docs/sqlite/get-started)
+- Drizzle schema 基础知识 - [在此阅读](/docs/sqlite/sql-schema-declaration)
+- 数据库连接基础知识 - [在此阅读](/docs/sqlite/connect-overview)
+- Drizzle migrations 基础知识 - [在此阅读](/docs/sqlite/migrations)
+- Drizzle Kit [概览](/docs/sqlite/kit-overview) 和 [配置文件](/docs/sqlite/drizzle-config-file)
+</Prerequisites>
+
+
+<br/>
+
+`drizzle-kit generate` 允许你在声明 Drizzle schema 时或后续 schema 变更时，根据你的 Drizzle schema 生成 SQL migrations。
+<Callout collapsed="内部是如何工作的？">
+Drizzle Kit `generate` 命令会触发一系列事件：
+1. 它会读取你的 Drizzle schema 文件，并生成一个 schema 的 json 快照
+2. 它会读取你之前的 migrations 文件夹，并将当前 json 快照与最近一次的快照进行比较
+3. 基于 json 差异生成 SQL migrations
+4. 在当前时间戳下，将 `migration.sql` 和 `snapshot.json` 保存到 migrations 文件夹中
+
+<Section>
+```typescript filename="src/schema.ts"
+import * as p from "drizzle-orm/sqlite-core";
+
+export const users = p.sqliteTable("users", {
+  id: p.integer().primaryKey({ autoIncrement: true }),
+  name: p.text(),
+  email: p.text().unique(), 
+});
+```
+```                                  
+┌────────────────────────┐                  
+│ $ drizzle-kit generate │                  
+└─┬──────────────────────┘                  
+  │                                           
+  └ 1. 读取之前的 migration 文件夹
+    2. 找出当前 schema 与之前 schema 之间的差异
+    3. 如有必要，提示开发者进行重命名
+  ┌ 4. 生成 SQL migration 并持久化到文件
+  │    ┌─┴───────────────────────────────────────┐  
+  │      📂 drizzle       
+  │      └ 📂 20242409125510_premium_mister_fear
+  │        ├ 📜 migration.sql
+  │        └ 📜 snapshot.json
+  v
+```
+```sql
+-- drizzle/20242409125510_premium_mister_fear/migration.sql
+
+CREATE TABLE `users` (
+	`id` integer PRIMARY KEY AUTOINCREMENT,
+	`name` text,
+	`email` text UNIQUE
+);
+```
+</Section>
+</Callout>
+
+它的设计目标是覆盖管理 Drizzle migrations 的 [代码优先](/docs/sqlite/migrations) 方法。 
+你可以使用 [`drizzle-kit migrate`](/docs/sqlite/drizzle-kit-migrate)、使用 drizzle-orm 的 `migrate()`、 
+使用外部迁移工具（如 [bytebase](https://www.bytebase.com/)）或直接在数据库上手动运行 migrations 来应用生成的 migrations。 
+
+`drizzle-kit generate` 命令要求你同时提供 `dialect` 和 `schema` 路径选项， 
+你可以通过 [drizzle.config.ts](/docs/sqlite/drizzle-config-file) 配置文件或 CLI 选项来设置它们
+<CodeTabs items={["使用配置文件", "作为 CLI 选项"]}>
+<Section>
+```ts
+// drizzle.config.ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "sqlite",
+  schema: "./src/schema.ts",
+});
+```
+```shell
+npx drizzle-kit generate
+```
+</Section>
+
+```shell
+npx drizzle-kit generate --dialect=sqlite --schema=./src/schema.ts
+```
+</CodeTabs>
+
+### Schema 文件路径
+你可以只有一个 `schema.ts` 文件，也可以将任意数量的 schema 文件分散在整个项目中。 
+Drizzle Kit 要求你通过 `schema` 配置选项以 [glob](https://www.digitalocean.com/community/tools/glob?comments=true&glob=/**/*.js&matches=false&tests=//%20This%20will%20match%20as%20it%20ends%20with%20'.js'&tests=/hello/world.js&tests=//%20This%20won't%20match!&tests=/test/some/globs) 的形式指定它们的路径。
+
+<SchemaFilePaths/>
+
+
+### 自定义 migration 文件名
+你可以通过提供 `--name` CLI 选项来设置自定义 migration 文件名
+```shell
+npx drizzle-kit generate --name=init
+```
+```plaintext {4}
+📦 <project root>
+ ├ 📂 drizzle
+ │ └ 📂 20242409125510_init
+ │   ├ 📜 snapshot.json
+ │   └ 📜 migration.sql
+ ├ 📂 src
+ └ …
+```
+
+### 一个项目中有多个配置文件
+你可以在项目中拥有多个配置文件，当你有多个数据库阶段、多个数据库，或者同一项目中使用不同数据库时，这会非常有用：
+<Npx>
+  drizzle-kit generate --config=drizzle-dev.config.ts
+  drizzle-kit generate --config=drizzle-prod.config.ts
+</Npx>
+```plaintext {5-6}
+📦 <project root>
+ ├ 📂 drizzle
+ ├ 📂 src
+ ├ 📜 .env
+ ├ 📜 drizzle-dev.config.ts
+ ├ 📜 drizzle-prod.config.ts
+ ├ 📜 package.json
+ └ 📜 tsconfig.json
+```
+
+### 自定义 migrations
+你可以生成空的 migration 文件，用于编写你自己的自定义 SQL migrations， 
+以处理目前 Drizzle Kit 不支持的 DDL 变更或数据初始化。关于自定义 migrations 的扩展文档 - [见此](/docs/sqlite/kit-custom-migrations)
+
+```shell
+drizzle-kit generate --custom --name=seed-users
+```
+<Section>
+```plaintext {5}
+📦 <project root>
+ ├ 📂 drizzle
+ │ ├ 📂 20242409125510_init
+ │ └ 📂 20242409125510_seed-users
+ ├ 📂 src
+ └ …
+```
+```sql
+-- ./drizzle/20242409125510_seed/migration.sql
+
+INSERT INTO `users` (`name`) VALUES('Dan');
+INSERT INTO `users` (`name`) VALUES('Andrew');
+INSERT INTO `users` (`name`) VALUES('Dandrew');
+```
+</Section>
+
+### 忽略冲突
+
+如果你需要 `generate` 命令跳过可交换性检查并绕过它，可以使用 `--ignore-conflicts`。如果你有场景需要使用它，那么
+很大概率是 `drizzle-kit` 没有正确检查 migrations，这属于一个 bug。请把你的情况反馈给我们，以便我们修复它
+
+```shell
+drizzle-kit generate --ignore-conflicts
+```
+
+### 可用配置的扩展列表
+`drizzle-kit generate` 有一组仅限 CLI 的选项
+
+<rem025/>
+
+|               |                                                      |
+| :--------     | :--------------------------------------------------- |
+| `custom`      | 为自定义 migration 生成空 SQL              |
+| `name`        | 生成带自定义名称的 migration                  |
+| `ignore-conflicts` | 跳过可交换性冲突检查，默认值为 `false` |
+<rem025/>
+
+<Npx>
+drizzle-kit generate --name=init
+drizzle-kit generate --name=seed_users --custom
+drizzle-kit generate --ignore-conflicts
+</Npx>
+
+<br/>
+<hr/>
+<br/>
+我们建议通过 [drizzle.config.ts](/docs/sqlite/drizzle-config-file) 文件来配置 `drizzle-kit`， 
+但如果有必要，例如在 CI/CD 流水线等场景中，你也可以通过 CLI 提供所有配置选项。
+
+|               |            |                                                                            |
+| :------------ | :-------   | :----------------------------------------------------------------------    |
+| `dialect`     | `required` | 数据库方言，取值之一为 <Dialects/>                                       |
+| `schema`      | `required` | typescript schema 文件或包含多个 schema 文件的文件夹路径  |
+| `out`         |            | migrations 输出文件夹，默认值为 `./drizzle`                           |
+| `config`      |            | 配置文件路径，默认值为 `drizzle.config.ts`                    |
+| `breakpoints` |            | SQL 语句断点，默认值为 `true`                              |
+
+
+### 扩展示例
+以下示例展示如何创建一个名为 `0001_seed-users.sql` 的自定义 SQLite migration 文件， 
+Drizzle schema 位于 `./src/schema.ts`，migrations 文件夹名为 `./migrations`，而不是默认的 `./drizzle`。
+
+我们还会把 drizzle config 文件放在 `configs` 文件夹中。
+
+先创建配置文件：
+
+```plaintext {4}
+📦 <project root>
+ ├ 📂 migrations
+ ├ 📂 configs
+ │ └ 📜 drizzle.config.ts
+ ├ 📂 src
+ └ …
+```
+```ts filename='drizzle.config.ts'
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "sqlite",
+  schema: "./src/schema.ts",
+  out: "./migrations",
+});
+```
+
+现在运行
+```shell
+npx drizzle-kit generate --config=./configs/drizzle.config.ts --name=seed-users --custom
+```
+它将成功生成
+<Section>
+```plaintext {6}
+📦 <project root>
+ ├ …
+ ├ 📂 migrations
+ │ ├ 📂 20242409125510_init
+ │ └ 📂 20242409125510_seed-users
+ └ …
+```
+```sql
+-- ./drizzle/20242409125510_seed-users/migration.sql
+
+INSERT INTO `users` (`name`) VALUES('Dan');
+INSERT INTO `users` (`name`) VALUES('Andrew');
+INSERT INTO `users` (`name`) VALUES('Dandrew');
+```
+</Section>

@@ -1,0 +1,17 @@
+# 自定义类型
+
+SingleStore 从 `drizzle-orm/singlestore-core` 中暴露 `customType`。
+
+```ts
+import { customType, singlestoreTable } from 'drizzle-orm/singlestore-core';
+
+const customText = customType<{ data: string }>({
+  dataType() {
+    return 'text';
+  },
+});
+
+export const users = singlestoreTable('users', {
+  name: customText('name').notNull(),
+});
+```

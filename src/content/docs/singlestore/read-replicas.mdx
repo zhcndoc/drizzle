@@ -1,0 +1,80 @@
+# 读副本
+
+当你的项目涉及一组读副本实例，并且你需要一种方便的方法来管理来自读副本的 
+SELECT 查询，以及在主实例上执行创建、删除和更新操作时，你可以在 Drizzle 中使用 `withReplicas()` 函数
+
+```ts copy
+import { drizzle } from "drizzle-orm/singlestore";
+import mysql from "mysql2/promise";
+import { boolean, int, singlestoreTable, text, withReplicas } from 'drizzle-orm/singlestore-core';
+
+const usersTable = singlestoreTable('users', {
+	id: int('id').primaryKey().autoincrement(),
+	name: text('name').notNull(),
+	verified: boolean('verified').notNull().default(false),
+});
+
+const primaryClient = await mysql.createConnection({
+  host: "host",
+  user: "user",
+  database: "primary_db",
+})
+const primaryDb = drizzle({ client: primaryClient });
+
+const read1Client = await mysql.createConnection({
+  host: "host",
+  user: "user",
+  database: "read_1",
+})
+const read1 = drizzle({ client: read1Client });
+
+const read2Client = await mysql.createConnection({
+  host: "host",
+  user: "user",
+  database: "read_2",
+})
+const read2 = drizzle({ client: read2Client });
+
+const db = withReplicas(primaryDb, [read1, read2]);
+```
+
+你现在可以像之前一样使用 `db` 实例。Drizzle 将会自动处理读副本和主实例之间的选择
+
+```ts
+// 从 read1 连接或 read2 连接中读取
+await db.select().from(usersTable)
+
+// 对删除操作使用主数据库
+await db.delete(usersTable).where(eq(usersTable.id, 1))
+```
+
+你可以使用 `$primary` 键来强制在读操作中也使用主实例
+
+```ts
+// 从主库读取
+await db.$primary.select().from(usersTable);
+```
+
+使用 Drizzle，你还可以为选择读副本指定自定义逻辑。 
+你可以进行加权决策，或者使用任何其他自定义选择方法来随机选择读副本。 
+下面是一个自定义逻辑的实现示例，用于选择读副本， 
+其中第一个副本有 70% 的概率被选中，第二个副本有 30% 
+的概率被选中。
+
+请记住，你可以为读副本实现任何类型的随机选择方法
+
+```ts
+const db = withReplicas(primaryDb, [read1, read2], (replicas) => {
+    const weight = [0.7, 0.3];
+    let cumulativeProbability = 0;
+    const rand = Math.random();
+
+    for (const [i, replica] of replicas.entries()) {
+      cumulativeProbability += weight[i]!;
+      if (rand < cumulativeProbability) return replica;
+    }
+    return replicas[0]!
+});
+
+await db.select().from(usersTable)
+```

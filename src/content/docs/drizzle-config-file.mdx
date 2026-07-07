@@ -80,7 +80,6 @@ export default defineConfig({
   },
 
   migrations: {
-    prefix: "timestamp",
     table: "__drizzle_migrations__",
     schema: "public",
   },
@@ -94,7 +93,6 @@ export default defineConfig({
   },
 
   breakpoints: true,
-  strict: true,
   verbose: true,
 });
 ```
@@ -136,11 +134,11 @@ export default defineConfig({
  ├ 📜 drizzle.config.ts
  └ 📜 package.json
 ```
-```ts {5}
+```ts {6}
 import { defineConfig } from "drizzle-kit";
 
 export default defineConfig({
-  dialect: "postgresql", // "mysql" | "sqlite" | "postgresql" | "turso" | "singlestore" | "mssql"
+  dialect: "postgresql",
   schema: "./src/schema/*",
   out: "./drizzle",
 });
@@ -155,16 +153,16 @@ export default defineConfig({
 您使用的数据库的方言 
 |               |                                                 |
 | :------------ | :-----------------------------------            |
-| 类型         | <Dialects/>                                     |
-| 默认        | --                                     |
-| 命令        | `generate` `migrate` `push` `pull` `check` `up` |
+| type        | <Dialects/>                                     |
+| default        | --                                     |
+| commands    | `generate`, `push`, `pull`, `studio`,  `migrate`, `up`, `export`, |
 
 <rem025/>
 ```ts {4}
 import { defineConfig } from "drizzle-kit";
 
 export default defineConfig({
-  dialect: "mysql", 
+  dialect: "postgresql", 
 });
 ```
 
@@ -176,9 +174,9 @@ export default defineConfig({
  基于路径的 Drizzle 模式文件或包含模式文件的文件夹。
 |               |                      |
 | :------------ | :-----------------   |
-| 类型          | `string` `string[]` |
-| 默认        | --                    |
-| 命令        | `generate` `push`    |
+| type          | `string` `string[]` |
+| default        | --                    |
+| commands      | `generate`, `push`, `export`, `studio`    |
 
 <rem025/>
 <SchemaFilePaths />
@@ -190,9 +188,9 @@ export default defineConfig({
 定义您的 SQL 迁移文件、模式的 json 快照以及来自 `drizzle-kit pull` 命令的 `schema.ts` 的输出文件夹。
 |               |                      |
 | :------------ | :-----------------   |
-| 类型          | `string` `string[]` |
-| 默认        | `drizzle`                    |
-| 命令        | `generate` `migrate` `push` `pull` `check` `up`    |
+| type          | `string` `string[]` |
+| default        | `drizzle`                    |
+| commands      | `generate`, `pull`, `migrate`, `check`, `up` |
 
 <rem025/>
 ```ts {4}
@@ -213,9 +211,9 @@ Drizzle Kit 会根据提供的 `dialect` 自动选择当前项目中可用的数
 
 |               |                      |
 | :------------ | :-----------------   |
-| 类型          | <Drivers/> |
-| 默认        | --                    |
-| 命令        | `migrate` `push` `pull`   |
+| type          | <Drivers/> |
+| default        | --                    |
+| commands      | `push`, `migrate`, `pull`, `studio`  |
 
 <rem025/>
 
@@ -231,13 +229,13 @@ Drizzle Kit 会根据提供的 `dialect` 自动选择当前项目中可用的数
 
 |               |                      |
 | :------------ | :-----------------   |
-| 类型          | 驱动连接选项的联合 |
-| 默认       | --                    |
-| 命令      | `migrate` `push` `pull`   |
+| type          | <Dialects/> |
+| default       | --                    |
+| commands      | `push`, `pull`, `migrate`, `studio` |
 
 <rem025/>
 
-<CodeTabs items={["PostgreSQL", "MySQL", "SQLite", "Turso", "Cloudflare D1", "AWS Data API", "PGLite"]}>
+<CodeTabs items={["PostgreSQL", "MySQL", "SQLite", "MSSQL", "Cockroach", "Turso", "Cloudflare D1", "AWS Data API", "PGLite"]}>
 <Section>
 ```ts
 import { defineConfig } from 'drizzle-kit'
@@ -308,13 +306,44 @@ export default defineConfig({
   }
 });
 ```
+<Section>
+```ts
+import { defineConfig } from 'drizzle-kit'
+
+export default defineConfig({
+  dialect: "mssql",
+  dbCredentials: {
+    url: "mssql://username:password@host:port/database",
+  }
+});
+```
+```ts
+import { defineConfig } from 'drizzle-kit'
+
+// 通过连接参数
+export default defineConfig({
+  dialect: "mssql",
+  dbCredentials: {
+    database: "database",
+    password: "password",
+    port: 1433,
+    server: "server",
+    user: "user",
+    options: {
+      encrypt: true, // 布尔值
+      trustServerCertificate: false, // 布尔值
+    },
+  },
+});
+```
+</Section>
 ```ts
 import { defineConfig } from 'drizzle-kit'
 
 export default defineConfig({
   dialect: "turso",
   dbCredentials: {
-    url: "libsql://acme.turso.io" // 远程 Turso 数据库 url
+    url: "libsql://acme.turso.io" // 远程 Turso 数据库 URL
     authToken: "...",
 
     // 或如果您需要本地数据库
@@ -367,16 +396,16 @@ export default defineConfig({
 ### `migrations`
 <rem025/>
 
-运行 `drizzle-kit migrate` 时，Drizzle 会在您的数据库中记录成功应用迁移的日志，
-名为 `__drizzle_migrations` 的日志表在 `public` 模式下（仅适用于 PostgreSQL）。
+运行 `drizzle-kit migrate` 时，drizzle 会在数据库中记录
+已成功应用的迁移，并写入 `public` 模式下名为 `__drizzle_migrations` 的日志表中（`schema` 仅在 PostgreSQL 中使用）。
 
 `migrations` 配置选项让您可以更改迁移日志 `table` 名称和 `schema`。
 
 |               |                      |
 | :------------ | :-----------------   |
-| 类型          | `{ table: string, schema: string }` |
-| 默认       | `{ table: "__drizzle_migrations", schema: "drizzle" }`                    |
-| 命令      | `migrate`   |
+| type          | `{ table: string, schema: string }` |
+| default       | `{ table: "__drizzle_migrations", schema: "drizzle" }`                    |
+| commands      | `migrate`, `push`, `pull`   |
 
 <rem025/>
 
@@ -475,9 +504,9 @@ SELECT a.attname AS column_name, format_type(a.atttypid, a.atttypmod) as data_ty
 
 |               |                      |
 | :------------ | :-----------------   |
-| 类型          | `string` `string[]` |
-| 默认       | --                    |
-| 命令      | `generate` `push` `pull`   |
+| type          | `string` `string[]` |
+| default       | --                    |
+| commands      | `push` `pull`   |
 
 <rem025/>
 ```ts
@@ -491,21 +520,6 @@ export default defineConfig({
 
 ### `schemaFilter`
 
-自 `1.0.0-beta.1` 版本开始有所更改！
-
-<Callout type='warning' collapsed="0.x 版本中的行为">
-`drizzle-kit push` 和 `drizzle-kit pull` 默认会管理 `public` 模式中的所有表。
-您可以通过 `tablesFilters`、`schemaFilter` 和 `extensionFilters` 选项配置表、模式和扩展的列表。
-
-`schemaFilter` 选项让您指定 Drizzle Kit 要管理的模式列表
-
-|               |                      |
-| :------------ | :-----------------   |
-| 类型          | `string[]` |
-| 默认       | `["public"]`                    |
-| 命令      | `push` `pull`   |
-
-</Callout>
 
 <Callout>
 如果您想在一个数据库中运行多个项目 - 查看 [我们的指南](/docs/goodies#multi-project-schema)。
@@ -679,26 +693,6 @@ export default defineConfig({
 
 ## ---
 
-### `strict`
-<rem025/>
-
-在运行 `drizzle-kit push` 命令时提示确认执行打印的 SQL 语句。
-
-|               |                      |
-| :------------ | :-----------------   |
-| 类型          | `boolean` |
-| 默认         | `false`                    |
-| 命令          | `push`   |
-
-<rem025/>
-
-```ts
-export default defineConfig({
-  dialect: "postgresql",
-  strict: false,
-});
-```
-
 ### `verbose`
 <rem025/>
 
@@ -722,7 +716,7 @@ export default defineConfig({
 ### `breakpoints`
 <rem025/>
 
-Drizzle Kit 将自动在生成的 SQL 迁移文件中嵌入 `--> statement-breakpoint`，
+Drizzle Kit 会自动在生成的 SQL 迁移文件中嵌入 `--> statement-breakpoint`，
 这对于不支持在一个事务中进行多个 DDL 更改语句的数据库（MySQL 和 SQLite）是必要的。
 
 `breakpoints` 选项标志允许您开关此功能。

@@ -1,0 +1,400 @@
+import CodeTabs from '@mdx/CodeTabs.astro';
+import CodeTab from '@mdx/CodeTab.astro';
+import Callout from '@mdx/Callout.astro';
+import Section from "@mdx/Section.astro";
+
+# 集合操作
+
+SQL 集合操作将多个查询块的结果组合为单个结果。  
+SQL 标准定义了以下三种集合操作：`UNION`、`INTERSECT`、`EXCEPT`、`UNION ALL`、`INTERSECT ALL`、`EXCEPT ALL`。
+
+### 并集
+将两个查询块中的所有结果合并为一个结果，去除任何重复项。
+
+从 customers 和 users 表中获取所有姓名，不包含重复项。
+
+<CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
+	<CodeTab>
+	```typescript copy
+    import { union } from 'drizzle-orm/cockroach-core'
+    import { users, customers } from './schema'
+
+    const allNamesForUserQuery = db.select({ name: users.name }).from(users);
+
+    const result = await union(
+		allNamesForUserQuery,
+		db.select({ name: customers.name }).from(customers)
+	).limit(10);
+    ```
+    ```sql
+    (select "name" from "sellers")
+    union
+    (select "name" from "customers")
+    limit $1 -- params: [10]
+    ```
+    </CodeTab>
+    <CodeTab>
+    ```ts copy
+    import { users, customers } from './schema'
+
+    const result = await db
+      .select({ name: users.name })
+      .from(users)
+      .union(db.select({ name: customers.name }).from(customers))
+      .limit(10);
+    ```
+    ```sql
+    (select "name" from "sellers")
+    union
+    (select "name" from "customers")
+    limit $1 -- params: [10]
+    ```
+	</CodeTab>
+    <CodeTab>
+	```typescript copy
+    import { int4, cockroachTable, string, varchar } from "drizzle-orm/cockroach-core";
+
+    export const users = cockroachTable('sellers', {
+        id: int4().primaryKey(),
+        name: varchar({ length: 256 }).notNull(),
+        address: string(),
+    });
+    
+    export const customers = cockroachTable('customers', {
+        id: int4().primaryKey(),
+        name: varchar({ length: 256 }).notNull(),
+        city: string(),
+        email: varchar({ length: 256 }).notNull()
+    });
+    ```
+    </CodeTab>
+  </CodeTabs>
+
+### Union All
+将两个查询块中的所有结果合并为单个结果，包括重复项。
+
+让我们考虑这样一个场景：你有两张表，一张表示线上销售，另一张表示店内销售。在这种情况下，你希望将这两张表中的数据合并为一个结果集。由于可能存在重复交易，你希望保留所有记录，而不消除重复项。
+
+<CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
+	<CodeTab>
+	```typescript copy
+    import { unionAll } from 'drizzle-orm/cockroach-core'
+    import { onlineSales, inStoreSales } from './schema'
+
+    const onlineTransactions = db.select({ transaction: onlineSales.transactionId }).from(onlineSales);
+    const inStoreTransactions = db.select({ transaction: inStoreSales.transactionId }).from(inStoreSales);
+
+    const result = await unionAll(onlineTransactions, inStoreTransactions);
+    ```
+    ```sql
+    (select "transaction_id" from "online_sales")
+    union all
+    (select "transaction_id" from "in_store_sales")
+    ```
+    </CodeTab>
+    <CodeTab>
+    ```ts copy
+    import { onlineSales, inStoreSales } from './schema'
+
+    const result = await db
+      .select({ transaction: onlineSales.transactionId })
+      .from(onlineSales)
+      .unionAll(
+        db.select({ transaction: inStoreSales.transactionId }).from(inStoreSales)
+      );
+    ```
+    ```sql
+    (select "transaction_id" from "online_sales")
+    union all
+    (select "transaction_id" from "in_store_sales")
+    ```
+	</CodeTab>
+    <CodeTab>
+	```typescript copy
+    import { int4, cockroachTable, timestamp } from "drizzle-orm/cockroach-core";
+
+    export const onlineSales = cockroachTable('online_sales', {
+        transactionId: int4('transaction_id').primaryKey(),
+        productId: int4('product_id').unique(),
+        quantitySold: int4('quantity_sold'),
+        saleDate: timestamp('sale_date', { mode: 'date' }),
+    });
+    
+    export const inStoreSales = cockroachTable('in_store_sales', {
+        transactionId: int4('transaction_id').primaryKey(),
+        productId: int4('product_id').unique(),
+        quantitySold: int4('quantity_sold'),
+        saleDate: timestamp('sale_date', { mode: 'date' }),
+    });
+    ```
+    </CodeTab>
+  </CodeTabs>
+
+### 交集
+仅合并两个查询块结果中共有的行，并省略任何重复项。
+
+假设你有两张表，存储学生课程选修信息。  
+你想找出两个不同院系之间共有的课程，  
+但你只想要不同的课程名称，并且你不关心统计同一名学生对同一门课程的多次选修。
+
+在这个场景中，你想找出两个院系之间共有的课程，但不想  
+重复统计同一门课程，即使同一院系中有多个学生选修了它。
+
+<CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
+	<CodeTab>
+	```typescript copy
+    import { intersect } from 'drizzle-orm/cockroach-core'
+    import { depA, depB } from './schema'
+
+    const departmentACourses = db.select({ courseName: depA.courseName }).from(depA);
+    const departmentBCourses = db.select({ courseName: depB.courseName }).from(depB);
+
+    const result = await intersect(departmentACourses, departmentBCourses);
+    ```
+    ```sql
+    (select "course_name" from "department_a_courses")
+    intersect
+    (select "course_name" from "department_b_courses")
+    ```
+	</CodeTab>
+    <CodeTab>
+    ```typescript copy
+    import { depA, depB } from './schema'
+
+    const result = await db
+      .select({ courseName: depA.courseName })
+      .from(depA)
+      .intersect(db.select({ courseName: depB.courseName }).from(depB));
+    ```
+    ```sql
+    (select "course_name" from "department_a_courses")
+    intersect
+    (select "course_name" from "department_b_courses")
+    ```
+    </CodeTab>
+    <CodeTab>
+	```typescript copy
+    import { int4, cockroachTable, varchar } from "drizzle-orm/cockroach-core";
+
+    export const depA = cockroachTable('department_a_courses', {
+        studentId: int4('student_id'),
+        courseName: varchar('course_name').notNull(),
+    });
+    
+    export const depB = cockroachTable('department_b_courses', {
+        studentId: int4('student_id'),
+        courseName: varchar('course_name').notNull(),
+    });
+    ```
+    </CodeTab>
+  </CodeTabs>
+
+### 交集全部
+仅合并两个查询块结果中共同存在的那些行，并保留重复项。
+
+让我们考虑这样一个场景：你有两个包含客户订单数据的表，你想要识别被普通客户和 VIP 客户都下单的商品。在这种情况下，你希望跟踪每种商品的数量，即使它被不同客户多次订购。
+
+在这个场景中，你希望找出同时被普通客户和 VIP 客户订购的商品，但你想保留数量信息，即使同一商品被不同客户多次订购。
+
+<CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
+	<Section>
+	```typescript copy
+    import { intersectAll } from 'drizzle-orm/cockroach-core'
+    import { regularCustomerOrders, vipCustomerOrders } from './schema'
+
+    const regularOrders = db.select({ 
+        productId: regularCustomerOrders.productId,
+        quantityOrdered: regularCustomerOrders.quantityOrdered }
+    ).from(regularCustomerOrders);
+
+    const vipOrders = db.select({ 
+        productId: vipCustomerOrders.productId,
+        quantityOrdered: vipCustomerOrders.quantityOrdered }
+    ).from(vipCustomerOrders);
+
+    const result = await intersectAll(regularOrders, vipOrders);
+    ```
+    ```sql
+    (select "product_id", "quantity_ordered" from "regular_customer_orders")
+    intersect all
+    (select "product_id", "quantity_ordered" from "vip_customer_orders")
+    ```
+	</Section>
+	<Section>
+    ```ts copy
+    import { regularCustomerOrders, vipCustomerOrders } from './schema'
+
+    const result = await db
+        .select({
+          productId: regularCustomerOrders.productId,
+          quantityOrdered: regularCustomerOrders.quantityOrdered,
+        })
+        .from(regularCustomerOrders)
+        .intersectAll(
+          db
+            .select({
+              productId: vipCustomerOrders.productId,
+              quantityOrdered: vipCustomerOrders.quantityOrdered,
+            })
+            .from(vipCustomerOrders)
+        );
+    ```
+    ```sql
+    (select "product_id", "quantity_ordered" from "regular_customer_orders")
+    intersect all
+    (select "product_id", "quantity_ordered" from "vip_customer_orders")
+    ```
+	</Section>
+    <Section>
+	```typescript copy
+    import { int4, cockroachTable } from "drizzle-orm/cockroach-core";
+
+    export const regularCustomerOrders = cockroachTable('regular_customer_orders', {
+        customerId: int4('customer_id').primaryKey(),
+        productId: int4('product_id').notNull(),
+        quantityOrdered: int4('quantity_ordered').notNull(),
+    });
+    
+    export const vipCustomerOrders = cockroachTable('vip_customer_orders', {
+        customerId: int4('customer_id').primaryKey(),
+        productId: int4('product_id').notNull(),
+        quantityOrdered: int4('quantity_ordered').notNull(),
+    });
+    ```
+    </Section>
+  </CodeTabs>
+
+### Except
+对于两个查询块 A 和 B，返回 A 中所有不同时存在于 B 中的结果，并省略任何重复项。
+
+假设你有两个存储员工项目分配信息的表。 
+你想找到某个部门独有的项目， 
+并且这些项目没有与另一个部门共享，同时排除重复项。
+
+在这种情况下，你想识别出仅属于一个部门、且
+未与另一个部门共享的项目。即使同一部门的多个员工都被分配到了同一个项目，你也不希望将该项目
+重复计数多次。
+
+<CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
+	<CodeTab>
+	```typescript copy
+    import { except } from 'drizzle-orm/cockroach-core'
+    import { depA, depB } from './schema'
+
+    const departmentACourses = db.select({ courseName: depA.projectsName }).from(depA);
+    const departmentBCourses = db.select({ courseName: depB.projectsName }).from(depB);
+
+    const result = await except(departmentACourses, departmentBCourses);
+    ```
+    ```sql
+    (select "projects_name" from "department_a_projects")
+    except
+    (select "projects_name" from "department_b_projects")
+    ```
+	</CodeTab>
+    <CodeTab>
+    ```ts copy
+    import { depA, depB } from './schema'
+
+    const result = await db
+        .select({ courseName: depA.projectsName })
+        .from(depA)
+        .except(db.select({ courseName: depB.projectsName }).from(depB));
+    ```
+    ```sql
+    (select "projects_name" from "department_a_projects")
+    except
+    (select "projects_name" from "department_b_projects")
+    ```
+    </CodeTab>
+    <CodeTab>
+	```typescript copy
+    import { int4, cockroachTable, varchar } from "drizzle-orm/cockroach-core";
+
+    export const depA = cockroachTable('department_a_projects', {
+        employeeId: int4('employee_id'),
+        projectsName: varchar('projects_name').notNull(),
+    });
+    
+    export const depB = cockroachTable('department_b_projects', {
+        employeeId: int4('employee_id'),
+        projectsName: varchar('projects_name').notNull(),
+    });
+    ```
+    </CodeTab>
+  </CodeTabs>
+
+### Except All
+对于两个查询块 A 和 B，返回 A 中所有不同时出现在 B 中的结果，并保留重复项。
+
+让我们考虑这样一个场景：你有两张包含客户订单数据的表，并且你想要识别仅由普通客户下单的商品（不包括 VIP 客户）。在这种情况下，你希望跟踪每种商品的数量，即使同一种商品被不同的普通客户多次下单。
+
+在这个场景中，你想找出仅由普通客户下单、而未被 VIP 客户下单的商品。你希望保留数量信息，即使同一种商品被不同的普通客户多次下单也是如此。
+
+<CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
+	<CodeTab>
+	```typescript copy
+    import { exceptAll } from 'drizzle-orm/cockroach-core'
+    import { regularCustomerOrders, vipCustomerOrders } from './schema'
+
+    const regularOrders = db.select({ 
+        productId: regularCustomerOrders.productId,
+        quantityOrdered: regularCustomerOrders.quantityOrdered }
+    ).from(regularCustomerOrders);
+
+    const vipOrders = db.select({ 
+        productId: vipCustomerOrders.productId,
+        quantityOrdered: vipCustomerOrders.quantityOrdered }
+    ).from(vipCustomerOrders);
+
+    const result = await exceptAll(regularOrders, vipOrders);
+    ```
+    ```sql
+    (select "product_id", "quantity_ordered" from "regular_customer_orders")
+    except all
+    (select "product_id", "quantity_ordered" from "vip_customer_orders")
+    ```
+	</CodeTab>
+    <CodeTab>
+    ```ts copy
+    import { regularCustomerOrders, vipCustomerOrders } from './schema'
+ 
+    const result = await db
+        .select({
+          productId: regularCustomerOrders.productId,
+          quantityOrdered: regularCustomerOrders.quantityOrdered,
+        })
+        .from(regularCustomerOrders)
+        .exceptAll(
+          db
+            .select({
+              productId: vipCustomerOrders.productId,
+              quantityOrdered: vipCustomerOrders.quantityOrdered,
+            })
+            .from(vipCustomerOrders)
+        );
+    ```
+    ```sql
+    (select "product_id", "quantity_ordered" from "regular_customer_orders")
+    except all
+    (select "product_id", "quantity_ordered" from "vip_customer_orders")
+    ```
+    </CodeTab>
+	<CodeTab>
+	```typescript copy
+    import { int4, cockroachTable } from "drizzle-orm/cockroach-core";
+
+    export const regularCustomerOrders = cockroachTable('regular_customer_orders', {
+        customerId: int4('customer_id').primaryKey(),
+        productId: int4('product_id').notNull(),
+        quantityOrdered: int4('quantity_ordered').notNull(),
+    });
+    
+    export const vipCustomerOrders = cockroachTable('vip_customer_orders', {
+        customerId: int4('customer_id').primaryKey(),
+        productId: int4('product_id').notNull(),
+        quantityOrdered: int4('quantity_ordered').notNull(),
+    });
+    ```
+	</CodeTab>
+  </CodeTabs>

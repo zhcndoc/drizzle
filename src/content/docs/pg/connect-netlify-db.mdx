@@ -1,0 +1,68 @@
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
+import Npm from "@mdx/Npm.astro";
+import Callout from '@mdx/Callout.astro';
+import Steps from '@mdx/Steps.astro';
+import AnchorCards from '@mdx/AnchorCards.astro';
+import Prerequisites from "@mdx/Prerequisites.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Section from "@mdx/Section.astro";
+import WhatsNextPostgres from "@mdx/WhatsNextPostgres.astro";
+
+# Drizzle \<\> Netlify 数据库
+<Prerequisites>
+- 使用 Drizzle 进行数据库[连接基础](/docs/connect-overview)
+- Netlify Database - [网站](https://docs.netlify.com/build/data-and-storage/netlify-database/)
+</Prerequisites>
+
+<Callout type="warning">
+Netlify Database 驱动由 Netlify 团队开发和维护。
+</Callout>
+
+Drizzle 原生支持 Netlify Database 连接，并会根据运行时环境智能选择底层最优的 Postgres 驱动。
+
+Netlify Database 是一个托管的 Postgres 数据库。在 Netlify 平台上，相同的应用代码会在两种截然不同的上下文中运行：
+
+- 无服务器函数：没有持久连接，最适合基于 HTTP 的查询
+- 服务模式：通过 node-postgres 使用持久连接
+
+这个适配器将这一决策抽象掉，因此使用者只需编写一次 `drizzle()`，即可自动获得正确的驱动。
+  
+#### 第 1 步 - 安装包
+<Npm>
+ drizzle-orm@rc @netlify/database
+ -D drizzle-kit@rc
+</Npm>
+
+#### 第 2 步 - 初始化驱动并进行查询
+<CodeTabs items={["零配置", "连接字符串", "显式客户端"]}>
+```typescript
+import { drizzle } from 'drizzle-orm/netlify-db';
+
+// 连接字符串由平台自动设置
+const db = drizzle();
+
+const result = await db.execute('select 1');
+```
+<Section> 
+```typescript 
+import { drizzle } from 'drizzle-orm/netlify-db';
+
+const db = drizzle(process.env.DATABASE_URL);
+
+const result = await db.execute('select 1');
+```
+</Section> 
+```typescript
+import { drizzle } from 'drizzle-orm/netlify-db';
+
+// 显式客户端 — 由使用者控制驱动
+const db = drizzle({ client: netlifyDbClient });
+
+const result = await db.execute('select 1');
+```
+</CodeTabs>
+
+#### 接下来是什么？
+
+<WhatsNextPostgres/>

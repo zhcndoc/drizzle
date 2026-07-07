@@ -1,0 +1,13 @@
+我们建议将从 `drizzle/schema.ts` 和 `drizzle/relations.ts` 生成的代码转移到实际的 schema 文件中。在本指南中，我们将代码转移到了 `src/db/schema.ts`。可以删除用于 schema 和 relations 的生成文件。这样你就可以以更有结构的方式管理你的 schema。
+```plaintext {5,8}
+ ├ 📂 drizzle
+ │ ├ 📂 20242409125510_premium_mister_fear
+ │ │ ├ 📜 snapshot.json
+ │ │ └ 📜 migration.sql
+ │ └ 📜 schema.ts ───────────┐
+ ├ 📂 src                    │ 
+ │ ├ 📂 db                   │
+ │ │ └ 📜 schema.ts <────────┘
+ │ └ 📜 index.ts         
+ └ …
+```

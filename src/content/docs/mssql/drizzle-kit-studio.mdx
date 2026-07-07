@@ -1,0 +1,103 @@
+import CodeTab from "@mdx/CodeTab.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Section from "@mdx/Section.astro";
+import Tab from "@mdx/Tab.astro";
+import Tabs from "@mdx/Tabs.astro";
+import Callout from "@mdx/Callout.astro";
+import Prerequisites from "@mdx/Prerequisites.astro";
+import Npm from "@mdx/Npm.astro";
+import Npx from "@mdx/Npx.astro";
+
+
+# `drizzle-kit studio`
+<Prerequisites>
+- Drizzle Kit [概览](/docs/mssql/kit-overview) 和 [配置文件](/docs/mssql/drizzle-config-file)
+- Drizzle Studio，我们的数据库浏览器 - [点此阅读](/drizzle-studio/overview)
+</Prerequisites>
+
+`drizzle-kit studio` 命令会启动一个用于 [Drizzle Studio](/drizzle-studio/overview) 的服务器，托管在 [local.drizzle.studio](https://local.drizzle.studio)。 
+它要求你通过 [drizzle.config.ts](/docs/mssql/drizzle-config-file) 配置文件指定数据库连接凭据。
+
+默认情况下，它会在 `127.0.0.1:4983` 上启动一个 Drizzle Studio 服务器
+<Section>
+```ts {6}
+// drizzle.config.ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "mssql",
+  dbCredentials: {
+    url: "mssql://user:password@host:port/dbname"
+  },
+});
+```
+```shell
+npx drizzle-kit studio
+```
+</Section>
+
+### 配置 `host` 和 `port`
+默认情况下，Drizzle Studio 服务器会在 `127.0.0.1:4983` 启动， 
+你可以通过 CLI 选项配置 `host` 和 `port`
+
+<Npx>
+drizzle-kit studio --port=3000
+drizzle-kit studio --host=0.0.0.0
+drizzle-kit studio --host=0.0.0.0 --port=3000
+</Npx>
+
+
+### 日志记录
+你可以通过提供 `verbose` 标志来启用每条 SQL 语句的日志记录
+
+<Npx>
+drizzle-kit studio --verbose
+</Npx>
+
+### Safari 和 Brave 支持
+Safari 和 Brave 默认会阻止访问 localhost。 
+你需要安装 [mkcert](https://github.com/FiloSottile/mkcert) 并生成自签名证书：
+
+1. 按照 mkcert [安装步骤](https://github.com/FiloSottile/mkcert#installation) 操作
+2. 运行 `mkcert -install`
+3. 重启你的 `drizzle-kit studio`
+
+### Drizzle Studio 的可嵌入版本
+虽然托管版 Drizzle Studio 供本地开发免费永久使用，旨在丰富 Drizzle 生态系统， 
+但我们也为企业提供可嵌入版本的 Drizzle Studio 作为 B2B 方案。
+
+**Drizzle Studio 组件** - 是一个预打包、与框架无关的 Drizzle Studio Web 组件， 
+你可以将其嵌入到你的 UI 中，例如 `React` `Vue` `Svelte` `VanillaJS` 等。 
+
+如果你提供 Database as a SaaS 或基于 SQL 的数据中心型 SaaS 解决方案， 
+或者用于非面向客户的内部使用，这都是一个极其强大的 UI 元素，能够提升你的产品。
+
+使用 Drizzle Studio 的数据库平台：
+- [Turso](https://turso.tech/)，我们自 2023 年 10 月起的首批客户！
+- [Neon](https://neon.tech/)，[发布文章](https://neon.tech/docs/changelog/2024-05-24)
+- [Hydra](https://www.hydra.so/)
+
+使用 Drizzle Studio 的数据中心型平台：
+- [Nuxt Hub](https://hub.nuxt.com/)，Sébastien Chopin 的 [发布文章](https://x.com/Atinux/status/1768663789832929520)
+- [Deco.cx](https://deco.cx/)
+
+你可以在 [这里](https://www.npmjs.com/package/@drizzle-team/studio) 阅读详细概述， 
+如果你感兴趣，请通过 [Twitter](https://x.com/drizzleorm) 私信我们，或在 [Discord #drizzle-studio](https://driz.link/discord) 频道联系。
+
+### Drizzle Studio chrome 扩展
+Drizzle Studio [chrome 扩展](https://chromewebstore.google.com/detail/drizzle-studio/mjkojjodijpaneehkgmeckeljgkimnmd) 
+让你可以直接在各自服务商的管理面板中浏览你的 [PlanetScale](https://planetscale.com)、 
+[Cloudflare](https://developers.cloudflare.com/d1/) 和 [Vercel Postgres](https://vercel.com/docs/storage/vercel-postgres)
+无服务器数据库！
+
+### 限制
+我们的托管版 Drizzle Studio 旨在用于本地开发，不适用于远程环境（VPS 等）。
+
+如果你想将 Drizzle Studio 部署到你的 VPS - 我们有一个 Drizzle Studio Gateway 的 alpha 版本， 
+请通过 [Twitter](https://x.com/drizzleorm) 私信我们，或在 [Discord #drizzle-studio](https://driz.link/discord) 频道联系。
+
+### 它是开源的吗？
+不是。Drizzle ORM 和 Drizzle Kit 是完全开源的，而 Studio 不是。 
+
+Drizzle Studio 供本地开发免费永久使用，以丰富 Drizzle 生态系统， 
+遗憾的是，如果开源它，我们将无法继续提供 B2B 方案并实现商业化。

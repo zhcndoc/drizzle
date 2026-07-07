@@ -39,6 +39,8 @@
   ["do-existing", "SQLite"],
   ["bun-sqlite-new", "SQLite"],
   ["bun-sqlite-existing", "SQLite"],
+  ["node-sqlite-new", "SQLite"],
+  ["node-sqlite-existing", "SQLite"],
   ["sqlite-cloud-new", "SQLite"],
   ["sqlite-cloud-existing", "SQLite"],
   ["bun-sql-new", "PostgreSQL"],
@@ -47,8 +49,8 @@
   ["mssql-existing", "MSSQL"],
   ["cockroach-new", "CockroachDB"],
   ["cockroach-existing", "CockroachDB"],
-  ["expo-new", "Native SQLite"],
-  ["expo-existing", "Native SQLite"],
-  ["op-sqlite-new", "Native SQLite"],
-  ["op-sqlite-existing", "Native SQLite"]
+  ["expo-new", "原生 SQLite"],
+  ["expo-existing", "原生 SQLite"],
+  ["op-sqlite-new", "原生 SQLite"],
+  ["op-sqlite-existing", "原生 SQLite"]
 ]

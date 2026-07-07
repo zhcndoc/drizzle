@@ -1,0 +1,271 @@
+import CodeTabs from '@mdx/CodeTabs.astro';
+import CodeTab from '@mdx/CodeTab.astro';
+import Callout from '@mdx/Callout.astro';
+
+# 集合操作
+
+SQL 集合操作将多个查询块的结果合并为单个结果。  
+SQL 标准定义了以下三种集合操作：`UNION`、`INTERSECT`、`EXCEPT`、`UNION ALL`、`INTERSECT ALL`、`EXCEPT ALL`。
+
+### Union
+将两个查询块中的所有结果合并为单个结果，并省略任何重复项。
+
+从 customers 和 users 表中获取所有不重复的名称。
+
+<CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
+	<CodeTab>
+	```typescript copy
+    import { union } from 'drizzle-orm/sqlite-core'
+    import { users, customers } from './schema'
+
+    const allNamesForUserQuery = db.select({ name: users.name }).from(users);
+
+    const result = await union(
+		allNamesForUserQuery,
+		db.select({ name: customers.name }).from(customers)
+	).limit(10);
+    ```
+    ```sql
+    (select "name" from "sellers")
+    union 
+    (select "name" from "customers")
+    limit 10
+    ```
+	</CodeTab>
+    <CodeTab>
+    ```ts copy
+    import { users, customers } from './schema'
+
+    const result = await db
+      .select({ name: users.name })
+      .from(users)
+      .union(db.select({ name: customers.name }).from(customers))
+      .limit(10);
+    ```
+    ```sql
+    select "name" from "sellers" union select "name" from "customers" limit 10
+    ```
+    </CodeTab>
+    <CodeTab>
+	```typescript copy
+    import { int, sqliteTable, text } from "drizzle-orm/sqlite-core";
+
+    const users = sqliteTable('sellers', {
+        id: int().primaryKey(),
+        name: text().notNull(),
+        address: text(),
+    });
+    
+    const customers = sqliteTable('customers', {
+        id: int().primaryKey(),
+        name: text().notNull(),
+        city: text(),
+        email: text().notNull()
+    });
+    ```
+    </CodeTab>
+  </CodeTabs>
+
+### Union All
+将两个查询块中的所有结果合并为单个结果，并保留重复项。
+
+假设你有两张表，一张表示线上销售，另一张表示店内销售。在这种情况下，你希望将这两张表中的数据合并为一个结果集。由于可能存在重复交易，  
+你希望保留所有记录，而不消除重复项。
+
+<CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
+	<CodeTab>
+	```typescript copy
+    import { unionAll } from 'drizzle-orm/sqlite-core'
+    import { onlineSales, inStoreSales } from './schema'
+
+    const onlineTransactions = db.select({ transaction: onlineSales.transactionId }).from(onlineSales);
+    const inStoreTransactions = db.select({ transaction: inStoreSales.transactionId }).from(inStoreSales);
+
+    const result = await unionAll(onlineTransactions, inStoreTransactions);
+    ```
+    ```sql
+    select "transaction_id" from "online_sales" 
+    union all 
+    select "transaction_id" from "in_store_sales"
+    ```
+    </CodeTab>
+    <CodeTab>
+    ```ts copy
+    import { onlineSales, inStoreSales } from './schema'
+
+    const result = await db
+      .select({ transaction: onlineSales.transactionId })
+      .from(onlineSales)
+      .unionAll(
+        db.select({ transaction: inStoreSales.transactionId }).from(inStoreSales)
+      );
+    ```
+    ```sql
+    select "transaction_id" from "online_sales" 
+    union all 
+    select "transaction_id" from "in_store_sales"
+    ```
+	</CodeTab>
+    <CodeTab>
+	```typescript copy
+    import { int, sqliteTable } from "drizzle-orm/sqlite-core";
+
+    const onlineSales = sqliteTable('online_sales', {
+        transactionId: int('transaction_id').primaryKey(),
+        productId: int('product_id').unique(),
+        quantitySold: int('quantity_sold'),
+        saleDate: int('sale_date', { mode: 'timestamp' }),
+    });
+    
+    const inStoreSales = sqliteTable('in_store_sales', {
+        transactionId: int('transaction_id').primaryKey(),
+        productId: int('product_id').unique(),
+        quantitySold: int('quantity_sold'),
+        saleDate: int('sale_date', { mode: 'timestamp' }),
+    });
+    ```
+    </CodeTab>
+  </CodeTabs>
+
+### Intersect
+仅合并两个查询块结果中共有的行，并省略任何重复项。
+
+假设你有两张表，存储学生课程注册信息。  
+你想找出两个不同院系之间共有的课程，  
+但你只想要不同的课程名称，并且不关心统计同一学生对同一课程的多次注册。
+
+在这种情况下，你想找到两个院系之间共有的课程，但你不希望  
+即使同一院系的多个学生都注册了同一课程，也把这门课程重复计算多次。
+
+<CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
+	<CodeTab>
+	```typescript copy
+    import { intersect } from 'drizzle-orm/sqlite-core'
+    import { depA, depB } from './schema'
+
+    const departmentACourses = db.select({ courseName: depA.courseName }).from(depA);
+    const departmentBCourses = db.select({ courseName: depB.courseName }).from(depB);
+
+    const result = await intersect(departmentACourses, departmentBCourses);
+    ```
+    ```sql
+    select "course_name" from "department_a_courses"
+    intersect
+    select "course_name" from "department_b_courses"
+    ```
+	</CodeTab>
+    <CodeTab>
+    ```typescript copy
+    import { depA, depB } from './schema'
+
+    const result = await db
+      .select({ courseName: depA.courseName })
+      .from(depA)
+      .intersect(db.select({ courseName: depB.courseName }).from(depB));
+    ```
+    ```sql
+    select "course_name" from "department_a_courses" 
+    intersect 
+    select "course_name" from "department_b_courses"
+    ```
+    </CodeTab>
+    <CodeTab>
+	```typescript copy
+    import { int, sqliteTable, text } from "drizzle-orm/sqlite-core";
+
+    const depA = sqliteTable('department_a_courses', {
+        studentId: int('student_id'),
+        courseName: text('course_name').notNull(),
+    });
+    
+    const depB = sqliteTable('department_b_courses', {
+        studentId: int('student_id'),
+        courseName: text('course_name').notNull(),
+    });
+    ```
+    </CodeTab>
+  </CodeTabs>
+
+### Intersect All
+仅合并两个查询块结果中共有的行，并保留重复项。
+
+假设你有两张表，包含客户订单数据，并且你想  
+找出普通客户和 VIP 客户都下单的产品。在这种情况下，  
+你希望跟踪每个产品的数量，即使它被不同客户多次下单。
+
+在这种情况下，你想找出普通客户和 VIP 客户都下单的产品，  
+但你希望保留数量信息，即使同一产品被不同客户多次下单也是如此。
+
+SQLite 不支持
+
+### Except
+对于两个查询块 A 和 B，返回 A 中所有不也出现在 B 中的结果，并省略任何重复项。
+
+假设你有两张表，存储员工项目分配信息。  
+你想找出某个院系独有、  
+且未与另一个院系共享的项目，并排除重复项。
+
+在这种情况下，你想识别仅属于某个院系、并且  
+未与另一个院系共享的项目。即使同一院系的多个员工都被分配到同一个项目，你也不希望把该项目  
+重复计算多次。
+
+<CodeTabs items={["import-pattern", "builder-pattern", "schema.ts"]}>
+	<CodeTab>
+	```typescript copy
+    import { except } from 'drizzle-orm/sqlite-core'
+    import { depA, depB } from './schema'
+
+    const departmentACourses = db.select({ courseName: depA.projectsName }).from(depA);
+    const departmentBCourses = db.select({ courseName: depB.projectsName }).from(depB);
+
+    const result = await except(departmentACourses, departmentBCourses);
+    ```
+    ```sql
+    select "projects_name" from "department_a_projects" 
+    except 
+    select "projects_name" from "department_b_projects"
+    ```
+	</CodeTab>
+    <CodeTab>
+    ```ts copy
+    import { depA, depB } from './schema'
+
+    const result = await db
+        .select({ courseName: depA.projectsName })
+        .from(depA)
+        .except(db.select({ courseName: depB.projectsName }).from(depB));
+    ```
+    ```sql
+    select "projects_name" from "department_a_projects" 
+    except 
+    select "projects_name" from "department_b_projects"
+    ```
+    </CodeTab>
+    <CodeTab>
+	```typescript copy
+    import { int, sqliteTable, text } from "drizzle-orm/sqlite-core";
+
+    const depA = sqliteTable('department_a_projects', {
+        employeeId: int('employee_id'),
+        projectsName: text('projects_name').notNull(),
+    });
+    
+    const depB = sqliteTable('department_b_projects', {
+        employeeId: int('employee_id'),
+        projectsName: text('projects_name').notNull(),
+    });
+    ```
+    </CodeTab>
+  </CodeTabs>
+
+### Except All
+对于两个查询块 A 和 B，返回 A 中所有不也出现在 B 中的结果，并保留重复项。
+
+假设你有两张表，包含客户订单数据，并且你想  
+找出仅由普通客户下单的产品（不包括 VIP 客户）。  
+在这种情况下，你希望跟踪每个产品的数量，即使它被不同的普通客户多次下单。
+
+在这种情况下，你想找出仅由普通客户下单、而没有  
+被 VIP 客户下单的产品。你希望保留数量信息，即使同一产品被不同的普通客户多次下单也是如此。
+
+SQLite 不支持

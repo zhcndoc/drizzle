@@ -1,0 +1,334 @@
+import Callout from '@mdx/Callout.astro';
+import Section from '@mdx/Section.astro';
+
+# 索引与约束
+
+## 约束
+
+SQL 约束是对表列强制执行的规则。它们用于防止无效数据被插入数据库。
+
+这确保了数据库中数据的准确性和可靠性。
+
+### 默认值
+
+`DEFAULT` 子句指定在用户执行 `INSERT` 时，如果未提供值，则该列使用的默认值。
+如果列定义中没有显式附加 `DEFAULT` 子句，
+那么该列的默认值为 `NULL`。
+
+显式的 `DEFAULT` 子句可以指定默认值为 `NULL`、
+字符串常量、blob 常量、有符号数字，或括号中包裹的任何常量表达式。
+
+<Section>
+    ```typescript
+    import { sql } from "drizzle-orm";
+    import { int, time, mssqlTable } from "drizzle-orm/mssql-core";
+    
+    export const table = mssqlTable("table", {
+      int: int().default(42),
+      time: time().default(sql`cast('14:06:10' AS TIME)`),
+    });
+    ```
+    ```sql
+    CREATE TABLE [table] (
+      [int] int CONSTRAINT [table_int_default] DEFAULT ((42)),
+      [time] time CONSTRAINT [table_time_default] DEFAULT (cast('14:06:10' AS TIME))
+    );
+    ```
+    </Section>
+
+### 非空
+
+默认情况下，列可以包含 **NULL** 值。`NOT NULL` 约束强制列 **不** 接受 **NULL** 值。  
+
+这强制字段始终包含一个值，这意味着你不能在不为该字段添加值的情况下插入新记录，
+或更新记录。
+
+<Section>
+      ```typescript
+      import { int, mssqlTable } from "drizzle-orm/mssql-core";
+
+      export const table = mssqlTable('table', {
+        int: int().notNull(),
+      });
+      ```
+
+      ```sql
+      CREATE TABLE [table] (
+        [int] int NOT NULL
+      );
+      ```
+    </Section>
+
+### 唯一
+
+`UNIQUE` 约束确保列中的所有值都不同。  
+
+`UNIQUE` 和 `PRIMARY KEY` 约束都能为某一列或某组列提供唯一性保证。
+
+`PRIMARY KEY` 约束会自动包含 `UNIQUE` 约束。  
+
+<Callout type="info" emoji="ℹ️">
+  每个表可以有多个 `UNIQUE` 约束，但每个表只能有一个 `PRIMARY KEY` 约束。
+</Callout>
+
+<Section>
+      ```typescript
+      import { int, varchar, unique, mssqlTable } from "drizzle-orm/mssql-core";
+
+      export const user = mssqlTable('user', {
+        id: int().unique(),
+      });
+
+      export const table = mssqlTable('table', {
+        id: int().unique('custom_name_1'),
+      });
+
+      export const composite = mssqlTable('composite_example', {
+        id: int(),
+        name: varchar({ length: 256 }),
+      }, (t) => [
+        unique().on(t.id, t.name),
+        unique('custom_name_2').on(t.id, t.name)
+      ]);
+      ```
+
+      ```sql
+      CREATE TABLE [user] (
+      	[id] int,
+      	CONSTRAINT [user_id_key] UNIQUE([id])
+      );
+
+      CREATE TABLE [table] (
+      	[id] int,
+      	CONSTRAINT [custom_name_1] UNIQUE([id])
+      );
+
+      CREATE TABLE [composite_example] (
+        [id] int,
+        [name] varchar(256),
+        CONSTRAINT [composite_example_id_name_key] UNIQUE([id],[name]),
+        CONSTRAINT [custom_name_2] UNIQUE([id],[name])
+      );
+      ```
+    </Section>
+
+### 检查
+
+`CHECK` 约束用于限制可以放入列中的值范围。
+
+如果你在列上定义 `CHECK` 约束，它将只允许该列取某些特定值。  
+
+如果你在表上定义 `CHECK` 约束，它可以基于行中其他列的值，限制某些列中的值。
+
+<Section>
+      ```typescript copy
+      import { sql } from "drizzle-orm";
+      import { check, int, mssqlTable, text } from "drizzle-orm/mssql-core";
+
+      export const users = mssqlTable(
+        "users",
+        {
+          id: int().primaryKey(),
+          username: text().notNull(),
+          age: int(),
+        },
+        (table) => [
+          check("age_check1", sql`${table.age} > 21`)
+        ]
+      );
+      ```
+      ```sql
+      CREATE TABLE [users] (
+          [id] int,
+          [username] text NOT NULL,
+          [age] int,
+          CONSTRAINT [users_pkey] PRIMARY KEY([id]),
+          CONSTRAINT [age_check1] CHECK ([users].[age] > 21)
+      );
+      ```
+    </Section>
+
+### 主键
+
+`PRIMARY KEY` 约束可以唯一标识表中的每条记录。  
+主键必须包含 **唯一** 值，并且不能包含 **NULL** 值。  
+
+一个表只能有 **一个** 主键；并且在该表中，这个主键可以由单列或多列（字段）组成。
+
+<Section>
+      ```typescript
+      import { int, mssqlTable } from "drizzle-orm/mssql-core";
+
+      export const user = mssqlTable("user", {
+        id: int().identity().primaryKey(),
+      })
+
+      export const table = mssqlTable("table", {
+        id: int().primaryKey(),
+      })
+      ```
+
+      ```sql
+      CREATE TABLE [user] (
+        [id] int IDENTITY(1, 1),
+        CONSTRAINT [user_pkey] PRIMARY KEY([id])
+      );
+
+      CREATE TABLE [table] (
+        [id] int,
+        CONSTRAINT [table_pkey] PRIMARY KEY([id])
+      );
+      ```
+    </Section>
+
+### 复合主键
+
+与 `PRIMARY KEY` 类似，复合主键通过使用多个字段来唯一标识表中的每条记录。
+
+Drizzle ORM 为此提供了一个独立的 `primaryKey` 操作符：
+
+<Section>
+      ```typescript {18, 19}
+      import { int, text, primaryKey, mssqlTable } from "drizzle-orm/mssql-core";
+
+      export const user = mssqlTable("user", {
+        id: int().identity().primaryKey(),
+        name: text(),
+      });
+
+      export const book = mssqlTable("book", {
+        id: int().identity().primaryKey(),
+        name: text(),
+      });
+
+      export const booksToAuthors = mssqlTable("books_to_authors", {
+        authorId: int("author_id"),
+        bookId: int("book_id"),
+      }, (table) => [
+        primaryKey({ columns: [table.bookId, table.authorId] }),
+        // 或者使用自定义名称的主键
+        primaryKey({ name: 'custom_name', columns: [table.bookId, table.authorId] })
+      ]);
+      ```
+
+      ```sql {6}
+      ...
+
+      CREATE TABLE [books_to_authors] (
+      	[author_id] int,
+      	[book_id] int,
+      	CONSTRAINT [books_to_authors_pkey] PRIMARY KEY([book_id],[author_id])
+      );
+      ```
+    </Section>
+
+### 外键
+
+`FOREIGN KEY` 约束用于防止破坏表之间关联关系的操作。
+`FOREIGN KEY` 是一个表中的字段（或字段集合），它引用另一个表中的 `PRIMARY KEY`。
+包含外键的表称为子表，被引用主键的表称为被引用表或父表。
+
+Drizzle ORM 提供了多种声明外键的方法。
+你可以在列声明语句中声明它们：
+
+```typescript {11}
+import { int, text, mssqlTable } from "drizzle-orm/mssql-core";
+
+export const user = mssqlTable("user", {
+  id: int().primaryKey().identity(),
+  name: text(),
+});
+
+export const book = mssqlTable("book", {
+  id: int().primaryKey().identity(),
+  name: text(),
+  authorId: int("author_id").references(() => user.id)
+});
+```
+
+如果你想进行自引用，由于 TypeScript 的限制，你需要显式
+为引用回调设置返回类型，或者使用独立的 `foreignKey` 操作符。
+
+```typescript {6,16-19}
+import { int, text, foreignKey, type AnyMsSqlColumn, mssqlTable } from "drizzle-orm/mssql-core";
+
+export const user = mssqlTable("user", {
+  id: int().primaryKey().identity(),
+  name: text(),
+  parentId: int("parent_id").references((): AnyMsSqlColumn => user.id),
+});
+
+// 或者
+export const user = mssqlTable("user", {
+  id: int().primaryKey().identity(),
+  name: text(),
+  parentId: int("parent_id")
+}, (table) => [
+  foreignKey({
+    columns: [table.parentId],
+    foreignColumns: [table.id],
+    name: "custom_fk"
+  })
+]);
+```
+
+要声明多列外键，你可以使用专门的 `foreignKey` 操作符：
+
+```typescript copy {4-5,14-15,18-21}
+import { int, varchar, primaryKey, foreignKey, mssqlTable } from "drizzle-orm/mssql-core";
+
+export const user = mssqlTable("user", {
+  firstName: varchar('firstName', { length: 100 }),
+  lastName: varchar('lastName', { length: 100 }),
+}, (table) => [
+  primaryKey({ columns: [table.firstName, table.lastName]})
+]);
+
+export const profile = mssqlTable("profile", {
+  id: int("id").identity().primaryKey(),
+  userFirstName: varchar("user_first_name", { length: 100 }),
+  userLastName: varchar("user_last_name", { length: 100 }),
+}, (table) => [
+  foreignKey({
+    columns: [table.userFirstName, table.userLastName],
+    foreignColumns: [user.firstName, user.lastName],
+    name: "custom_name"
+  })
+]);
+```
+
+## 索引
+
+Drizzle ORM 为 `index` 和 `unique index` 声明都提供了 API：
+
+<Section>
+    ```typescript copy {9-10}
+    import { int, varchar, index, uniqueIndex, mssqlTable } from "drizzle-orm/mssql-core";
+
+    export const user = mssqlTable("user", {
+      id: int().primaryKey().identity(),
+      name: varchar({ length: 256 }),
+      email: varchar({ length: 256 }),
+    }, (table) => [
+      index("name_idx").on(table.name),
+      uniqueIndex("email_idx").on(table.email),
+    ]);
+    ```
+    ```sql {5-6}
+    CREATE TABLE `user` (
+      ...
+    );
+
+    CREATE INDEX [name_idx] ON [user] ([name]);
+    CREATE UNIQUE INDEX [email_idx] ON [user] ([email]);
+    ```
+    </Section>
+
+     Drizzle ORM 提供了用于索引创建的全部参数：
+
+    ```typescript
+    // 索引声明参考
+    index('name_idx')
+      .on(table.name)
+      .where(sql``)
+    ```

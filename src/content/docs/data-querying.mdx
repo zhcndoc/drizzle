@@ -16,18 +16,18 @@ Drizzle 提供了几种查询数据库的方法，您可以根据下一个项目
 
 它可以是类似 SQL 的语法或关系语法。让我们来看看它们：
 
-## 为什么选择 SQL 类似语法？
+## Why choose SQL-like syntax?
 \
-**如果你知道 SQL，你就能掌握 Drizzle。**
+**If you know SQL, you can master Drizzle.**
 
-其他 ORM 和数据框架往往偏离或抽象 SQL，这导致了双重学习曲线：你需要同时学习 SQL 和框架的 API。
+Other ORMs and data frameworks often deviate from or abstract away SQL, which creates a double learning curve: you need to learn both SQL and the framework’s API.
 
-Drizzle 则恰恰相反。
-我们拥抱 SQL，并将 Drizzle 的核心构建成类似 SQL 的形式，以便你几乎没有学习曲线，并能完全利用 SQL 的强大功能。
+Drizzle is the opposite.
+We embrace SQL and build Drizzle’s core in a SQL-like form, so that you have almost no learning curve and can fully leverage the power of SQL.
 
 <Section>
 ```typescript copy
-// 访问你的数据
+// Access your data
 await db
   .select()
 	.from(posts)
@@ -42,10 +42,10 @@ WHERE posts.id = 10
 ```
 </Section>
 
-使用 SQL 类似语法，你可以复制大部分纯 SQL 中可以做的事情，
-并清楚知道 Drizzle 将执行什么以及会生成什么查询。你可以执行各种范围的查询，
-包括选择、插入、更新、删除，以及使用别名、WITH 子句、子查询、准备语句等。
-让我们看更多示例。
+With SQL-like syntax, you can do most of what you can do in plain SQL,
+and clearly know what Drizzle will execute and what queries it will generate. You can perform a variety of queries,
+including select, insert, update, delete, as well as aliases, WITH clauses, subqueries, prepared statements, and more.
+Let’s look at more examples.
 
 <CodeTabs items={['插入', '更新', '删除']}>
 <Section>
@@ -116,7 +116,7 @@ async function getProductsBy({
 }: {
   name?: string;
   category?: string;
-  maxPrice?: string;
+  maxPrice?: number;
 }) {
   const filters: SQL[] = [];
 

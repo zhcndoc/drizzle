@@ -1,0 +1,413 @@
+import CodeTabs from '@mdx/CodeTabs.astro';
+import CodeTab from '@mdx/CodeTab.astro';
+import Section from '@mdx/Section.astro';
+
+# 连接 [SQL]
+SQL 中的 JOIN 子句用于基于表之间的相关列将 2 个或更多表组合在一起。
+Drizzle ORM 的连接语法在 SQL 风格和类型安全之间取得了平衡。
+
+## 联接类型
+Drizzle ORM 提供了 `INNER JOIN [LATERAL]`、`LEFT JOIN [LATERAL]`、`RIGHT JOIN` 和 `CROSS JOIN [LATERAL]` 的 API。
+让我们根据下面的表结构快速看几个示例：
+```typescript copy
+export const users = mysqlTable('users', {
+  id: int().primaryKey().autoincrement(),
+  name: varchar({ length: 255 }).notNull(),
+  age: int(),
+});
+
+export const pets = mysqlTable('pets', {
+  id: int().primaryKey().autoincrement(),
+  name: varchar({ length: 255 }).notNull(),
+  ownerId: int('owner_id').notNull().references(() => users.id),
+})
+```
+
+### 左联接
+<Section>
+```typescript copy
+const result = await db.select().from(users).leftJoin(pets, eq(users.id, pets.ownerId))
+```
+```sql
+select ... from `users` left join `pets` on `users`.`id` = `pets`.`owner_id`
+```
+```typescript
+// 结果类型
+const result: {
+    users: {
+        id: number;
+        name: string;
+        age: number | null;
+    };
+    pets: {
+        id: number;
+        name: string;
+        ownerId: number;
+    } | null;
+}[];
+```
+</Section>
+
+### 左联接 Lateral
+<Section>
+```typescript copy
+const subquery = db.select().from(pets).where(gte(users.age, 16)).as('userPets')
+const result = await db.select().from(users).leftJoinLateral(subquery, sql`true`)
+```
+```sql
+select ... from `users`
+left join lateral (select ... from `pets` where `users`.`age` >= 16) `userPets` on true
+```
+```typescript
+// 结果类型
+const result: {
+    users: {
+        id: number;
+        name: string;
+        age: number | null;
+    };
+    userPets: {
+        id: number;
+        name: string;
+        ownerId: number;
+    } | null;
+}[];
+```
+</Section>
+
+### 右联接
+<Section>
+```typescript copy
+const result = await db.select().from(users).rightJoin(pets, eq(users.id, pets.ownerId))
+```
+```sql
+select ... from `users` right join `pets` on `users`.`id` = `pets`.`owner_id`
+```
+```typescript
+// 结果类型
+const result: {
+    users: {
+        id: number;
+        name: string;
+        age: number | null;
+    } | null;
+    pets: {
+        id: number;
+        name: string;
+        ownerId: number;
+    };
+}[];
+```
+</Section>
+
+### 内联接
+<Section>
+```typescript copy
+const result = await db.select().from(users).innerJoin(pets, eq(users.id, pets.ownerId))
+```
+```sql
+select ... from `users` inner join `pets` on `users`.`id` = `pets`.`owner_id`
+```
+```typescript
+// 结果类型
+const result: {
+    users: {
+        id: number;
+        name: string;
+        age: number | null;
+    };
+    pets: {
+        id: number;
+        name: string;
+        ownerId: number;
+    };
+}[];
+```
+</Section>
+
+### 内联接 Lateral
+<Section>
+```typescript copy
+const subquery = db.select().from(pets).where(gte(users.age, 16)).as('userPets')
+const result = await db.select().from(users).innerJoinLateral(subquery, sql`true`)
+```
+```sql
+select ... from `users` inner join lateral (select ... from `pets` where `users`.`age` >= 16) `userPets` on true
+```
+```typescript
+// 结果类型
+const result: {
+    users: {
+        id: number;
+        name: string;
+        age: number | null;
+    };
+    userPets: {
+        id: number;
+        name: string;
+        ownerId: number;
+    };
+}[];
+```
+</Section>
+
+### 交叉联接
+<Section>
+```typescript copy
+const result = await db.select().from(users).crossJoin(pets)
+```
+```sql
+select ... from `users` cross join `pets`
+```
+```typescript
+// 结果类型
+const result: {
+    users: {
+        id: number;
+        name: string;
+        age: number | null;
+    };
+    pets: {
+        id: number;
+        name: string;
+        ownerId: number;
+    };
+}[];
+```
+</Section>
+
+### 交叉联接 Lateral
+<Section>
+```typescript copy
+const subquery = db.select().from(pets).where(gte(users.age, 16)).as('userPets')
+const result = await db.select().from(users).crossJoinLateral(subquery)
+```
+```sql
+select ... from `users` cross join lateral (select ... from `pets` where `users`.`age` >= 16) `userPets`
+```
+```typescript
+// 结果类型
+const result: {
+    users: {
+        id: number;
+        name: string;
+        age: number | null;
+    };
+    userPets: {
+        id: number;
+        name: string;
+        ownerId: number;
+    };
+}[];
+```
+</Section>
+
+## 部分选择
+如果你需要选择某个特定字段子集，或者想要一个扁平的响应类型，Drizzle ORM
+支持使用部分选择进行联接，并且会根据 `.select({ ... })` 结构自动推断返回类型。
+<Section>
+```typescript copy
+await db.select({
+  userId: users.id,
+  petId: pets.id,
+}).from(users).leftJoin(pets, eq(users.id, pets.ownerId))
+```
+```sql
+select `users`.`id`, `pets`.`id` from `users` left join `pets` on `users`.`id` = `pets`.`owner_id`
+```
+```typescript
+// 结果类型
+const result: {
+  userId: number;
+  petId: number | null;
+}[];
+```
+</Section>
+你可能已经注意到了，现在 `petId` 可以为 null，这是因为我们使用的是左连接，可能会存在没有宠物的用户。
+
+在使用 `sql` 操作符进行部分字段选择和必要的聚合时，非常重要的一点是要记住，
+为了正确推断结果类型，你应该使用 `sql<type | null>`，这一点需要你自己处理！
+<Section>
+```typescript copy
+const result = await db.select({
+  userId: users.id,
+  petId: pets.id,
+  petName1: sql`upper(${pets.name})`,
+  petName2: sql<string | null>`upper(${pets.name})`,
+  //˄对于这个字段，我们应当在类型中显式告诉它 'string | null'，因为这里使用了左连接
+}).from(users).leftJoin(pets, eq(users.id, pets.ownerId))
+```
+```sql
+select `users`.`id`, `pets`.`id`, upper(`pets`.`name`), upper(`pets`.`name`) from `users` left join `pets` on `users`.`id` = `pets`.`owner_id`
+```
+```typescript
+// 结果类型
+const result: {
+  userId: number;
+  petId: number | null;
+  petName1: unknown;
+  petName2: string | null;
+}[];
+```
+</Section>
+为了避免在联接包含大量列的表时出现大量可空字段，我们可以利用我们的 **嵌套 select 对象语法**，
+我们的智能类型推断会让整个对象变为可空，而不是让表中的所有字段都变为可空！
+<Section>
+```typescript copy
+await db.select({
+  userId: users.id,
+  userName: users.name,
+  pet: {
+    id: pets.id,
+    name: pets.name,
+    upperName: sql<string>`upper(${pets.name})`
+  }
+}).from(users).leftJoin(pets, eq(users.id, pets.ownerId))
+```
+```sql
+select ... from `users` left join `pets` on `users`.`id` = `pets`.`owner_id`
+```
+```typescript
+// 结果类型
+const result: {
+    userId: number;
+    userName: string;
+    pet: {
+        id: number;
+        name: string;
+        upperName: string;
+    } | null;
+}[];
+```
+</Section>
+
+## 别名与自连接
+Drizzle ORM 支持表别名，当你需要进行自连接时，这个功能非常实用。
+
+假设你需要获取带有父级信息的用户：
+
+<CodeTabs items={["index.ts", "schema.ts"]}>
+<CodeTab>
+```typescript copy
+import { user } from "./schema";
+import { alias } from "drizzle-orm/mysql-core";
+
+const parent = alias(user, "parent");
+const result = await db
+  .select()
+  .from(user)
+  .leftJoin(parent, eq(parent.id, user.parentId));
+```
+```sql
+select ... from `user` left join `user` `parent` on `parent`.`id` = `user`.`parent_id`
+```
+```typescript
+// 结果类型
+const result: {
+    user: {
+        id: number;
+        name: string;
+        parentId: number;
+    };
+    parent: {
+        id: number;
+        name: string;
+        parentId: number;
+    } | null;
+}[];
+```
+</CodeTab>
+
+```typescript
+export const user = mysqlTable("user", {
+  id: int().primaryKey().autoincrement(),
+  name: varchar({ length: 255 }).notNull(),
+  parentId: int("parent_id").notNull().references((): AnyMySqlColumn => user.id),
+});
+```
+
+</CodeTabs>
+
+## 聚合结果
+Drizzle ORM 会从驱动程序直接返回按名称映射的结果，而不会改变结构。
+
+你可以自由地按照自己想要的方式处理结果，下面是一个将多对一关系数据进行映射的示例：
+```typescript
+type User = typeof users.$inferSelect;
+type Pet = typeof pets.$inferSelect;
+
+const rows = await db
+  .select({
+    user: users,
+    pet: pets,
+  })
+  .from(users)
+  .leftJoin(pets, eq(users.id, pets.ownerId));
+
+const result = rows.reduce<Record<number, { user: User; pets: Pet[] }>>((acc, row) => {
+  const user = row.user;
+  const pet = row.pet;
+
+  if (typeof acc[user.id] === "undefined") {
+    acc[user.id] = { user, pets: [] };
+  }
+
+  if (pet) {
+    acc[user.id]!.pets.push(pet);
+  }
+
+  return acc;
+}, {});
+
+// 结果类型
+const result: Record<number, {
+    user: User;
+    pets: Pet[];
+}>
+```
+
+## 多对一示例
+```typescript
+import { mysqlTable, varchar, int } from 'drizzle-orm/mysql-core';
+import { drizzle } from 'drizzle-orm/mysql2';
+
+const cities = mysqlTable('cities', {
+  id: int().primaryKey().autoincrement(),
+  name: varchar({ length: 255 }),
+});
+
+const users = mysqlTable('users', {
+  id: int().primaryKey().autoincrement(),
+  name: varchar({ length: 255 }),
+  cityId: int('city_id').references(() => cities.id)
+});
+
+const db = drizzle();
+
+const result = await db.select().from(cities).leftJoin(users, eq(cities.id, users.cityId));
+```
+## 多对多示例
+```typescript
+const users = mysqlTable('users', {
+  id: int().primaryKey().autoincrement(),
+  name: varchar({ length: 255 }),
+});
+
+const chatGroups = mysqlTable('chat_groups', {
+  id: int().primaryKey().autoincrement(),
+  name: varchar({ length: 255 }),
+});
+
+const usersToChatGroups = mysqlTable('usersToChatGroups', {
+  userId: int('user_id').notNull().references(() => users.id),
+  groupId: int('group_id').notNull().references(() => chatGroups.id),
+});
+
+
+// 查询 id 为 1 的用户组以及所有参与者（用户）
+await db.select()
+  .from(usersToChatGroups)
+  .leftJoin(users, eq(usersToChatGroups.userId, users.id))
+  .leftJoin(chatGroups, eq(usersToChatGroups.groupId, chatGroups.id))
+  .where(eq(chatGroups.id, 1));
+```

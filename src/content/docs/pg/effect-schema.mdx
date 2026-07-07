@@ -1,0 +1,56 @@
+import Npm from '@mdx/Npm.astro';
+import Callout from '@mdx/Callout.astro';
+
+# effect-schema
+
+允许你根据 Drizzle ORM 模式生成 [effect](https://effect.website/) 模式。
+
+**特性**
+
+- 为表、视图和枚举创建选择模式。
+- 为表创建插入和更新模式。
+
+#### 用法
+
+```ts
+import { pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
+import { createInsertSchema, createSelectSchema, createUpdateSchema } from 'drizzle-orm/effect-schema';
+import { Effect, Schema } from "effect";
+
+const users = pgTable('users', {
+	id: serial().primaryKey(),
+	name: text().notNull(),
+	email: text().notNull(),
+	role: text({ enum: ['admin', 'user'] }).notNull(),
+	createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+// 用于插入用户的模式 - 可用于验证 API 请求
+const UserInsert = createInsertSchema(users);
+
+// 用于更新用户的模式 - 可用于验证 API 请求
+const UserUpdate = createUpdateSchema(users);
+
+// 用于选择用户的模式 - 可用于验证 API 响应
+const UserSelect = createSelectSchema(users);
+
+// 覆盖字段
+const UserInsert = createInsertSchema(users, {
+	role: Schema.String,
+});
+
+// 优化字段 - 如果你想在字段在最终模式中变为可空/可选之前修改它们，这很有用
+const UserInsert = createInsertSchema(users, {
+	id: (schema) => schema.check(Schema.isGreaterThanOrEqualTo(0)),
+	role: Schema.String,
+});
+
+// 用法
+const program = Effect.gen(function*() {
+	const parsedUser = yield* Schema.decodeUnknownEffect(UserInsert)({
+		name: 'John Doe',
+		email: 'johndoe@test.com',
+		role: 'admin',
+	});
+});
+```

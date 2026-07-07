@@ -1,0 +1,325 @@
+import Callout from '@mdx/Callout.astro';
+import Section from '@mdx/Section.astro';
+
+# 索引与约束
+
+## 约束
+
+SQL 约束是对表列强制执行的规则。它们用于防止无效数据被输入到数据库中。
+
+这确保了你的数据库中数据的准确性和可靠性。
+
+### 默认值
+
+`DEFAULT` 子句指定当执行 `INSERT` 时，如果用户未提供该列的值，则使用的默认值。
+如果列定义中没有显式附加 `DEFAULT` 子句，那么该列的默认值为 `NULL`。
+
+显式的 `DEFAULT` 子句可以指定默认值为 `NULL`、字符串常量、blob 常量、有符号数字，或任何用括号括起的常量表达式。
+
+<Section>
+    ```typescript
+    import { sql } from "drizzle-orm";
+    import { integer, sqliteTable } from "drizzle-orm/sqlite-core";
+
+    const table = sqliteTable('table', {
+      int1: integer('int1').default(42),
+      int2: integer('int2').default(sql`(abs(42))`)
+    });
+
+    ```
+    ```sql
+    CREATE TABLE `table` (
+      `int1` integer DEFAULT 42
+      `int2` integer DEFAULT (abs(42))
+    );
+    ```
+    </Section>
+
+### 非空
+
+默认情况下，列可以保存 **NULL** 值。`NOT NULL` 约束强制列**不**接受 **NULL** 值。  
+
+这会强制某个字段始终包含一个值，这意味着你不能在不为该字段添加值的情况下插入新记录，
+或更新记录。
+
+<Section>
+      ```typescript copy
+      const table = sqliteTable('table', { 
+        numInt: integer('numInt').notNull() 
+      });
+      ```
+
+      ```sql
+      CREATE TABLE table (
+        `numInt` integer NOT NULL
+      );
+      ```
+    </Section>
+
+### 唯一
+
+`UNIQUE` 约束确保列中的所有值都不同。  
+
+`UNIQUE` 和 `PRIMARY KEY` 约束都能保证某列或某组列的唯一性。
+
+`PRIMARY KEY` 约束会自动具有 `UNIQUE` 约束。  
+
+<Callout type="info" emoji="ℹ️">
+  你可以在一张表上拥有多个 `UNIQUE` 约束，但每张表只能有一个 `PRIMARY KEY` 约束。
+</Callout>
+
+<Section>
+      ```typescript copy
+      import { int, text, unique, sqliteTable } from "drizzle-orm/sqlite-core";
+
+      export const user = sqliteTable('user', {
+        id: int('id').unique(),
+      });
+
+      export const table = sqliteTable('table', {
+        id: int('id').unique('custom_name'),
+      });
+
+      export const composite = sqliteTable('composite_example', {
+        id: int('id'),
+        name: text('name'),
+      }, (t) => [
+        unique().on(t.id, t.name),
+        unique('custom_name').on(t.id, t.name)
+      ]);
+      ```
+
+      ```sql
+	  CREATE TABLE `user` (
+        `id` integer UNIQUE
+      );
+
+      CREATE TABLE `table` (
+        `id` integer CONSTRAINT `custom_name` UNIQUE
+      );
+
+      CREATE TABLE `composite_example` (
+        `id` integer,
+        `name` text,
+        CONSTRAINT `composite_example_id_name_unique` UNIQUE(`id`,`name`),
+        CONSTRAINT `custom_name` UNIQUE(`id`,`name`)
+      );
+      ```
+    </Section>
+
+### 检查
+
+`CHECK` 约束用于限制可以放入某列的值范围。
+
+如果你在列上定义 `CHECK` 约束，它将只允许该列使用某些特定值。  
+
+如果你在表上定义 `CHECK` 约束，它可以根据行中其他列的值来限制某些列中的值。
+
+<Section>
+      ```typescript copy
+      import { sql } from "drizzle-orm";
+      import { check, int, sqliteTable, text } from "drizzle-orm/sqlite-core";
+
+      export const users = sqliteTable(
+        "users",
+        {
+          id: int().primaryKey(),
+          username: text().notNull(),
+          age: int(),
+        },
+        (table) => [
+          check("age_check1", sql`${table.age} > 21`)
+        ]
+      );
+      ```
+      ```sql
+      CREATE TABLE `users` (
+	      `id` integer PRIMARY KEY NOT NULL,
+	      `username` text NOT NULL,
+	      `age` integer,
+	      CONSTRAINT "age_check1" CHECK("age" > 21)
+      );
+      ```
+    </Section>
+
+### 主键
+
+`PRIMARY KEY` 约束可唯一标识表中的每条记录。  
+主键必须包含 **UNIQUE** 值，并且不能包含 **NULL** 值。  
+
+一张表只能有**一个**主键；而在表中，这个主键可以由单列或多列（字段）组成。
+
+<Section>
+      ```typescript copy
+      import { integer, sqliteTable } from "drizzle-orm/sqlite-core";
+
+      export const user = sqliteTable("user", {
+        id: integer().primaryKey({ autoIncrement: true }),
+      })
+
+      export const pet = sqliteTable("pet", {
+        id: integer().primaryKey(),
+      })
+      ```
+
+      ```sql
+      CREATE TABLE `user` (
+        `id` integer PRIMARY KEY AUTOINCREMENT
+      );
+
+      CREATE TABLE `pet` (
+        `id` integer PRIMARY KEY
+      )
+      ```
+    </Section>
+
+### 复合主键
+
+和 `PRIMARY KEY` 一样，复合主键通过使用多个字段来唯一标识表中的每条记录。
+
+Drizzle ORM 为此提供了一个独立的 `primaryKey` 操作符：
+
+<Section>
+      ```typescript copy {18, 19}
+      import { integer, text, primaryKey, sqliteTable} from "drizzle-orm/sqlite-core";
+
+      export const user = sqliteTable("user", {
+        id: integer().primaryKey({ autoIncrement: true }),
+        name: text(),
+      });
+
+      export const book = sqliteTable("book", {
+        id: integer().primaryKey({ autoIncrement: true }),
+        name: text(),
+      });
+
+      export const bookToAuthor = sqliteTable("book_to_author", {
+        authorId: integer("author_id"),
+        bookId: integer("book_id"),
+      }, (table) => [
+        primaryKey({ columns: [table.bookId, table.authorId] }),
+        // 或使用自定义名称的主键
+        primaryKey({ name: 'custom_name', columns: [table.bookId, table.authorId] })
+      ]);
+      ```
+      ```sql {6}
+      ...
+
+      CREATE TABLE `book_to_author` (
+        `author_id` integer,
+        `book_id` integer,
+        PRIMARY KEY(`book_id`, `author_id`)
+      );
+      ```
+    </Section>
+
+### 外键
+
+`FOREIGN KEY` 约束用于防止会破坏表之间关联的操作。
+外键是某个表中的一个字段（或字段集合），它引用另一个表中的 `PRIMARY KEY`。
+包含外键的表称为子表，被引用主键所在的表称为引用表或父表。
+
+Drizzle ORM 提供了多种声明外键的方式。
+你可以在列声明语句中声明它们：
+
+	```typescript {11}
+    import { integer, text, sqliteTable } from "drizzle-orm/sqlite-core";
+
+    export const user = sqliteTable("user", {
+      id: integer().primaryKey({ autoIncrement: true }),
+      name: text(),
+    });
+
+    export const book = sqliteTable("book", {
+      id: integer().primaryKey({ autoIncrement: true }),
+      name: text(),
+      authorId: integer("author_id").references(() => user.id)
+    });
+    ```
+
+如果你想进行自引用，由于 TypeScript 的限制，你必须显式
+为引用回调设置返回类型，或者使用独立的 `foreignKey` 操作符。
+
+	```typescript {6,15-19}
+    import { integer, text, foreignKey, sqliteTable, type AnySQLiteColumn } from "drizzle-orm/sqlite-core";
+
+    export const user = sqliteTable("user", {
+      id: integer().primaryKey({ autoIncrement: true }),
+      name: text(),
+      parentId: integer("parent_id").references((): AnySQLiteColumn => user.id)
+    });
+
+    //或
+    export const user = sqliteTable("user", {
+      id: integer().primaryKey({ autoIncrement: true }),
+      name: text(),
+      parentId: integer(),
+    }, (table) => [
+      foreignKey({
+        columns: [table.parentId],
+        foreignColumns: [table.id],
+        name: "custom_fk"
+      })
+    ]);
+    ```
+
+要声明多列外键，可以使用专用的 `foreignKey` 操作符：
+
+	```typescript {4-5,15-19}
+    import { integer, text, primaryKey, foreignKey, sqliteTable } from "drizzle-orm/sqlite-core";
+
+    export const user = sqliteTable("user", {
+      firstName: text("firstName"),
+      lastName: text("lastName"),
+    }, (table) => [
+      primaryKey({ columns: [table.firstName, table.lastName]})
+    ]);
+
+    export const profile = sqliteTable("profile", {
+      id: integer().primaryKey({ autoIncrement: true }),
+      userFirstName: text("user_first_name"),
+      userLastName: text("user_last_name"),
+    }, (table) => [
+      foreignKey({
+        columns: [table.userFirstName, table.userLastName],
+        foreignColumns: [user.firstName, user.lastName],
+        name: "custom_name"
+      })
+    ]);
+    ```
+
+## 索引
+
+Drizzle ORM 为 `index` 和 `unique index` 声明都提供了 API：
+
+<Section>
+    ```typescript {8-9}
+    import { integer, text, index, uniqueIndex, sqliteTable } from "drizzle-orm/sqlite-core";
+
+    export const user = sqliteTable("user", {
+      id: integer().primaryKey({ autoIncrement: true }),
+      name: text(),
+      email: text(),
+    }, (table) => [
+      index("name_idx").on(table.name),
+      uniqueIndex("email_idx").on(table.email),
+    ]);
+    ```
+    ```sql {5-6}
+    CREATE TABLE `user` (
+      ...
+    );
+
+    CREATE INDEX `name_idx` ON `user` (`name`);
+    CREATE UNIQUE INDEX `email_idx` ON `user` (`email`);
+    ```
+    </Section>
+
+     Drizzle ORM 为索引创建提供了一组完整的参数：
+     
+    ```typescript
+    // 索引声明参考
+    index("name")
+      .on(table.name)
+      .where(sql`...`)
+    ```

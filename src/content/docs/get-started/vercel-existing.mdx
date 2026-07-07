@@ -25,10 +25,10 @@ import UpdateSchema from '@mdx/get-started/postgresql/UpdateSchema.mdx';
 # 在现有项目中开始使用 Drizzle 和 Vercel Postgres
 
 <Prerequisites>
-  - **dotenv** - 管理环境变量的包 - [查看这里](https://www.npmjs.com/package/dotenv)
-  - **tsx** - 运行 TypeScript 文件的包 - [查看这里](https://tsx.is/)
-  - **Vercel Postgres 数据库** - [查看这里](https://vercel.com/docs/storage/vercel-postgres)
-  - **Vercel Postgres 驱动** - [查看这里](https://vercel.com/docs/storage/vercel-postgres/sdk) & [GitHub](https://github.com/vercel/storage/tree/main/packages/postgres)
+  - **dotenv** - 用于管理环境变量的包 - [在此阅读](https://www.npmjs.com/package/dotenv)
+  - **tsx** - 用于运行 TypeScript 文件的包 - [在此阅读](https://tsx.hirok.io/)
+  - **Vercel Postgres database** - [在此阅读](https://vercel.com/docs/storage/vercel-postgres)
+  - **Vercel Postgres driver** - [在此阅读](https://vercel.com/docs/storage/vercel-postgres/sdk) & [GitHub](https://github.com/vercel/storage/tree/main/packages/postgres)
 </Prerequisites>
 
 <FileStructure/>
@@ -81,7 +81,7 @@ async function main() {
 
   await db.insert(usersTable).values(user);
   console.log('新用户已创建！')
-
+  
   const users = await db.select().from(usersTable);
   console.log('从数据库获取所有用户: ', users)
   /*
@@ -140,7 +140,7 @@ async function main() {
 
   await db.insert(usersTable).values(user);
   console.log('新用户已创建！')
-
+  
   const users = await db.select().from(usersTable);
   console.log('从数据库获取所有用户: ', users)
   /*

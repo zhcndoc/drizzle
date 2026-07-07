@@ -1,0 +1,386 @@
+import Callout from '@mdx/Callout.astro';
+import Section from '@mdx/Section.astro';
+
+# 索引与约束
+
+## 约束
+
+SQL 约束是施加在表列上的规则。它们用于防止无效数据被写入数据库。
+
+这可以确保数据库中数据的准确性和可靠性。
+
+### 默认值
+
+`DEFAULT` 子句指定：当用户在执行 `INSERT` 时未提供值时，该列要使用的默认值。  
+如果列定义中没有显式附加 `DEFAULT` 子句，那么该列的默认值为 `NULL`。
+
+显式的 `DEFAULT` 子句可以指定默认值为 `NULL`、字符串常量、blob 常量、有符号数字，或任何用括号括起来的常量表达式。
+
+<Section>
+    ```typescript
+    import { sql } from "drizzle-orm";
+    import { int4, uuid, cockroachTable } from "drizzle-orm/cockroach-core";
+
+    export const table = cockroachTable('table', {
+      integer1: int4().default(42),
+      integer2: int4().default(sql`24`),
+      uuid1: uuid().defaultRandom(),
+      uuid2: uuid().default(sql`gen_random_uuid()`),
+    });
+    ```
+
+    ```sql
+    CREATE TABLE "table" (
+      "integer1" int4 DEFAULT 42,
+      "integer2" int4 DEFAULT 24,
+      "uuid1" uuid DEFAULT gen_random_uuid(),
+      "uuid2" uuid DEFAULT gen_random_uuid()
+    );
+    ```
+    </Section>
+
+### 非空
+
+默认情况下，列可以包含 **NULL** 值。`NOT NULL` 约束会强制列**不**接受 **NULL** 值。  
+
+这会强制字段始终包含一个值，这意味着你不能在不为该字段添加值的情况下插入新记录，
+或者更新记录。
+
+<Section>
+      ```typescript copy
+      import { int4, cockroachTable } from "drizzle-orm/cockroach-core";
+
+      export const table = cockroachTable('table', {
+        int4: int4().notNull(),
+      });
+      ```
+
+      ```sql
+      CREATE TABLE "table" (
+        "int4" int4 NOT NULL
+      );
+      ```
+    </Section>
+
+### 唯一
+
+`UNIQUE` 约束确保列中的所有值都不同。  
+
+`UNIQUE` 和 `PRIMARY KEY` 约束都能为某一列或某组列提供唯一性保证。
+
+`PRIMARY KEY` 约束会自动带有 `UNIQUE` 约束。  
+
+<Callout type="info" emoji="ℹ️">
+  每个表可以有多个 `UNIQUE` 约束，但每个表只能有一个 `PRIMARY KEY` 约束。
+</Callout>
+
+<Section>
+      ```typescript copy
+      import { int4, string, unique, cockroachTable } from "drizzle-orm/cockroach-core";
+
+      export const user = cockroachTable('user', {
+        id: int4().unique(),
+      });
+
+      export const table = cockroachTable('table', {
+        id: int4().unique('custom_name'),
+      });
+
+      export const composite = cockroachTable('composite_example', {
+        id: int4(),
+        name: string(),
+      }, (t) => [
+        unique().on(t.id, t.name),
+        unique('custom_name').on(t.id, t.name)
+      ]);
+
+      ```
+
+      ```sql
+	CREATE TABLE "user" (
+		"id" int4 UNIQUE
+	);
+
+	CREATE TABLE "table" (
+		"id" int4 CONSTRAINT "custom_name" UNIQUE
+	);
+	
+	CREATE TABLE "composite_example" (
+		"id" int4,
+		"name" string,
+		CONSTRAINT "composite_example_id_name_unique" UNIQUE("id","name"),
+		CONSTRAINT "custom_name" UNIQUE("id","name")
+	);
+      ```
+    </Section>
+
+### 检查
+
+`CHECK` 约束用于限制可以放入列中的值范围。
+
+如果你在列上定义 `CHECK` 约束，它只会允许该列出现某些特定值。  
+
+如果你在表上定义 `CHECK` 约束，它可以根据同一行中其他列的值来限制某些列的值。
+
+<Section>
+      ```typescript copy
+      import { sql } from "drizzle-orm";
+      import { check, int4, cockroachTable, string, uuid } from "drizzle-orm/cockroach-core";
+
+      export const users = cockroachTable(
+        "users",
+        {
+          id: uuid().defaultRandom().primaryKey(),
+          username: string().notNull(),
+          age: int4(),
+        },
+        (table) => [
+          check("age_check1", sql`${table.age} > 21`),
+        ]
+      );
+      ```
+      ```sql
+	  CREATE TABLE "users" (
+		"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+		"username" string NOT NULL,
+		"age" int4,
+		CONSTRAINT "age_check1" CHECK ("users"."age" > 21)
+	  );
+      ```
+    </Section>
+
+### 主键
+
+`PRIMARY KEY` 约束唯一标识表中的每条记录。  
+主键必须包含 `UNIQUE` 值，并且不能包含 `NULL` 值。  
+
+一个表只能有**一个**主键；并且在该表中，这个主键可以由单个列或多个列（字段）组成。
+
+<Section>
+      ```typescript copy
+      import { int4, string, cockroachTable } from "drizzle-orm/cockroach-core";
+
+      export const user = cockroachTable('user', {
+        id: int4('id').primaryKey(),
+      });
+
+      export const table = cockroachTable('table', {
+        id: string('cuid').primaryKey(),
+      });
+      ```
+
+      ```sql
+	  CREATE TABLE "user" (
+		"id" int4 PRIMARY KEY
+	  );
+
+	  CREATE TABLE "table" (
+		"cuid" string PRIMARY KEY
+	  );
+      ```
+    </Section>
+
+### 复合主键
+
+与 `PRIMARY KEY` 类似，复合主键使用多个字段来唯一标识表中的每条记录。
+
+Drizzle ORM 为此提供了一个独立的 `primaryKey` 操作符：
+
+<Section>
+      ```typescript copy {17,19}
+      import { int4, string, primaryKey, cockroachTable } from "drizzle-orm/cockroach-core";
+
+      export const user = cockroachTable("user", {
+        id: int4("id").primaryKey(),
+        name: string("name"),
+      });
+
+      export const book = cockroachTable("book", {
+        id: int4("id").primaryKey(),
+        name: string("name"),
+      });
+
+      export const booksToAuthors = cockroachTable("books_to_authors", {
+        authorId: int4("author_id"),
+        bookId: int4("book_id"),
+      }, (table) => [
+        primaryKey({ columns: [table.bookId, table.authorId] }),
+        // 或者使用自定义名称的 PK
+        primaryKey({ name: 'custom_name', columns: [table.bookId, table.authorId] }),
+      ]);
+      ```
+
+      ```sql {6,9}
+      ...
+
+      CREATE TABLE "books_to_authors" (
+        "author_id" int4,
+        "book_id" int4,
+        PRIMARY KEY("book_id","author_id")
+      );
+
+      ALTER TABLE "books_to_authors" ADD CONSTRAINT "custom_name" PRIMARY KEY("book_id","author_id");
+      ```
+    </Section>
+
+### 外键
+
+`FOREIGN KEY` 约束用于防止破坏表之间关联的操作。  
+`FOREIGN KEY` 是一个表中的字段（或字段集合），它引用另一个表中的 `PRIMARY KEY`。  
+包含外键的表称为子表，而包含主键的表称为被引用表或父表。
+
+Drizzle ORM 提供了多种声明外键的方式。  
+你可以在列声明语句中声明它们：
+
+	```typescript copy {11}
+	import { int4, string, cockroachTable } from "drizzle-orm/cockroach-core";
+
+	export const user = cockroachTable("user", {
+		id: int4("id").primaryKey(),
+		name: string("name"),
+	});
+
+	export const book = cockroachTable("book", {
+		id: int4("id"),
+		name: string("name"),
+		authorId: int4("author_id").references(() => user.id)
+	});
+	```
+	```sql {12}
+	CREATE TABLE "user" (
+		"id" int4 PRIMARY KEY,
+		"name" string
+	);
+
+	CREATE TABLE "book" (
+		"id" int4,
+		"name" string,
+		"author_id" int4
+	);
+
+	ALTER TABLE "book" ADD CONSTRAINT "book_author_id_user_id_fkey" FOREIGN KEY ("author_id") REFERENCES "user"("id");
+	```
+
+
+
+如果你想进行自引用，由于 TypeScript 的限制，你必须显式
+为引用回调设置返回类型，或者使用独立的 `foreignKey` 操作符。
+
+	```typescript copy {6,16-18}
+    import { int4, string, foreignKey, cockroachTable, type AnyCockroachColumn } from "drizzle-orm/cockroach-core";
+
+    export const user = cockroachTable("user", {
+      id: int4().primaryKey(),
+      name: string(),
+      parentId: int4("parent_id").references((): AnyCockroachColumn => user.id)
+    });
+
+    // 或者
+    export const user = cockroachTable("user", {
+      id: int4(),
+      name: string(),
+      parentId: int4("parent_id"),
+    }, (table) => [
+      foreignKey({
+        columns: [table.parentId],
+        foreignColumns: [table.id],
+        name: "custom_fk"
+      })
+    ]);
+    ```
+	```sql {7}
+	CREATE TABLE "user" (
+		"id" int4 PRIMARY KEY,
+		"name" string,
+		"parent_id" int4
+	);
+	
+	ALTER TABLE "user" ADD CONSTRAINT "user_parent_id_user_id_fkey" FOREIGN KEY ("parent_id") REFERENCES "user"("id");
+	```
+
+要声明多列外键，你可以使用专门的 `foreignKey` 操作符：
+
+```typescript copy {15-19}
+    import { int4, string, foreignKey, cockroachTable, primaryKey } from "drizzle-orm/cockroach-core";
+
+    export const user = cockroachTable("user", {
+      firstName: string("firstName"),
+      lastName: string("lastName"),
+    }, (table) => [
+      primaryKey({ columns: [table.firstName, table.lastName]})
+    ]);
+
+    export const profile = cockroachTable("profile", {
+      id: int4("id").primaryKey(),
+      userFirstName: string("user_first_name"),
+      userLastName: string("user_last_name"),
+    }, (table) => [
+      foreignKey({
+        columns: [table.userFirstName, table.userLastName],
+        foreignColumns: [user.firstName, user.lastName],
+        name: "custom_fk"
+      })
+    ])
+    ```
+	```sql {13}
+	CREATE TABLE "user" (
+		"firstName" string,
+		"lastName" string,
+		CONSTRAINT "user_pkey" PRIMARY KEY("firstName","lastName")
+	);
+
+	CREATE TABLE "profile" (
+		"id" int4 PRIMARY KEY,
+		"user_first_name" string,
+		"user_last_name" string
+	);
+	
+	ALTER TABLE "profile" ADD CONSTRAINT "custom_fk" FOREIGN KEY ("user_first_name","user_last_name") REFERENCES "user"("firstName","lastName");
+	```
+
+## 索引
+
+Drizzle ORM 为 `index` 和 `unique index` 声明都提供了 API：
+
+<Section>
+    ```typescript copy {8-9}
+    import { int4, string, index, uniqueIndex, cockroachTable } from "drizzle-orm/cockroach-core";
+
+    export const user = cockroachTable("user", {
+      id: int4().primaryKey(),
+      name: string(),
+      email: string(),
+    }, (table) => [
+      index("name_idx").on(table.name),
+      uniqueIndex("email_idx").on(table.email)
+    ]);
+    ```
+    ```sql {3,6}
+	CREATE TABLE "user" (
+	  ...,
+	  CONSTRAINT "email_idx" UNIQUE("email")
+	  );
+
+	CREATE INDEX "name_idx" ON "user" ("name");
+    ```
+</Section>
+
+
+Drizzle ORM 为索引创建提供了一组参数：
+
+```ts
+// `.on()`
+index('name')
+  .on(table.column1.asc(), ...)
+  .where(sql``) // sql 表达式
+
+// `.onOnly()`
+index('name')
+  .onOnly(table.column1.asc(), ...)
+  .where(sql``) // sql 表达式
+
+// 第二个示例，使用 `.using()`
+index('name')
+  .using('btree', table.column1.asc(), sql`lower(${table.column2})`)
+  .where(sql``) // sql 表达式
+```

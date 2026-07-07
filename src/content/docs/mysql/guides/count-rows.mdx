@@ -1,0 +1,167 @@
+---
+title: 计算行数
+---
+import Section from "@mdx/Section.astro";
+import Prerequisites from "@mdx/Prerequisites.astro";
+import CodeTabs from '@mdx/CodeTabs.astro';
+import CodeTab from '@mdx/CodeTab.astro';
+import Callout from '@mdx/Callout.astro';
+
+<Prerequisites>
+- 从 [MySQL](/docs/mysql/get-started-mysql) 开始
+- [Select statement](/docs/mysql/select)
+- [Filters](/docs/mysql/operators) 和 [sql operator](/docs/mysql/sql)
+- [Aggregations](/docs/mysql/select#aggregations) 和 [Aggregation helpers](/docs/mysql/select#aggregations-helpers)
+- [Joins](/docs/mysql/joins)
+</Prerequisites>
+
+要统计表中的所有行，你可以像下面这样使用 `count()` 函数或 `sql` 操作符：
+
+<CodeTabs items={["index.ts", "schema.ts"]}>
+  <CodeTab>
+    ```ts copy {6,9}
+    import { count, sql } from 'drizzle-orm';
+    import { products } from './schema';
+
+    const db = drizzle(...);
+
+    await db.select({ count: count() }).from(products);
+
+    // 在底层，count() 函数会在运行时将其结果转换为 number。
+    await db.select({ count: sql`count(*)`.mapWith(Number) }).from(products);
+    ```
+
+    ```ts
+    // 结果类型
+    type Result = {
+      count: number;
+    }[];
+    ```
+
+    ```sql
+    select count(*) from products;
+    ```
+  </CodeTab>
+  ```ts
+  import { int, mysqlTable, varchar } from 'drizzle-orm/mysql-core';
+
+  export const products = mysqlTable('products', {
+    id: int('id').primaryKey().autoincrement(),
+    name: varchar('name', { length: 255 }).notNull(),
+    discount: int('discount'),
+    price: int('price').notNull(),
+  });
+  ```
+</CodeTabs>
+
+要统计指定列包含非 NULL 值的行数，你可以将 `count()` 函数与某一列一起使用：
+
+<Section>
+```ts copy {1}
+await db.select({ count: count(products.discount) }).from(products);
+```
+
+```ts
+// 结果类型
+type Result = {
+  count: number;
+}[];
+```
+
+```sql
+select count(`discount`) from products;
+```
+</Section>
+
+Drizzle 提供了简单且灵活的 API，这使你可以创建自定义解决方案。在 MySQL 中，驱动可能会将 `count()` 作为字符串返回，因此在你需要数值结果时，应将其转换为 number：
+
+<Section>
+```ts copy {5,7,11,12}
+import { AnyColumn, sql } from 'drizzle-orm';
+
+const customCount = (column?: AnyColumn) => {
+  if (column) {
+    return sql<number>`cast(count(${column}) as unsigned)`; // 在 MySQL 中转换为无符号整数
+  } else {
+    return sql<number>`cast(count(*) as unsigned)`; // 在 MySQL 中转换为无符号整数
+  }
+};
+
+await db.select({ count: customCount() }).from(products);
+await db.select({ count: customCount(products.discount) }).from(products);
+```
+
+```sql
+select cast(count(*) as unsigned) from products;
+select cast(count(`discount`) as unsigned) from products;
+```
+</Section>
+
+
+<Callout type="warning">
+通过指定 `sql<number>`，你是在告诉 Drizzle 该字段的**预期**类型是 `number`。<br />
+如果你指定错误（例如，对一个运行时会返回 number 的字段使用 `sql<string>`），运行时的值将不会与预期类型匹配。
+Drizzle 无法根据提供的类型泛型执行任何类型转换，因为这些信息在运行时不可用。
+
+如果你需要对返回值应用运行时转换，可以使用 [`.mapWith()`](/docs/mysql/sql#sqlmapwith) 方法。
+</Callout>
+
+要统计符合某个条件的行，你可以使用 `.where()` 方法：
+
+<Section>
+```ts copy {4,6}
+import { count, gt } from 'drizzle-orm';
+
+await db
+  .select({ count: count() })
+  .from(products)
+  .where(gt(products.price, 100));
+```
+
+```sql
+select count(*) from products where price > 100
+```
+</Section>
+
+下面是如何将 `count()` 函数与连接和聚合一起使用：
+
+<CodeTabs items={["index.ts", "schema.ts"]}>
+	<CodeTab>
+    ```ts copy {8,11,12,13}
+    import { count, eq } from 'drizzle-orm';
+    import { countries, cities } from './schema';
+
+    // 统计每个国家的城市数量
+    await db
+      .select({
+        country: countries.name,
+        citiesCount: count(cities.id),
+      })
+      .from(countries)
+      .leftJoin(cities, eq(countries.id, cities.countryId))
+      .groupBy(countries.id)
+      .orderBy(countries.name);
+    ```
+
+    ```sql
+    select countries.name, count(`cities`.`id`) from countries
+      left join cities on countries.id = cities.country_id
+      group by countries.id
+      order by countries.name;
+    ```
+  </CodeTab>
+  ```ts
+  import { int, mysqlTable, varchar } from 'drizzle-orm/mysql-core';
+
+  export const countries = mysqlTable('countries', {
+    id: int('id').primaryKey().autoincrement(),
+    name: varchar('name', { length: 255 }).notNull(),
+  });
+
+  export const cities = mysqlTable('cities', {
+    id: int('id').primaryKey().autoincrement(),
+    name: varchar('name', { length: 255 }).notNull(),
+    countryId: int('country_id').notNull().references(() => countries.id),
+  });
+  ```
+</CodeTabs>

@@ -1,0 +1,70 @@
+import Npm from '@mdx/Npm.astro';
+import Callout from '@mdx/Callout.astro';
+
+<Callout type="error">
+从 `drizzle-orm@1.0.0-beta.15` 开始，`drizzle-typebox` 已被弃用，转而使用 Drizzle ORM 自身的一流 schema 生成支持
+
+你仍然可以使用 `drizzle-typebox` 包，但所有新更新都将直接添加到 Drizzle ORM 中
+
+此版本的 `typebox` 使用新的 `typebox` 包
+</Callout>
+
+# typebox
+
+#### 安装依赖
+<Npm>
+drizzle-orm@rc typebox
+</Npm>
+
+允许你从 Drizzle ORM schema 生成 [typebox](https://sinclairzx81.github.io/typebox/#/) schemas
+
+**功能**
+
+- 为表创建 select schema。
+- 为表创建 insert 和 update schema。
+- 支持的方言：SingleStore。
+
+#### 用法
+
+```ts
+import { int, singlestoreTable, text, timestamp } from 'drizzle-orm/singlestore-core';
+import { createInsertSchema, createSelectSchema, createUpdateSchema } from 'drizzle-orm/typebox';
+import { Type } from 'typebox';
+import { Value } from 'typebox/value';
+
+const users = singlestoreTable('users', {
+	id: int('id').primaryKey().autoincrement(),
+	name: text('name').notNull(),
+	email: text('email').notNull(),
+	role: text('role', { enum: ['admin', 'user'] }).notNull(),
+	createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+// 插入用户的 schema - 可用于验证 API 请求
+const insertUserSchema = createInsertSchema(users);
+
+// 更新用户的 schema - 可用于验证 API 请求
+const updateUserSchema = createUpdateSchema(users);
+
+// 选择用户的 schema - 可用于验证 API 响应
+const selectUserSchema = createSelectSchema(users);
+
+// 覆盖字段
+const insertUserSchema = createInsertSchema(users, {
+	role: Type.String(),
+});
+
+// 细化字段 - 如果你想在它们最终变为 nullable/optional 之前修改字段，这会很有用
+const insertUserSchema = createInsertSchema(users, {
+	id: (schema) => Type.Number({ ...schema, minimum: 0 }),
+	role: Type.String(),
+});
+
+// 用法
+
+const isUserValid: boolean = Value.Check(insertUserSchema, {
+	name: 'John Doe',
+	email: 'johndoe@test.com',
+	role: 'admin',
+});
+```

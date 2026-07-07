@@ -1,0 +1,89 @@
+import CodeTab from "@mdx/CodeTab.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Section from "@mdx/Section.astro";
+import Tab from "@mdx/Tab.astro";
+import Tabs from "@mdx/Tabs.astro";
+import Callout from "@mdx/Callout.astro";
+import Prerequisites from "@mdx/Prerequisites.astro";
+import Npm from "@mdx/Npm.astro";
+import Npx from "@mdx/Npx.astro";
+import Dialects from "@mdx/Dialects.mdx"
+
+# `drizzle-kit check`
+
+<Prerequisites>
+- 开始使用 Drizzle 和 `drizzle-kit` - [请阅读这里](/docs/mssql/get-started)
+- Drizzle schema 基础知识 - [请阅读这里](/docs/mssql/sql-schema-declaration)
+- 数据库连接基础 - [请阅读这里](/docs/mssql/connect-overview)
+- Drizzle migrations 基础知识 - [请阅读这里](/docs/mssql/migrations)
+- Drizzle Kit [概览](/docs/mssql/kit-overview) 和 [配置文件](/docs/mssql/drizzle-config-file)
+- `drizzle-kit generate` 命令 - [请阅读这里](/docs/mssql/drizzle-kit-generate)
+</Prerequisites>
+
+`drizzle-kit check` 命令可让你检查已生成的 SQL migrations 历史是否一致。
+
+当你有多个开发者同时在项目上工作，并且在不同分支上修改数据库 schema 时，这非常有用 - 了解更多关于 [团队 migrations](/docs/mssql/kit-migrations-for-teams)。
+
+<br/>
+<hr/>
+<br/>
+
+`drizzle-kit check` 命令要求你指定 `dialect`，你可以通过 [drizzle.config.ts](/docs/mssql/drizzle-config-file) 配置文件或通过 CLI 选项来提供它
+
+<CodeTabs items={["使用配置文件", "作为 CLI 选项"]}>
+<Section>
+```ts {5,8}
+// drizzle.config.ts
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  dialect: "mssql",
+});
+```
+```shell
+npx drizzle-kit check
+```
+</Section>
+```shell
+npx drizzle-kit check --dialect=mssql
+```
+</CodeTabs>
+
+### 一个项目中有多个配置文件
+当项目中有多个数据库阶段或在同一项目中有多个数据库时，你可以在项目里使用多个配置文件，这非常有用：
+<Npx>
+  drizzle-kit check --config=drizzle-dev.config.ts
+  drizzle-kit check --config=drizzle-prod.config.ts
+</Npx>
+```plaintext {5-6}
+📦 <项目根目录>
+ ├ 📂 drizzle
+ ├ 📂 src
+ ├ 📜 .env
+ ├ 📜 drizzle-dev.config.ts
+ ├ 📜 drizzle-prod.config.ts
+ ├ 📜 package.json
+ └ 📜 tsconfig.json
+```
+
+### 忽略冲突
+
+如果你需要 `check` 命令跳过可交换性检查并绕过它，可以使用 `--ignore-conflicts`。如果你会用到它，那么很有可能是 `drizzle-kit` 没有正确检查 migrations，这是一个 bug。请把你的情况反馈给我们，以便我们修复它
+
+```shell
+drizzle-kit check --ignore-conflicts
+```
+
+### 配置项扩展列表
+我们建议通过 [drizzle.config.ts](/docs/mssql/drizzle-config-file) 文件来配置 `drizzle-kit`，但如果需要，例如在 CI/CD 流水线等场景中，你也可以通过 CLI 提供全部配置选项。
+<rem025/>
+|           |            |                                                                         |
+| :-------- | :--------- | :---------------------------------------------------------------------- |
+| `dialect` | `required` | 你正在使用的数据库方言。可以是 <Dialects/> 中的一种 |
+| `out`     |            | migrations 文件夹，默认=`./drizzle`                                         |
+| `config`  |            | 配置文件路径，默认=`drizzle.config.ts`                           |
+<br/>
+<Npx>
+drizzle-kit check --dialect=mssql
+drizzle-kit check --dialect=mssql --out=./migrations-folder
+</Npx>

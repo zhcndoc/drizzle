@@ -1,0 +1,304 @@
+# 自定义类型
+
+自定义类型允许你使用自定义 SQL 数据类型以及 JS/DB 值转换来定义你自己的列类型
+
+SQLite 从 `drizzle-orm/sqlite-core` 暴露了 `customType`。
+
+## 示例
+了解 `customType` 定义如何工作的最佳方式，是查看如何使用 Drizzle ORM 中的 `customType` 函数来定义数据类型。
+
+#### Int
+
+```ts
+import { customType, sqliteTable } from 'drizzle-orm/sqlite-core';
+
+const customInt = customType<{ data: number }>({
+  dataType() {
+    return 'int';
+  },
+});
+
+export const users = sqliteTable('users', {
+  id: customInt(),
+});
+
+```
+
+#### Text
+```ts
+import { customType, sqliteTable } from 'drizzle-orm/sqlite-core';
+
+const customText = customType<{ data: string }>({
+  dataType() {
+    return 'text';
+  },
+});
+
+export const users = sqliteTable('users', {
+  name: customText(),
+});
+```
+
+#### Hex
+```ts
+import { customType, sqliteTable } from 'drizzle-orm/sqlite-core';
+
+const customHex = customType<{
+  data: string;
+  driverData: string;
+  config: { mode: 'text' | 'blob' };
+  configRequired: false;
+}>({
+  dataType(config) {
+    return config?.mode ? config.mode : 'text';
+  },
+  fromDriver(value: string): string {
+    return value.startsWith('0x') ? value : `0x${value}`;
+  },
+  toDriver(value: string): string {
+    return value.replace(/^0x/, '');
+  },
+});
+
+export const users = sqliteTable('users', {
+  wallet: customHex('wallet', { mode: 'text' }),
+});
+```
+
+所有类型的用法都与 Drizzle ORM 中定义的函数相同。例如：
+```ts
+const usersTable = mysqlTable("users", {
+  id: customInt().primaryKey(),
+  name: customText().notNull(),
+  wallet: customHex('wallet', { mode: 'text' })
+});
+```
+
+### 类型定义的 TS-doc
+
+你可以查看 `ts-doc` 了解类型、参数定义和示例
+
+```ts
+export interface CustomTypeValues {
+	/**
+	 * 自定义列所需的类型，这将推导出正确的类型模型
+	 *
+	 * 示例：
+	 *
+	 * 如果你希望你的列在查询后/插入时类型为 `string` - 使用 `data: string`。例如 `text`、`varchar`
+	 *
+	 * 如果你希望你的列在查询后/插入时类型为 `number` - 使用 `data: number`。例如 `integer`
+	 */
+	data: unknown;
+
+	/**
+	 * 类型辅助器，表示数据库驱动对特定数据库数据类型所接受的类型
+	 */
+	driverData?: unknown;
+
+	/**
+	 * 类型辅助器，表示数据库驱动对特定数据库数据类型返回的类型
+	 *
+	 * 仅在驱动输出和输入类型不同的情况下需要
+	 *
+	 * 默认值为 {@link driverData}
+	 */
+	driverOutput?: unknown;
+
+	/**
+	 * 类型辅助器，表示字段聚合为 JSON 后返回的类型
+	 */
+	jsonData?: unknown;
+
+	/**
+	 * {@link CustomTypeParams} 的 `dataType` 生成应使用何种 config 类型
+	 */
+	config?: Record<string, any>;
+
+	/**
+	 * config 参数是否应该是必需的
+	 * @default false
+	 */
+	configRequired?: boolean;
+
+	/**
+	 * 如果你的自定义数据类型默认应为 notNull，可以使用 `notNull: true`
+	 *
+	 * @example
+	 * const customSerial = customType<{ data: number, notNull: true, default: true }>({
+	 * 	  dataType() {
+	 * 	    return 'serial';
+	 *    },
+	 * });
+	 */
+	notNull?: boolean;
+
+	/**
+	 * 如果你的自定义数据类型有默认值，可以使用 `default: true`
+	 *
+	 * @example
+	 * const customSerial = customType<{ data: number, notNull: true, default: true }>({
+	 * 	  dataType() {
+	 * 	    return 'serial';
+	 *    },
+	 * });
+	 */
+	default?: boolean;
+}
+
+export interface CustomTypeParams<T extends CustomTypeValues> {
+	/**
+	 * 数据库数据类型的字符串表示，用于迁移
+	 * @example
+	 * ```
+	 * `jsonb`, `text`
+	 * ```
+	 *
+	 * 如果数据库数据类型需要额外参数，可以从 `config` 参数中使用
+	 * @example
+	 * ```
+	 * `varchar(256)`, `numeric(2,3)`
+	 * ```
+	 *
+	 * 若要让 `config` 具有特定类型，请在 {@link CustomTypeValues} 中使用 config 泛型
+	 *
+	 * @example
+	 * 使用示例
+	 * ```
+	 *   dataType() {
+	 *     return 'boolean';
+	 *   },
+	 * ```
+	 * 或
+	 * ```
+	 *   dataType(config) {
+	 * 	   return typeof config.length !== 'undefined' ? `varchar(${config.length})` : `varchar`;
+	 * 	 }
+	 * ```
+	 */
+	dataType: (config: T['config'] | (Equal<T['configRequired'], true> extends true ? never : undefined)) => string;
+
+	/**
+	 * 可选映射函数，用于将代码中期望使用的输入格式转换为适合驱动使用的格式
+	 * @example
+	 * 例如，在使用 jsonb 时，我们需要在写入数据库之前将 JS/TS 对象映射为字符串
+	 * ```
+	 * toDriver(value: TData): string {
+	 * 	 return JSON.stringify(value);
+	 * }
+	 * ```
+	 */
+	toDriver?: (value: T['data']) => T['driverData'] | SQL;
+
+	/**
+	 * 可选映射函数，用于将驱动返回的数据转换为所需的列输出格式
+	 * @example
+	 * 例如，在使用 timestamp 时，我们需要将字符串 Date 表示形式映射为 JS Date
+	 * ```
+	 * fromDriver(value: string): Date {
+	 * 	return new Date(value);
+	 * }
+	 * ```
+	 *
+	 * 这会使返回的数据从：
+	 * ```
+	 * {
+	 * 	customField: "2025-04-07T03:25:16.635Z";
+	 * }
+	 * ```
+	 * 变为：
+	 * ```
+	 * {
+	 * 	customField: new Date("2025-04-07T03:25:16.635Z");
+	 * }
+	 * ```
+	 */
+	fromDriver?: (value: 'driverOutput' extends keyof T ? T['driverOutput'] : T['driverData']) => T['data'];
+
+	/**
+	 * 可选映射函数，用于将经过转换后写入数据库并聚合为 JSON 的数据转换为所需格式
+	 *
+	 * 由 [关系查询](https://orm.drizzle.team/docs/rqb) 使用
+	 *
+	 * 默认值为 {@link fromDriver} 函数
+	 * @example
+	 * 例如，通过 [RQB](https://orm.drizzle.team/docs/rqb) 或 [JSON 函数](https://orm.drizzle.team/docs/json-functions) 查询 blob 列时，结果字段将返回其十六进制字符串表示，而不是常规查询中的 Buffer
+	 * 为处理这种情况，我们需要一个单独的函数来处理该字段的映射：
+	 * ```
+	 * fromJson(value: string): Buffer {
+	 * 	return Buffer.from(value, 'hex');
+	 * },
+	 * ```
+	 *
+	 * 这会使返回的数据从：
+	 * ```
+	 * {
+	 * 	customField: "04A8...";
+	 * }
+	 * ```
+	 * 变为：
+	 * ```
+	 * {
+	 * 	customField: Buffer([...]);
+	 * }
+	 * ```
+	 */
+	fromJson?: (value: T['jsonData']) => T['data'];
+
+	/**
+	 * 可选的选择修饰函数，用于修改 [JSON 函数](https://orm.drizzle.team/docs/json-functions) 中列的选择结果
+	 *
+	 * 这类场景可能需要的额外映射可以使用 {@link fromJson} 函数来处理
+	 *
+	 * 由 [关系查询](https://orm.drizzle.team/docs/rqb) 使用
+	 *
+	 * 以下类型默认会被转换为 text：`numeric`、`decimal`、`bigint`、`blob`（通过 `hex()` 函数）
+	 * @example
+	 * 例如，在使用 numeric 字段存储 bigint 时，我们需要将字段转换为 text 以保持数据完整性
+	 * ```
+	 * forJsonSelect(identifier: SQL, sql: SQLGenerator): SQL {
+	 * 	return sql`cast(${identifier} as text)`
+	 * },
+	 * ```
+	 *
+	 * 这会将查询从：
+	 * ```
+	 * SELECT
+	 * 	json_object('bigint', `t`.`bigint`)
+	 * 	FROM
+	 * 	(
+	 * 		SELECT
+	 * 		`table`.`custom_bigint` AS "bigint"
+	 * 		FROM
+	 * 		`table`
+	 * 	) AS `t`
+	 * ```
+	 * 变为：
+	 * ```
+	 * SELECT
+	 * 	json_object('bigint', `t`.`bigint`)
+	 * 	FROM
+	 * 	(
+	 * 		SELECT
+	 * 		cast(`table`.`custom_bigint` as text) AS `bigint`
+	 * 		FROM
+	 * 		`table`
+	 * 	) AS `t`
+	 * ```
+	 *
+	 * 查询对象返回值将从：
+	 * ```
+	 * {
+	 * 	bigint: 5044565289845416000; // 由于直接转换为 JSON 格式导致部分数据丢失
+	 * }
+	 * ```
+	 * 变为：
+	 * ```
+	 * {
+	 * 	bigint: "5044565289845416380"; // 由于在 JSON 化之前将字段转换为 text，数据得以保留
+	 * }
+	 * ```
+	 */
+	forJsonSelect?: (identifier: SQL, sql: SQLGenerator) => SQL;
+}
+```

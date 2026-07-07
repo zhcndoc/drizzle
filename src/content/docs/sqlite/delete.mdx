@@ -1,0 +1,87 @@
+import Callout from '@mdx/Callout.astro';
+import Section from '@mdx/Section.astro';
+
+# SQL 删除
+您可以删除表中的所有行：
+```typescript copy
+await db.delete(users);
+```
+您还可以使用过滤器和条件删除：
+```typescript copy
+await db.delete(users).where(eq(users.name, 'Dan'));
+```
+
+### 限制
+使用 `.limit()` 将 `limit` 子句添加到查询中——例如：
+<Section>
+```typescript
+await db.delete(users).where(eq(users.name, 'Dan')).limit(2);
+```
+```sql
+delete from "users" where "users"."name" = ? limit ?;
+```
+</Section>
+
+### 按顺序排列
+使用 `.orderBy()` 将 `order by` 子句添加到查询中，按指定字段对结果进行排序：
+<Section>
+```typescript
+import { asc, desc } from 'drizzle-orm';
+
+await db.delete(users).where(eq(users.name, 'Dan')).orderBy(users.name);
+await db.delete(users).where(eq(users.name, 'Dan')).orderBy(desc(users.name));
+
+// 按多个字段排序
+await db.delete(users).where(eq(users.name, 'Dan')).orderBy(users.name, users.name2);
+await db.delete(users).where(eq(users.name, 'Dan')).orderBy(asc(users.name), desc(users.name2));
+```
+```sql
+delete from "users" where "users"."name" = ? order by "name";
+delete from "users" where "users"."name" = ? order by "name" desc;
+
+delete from "users" where "users"."name" = ? order by "name", "name2";
+delete from "users" where "users"."name" = ? order by "name" asc, "name2" desc;
+```
+</Section>
+
+### 返回值
+您可以在 SQLite 中删除一行并将其取回：
+```typescript copy
+const deletedUser = await db.delete(users)
+  .where(eq(users.name, 'Dan'))
+  .returning();
+
+// 部分返回
+const deletedUserIds: { deletedId: number }[] = await db.delete(users)
+  .where(eq(users.name, 'Dan'))
+  .returning({ deletedId: users.id });
+```
+
+## WITH DELETE 子句
+
+<Callout>
+  查看如何将 WITH 语句与 [select](/docs/sqlite/select#with-clause)、[insert](/docs/sqlite/insert#with-insert-clause)、[update](/docs/sqlite/update#with-update-clause) 一起使用
+</Callout>
+
+使用 `with` 子句可以通过将复杂查询分割成称为公共表表达式（CTE）的小子查询来简化复杂查询：
+<Section>
+```typescript copy
+const averageAmount = db.$with('average_amount').as(
+  db.select({ value: sql`avg(${orders.amount})`.as('value') }).from(orders)
+);
+
+const result = await db
+	.with(averageAmount)
+	.delete(orders)
+	.where(gt(orders.amount, sql`(select * from ${averageAmount})`))
+	.returning({
+		id: orders.id
+	});
+```
+```sql
+with "average_amount" as (select avg("amount") as "value" from "orders") 
+delete from "orders" 
+where "orders"."amount" > (select * from "average_amount") 
+returning "id"
+```
+</Section>
