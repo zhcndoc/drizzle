@@ -8,6 +8,7 @@ import Npm from "@mdx/Npm.astro";
 import Steps from "@mdx/Steps.astro";
 import Section from "@mdx/Section.astro";
 import Callout from "@mdx/Callout.astro";
+import Shortcut from "@mdx/Shortcut.astro";
 
 本教程演示如何在 [Railway](https://driz.link/railway) 上部署的 [Bun](https://bun.sh/) 运行时和 PostgreSQL 数据库中使用 Drizzle ORM。
 
@@ -40,13 +41,23 @@ import Callout from "@mdx/Callout.astro";
 
 #### 配置 PostgreSQL 数据库
 
-在项目画布中，点击右上角的 `New` 按钮，然后选择 `Database` → `PostgreSQL`。你也可以使用命令面板（`Cmd/Ctrl + K`）并搜索 PostgreSQL。Railway 将为你提供一个新的 PostgreSQL 实例。
+在项目画布中，点击右上角的 `New` 按钮，然后选择 `Database` → `PostgreSQL`。你也可以使用命令面板（<Shortcut mac="⌘ K" other="Ctrl K" />）并搜索 PostgreSQL。Railway 会为你创建一个新的 PostgreSQL 实例。
 
 ![](@/assets/images/tutorials/railway-select-postgres.png)
 
+#### 为数据库启用公共访问
+
+Railway 默认将数据库保留在私有网络中，因此你的机器无法直接访问。点击 PostgreSQL 服务，打开 `Settings` 选项卡，找到 `Networking` 区域，然后点击 `Add Public Access`。
+
+![](@/assets/images/tutorials/railway-add-public-access.png)
+
+然后点击顶部栏中的 `Deploy` 应用更改。Railway 会添加公共主机和端口，并在服务中设置 `DATABASE_PUBLIC_URL` 变量。
+
+![](@/assets/images/tutorials/railway-add-public-access-apply.png)
+
 #### 获取连接字符串
 
-点击项目中的 PostgreSQL 服务，进入 `Variables` 选项卡，找到 `DATABASE_PUBLIC_URL` 变量。复制其值——它应该类似于这样：
+打开 PostgreSQL 服务的 `Variables` 选项卡，找到 `DATABASE_PUBLIC_URL` 变量并复制其值，格式应类似于：
 
 ```bash
 postgresql://postgres:password@region.railway.app:port/railway
@@ -338,7 +349,38 @@ bunx drizzle-kit migrate
 
 ## 将 Drizzle Studio 部署到 Railway
 
-你可以将 [Drizzle Studio](/drizzle-studio/overview) 与你的应用一起部署到 Railway，从浏览器中直接浏览和管理你的数据库。你可以使用 [Drizzle Studio Railway 模板](https://railway.com/deploy/drizzle-studio-1)，或者按照以下步骤操作。
+你可以在 Railway 上将 [Drizzle Studio](/drizzle-studio/overview) 与应用一起部署，从浏览器中直接浏览和管理数据库。
+
+### 方式一：一键部署（推荐）
+
+<a
+  href="https://railway.com/new/template/drizzle-studio-1?referralCode=eobqmj&utm_medium=integration&utm_source=button&utm_campaign=drizzle-studio-1"
+  target="_blank"
+  rel="nofollow noreferrer"
+  style="display: inline-block; margin: 16px 0;"
+>
+  <img src="https://railway.com/button.svg" alt="部署到 Railway" width="183" height="40" />
+</a>
+
+<Steps>
+#### 选择 Railway 项目
+
+打开 `Deploy to` 下拉菜单并选择 PostgreSQL 数据库所在的项目。将 Drizzle Studio 部署到同一项目后，它就可以引用数据库变量。
+
+![](@/assets/images/tutorials/railway-deploy-drizzle-studio-project.png)
+
+#### 设置数据库连接字符串
+
+点击 `Configure`，将 `DATABASE_URL` 变量设为 `${{Postgres.DATABASE_URL}}` 以引用现有的 PostgreSQL 服务，然后点击 `Save Config`。接着点击 `Review and deploy`。
+
+![](@/assets/images/tutorials/railway-deploy-drizzle-studio-env.png)
+
+</Steps>
+
+### 方式二：手动部署
+
+<details>
+<summary style="cursor: pointer; user-select: none; margin-bottom: 16px;">显示手动部署步骤</summary>
 
 <Steps>
 #### 从模板添加一个新服务
@@ -355,24 +397,44 @@ bunx drizzle-kit migrate
 
 #### 配置环境变量并部署
 
-该模板包含两个预配置的环境变量：
+模板预先配置了三个环境变量：
 
-- `PASSCODE` - 访问你的 Studio 实例的密码。默认值为 `${{secret()}}`，它会生成一个随机密钥。
-- `DATABASE_URL` - 数据库连接字符串。将其设置为 `${{Postgres.DATABASE_URL}}`，以引用你现有的 PostgreSQL 服务。
+- `PASSCODE`：用于安全访问 Studio 实例的密码。默认值为 `${{secret()}}`，它会生成随机密钥。
+- `DATABASE_URL`：数据库连接字符串。将其设为 `${{Postgres.DATABASE_URL}}`，以引用现有的 PostgreSQL 服务。
+- `PORT`：Drizzle Studio 监听的端口。默认值为 `4983`，保持原样即可。
 
 点击 `Deploy Template` 进行部署。
 
 ![](@/assets/images/tutorials/railway-drizzle-studio-template-config.png)
 
-#### 找到你的 Drizzle Studio URL
+</Steps>
+
+</details>
+
+### 部署后
+
+<Steps>
+#### 查找 Drizzle Studio URL
 
 部署完成后，点击项目中的 Drizzle Studio 服务，进入 `Settings` 选项卡，并向下滚动到 `Networking` 部分。你会在 **Public Networking** 下找到你的公共域名。
 
 ![](@/assets/images/tutorials/railway-drizzle-studio-networking.png)
 
-#### 使用 Drizzle Studio 浏览你的数据库
+#### 输入访问码
 
-在浏览器中打开 Drizzle Studio 的 URL。你应该可以看到数据库表，并能直接浏览、筛选和编辑数据。
+在浏览器中打开 Drizzle Studio URL。首次访问时，系统会要求输入访问码。
+
+![](@/assets/images/tutorials/railway-drizzle-studio-passcode-request.png)
+
+返回 Railway 中的 Drizzle Studio 服务，打开 `Variables` 选项卡并复制 `PASSCODE` 变量的值。该值由模板生成，因此每次部署都不同。
+
+![](@/assets/images/tutorials/railway-drizzle-studio-passcode.png)
+
+将访问码粘贴到输入框中，然后点击 `Continue`。
+
+#### 使用 Drizzle Studio 浏览数据库
+
+现在应该可以看到数据库表，并直接浏览、筛选和编辑数据。
 
 ![](@/assets/images/tutorials/drizzle-studio-posts-table.png)
 

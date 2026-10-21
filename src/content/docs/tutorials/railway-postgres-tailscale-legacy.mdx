@@ -1,0 +1,262 @@
+---
+title: "通过 Tailscale 连接 Railway 私有数据库中的 Drizzle Kit [已过时]"
+date: "2026-08-27"
+---
+
+import Prerequisites from "@mdx/Prerequisites.astro";
+import Npm from "@mdx/Npm.astro";
+import Steps from "@mdx/Steps.astro";
+import Callout from "@mdx/Callout.astro";
+import Shortcut from "@mdx/Shortcut.astro";
+import TableWrapper from "@mdx/TableWrapper.astro";
+import ExternalLinkArrows from "@mdx/ExternalLinkArrows.astro";
+import { Image } from "astro:assets";
+import diagramLight from "@/assets/images/tutorials/railway-postgres-tailscale-diagram-light.png";
+import diagramDark from "@/assets/images/tutorials/railway-postgres-tailscale-diagram-dark.png";
+
+<style>{`
+  .tailscale-diagram-light,
+  .tailscale-diagram-dark {
+    width: 100%;
+    height: auto;
+    margin: 16px 0;
+  }
+  .tailscale-diagram-dark {
+    display: none;
+  }
+  html[class~="dark"] .tailscale-diagram-light {
+    display: none;
+  }
+  html[class~="dark"] .tailscale-diagram-dark {
+    display: block;
+  }
+`}</style>
+
+<ExternalLinkArrows />
+
+<Callout type="error" title="指南已过时" highlighted>
+Drizzle 现在提供了自带 Tailscale 转发器的 Railway 模板，设置流程更加简单。请参阅本指南的[最新版本](/docs/tutorials/railway-postgres-tailscale)。
+</Callout>
+
+本教程会在 [Railway](https://driz.link/railway) 上运行一个已关闭公共访问的 PostgreSQL 数据库，并从你的机器连接 `drizzle-kit`。
+
+[Tailscale](https://tailscale.com/) 转发器会加入你的 tailnet，并将数据库端口转发到 Railway 私有网络。整个过程不会向公共互联网开放任何服务，tailnet 中的每台设备都可以对数据库运行迁移。
+
+<Prerequisites title="本指南假设你已经：">
+  - 拥有 [Railway](https://driz.link/railway) 账户。
+
+  - 拥有 [Tailscale](https://tailscale.com/) 账户。
+
+  - 已在工作机器上安装 Tailscale 客户端，并登录到你的 tailnet。可从 [Tailscale 网站](https://tailscale.com/download)下载客户端。
+
+  - 已安装 Drizzle ORM 和 [Drizzle Kit](/docs/kit-overview)。
+  <Npm>
+      drizzle-orm@rc
+      -D drizzle-kit@rc
+  </Npm>
+</Prerequisites>
+
+## 工作原理
+
+Railway 为每项服务分配以 `.railway.internal` 结尾的私有域名。这些域名只能在项目内解析，因此你机器上的 `drizzle-kit` 无法直接使用它们。
+
+Tailscale 转发器负责连接两侧网络。它运行在同一个 Railway 项目中，因此可以解析私有域名；它也会作为一台机器加入你的 tailnet，让你的设备可以通过 tailnet 名称访问它。流量从 `drizzle-kit` 经 tailnet 到达转发器，再通过 Railway 私有网络连接数据库。
+
+<Image class="tailscale-diagram-light" src={diagramLight} alt="" />
+<Image class="tailscale-diagram-dark" src={diagramDark} alt="" />
+
+## 设置 Railway 项目
+
+<Steps>
+#### 创建 Railway 项目
+
+登录 [Railway 控制面板](https://railway.app/dashboard)，然后点击 `New Project` 按钮。
+
+![](@/assets/images/tutorials/railway-create-service-menu.png)
+
+#### 创建 PostgreSQL 数据库
+
+在项目画布中，点击右上角的 `New` 按钮，然后选择 `Database` → `PostgreSQL`。你也可以使用命令面板（<Shortcut mac="⌘ K" other="Ctrl K" />）并搜索 PostgreSQL。
+
+![](@/assets/images/tutorials/railway-select-postgres.png)
+
+#### 将数据库保留在私有网络中
+
+点击 PostgreSQL 服务，打开 `Settings` 选项卡并找到 `Networking` 区域。确认公共访问已关闭。在 `Private Networking` 下方可以看到服务的私有域名，例如 `postgres.railway.internal`。转发器会使用该域名。
+
+![](@/assets/images/tutorials/railway-postgres-private-networking.png)
+
+</Steps>
+
+## 将数据库接入 tailnet
+
+<Steps>
+#### 检查 MagicDNS 和 HTTPS 证书
+
+在 Tailscale 管理控制台中打开 [DNS 页面](https://login.tailscale.com/admin/dns)。必须同时启用 **MagicDNS** 和 **HTTPS Certificates**。每个区域显示的都是相反操作，因此如果按钮显示 `Disable MagicDNS...`，就表示 MagicDNS 已启用。
+
+MagicDNS 会为转发器提供稳定的机器名称，数据库连接需要用到该名称。数据库连接本身不需要 HTTPS 证书，但通过转发器打开数据库 UI 时需要证书。两个设置都位于此页面。
+
+![](@/assets/images/tutorials/tailscale-dns-magicdns-https.png)
+
+#### 创建可重复使用的 auth key
+
+在设置菜单中打开 [Keys 页面](https://login.tailscale.com/admin/settings/keys)，然后点击 `Generate auth key`。填写说明并启用 `Reusable`，其他设置保持不变。可重复使用的 key 可让转发器在没有现有状态时重新启动并注册自身。
+
+![](@/assets/images/tutorials/tailscale-generate-auth-key.png)
+
+点击 `Generate key`。现在就复制此 key，因为管理控制台只会显示一次。
+
+![](@/assets/images/tutorials/tailscale-auth-key-created.png)
+
+#### 部署 Tailscale 转发器
+
+Tailscale 转发器是一个小型 TCP 代理。它会作为一台机器加入你的 tailnet，并将该机器上的端口转发到 Railway 私有网络中的服务。Railway 提供了此模板，模板运行 `brody192/tailscale-forwarder` 镜像。
+
+<a
+  href="https://railway.com/deploy/tailscale-forwarder"
+  target="_blank"
+  rel="nofollow noreferrer"
+  style="display: inline-block; margin: 16px 0;"
+>
+  <img src="https://railway.com/button.svg" alt="部署到 Railway" width="183" height="40" />
+</a>
+
+打开 `Deploy to` 下拉菜单并选择数据库所在的项目。两项服务必须位于同一个项目中，否则转发器将无法通过私有网络访问数据库，因为它们会被放置在不同的私有网络中。
+
+将 auth key 粘贴到 `TS_AUTHKEY` 中，然后将数据库映射设置到 `CONNECTION_MAPPING_01`。格式为 `[https:]<source port>:<target host>:<target port>`。
+
+```plaintext copy
+5432:${{Postgres.RAILWAY_PRIVATE_DOMAIN}}:${{Postgres.PGPORT}}
+```
+
+此设置会将转发器上的 `5432` 端口转发到数据库。
+
+![](@/assets/images/tutorials/railway-tailscale-forwarder-template-config.png)
+
+<Callout type="info">
+模板设置页面只显示模板声明的变量，无法在此添加新变量。目前只能设置 `CONNECTION_MAPPING_01`。服务创建后，你可以直接在服务中添加更多映射。
+</Callout>
+
+#### 部署并检查日志
+
+点击 `Deploy`。模板会挂载一个卷并设置 `TS_EPHEMERAL=false`，这样机器在重新部署时会保留相同身份，而不会重复注册。
+
+打开 `Deployments` 选项卡并查看部署日志。以下三行可以确认转发器已正确启动：
+
+- `tsnet starting with hostname "..."` 会显示机器在 tailnet 中的名称，后续步骤会用到。
+- `Starting tailscale_fwdr` 会列出已解析的设置，包括 `ts-ephemeral: false` 以及每条映射的源端口、目标地址和目标端口。
+- `listening for connections` 表示转发器正在相应源端口上接收流量。
+
+![](@/assets/images/tutorials/railway-tailscale-forwarder-logs.png)
+
+<a id="copy-the-forwarder-domain"></a>
+#### 复制转发器域名
+
+`TS_HOSTNAME` 默认由项目名称、环境名称和服务名称以连字符连接组成，例如 `my-project-production-tailscale-forwarder`。部署日志会在 `tsnet starting with hostname` 行中显示此值。
+
+在 Tailscale 管理控制台中打开[机器页面](https://login.tailscale.com/admin/machines)。转发器使用有效 auth key 启动后，会自动显示在此页面。
+
+![](@/assets/images/tutorials/tailscale-machines-forwarder.png)
+
+点击机器名称打开详情页。在 `Machine Details` 下复制 `Full domain` 的值。你的机器会使用该主机名进行连接。
+
+![](@/assets/images/tutorials/tailscale-machine-full-domain.png)
+
+</Steps>
+
+## 从机器连接 Drizzle Kit
+
+<Callout type="warning">
+运行 `drizzle-kit` 的机器必须登录到与转发器相同的 tailnet，因为数据库连接会经由转发器路由。
+</Callout>
+
+<Steps>
+#### 设置连接字符串
+
+在 Railway 中打开 PostgreSQL 服务，进入 `Variables` 选项卡并复制 `DATABASE_URL`。
+
+![](@/assets/images/tutorials/railway-postgres-database-url.png)
+
+将主机名 `***.railway.internal` 替换为 [Tailscale 转发器域名](#copy-the-forwarder-domain)，并保留连接字符串的其余部分。Railway 外部的机器无法解析 `railway.internal`，因此需要通过 Tailscale 转发器连接。将结果写入 `.env` 文件。
+
+```plaintext copy
+DATABASE_URL=postgresql://postgres:password@<full-domain>:5432/railway
+```
+
+<Callout type="info">
+Tailscale 会加密机器与转发器之间的连接，Railway 也会加密转发器与数据库之间的连接。Railway PostgreSQL 还支持通过转发器使用 TLS，因此大多数客户端使用默认设置即可连接。
+</Callout>
+
+#### 设置 Drizzle 配置文件
+
+在项目根目录创建 `drizzle.config.ts` 文件：
+
+```typescript copy filename="drizzle.config.ts"
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  schema: "./src/schema.ts",
+  out: "./migrations",
+  dialect: "postgresql",
+  dbCredentials: {
+    url: process.env.DATABASE_URL!,
+  },
+});
+```
+
+#### 应用 Schema
+
+生成并应用迁移：
+
+```bash copy
+npx drizzle-kit generate
+```
+
+```bash copy
+npx drizzle-kit migrate
+```
+
+快速原型开发时，可以使用 [drizzle-kit push](/docs/kit-overview#prototyping-with-db-push) 直接推送 Schema。生产环境部署时，建议使用 `generate` 和 `migrate` 工作流，以保留 Schema 变更的版本历史。详情请参阅 [Drizzle 迁移基础](/docs/migrations)。
+
+#### 检查结果
+
+在 [Drizzle Studio](/docs/drizzle-kit-studio) 中打开数据库：
+
+```bash copy
+npx drizzle-kit studio
+```
+
+它会在你的机器上运行并读取同一个 `DATABASE_URL`，因此可以通过转发器访问数据库。此时即可看到新建的数据表。
+
+![](@/assets/images/tutorials/drizzle-studio-posts-table.png)
+
+</Steps>
+
+<Callout type="info">
+偶尔访问时无需使用 Tailscale。Railway CLI 可以通过 `railway connect Postgres --tunnel-only` 建立到私有数据库的临时隧道。如果你需要永久路由，或希望 tailnet 中的所有设备都能访问，请使用转发器。
+</Callout>
+
+## 后续步骤
+
+转发器可以承载多个端口。[《通过 Tailscale 在 Railway 上运行 Drizzle Studio 和 Gateway》](/docs/tutorials/railway-studio-tailscale-legacy)教程会在同一 Railway 项目中部署数据库 UI，并为其添加第二条映射。这样你就可以通过 tailnet 浏览数据表，而无需设置公共域名。该教程从空项目开始；由于你已经运行转发器，可以直接跳到部署模板和添加第二条映射的步骤。
+
+## 故障排查
+
+<Callout>
+<Fragment slot="collapsed-title">机器列表中没有转发器</Fragment>
+
+auth key 已过期，或使用了已用过且不可重复使用的 key。请生成新的可重复使用 key，更新转发器服务上的 `TS_AUTHKEY`，然后重新部署。
+</Callout>
+
+<Callout>
+<Fragment slot="collapsed-title">`drizzle-kit` 无法连接</Fragment>
+
+运行 `tailscale status`，确认设备已登录到同一 tailnet。检查连接字符串中的端口是否与 `CONNECTION_MAPPING_01` 中的源端口一致。Railway PostgreSQL 支持通过转发器使用 TLS，因此无需禁用 SSL。
+</Callout>
+
+<Callout>
+<Fragment slot="collapsed-title">映射变量未生效</Fragment>
+
+请确认转发器服务上的变量名称完全正确。模板声明的是带前导零的 `CONNECTION_MAPPING_01`。一些旧指南使用 `CONNECTION_MAPPING_1`。请按配置面板显示的格式填写，并确保编号唯一。
+</Callout>

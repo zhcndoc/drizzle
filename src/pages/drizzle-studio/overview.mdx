@@ -1,75 +1,243 @@
 import CenteredLayout from "@/ui/CenteredLayout.astro";
-import Npm from "@mdx/Npm.astro";
-import Npx from "@mdx/Npx.astro";
-import Steps from '@mdx/Steps.astro';
-import Tab from '@mdx/Tab.astro';
-import Tabs from '@mdx/Tabs.astro';
+import CompanyLogos from "@mdx/CompanyLogos.astro";
+import Button from "@mdx/Button.astro";
+import Flex from "@mdx/Flex.astro";
+import ContactProductManager from "@mdx/ContactProductManager.astro";
+import TableWrapper from "@mdx/TableWrapper.astro";
+import StudioIcon from "@mdx/StudioIcon.astro";
+import ThemeImage from "@mdx/ThemeImage.astro";
+import StudioHero from "@mdx/StudioHero.astro";
+import OverviewLight from "@/assets/images/drizzle-studio-overview-light.webp";
+import OverviewDark from "@/assets/images/drizzle-studio-overview-dark.webp";
+import LocalLight from "@/assets/images/drizzle-studio-local-light.webp";
+import LocalDark from "@/assets/images/drizzle-studio-local-dark.webp";
+import GatewayLight from "@/assets/images/drizzle-gateway-light.webp";
+import GatewayDark from "@/assets/images/drizzle-gateway-dark.webp";
+import ExtensionLight from "@/assets/images/drizzle-studio-extension-2-light.webp";
+import StudioInTursoLight from "@/assets/images/drizzle-studio-in-turso-light.webp";
+import StudioInTursoDark from "@/assets/images/drizzle-studio-in-turso-dark.webp";
+import DesktopSoonLight from "@/assets/images/desktop-app-coming-soon-light.webp";
+import DesktopSoonDark from "@/assets/images/desktop-app-coming-soon-dark.webp";
+import ExtensionDark from "@/assets/images/drizzle-studio-extension-2-dark.webp";
 
-<CenteredLayout isStudio={true} customTitle="遇见 Drizzle Studio">
-# 遇见 Drizzle Studio
-🖥 Drizzle Studio 是一种新的方式，让你在 Drizzle 项目中探索 SQL 数据库。
+<CenteredLayout
+  isStudio={true}
+  customTitle="认识 Drizzle Studio"
+  description="Drizzle Studio 是一款现代化的 Web 数据库浏览器。你可以使用 drizzle-kit studio 在本地运行，通过 Drizzle Gateway 自托管，使用 Chrome 扩展浏览无服务器数据库，或将其嵌入自己的产品。"
+  image="/og/drizzle-studio.jpg"
+>
+<StudioHero
+  eyebrow="Drizzle Studio"
+  title="我们从没想过要开发数据库浏览器"
+  punchline="我们自己也不敢相信。"
+>
+  <Flex slot="actions">
+    <Button href="https://demo.drizzle.studio" variant="secondary">在线演示</Button>
+    <ContactProductManager variant="secondary" />
+  </Flex>
+  <ThemeImage slot="image" light={OverviewLight} dark={OverviewDark} alt="Drizzle Studio 数据浏览器" />
+</StudioHero>
 
-![Drizzle Studio](@/assets/images/drizzle-studio.jpeg)
+三年前，我们发布了 Drizzle ORM 的首个主要版本并开始获得关注。当时我们的主要用户来自 Prisma，他们有两个需求：**Relational Queries 语法**和**本地数据库浏览器**。
 
-Drizzle Studio 会抓取你的 Drizzle 配置文件，连接到你的数据库，并允许你浏览、添加、删除和更新所有内容，这些内容都是基于你的现有 
-Drizzle SQL 模式。它支持显式的 `null` 和 `empty string` 值，`booleans`，`numbers` 和 `big integers`，`json objects`
-和 `json arrays`。
+我们有商业开发经验，平时使用 Beekeeper、Postico 或 TablePlus 就能完成工作，因此多次婉拒，并建议大家使用业界常见工具。但用户非常坚持，我们最终还是动手了。当时我们想，这能花多少时间呢？
 
-## 快速开始
-<Steps>
+于是我们开发了 Drizzle Studio。它是一款现代化数据库浏览器，可以浏览和编辑数据、查看 Schema 并运行 SQL，无需对现有数据库进行额外设置。现在它有五种形态：
 
-#### 安装依赖
-确保先查看我们的[入门指南](/docs/get-started)！
+<TableWrapper fit>
+| | | |
+| :------ | :--------- | :------ |
+| <StudioIcon name="local" /> **[本地 Studio](#drizzle-studio-for-local-development)** | 免费 | 在 Drizzle 项目中运行 `drizzle-kit studio` |
+| <StudioIcon name="gateway" /> **[Drizzle Gateway](#drizzle-gateway)** | 免费 | 在自己的基础设施中自托管 Studio，可部署为 Docker 容器或二进制文件 |
+| <StudioIcon name="extension" /> **[Chrome 扩展](#drizzle-studio-chrome-extension)** | 免费 | 直接在供应商控制台中浏览无服务器数据库 |
+| <StudioIcon name="component" /> **[Studio 组件](#drizzle-studio-component)** | B2B 服务 | 可嵌入自己产品中的 Studio |
+| <StudioIcon name="desktop" /> **[桌面应用](#drizzle-studio-desktop-app)** | 即将推出 | 无需终端的原生数据库浏览器 |
+</TableWrapper>
 
-<Npm>
-  drizzle-orm@rc
-  -D drizzle-kit@rc
-</Npm>
+## 功能一览
+- **浏览数据**：支持分页、筛选、多列排序和列顺序调整
+- **编辑数据**：直接添加、更新和删除行；可原位编辑 `json`、`boolean` 和 `enum` 值
+- **复制和粘贴**：复制单元格区域、将行复制到剪贴板，或导出为 `json`、`csv`、`sql`
+- **导入数据**：支持 `json`、`csv` 和 `sql` 文件
+- **运行 SQL**：在 SQL 控制台中使用自动补全、`explain`/`analyze` 支持和查询遥测
+- **运行 Drizzle 查询**：使用 Drizzle runner 执行查询
+- **浏览和管理 Schema**：包括表、视图、列、索引、外键、策略和权限
 
-#### 准备你的数据库模式
-查看扩展模式声明[文档](/docs/sql-schema-declaration)。
-```typescript copy filename="schema.ts"
-import { pgTable, serial, text, varchar } from "drizzle-orm/pg-core";
+## 实现原理
+Drizzle Studio 的核心是一个 UI 组件，用于呈现数据库内容并提供操作数据和 Schema 的基础功能。它使用 TypeScript 编写，因此几乎可以无缝集成到任何环境中：
 
-export const users = pgTable('users', {
-  id: serial('id').primaryKey(),
-  fullName: text('full_name'),
-  phone: varchar('phone', { length: 256 }),
-});
+![Drizzle Studio 产品系列：面向基础设施、平台和本地开发](@/assets/images/drizzle-studio-family.webp)
+
+<a id="drizzle-studio-for-local-development"></a>
+## Drizzle Studio 本地开发版
+这是最初的版本，也是 Drizzle Studio 的起点，目前每月有 12 万名用户。它面向本地开发场景，可快速打开指定数据库并管理其中的数据。
+
+随着 Schema 管理功能的推出，我们逐渐从最初的代码优先 Schema 思路转向更传统的数据库浏览器模式，由数据库本身作为事实来源。
+
+<ThemeImage light={LocalLight} dark={LocalDark} alt="Drizzle Studio 本地开发版" />
+
+本地开发版永久免费，并从你的 [drizzle.config.ts](/docs/drizzle-config-file) 文件读取所需配置。它支持 `PostgreSQL`、`MySQL`、`SQLite`、`SingleStore`、`MSSQL` 和 `CockroachDB`。
+
+安装 `drizzle-kit`，将其指向配置文件并运行 `drizzle-kit studio`。[`drizzle-kit studio` 文档](/docs/drizzle-kit-studio)介绍了设置步骤、`--port`、`--verbose` 和 `--host` 标志，以及 Safari 和 Brave 默认阻止访问 localhost 时的处理方法。
+
+托管版 Studio 面向本地开发，**不适合**暴露在远程机器上。如需远程部署，请使用 [Drizzle Gateway](#drizzle-gateway)。
+
+## Drizzle Gateway
+[Drizzle Gateway](https://gateway.drizzle.team) 是增强版的免费自托管 Drizzle Studio。它以单个 Docker 镜像（或独立二进制文件）的形式运行，可同时连接所有数据库，并像其他容器化应用一样部署在你的基础设施中，例如 VPC 或堡垒机后方，享有相应的安全和运维优势。
+
+<ThemeImage
+  light={GatewayLight}
+  dark={GatewayDark}
+  alt="Drizzle Gateway 自托管数据库浏览器"
+/>
+
+与 `drizzle-kit studio` 不同，Gateway 无需 Drizzle 项目。你可以直接在 UI 中添加数据库连接，将其保存在持久化卷中并与团队共享，还可以使用主密码和每位用户各自的访问码保护访问。
+
+Gateway 最初是一项付费服务。Warhammer 开发者联系了我们后，我们意识到付费造成的使用门槛并不值得，于是最终将它改为免费。目前它在 GitHub 容器注册表中的下载量已达到 35 万次。
+
+<a
+  href="https://railway.com/new/template/drizzle-studio-gateway?referralCode=eobqmj&utm_medium=integration&utm_source=button&utm_campaign=drizzle-studio-gateway"
+  target="_blank"
+  rel="nofollow noreferrer"
+  style="display: inline-block; margin: 16px 0;"
+>
+  <img src="https://railway.com/button.svg" alt="部署到 Railway" width="183" height="40" />
+</a>
+
+```shell
+# pull latest version
+docker pull ghcr.io/drizzle-team/gateway:latest
+
+# persistent volume is required for the configuration file
+docker volume create drizzle-gateway
+
+# start the gateway
+docker run -d \
+  --name drizzle-gateway \
+  --restart always \
+  -p 4983:4983 \
+  -e PORT=4983 \
+  -e MASTERPASS=your_master_password \
+  -v drizzle-gateway:/app \
+  ghcr.io/drizzle-team/gateway:latest
 ```
 
-#### 准备配置文件
-查看扩展配置文件[文档](/docs/drizzle-config-file)。
-```typescript copy filename="drizzle.config.ts"
-import { defineConfig } from "drizzle-kit";
- 
-export default defineConfig({
-  schema: "./schema/*",
-  out: "./drizzle",
-  dialect: 'postgresql',
-  dbCredentials: {
-    url: process.env.DB_URL,
-  }
-});
-```
-#### 启动 Drizzle Studio
-<Npx>
-drizzle-kit studio
-</Npx>
+启动后，可通过 `http://localhost:4983` 访问 Gateway。它支持 `arm` 和 `amd` 架构，并提供 macOS 和 Linux 独立二进制文件。安装选项和更新日志请参阅 [gateway.drizzle.team](https://gateway.drizzle.team)。
 
-您可以使用 `port` CLI 标志启动工作室以自定义进程端口，并使用 `verbose` 标志进行扩展 SQL 语句日志记录。
-<Npx>
-drizzle-kit studio --port 3000 --verbose
-</Npx>
+<a id="drizzle-studio-chrome-extension"></a>
+## Drizzle Studio Chrome 扩展
+我们的 [Chrome 扩展](https://driz.link/extension)可以直接在供应商 UI 上显示数据库浏览器，无需本地设置或连接字符串。即使供应商没有官方的数据库浏览方式，只要你每天都在使用其产品，也能通过扩展直接在控制台中浏览数据库。
 
-默认情况下，Drizzle Studio 将会在 `https://local.drizzle.studio` 主机上启动，而 studio 服务器将在 127.0.0.1 主机上启动，但是你可以指定任何你想要的主机。
-<Npx>
-drizzle-kit studio --host 0.0.0.0
-</Npx>
-</Steps>
+它支持 [PlanetScale](https://planetscale.com)、[Cloudflare D1](https://developers.cloudflare.com/d1/) 和 [Vercel Postgres](https://vercel.com/docs/storage/vercel-postgres)。
 
+![注入 PlanetScale 分支页面的 Drizzle Studio 按钮](@/assets/images/drizzle-studio-extension-1.webp)
+<ThemeImage light={ExtensionLight} dark={ExtensionDark} alt="在供应商控制台中使用 Drizzle Studio 浏览 PlanetScale 数据库" />
 
-## 接下来是什么？
-我们将在接下来的几个月里大幅改进并扩展 Drizzle Studio！   
-在 [Twitter](https://twitter.com/DrizzleORM) 上关注我们，并欢迎加入我们的 [Discord](https://driz.link/discord)
+目前每周约有 3300 名用户，看来确实有不少人需要这样的工具。
+
+我们还提供 [sqlite.drizzle.studio](https://sqlite.drizzle.studio)，可以直接在浏览器中查看 SQLite 文件。
+
+<a id="drizzle-studio-component"></a>
+## Drizzle Studio 组件
+**Drizzle Studio Component** 是我们面向企业的付费 **B2B 服务**。它是预打包、完全不依赖框架且安全性有保障的 Drizzle Studio Web 组件，可以嵌入你的 UI，例如 `React`、`Vue`、`Svelte`、`VanillaJS` 等。
+
+<ThemeImage
+  light={StudioInTursoLight}
+  dark={StudioInTursoDark}
+  alt="嵌入 Turso 控制面板的 Drizzle Studio"
+/>
+
+如果你提供 Database as a SaaS 或基于 SQL 的数据型 SaaS 解决方案，它会是一个强大的 UI 组件，能提升产品体验；它也适用于不面向客户的内部场景。
+
+它支持高度定制：你可以先在高级[主题平台](https://drizzle.studio)中预览自定义配色，再与我们联系；还可以选择启用 SQL 查询运行器，我们也能按需添加合作伙伴专属定制。
+
+本地开发版 Studio 永久免费，旨在丰富 Drizzle 生态；而组件版一直是我们可持续收入的主要来源，也为 Drizzle 的开源开发提供了支持，直到 PlanetScale 的变化影响了这一模式。
+
+你可能已经在使用的数据库或智能体平台中见过它：
+
+<CompanyLogos
+  title="使用 Drizzle Studio 的数据库平台"
+  companies={[
+    { name: "Turso", href: "https://turso.tech", logo: { light: "/svg/new-turso.svg", dark: "/svg/new-turso-light.svg" } },
+    { name: "Neon", href: "https://neon.tech", logo: { light: "/svg/neon-light.svg", dark: "/svg/neon-dark.svg" } },
+    { name: "SQLite Cloud", href: "https://sqlitecloud.io/", logo: "/svg/sqlite-cloud.svg" },
+  ]}
+/>
+
+<CompanyLogos
+  title="用于构建应用和网站的 AI 平台"
+  companies={[
+    { name: "Replit", href: "https://repl.it", logo: "/images/customers/replit.png" },
+    { name: "Deno", href: "https://deno.com/deploy", logo: { light: "/images/customers/deno.svg", dark: "/images/customers/deno-dark.svg" } },
+    { name: "Kinsta", href: "https://kinsta.com/", logo: "/images/customers/kinsta.png" },
+    { name: "Create.xyz", href: "https://create.xyz", logo: "/images/customers/create.png" },
+    { name: "Sevalla", href: "https://sevalla.com/", logo: "/images/customers/sevalla.png" },
+    { name: "Orchids", href: "https://www.orchids.app/", logo: "/images/customers/orchids.svg" },
+    { name: "Netlify", href: "https://www.netlify.com/", logo: { light: "/images/customers/netlify.svg", dark: "/images/customers/netlify-dark.svg" } },
+    { name: "QwikBuild", href: "https://qwikbuild.com/", logo: { light: "/images/customers/qwikbuild.svg", dark: "/images/customers/qwikbuild-dark.svg" } },
+    { name: "Specific", href: "https://specific.dev/", logo: { light: "/images/customers/specific.svg", dark: "/images/customers/specific-dark.svg" } },
+  ]}
+/>
+
+<CompanyLogos
+  title="使用 Drizzle Studio 的初创公司"
+  companies={[
+    { name: "Sample Health Care", href: "https://samplehc.com/", logo: "/images/customers/samplehc.png" },
+  ]}
+/>
+
+<CompanyLogos
+  title="曾使用 Studio 的平台"
+  companies={[
+    { name: "Nuxt Hub", href: "https://hub.nuxt.com/" },
+    { name: "Deco.cx", href: "https://deco.cx/" },
+    { name: "Hydra", href: "https://www.hydra.so/" },
+    { name: "Runable", href: "https://runable.com/" },
+    { name: "Tembo", href: "https://www.tembo.io/" },
+    { name: "Squadbase", href: "https://www.squadbase.dev/" },
+  ]}
+/>
+
+还有一些公司在内部使用可嵌入的 Drizzle Studio。
+
+发布文章：[Neon](https://neon.tech/docs/changelog/2024-05-24) ·
+[SQLite Cloud](https://blog.sqlitecloud.io/release-notes-introducing-database-studio-in-sqlite-cloud) ·
+[Replit](https://blog.replit.com/database-editor) ·
+[Deno](https://x.com/rough__sea/status/1950231545807327329) ·
+[Create.xyz](https://x.com/create_xyz/status/1889479526499098830)
+
+#### 感兴趣？
+
+<ContactProductManager variant="secondary" />
+
+你可以在 npm 上阅读详细介绍：[@drizzle-team/studio](https://www.npmjs.com/package/@drizzle-team/studio) 只是一个 Markdown 文件，无需安装。也欢迎通过 [Twitter](https://x.com/drizzleorm) 私信我们，或在 [Discord #drizzle-studio](https://driz.link/discord) 频道交流。
+
+<a id="drizzle-studio-desktop-app"></a>
+## Drizzle Studio 桌面应用
+它将以原生应用的形式提供 Studio 的全部功能，无需终端，也无需调用 `drizzle-kit`，打开后即可连接数据库。目前正在开发中，暂时还不能体验。
+
+<ThemeImage
+  light={DesktopSoonLight}
+  dark={DesktopSoonDark}
+  alt="即将推出的 Drizzle Studio 桌面应用"
+/>
+
+关注我们的 [Twitter](https://twitter.com/DrizzleORM)，或加入 [Discord #drizzle-studio-desktop](https://discord.com/channels/1043890932593987624/1504843464267796510)，了解产品发布消息。
+
+## 常见问题
+#### Drizzle Studio 是开源的吗？
+不是。Drizzle ORM 和 Drizzle Kit 完全开源，但 Studio 并不开源。
+
+Drizzle Studio 本地开发版永久免费，旨在丰富 Drizzle 生态。遗憾的是，将其开源会影响我们提供 B2B 服务并实现商业化的能力。
+
+#### 我可以将 Studio 部署到自己的 VPS 上吗？
+可以，这正是 [Drizzle Gateway](#drizzle-gateway) 的用途。托管版 `local.drizzle.studio` 仅供本地开发使用。
+
+#### Studio 会将我的数据发送到其他地方吗？
+不会。`drizzle-kit studio` 和 Gateway 都在你的机器或基础设施中建立数据库连接，数据不会离开这些环境。
+
+## 接下来
+我们每月都会发布 Drizzle Studio 更新，可在[公告](/announcements)页面关注最新动态。
+
+欢迎关注我们的 [Twitter](https://twitter.com/DrizzleORM) 并加入 [Discord](https://driz.link/discord)！
 </CenteredLayout>

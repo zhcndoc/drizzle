@@ -241,17 +241,20 @@ const darkStylesSVGString = svgCodeDark.replace(
       const item = dialectSwitcherItems.find(({ id }) => id === sel.value);
       if (!item) return;
 
-      // Stay on the same page if the target dialect has it, else go to overview.
+      // Stay on the same page if the target dialect has it; fall back to the
+      // parent page, then to the dialect overview.
       const slug = currentPageSlug();
       const slugs = pageSlugsByDialect[item.id] || [];
-      const hasPage =
-        slug &&
-        (slugs.includes(slug) ||
-          (slug.includes("/") && slugs.includes(slug.split("/")[0])));
-      if (hasPage) {
-        const prefix =
-          item.id === defaultDocsDialect ? "/docs" : "/docs/" + item.id;
+      const prefix =
+        item.id === defaultDocsDialect ? "/docs" : "/docs/" + item.id;
+      const parent = slug.includes("/") ? slug.split("/")[0] : "";
+
+      if (slug && slugs.includes(slug)) {
         window.location.href = prefix + "/" + slug;
+      } else if (parent && slugs.includes(parent)) {
+        // child pages (e.g. get-started/postgresql-new) are not per-dialect,
+        // so the nested url would 404 — land on the parent instead
+        window.location.href = prefix + "/" + parent;
       } else {
         window.location.href = item.path;
       }

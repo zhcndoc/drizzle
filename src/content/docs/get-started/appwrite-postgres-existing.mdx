@@ -1,0 +1,86 @@
+import Callout from '@mdx/Callout.astro';
+import Breadcrumbs from '@mdx/Breadcrumbs.astro';
+import Prerequisites from "@mdx/Prerequisites.astro";
+import IntrospectPostgreSQL from '@mdx/get-started/postgresql/IntrospectPostgreSQL.mdx';
+import FileStructure from '@mdx/get-started/FileStructure.mdx';
+import InstallPackages from '@mdx/get-started/InstallPackages.mdx';
+import SetupConfig from '@mdx/get-started/SetupConfig.mdx';
+import TransferCode from '@mdx/get-started/TransferCode.mdx';
+import ApplyChanges from '@mdx/get-started/ApplyChanges.mdx';
+import RunFile from '@mdx/get-started/RunFile.mdx';
+import ConnectAppwritePostgres from '@mdx/get-started/postgresql/ConnectAppwritePostgres.mdx'
+import QueryDatabase from '@mdx/get-started/QueryDatabase.mdx';
+import QueryDatabaseUpdated from '@mdx/get-started/QueryDatabaseUpdated.mdx';
+import UpdateSchema from '@mdx/get-started/postgresql/UpdateSchema.mdx';
+
+<Breadcrumbs/>
+
+# 在现有项目中开始使用 Drizzle 和 Appwrite Postgres
+
+<Prerequisites>
+  - **dotenv** - 用于管理环境变量的包 - [了解详情](https://www.npmjs.com/package/dotenv)
+  - **tsx** - 用于运行 TypeScript 文件的包 - [了解详情](https://tsx.hirok.io/)
+  - **Appwrite Postgres** - Appwrite 提供的原生 PostgreSQL 数据库 - [了解详情](https://appwrite.io/docs/products/databases/postgresql)
+  - **node-postgres** - 用于查询 PostgreSQL 数据库的包 - [了解详情](https://node-postgres.com/)
+</Prerequisites>
+
+<Callout title='Appwrite 也提供 MySQL' type='info'>
+需要使用 MySQL？请参阅 [Appwrite MySQL 指南](/docs/get-started/appwrite-mysql-existing)
+</Callout>
+
+Appwrite 提供专用的原生 PostgreSQL 数据库，可通过 TLS 直接连接。Appwrite 没有专用驱动，因此本指南使用标准的 `node-postgres` 驱动。
+
+有关创建 Appwrite Postgres 数据库的详细说明，请参阅 [Appwrite PostgreSQL 文档](https://appwrite.io/docs/products/databases/postgresql)。
+
+<FileStructure/>
+
+#### 第一步：安装 **node-postgres** 包
+<InstallPackages lib='pg' devlib=' @types/pg'/>
+
+#### 第二步：设置连接变量
+
+在项目根目录创建 `.env` 文件，并添加数据库连接变量：
+
+```plaintext copy
+DATABASE_URL=postgresql://admin:<password>@db-<hash>.<region>.appwrite.center:5432/<database>?sslmode=require
+```
+
+<Callout title='提示'>
+在 Appwrite Console 中打开数据库并点击 **"Credentials"**，即可获取连接字符串。**"Drizzle"**、**"DSN"** 和 **".env"** 选项卡中提供了可直接使用且已包含 `sslmode=require` 的连接字符串。详细步骤请参阅 [Appwrite PostgreSQL 连接指南](https://appwrite.io/docs/products/databases/postgresql/connections)。
+</Callout>
+
+#### 第三步：设置 Drizzle 配置文件
+
+<SetupConfig dialect='postgresql' env_variable='DATABASE_URL'/>
+
+#### 第四步：内省数据库
+
+<IntrospectPostgreSQL/>
+
+#### 第五步：将代码移至实际的 Schema 文件
+
+<TransferCode/>
+
+#### 第六步：将 Drizzle ORM 连接到数据库
+
+<ConnectAppwritePostgres/>
+
+#### 第七步：查询数据库
+
+<QueryDatabase dialect='node-postgres' env_variable='DATABASE_URL'/>
+
+#### 第八步：运行 index.ts 文件
+
+<RunFile/>
+
+#### 第九步：更新表 Schema（可选）
+
+<UpdateSchema/>
+
+#### 第十步：将变更应用到数据库（可选）
+
+<ApplyChanges />
+
+#### 第十一步：使用新字段查询数据库（可选）
+
+<QueryDatabaseUpdated dialect='node-postgres' env_variable='DATABASE_URL' />

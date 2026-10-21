@@ -1,3 +1,45 @@
+2026-09:
+  - |
+    <b>Drizzle Studio 更新</b>
+
+    <ul>
+    <li>改进了日历转换器对 SQLite 时间戳的推断，并新增手动更改时间戳的功能。</li>
+    <li>修复了 AWS Data API codec 系统。</li>
+    </ul>
+2026-08:
+  - |
+    <b>Drizzle Studio 更新</b>
+
+    <ul>
+    <li>新增对 SHOW 语句的支持，可在 SQL 控制台中将 DDL 显示为 SQL。</li>
+    </ul>
+2026-07:
+  - |
+    <b>Drizzle Studio 更新</b>
+
+    <ul>
+    <li>筛选器新增对 enum 值的支持。</li>
+    <li>新增在菜单中更新表和视图数量的功能。</li>
+    <li>新增按多列排序的功能。</li>
+    <li>新增 `Cmd/Ctrl+A` 快捷键，可选中所有行。</li>
+    <li>新增 `Option/Alt+N` 快捷键，可添加新行。</li>
+    <li>新增 `Option/Alt+F` 快捷键，可筛选行。</li>
+    <li>新增复制建表语句到剪贴板的功能。</li>
+    <li>新增以 SQL 格式（INSERT 语句）导出和复制行的功能。</li>
+    <li>重做了表头单元格的排序功能。</li>
+    <li>调整了刷新快捷键：`Cmd/Ctrl+R` 刷新行，`Shift + Cmd/Ctrl+R` 刷新 Schema 和行。</li>
+    </ul>
+2026-06:
+  - |
+    <b>Drizzle Studio 更新</b>
+
+    <ul>
+    <li>除导出外，还新增将行复制到剪贴板的功能。</li>
+    <li>新增拖放调整列顺序的功能。</li>
+    <li>SQL 控制台结果面板新增子视图，可显示结果所属的查询。</li>
+    <li>改进了对 SQLite BLOB 列的支持。</li>
+    <li>新增 `Cmd/Ctrl+A` 快捷键，可选中所有行。</li>
+    </ul>
 2026-05:
   - |
     <b>Drizzle Beta <a href='https://github.com/drizzle-team/drizzle-orm/releases/tag/v1.0.0-rc.3'>v1.0.0-rc.3</a> release</b>
@@ -32,6 +74,13 @@
     <li>JIT row mappers to reduce ORM overhead to ~0</li>
     <li>Reworked casing API (breaking change)</li>
     <li>Drizzle for LLM agents (preview)</li>
+    </ul>
+  - |
+    <b>Drizzle Studio 更新</b>
+
+    <ul>
+    <li>修复了对分区表进行索引内省的问题。</li>
+    <li>修复了非管理员用户执行 Schema 内省失败的问题。</li>
     </ul>
 2026-04:
   - |
@@ -69,6 +118,12 @@
     <li>[BUG]: drizzle-kit commutative migrations takes only last leaf migration into account</li>
     <li>Updated migrate() function for mysql dialect to correctly manage multiple databases</li>
     <li>The behavior for reading schema files has been updated. From now only files with the following extensions will be processed: .js .mjs .cjs .jsx .ts .mts .cts .tsx. All other file types will be ignored</li>
+    </ul>
+  - |
+    <b>Drizzle Studio 更新</b>
+
+    <ul>
+    <li>提升了性能。</li>
     </ul>
 2026-03:
   - |

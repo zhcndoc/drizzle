@@ -1,0 +1,110 @@
+import Npm from "@mdx/Npm.astro";
+import Callout from "@mdx/Callout.astro";
+import Tabs from "@mdx/Tabs.astro";
+import Tab from "@mdx/Tab.astro";
+import AnchorCards from "@mdx/AnchorCards.astro";
+import WhatsNextMySQL from "@mdx/WhatsNextMySQL.astro";
+import Prerequisites from "@mdx/Prerequisites.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+
+# Drizzle \<\> Appwrite MySQL
+
+<Prerequisites>
+- Database [connection basics](/docs/mysql/connect-overview) with Drizzle
+- Appwrite native MySQL database - [website](https://appwrite.io) & [docs](https://appwrite.io/docs/products/databases/mysql)
+- Appwrite MySQL connections - [docs](https://appwrite.io/docs/products/databases/mysql/connections)
+- Drizzle MySQL drivers - [docs](/docs/mysql/get-started-mysql)
+</Prerequisites>
+
+Appwrite 提供专用的原生 MySQL 数据库，可通过 TLS 直接连接。Appwrite 没有专用驱动或抽象层，因此你可以像连接其他 MySQL 服务器一样，通过 `drizzle-orm/mysql2` 包搭配 [`mysql2`](https://github.com/sidorares/node-mysql2) 驱动使用 Drizzle。
+
+要获取连接字符串，请在 Appwrite Console 中打开数据库并点击 **Credentials**，也可以通过 Appwrite API 调用 `mysql.get()` 获取。用户名为 `admin.<hash>`，其中 hash 与主机名中的值相同，数据库名称始终为 `default`。Appwrite 代理会根据此用户名路由连接，因此请始终使用连接字符串中的完整用户名。
+
+```env
+DATABASE_URL="mysql://admin.<hash>:<password>@db-<hash>.<region>.appwrite.center:3306/default?ssl=true"
+```
+
+#### 第一步：安装依赖包
+<Npm>
+ drizzle-orm@rc mysql2
+ -D drizzle-kit@rc
+</Npm>
+
+#### 第二步：初始化驱动并执行查询
+<CodeTabs items={['mysql2', 'mysql2（带配置）']}>
+```typescript copy
+import { drizzle } from "drizzle-orm/mysql2";
+
+const db = drizzle(process.env.DATABASE_URL);
+
+const response = await db.select().from(...)
+```
+```typescript copy
+import { drizzle } from "drizzle-orm/mysql2";
+
+// You can specify any property from the mysql2 connection options
+const db = drizzle({ connection: { uri: process.env.DATABASE_URL, ssl: { rejectUnauthorized: true } } });
+
+const response = await db.select().from(...)
+```
+</CodeTabs>
+
+如果需要传入已有驱动：
+
+<CodeTabs items={['单连接', '连接池']}>
+```typescript copy
+import { drizzle } from "drizzle-orm/mysql2";
+import mysql from "mysql2/promise";
+
+const connection = await mysql.createConnection(process.env.DATABASE_URL);
+
+const db = drizzle({ client: connection });
+```
+```typescript copy
+import { drizzle } from "drizzle-orm/mysql2";
+import mysql from "mysql2/promise";
+
+const poolConnection = mysql.createPool({
+  uri: process.env.DATABASE_URL,
+});
+
+const db = drizzle({ client: poolConnection });
+```
+</CodeTabs>
+
+<Callout type="warning" emoji="⚙️">
+Appwrite Cloud 中的连接使用 TLS 加密。如果你的运行时或 `mysql2` 配置无法从连接字符串推断 TLS，请在连接选项中传入 `ssl: { rejectUnauthorized: true }`。
+
+对于内置的 `migrate` 函数和 DDL 迁移，我们与驱动作者都强烈建议使用单个 `client` 连接。
+</Callout>
+
+#### 无服务器环境中的连接池
+
+Appwrite 在同一主机名的 `6033` 端口上运行[连接池](https://appwrite.io/docs/products/databases/mysql/connection-pooling)。在无服务器和边缘环境中，请通过连接池转发应用流量，避免短暂运行的实例耗尽数据库引擎的连接上限；同时让 Drizzle Kit 连接引擎的直连端口 `3306`，因为迁移会执行需要会话级连接的 DDL。
+
+```env
+# Runtime: pooled, transaction mode
+DATABASE_URL="mysql://admin.<hash>:<password>@db-<hash>.<region>.appwrite.center:6033/default?ssl=true"
+
+# Migrations & introspection: direct connection to the engine
+DIRECT_URL="mysql://admin.<hash>:<password>@db-<hash>.<region>.appwrite.center:3306/default?ssl=true"
+```
+
+```typescript copy filename="drizzle.config.ts"
+import { defineConfig } from 'drizzle-kit';
+
+export default defineConfig({
+  dialect: 'mysql',
+  schema: './src/schema.ts',
+  out: './drizzle',
+  dbCredentials: {
+    url: process.env.DIRECT_URL!,
+  },
+});
+```
+
+连接池默认使用事务模式，不会在多个语句之间保留后端连接。Drizzle 的常规查询构建器会发送文本查询，因此可以搭配事务池使用；但显式预处理查询、用户变量和临时表等会话级功能需要使用直连端口或会话模式的连接池。
+
+#### 下一步
+
+<WhatsNextMySQL/>

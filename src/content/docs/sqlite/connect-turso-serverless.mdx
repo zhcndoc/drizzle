@@ -1,0 +1,59 @@
+import Npm from "@mdx/Npm.astro";
+import Callout from '@mdx/Callout.astro';
+import AnchorCards from '@mdx/AnchorCards.astro';
+import Steps from '@mdx/Steps.astro';
+import WhatsNextSQLite from "@mdx/WhatsNextSQLite.astro";
+import Prerequisites from "@mdx/Prerequisites.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+import LibsqlTable from "@mdx/LibsqlTable.mdx";
+import LibsqlTabs from "@mdx/LibsqlTabs.mdx";
+
+# Drizzle \<\> Turso 无服务器数据库
+
+<Prerequisites>
+- 使用 Drizzle 进行数据库[连接基础](/docs/sqlite/connect-overview)
+- Turso Database - [网站](https://docs.turso.tech/introduction)
+- Turso Database 无服务器驱动 - [网站](https://docs.turso.tech/sdk/ts/quickstart#recommended-@tursodatabase/serverless-remote-/-over-the-wire) 与 [GitHub](https://github.com/tursodatabase/turso/tree/main/serverless/javascript)
+</Prerequisites>
+
+根据 **[官方网站](https://docs.turso.tech/introduction)** 的介绍，
+Turso 是一款小型数据库，助力你在 AI 时代实现宏大梦想。
+
+#### 第一步：安装依赖包
+<Npm>
+ drizzle-orm@rc @tursodatabase/serverless
+ -D drizzle-kit@rc
+</Npm>
+
+#### 第二步：初始化驱动并执行查询
+```typescript
+import { drizzle } from 'drizzle-orm/tursodatabase-serverless';
+
+const db = drizzle({
+	connection: {
+		url: process.env.TURSO_URL,
+		authToken: process.env.TURSO_TOKEN
+	}
+});
+
+const result = await db.all('select 1');
+```
+
+如果需要传入已有驱动：
+
+```typescript
+import { connect } from '@tursodatabase/serverless';
+import { drizzle } from 'drizzle-orm/tursodatabase-serverless';
+
+const client = connect({
+    url: process.env.TURSO_URL,
+    authToken: process.env.TURSO_TOKEN
+});
+const db = drizzle({ client });
+
+const result = await db.all('select 1');
+```
+
+#### 下一步
+
+<WhatsNextSQLite/>

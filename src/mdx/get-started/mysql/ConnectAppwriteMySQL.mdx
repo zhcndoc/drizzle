@@ -1,0 +1,54 @@
+import Callout from '@mdx/Callout.astro';
+import CodeTabs from "@mdx/CodeTabs.astro";
+
+在 `src/db` 目录中创建 `index.ts` 文件并初始化连接：
+
+<CodeTabs items={['mysql2', 'mysql2 with config', 'your mysql2 driver']}>
+```typescript copy
+import 'dotenv/config';
+import { drizzle } from "drizzle-orm/mysql2";
+
+const db = drizzle(process.env.DATABASE_URL!);
+```
+```typescript copy
+import 'dotenv/config';
+import { drizzle } from "drizzle-orm/mysql2";
+
+// You can specify any property from the mysql2 connection options
+const db = drizzle({
+  connection: {
+    uri: process.env.DATABASE_URL!,
+    ssl: { rejectUnauthorized: true },
+  },
+});
+```
+```typescript copy
+import 'dotenv/config';
+import { drizzle } from "drizzle-orm/mysql2";
+import mysql from "mysql2/promise";
+
+const poolConnection = mysql.createPool({
+  uri: process.env.DATABASE_URL!,
+});
+const db = drizzle({ client: poolConnection });
+
+// or if you need client connection
+async function main() {
+  const connection = await mysql.createConnection(process.env.DATABASE_URL!);
+  const db = drizzle({ client: connection });
+}
+main();
+```
+</CodeTabs>
+
+<Callout type="warning" emoji="⚙️">
+  Connections on Appwrite Cloud are encrypted with TLS. If your runtime or `mysql2` configuration does not infer TLS from the connection string, pass `ssl: { rejectUnauthorized: true }` in the connection options.
+
+  对于内置的 `migrate` 函数和 DDL 迁移，我们与驱动作者都强烈建议使用单个 `client` 连接。
+</Callout>
+
+<Callout title='连接端口' type='info'>
+Appwrite MySQL 在同一主机名下支持两个连接端口：
+- **端口 3306**：直接连接 MySQL 引擎，用于 Drizzle Kit 迁移和内省。
+- **端口 6033**：通过[连接池](https://appwrite.io/docs/products/databases/mysql/connection-pooling)以事务模式连接。建议在无服务器和边缘环境中使用。详情请参阅 [Appwrite MySQL 连接指南](/docs/mysql/connect-appwrite-mysql#connection-pooling-for-serverless)。
+</Callout>

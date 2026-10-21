@@ -22,6 +22,8 @@
   "---",
   ["connect-turso", "Turso Cloud"],
   ["connect-turso-database", "Turso Database"],
+  ["connect-turso-serverless", "Turso 无服务器数据库"],
+  ["connect-turso-sync", "Turso 同步数据库"],
   ["connect-sqlite-cloud", "SQLite Cloud"],
   ["connect-cloudflare-d1", "Cloudflare D1"],
   ["connect-bun-sqlite", "Bun SQLite"],

@@ -1,0 +1,130 @@
+import Tab from '@mdx/Tab.astro';
+import Tabs from '@mdx/Tabs.astro';
+import Npm from "@mdx/Npm.astro";
+import Callout from '@mdx/Callout.astro';
+import Steps from '@mdx/Steps.astro';
+import AnchorCards from '@mdx/AnchorCards.astro';
+import Prerequisites from "@mdx/Prerequisites.astro";
+import CodeTabs from "@mdx/CodeTabs.astro";
+import Section from "@mdx/Section.astro";
+import WhatsNextPostgres from "@mdx/WhatsNextPostgres.astro";
+
+# Drizzle \<\> Appwrite Postgres
+<Prerequisites>
+- Database [connection basics](/docs/connect-overview) with Drizzle
+- Appwrite native PostgreSQL database - [website](https://appwrite.io) & [docs](https://appwrite.io/docs/products/databases/postgresql)
+- Appwrite PostgreSQL connections - [docs](https://appwrite.io/docs/products/databases/postgresql/connections)
+- Drizzle PostgreSQL drivers - [docs](/docs/get-started-postgresql)
+</Prerequisites>
+
+Appwrite 提供专用的原生 PostgreSQL 数据库，可通过 TLS 直接连接。Appwrite 没有专用驱动或抽象层，因此你可以像连接其他 PostgreSQL 服务器一样，搭配 [`node-postgres`](https://node-postgres.com/) 或 [`postgres.js`](https://github.com/porsager/postgres) 驱动使用 Drizzle。
+
+要获取连接字符串，请在 Appwrite Console 中打开数据库并点击 **Credentials**。**Drizzle** 选项卡中包含可直接使用的代码片段，**DSN** 和 **.env** 选项卡中则包含原始连接字符串。你也可以通过 Appwrite API 调用 `postgresql.get()` 获取。连接字符串已包含 `sslmode=require`，因此无需额外配置 TLS。
+
+```env
+DATABASE_URL="postgresql://admin:<password>@db-<hash>.<region>.appwrite.center:5432/<database>?sslmode=require"
+```
+
+#### 第一步：安装依赖包
+<CodeTabs items={["node-postgres (pg)", "postgres.js"]}>
+<Npm>
+ drizzle-orm@rc pg
+ -D drizzle-kit@rc
+</Npm>
+
+<Npm>
+ drizzle-orm@rc postgres
+ -D drizzle-kit@rc
+</Npm>
+
+</CodeTabs>
+
+#### 第二步：初始化驱动并执行查询
+<CodeTabs items={["node-postgres (pg)", "postgres.js"]}>
+```typescript
+// Make sure to install the 'pg' package
+import { drizzle } from 'drizzle-orm/node-postgres';
+
+const db = drizzle(process.env.DATABASE_URL);
+
+const result = await db.execute('select 1');
+```
+```typescript
+// Make sure to install the 'postgres' package
+import { drizzle } from 'drizzle-orm/postgres-js';
+
+const db = drizzle(process.env.DATABASE_URL);
+
+const result = await db.execute('select 1');
+```
+</CodeTabs>
+
+如果需要传入已有驱动：
+
+<CodeTabs items={["node-postgres (pg)", "postgres.js"]}>
+```typescript
+// Make sure to install the 'pg' package
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+const db = drizzle({ client: pool });
+
+const result = await db.execute('select 1');
+```
+```typescript
+// Make sure to install the 'postgres' package
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
+
+const queryClient = postgres(process.env.DATABASE_URL);
+const db = drizzle({ client: queryClient });
+
+const result = await db.execute('select 1');
+```
+</CodeTabs>
+
+#### 无服务器环境中的连接池
+
+Appwrite 在同一主机名的 `6432` 端口上运行[连接池](https://appwrite.io/docs/products/databases/postgresql/connection-pooling)。在无服务器和边缘环境中，请通过连接池转发应用流量，避免短暂运行的实例耗尽数据库引擎的连接上限；同时让 Drizzle Kit 连接引擎的直连端口 `5432`，因为迁移会执行需要会话级连接的 DDL。
+
+```env
+# Runtime: pooled, transaction mode
+DATABASE_URL="postgresql://admin:<password>@db-<hash>.<region>.appwrite.center:6432/<database>?sslmode=require"
+
+# Migrations & introspection: direct connection to the engine
+DIRECT_URL="postgresql://admin:<password>@db-<hash>.<region>.appwrite.center:5432/<database>?sslmode=require"
+```
+
+```typescript copy filename="drizzle.config.ts"
+import { defineConfig } from 'drizzle-kit';
+
+export default defineConfig({
+  dialect: 'postgresql',
+  schema: './src/schema.ts',
+  out: './drizzle',
+  dbCredentials: {
+    url: process.env.DIRECT_URL!,
+  },
+});
+```
+
+<Callout type="warning" emoji="⚙️">
+连接池默认使用**事务模式**，不会在多个语句之间保留后端连接，因此无法使用服务器端预处理语句。使用 `postgres.js` 通过连接池连接时，请自行创建客户端并设置 `prepare: false`：
+
+```typescript
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
+
+const queryClient = postgres(process.env.DATABASE_URL, { prepare: false });
+const db = drizzle({ client: queryClient });
+```
+
+如果你需要使用预处理语句、咨询锁、`LISTEN`/`NOTIFY`、临时表或 `SET LOCAL`，请将连接池切换到会话模式，或使用直连端口。
+</Callout>
+
+#### 下一步
+
+<WhatsNextPostgres/>
