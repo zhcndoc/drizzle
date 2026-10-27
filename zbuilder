@@ -1,6 +1,4 @@
-# syntax=docker/dockerfile:1
-
-FROM --platform=$BUILDPLATFORM node:24-bookworm AS build
+FROM --platform=$BUILDPLATFORM node:24-bookworm AS builder
 
 WORKDIR /app
 
@@ -15,23 +13,8 @@ COPY --exclude=.git \
 RUN pnpm install --frozen-lockfile
 RUN pnpm run build
 
-FROM caddy:2-alpine AS runtime
+FROM ikxin/caddy:latest
 
-COPY --from=build /app/dist /srv
+COPY --from=builder /app/dist /usr/share/caddy
 
-COPY <<'EOF' /etc/caddy/Caddyfile
-:80 {
-    root * /srv
-    encode zstd gzip
-
-    try_files {path} {path}.html
-    file_server
-
-    handle_errors 404 {
-        rewrite * /404.html
-        file_server
-    }
-}
-EOF
-
-EXPOSE 80
+EXPOSE 8080
