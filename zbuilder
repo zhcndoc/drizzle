@@ -2,15 +2,12 @@ FROM --platform=$BUILDPLATFORM node:24-bookworm AS builder
 
 WORKDIR /app
 
-RUN npm install --global pnpm@11.28.5
+RUN corepack enable pnpm
 
-COPY --exclude=.git \
-    --exclude=node_modules \
-    --exclude=dist \
-    --exclude=.astro \
-    . .
+COPY . .
 
 RUN pnpm install --frozen-lockfile
+
 RUN pnpm run build
 
 FROM ikxin/caddy:latest
